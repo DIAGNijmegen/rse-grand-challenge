@@ -66,6 +66,39 @@ def main():
     # Note that the jobs are not in any specific order!
     # We work that out from predictions.json
 
+    # predictions.json contains information about each job's inputs and outputs
+    # along with possible timing information. There are potentially up to two times
+    # available as ISO-8601 duration strings or None if not measured.
+    # We advise parsing these with isodate.parse_duration, available on pypi.
+    #
+    # We advise caution if you are considering using these times for ranking purposes,
+    # as they may not be stable for the duration of the challenge due to changes
+    # in the underlying implementation or infrastructure, or be repeatable
+    # due to shared hardware issues.
+    #
+    # `exec_duration`
+    #     The duration of the execution, **if measured**. Excludes data
+    #     validation, container pulling, model downloading, data downloading
+    #     and data uploading times.
+    #
+    #     Includes model loading time, input data loading time,
+    #     processing time, output data writing time and
+    #     **any delays from shared hardware issues**.
+    #
+    # `invoke_duration`
+    #     The duration of the execution, **if measured**. Excludes data
+    #     validation, container pulling, model downloading, data downloading
+    #     and data uploading times.
+    #
+    #     **Potentially excludes model loading time,
+    #     depending on the users implementation**.
+    #
+    #     Includes input data loading time, processing time,
+    #     output data writing time and
+    #     **any delays from shared hardware issues**.
+    #
+    # One, both or neither will be set.
+
     # Use concurrent workers to process the predictions more efficiently
     metrics["results"] = run_prediction_processing(fn=process, predictions=predictions)
 

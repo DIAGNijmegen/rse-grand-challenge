@@ -257,6 +257,8 @@ def generate_predictions_json(
                 "outputs": [
                     socket_to_socket_value(socket) for socket in outputs
                 ],
+                "exec_duration": "P0DT00H31M14S",
+                "invoke_duration": None,
                 "status": "Succeeded",
             }
         )
