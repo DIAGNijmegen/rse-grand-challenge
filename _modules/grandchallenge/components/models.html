@@ -415,7 +415,7 @@
 
 <div class="viewcode-block" id="ComponentInterface">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
     <span class="n">Kind</span> <span class="o">=</span> <span class="n">InterfaceKindChoices</span>
     <span class="n">SuperKind</span> <span class="o">=</span> <span class="n">InterfaceSuperKindChoices</span>
 
@@ -480,13 +480,6 @@
             <span class="s2">&quot;only valid for outputs.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-
-<div class="viewcode-block" id="ComponentInterface.__init__">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span></div>
-
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_kind_display</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
@@ -638,7 +631,7 @@
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;overlay_segments&quot;</span><span class="p">)</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_preserved</span>
             <span class="ow">and</span> <span class="p">(</span>
                 <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
@@ -652,12 +645,21 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_overlay_segments_preserved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">orig_overlay_segments</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span>
-        <span class="p">}</span>
-        <span class="n">new_overlay_segments</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
-        <span class="p">}</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_to_set</span><span class="p">(</span><span class="n">overlay_segments</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="nb">tuple</span><span class="p">(</span>
+                    <span class="nb">sorted</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">segment</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">&quot;visible&quot;</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">overlay_segments</span>
+            <span class="p">}</span>
+
+        <span class="n">orig_overlay_segments</span> <span class="o">=</span> <span class="n">_to_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">(</span><span class="s2">&quot;overlay_segments&quot;</span><span class="p">))</span>
+        <span class="n">new_overlay_segments</span> <span class="o">=</span> <span class="n">_to_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">orig_overlay_segments</span> <span class="o">&lt;=</span> <span class="n">new_overlay_segments</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -680,6 +682,9 @@
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;Relative path should not start with images/&quot;</span>
                 <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;relative_path&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;The relative path cannot be changed&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_store_in_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">allow_store_in_database</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span>
