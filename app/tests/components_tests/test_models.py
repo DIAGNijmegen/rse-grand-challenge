@@ -1103,6 +1103,13 @@ def test_clean_overlay_segments():
             ],
             nullcontext(),
         ],  # adds new voxel value
+        [
+            [
+                {"name": "s1", "visible": False, "voxel_value": 1},
+                {"name": "s2", "visible": True, "voxel_value": 2},
+            ],
+            nullcontext(),
+        ],  # changes visibility
     ),
 )
 @pytest.mark.django_db
@@ -1120,6 +1127,22 @@ def test_overlay_segments_can_be_extended(updated_segments, expectation):
 
     with expectation:
         ci._clean_overlay_segments()
+
+
+@pytest.mark.django_db
+def test_relative_path_not_modified():
+    ci = ComponentInterfaceFactory(
+        store_in_database=False,
+        kind=InterfaceKindChoices.PANIMG_IMAGE,
+        title="test",
+        relative_path="images/test",
+    )
+    ci.relative_path = "images/foo"
+
+    with pytest.raises(ValidationError) as error:
+        ci.clean()
+
+    assert str(error.value) == "['The relative path cannot be changed']"
 
 
 @pytest.mark.django_db

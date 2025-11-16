@@ -363,7 +363,7 @@ class OverlaySegmentsMixin(models.Model):
         abstract = True
 
 
-class ComponentInterface(OverlaySegmentsMixin):
+class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
     Kind = InterfaceKindChoices
     SuperKind = InterfaceSuperKindChoices
 
@@ -428,10 +428,6 @@ class ComponentInterface(OverlaySegmentsMixin):
             "only valid for outputs."
         ),
     )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._overlay_segments_orig = self.overlay_segments
 
     def __str__(self):
         return f"{self.title} ({self.get_kind_display()})"
@@ -580,7 +576,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
         if (
             self.pk is not None
-            and self._overlay_segments_orig != self.overlay_segments
+            and self.has_changed("overlay_segments")
             and not self._overlay_segments_preserved
             and (
                 ComponentInterfaceValue.objects.filter(interface=self).exists()
@@ -594,12 +590,21 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def _overlay_segments_preserved(self):
-        orig_overlay_segments = {
-            tuple(sorted(d.items())) for d in self._overlay_segments_orig
-        }
-        new_overlay_segments = {
-            tuple(sorted(d.items())) for d in self.overlay_segments
-        }
+        def _to_set(overlay_segments):
+            return {
+                tuple(
+                    sorted(
+                        (key, value)
+                        for key, value in segment.items()
+                        if key != "visible"
+                    )
+                )
+                for segment in overlay_segments
+            }
+
+        orig_overlay_segments = _to_set(self.initial_value("overlay_segments"))
+        new_overlay_segments = _to_set(self.overlay_segments)
+
         return orig_overlay_segments <= new_overlay_segments
 
     def _clean_relative_path(self):
@@ -622,6 +627,9 @@ class ComponentInterface(OverlaySegmentsMixin):
                 raise ValidationError(
                     "Relative path should not start with images/"
                 )
+
+        if self.pk is not None and self.has_changed("relative_path"):
+            raise ValidationError("The relative path cannot be changed")
 
     def _clean_store_in_database(self):
         allow_store_in_database = self.kind in (

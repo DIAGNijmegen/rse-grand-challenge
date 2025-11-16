@@ -515,7 +515,6 @@ THIRD_PARTY_APPS = [
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
     "compressor",  # for compressing css
-    "stdimage",
     "pictures",
     "django_filters",
     "drf_spectacular",
@@ -671,7 +670,7 @@ PICTURES = {
     "FILE_TYPES": ["AVIF"],
     "PIXEL_DENSITIES": [1, 2],
     "USE_PLACEHOLDERS": False,
-    "QUEUE_NAME": "acks-late-micro-short",
+    "QUEUE_NAME": "acks-late-2xlarge",
     "PROCESSOR": "pictures.tasks.process_picture",
 }
 
