@@ -17,13 +17,13 @@ repos:
       hooks:
           - id: isort
     - repo: https://github.com/asottile/pyupgrade
-      rev: v3.15.0
+      rev: v3.21.1
       hooks:
           - id: pyupgrade
             language: python
-            args: [--py311-plus]
+            args: [--py313-plus]
     - repo: https://github.com/ambv/black
-      rev: 24.1.1
+      rev: 25.11.0
       hooks:
           - id: black
             language: python

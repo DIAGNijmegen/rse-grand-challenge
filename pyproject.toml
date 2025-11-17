@@ -3,7 +3,7 @@ authors = [
     {name = "James Meakin"},
 ]
 license = {text = "Apache-2.0"}
-requires-python = "==3.11.*"
+requires-python = "==3.13.*"
 dependencies = [
     "celery[redis,sqs]!=5.0.6,!=5.3.0,!=5.5.*",
     "kombu!=5.3.0,!=5.5.*,!=5.6.*",
@@ -109,7 +109,7 @@ line_length = 79
 
 [tool.black]
 line-length = 79
-target-version = ['py311']
+target-version = ['py313']
 
 [tool.curlylint.rules]
 html_has_lang = 'en'
