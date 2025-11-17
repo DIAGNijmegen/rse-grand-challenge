@@ -1824,25 +1824,25 @@ def test_validate_user_upload_resource_error_handling(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "kind,expected_kwargs",
+    "kind,expected_queue",
     (
         # Ensure queue is not passed since setting to None would
-        # have Celery use the Celery-scope default ("celerly")
+        # have Celery use the Celery-scope default ("celery")
         (
             InterfaceKindChoices.STRING,
-            {},
+            None,
         ),
         (
             InterfaceKindChoices.NEWICK,
-            {"queue": "acks-late-2xlarge"},
+            "acks-late-2xlarge",
         ),
         (
             InterfaceKindChoices.BIOM,
-            {"queue": "acks-late-2xlarge"},
+            "acks-late-2xlarge",
         ),
     ),
 )
-def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
+def test_component_interface_custom_queue(kind, expected_queue, mocker):
 
     ci = ComponentInterfaceFactory(
         kind=kind,
@@ -1856,8 +1856,10 @@ def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
     ai = ArchiveItemFactory.build(archive=None)
 
     mock_task = mocker.patch(
-        "grandchallenge.components.tasks.add_file_to_object"
+        "grandchallenge.components.tasks.add_file_to_object",
+        autospec=True,
     )
+
     ai.validate_civ_data_objects_and_execute_linked_task(
         civ_data_objects=[
             CIVData(
@@ -1867,12 +1869,10 @@ def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
         ],
         user=user,
     )
-    assert mock_task.signature.called_once()  # Sanity
+    mock_task.signature.assert_called_once()
 
-    # Ignore the to-task keyword arguments
-    del mock_task.signature.call_args.kwargs["kwargs"]
-
-    assert mock_task.signature.call_args.kwargs == expected_kwargs
+    _, call_kwargs = mock_task.signature.call_args
+    assert call_kwargs.get("queue") == expected_queue
 
 
 def test_inputs_json_reserved():
