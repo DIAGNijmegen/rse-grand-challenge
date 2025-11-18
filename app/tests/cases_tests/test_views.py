@@ -5,7 +5,10 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.cases.widgets import ImageWidgetChoices
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface
-from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.cases_tests.factories import (
+    DICOMImageSetUploadFactory,
+    RawImageUploadSessionFactory,
+)
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.uploads_tests.factories import UserUploadFactory
@@ -16,6 +19,7 @@ from tests.utils import get_view_for_user
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         rius = RawImageUploadSessionFactory()
+        dicom_image_set_upload = DICOMImageSetUploadFactory()
         u = UserFactory()
 
         for view_name, kwargs, permission, obj in [
@@ -24,6 +28,12 @@ class TestObjectPermissionRequiredViews:
                 {"pk": rius.pk},
                 "view_rawimageuploadsession",
                 rius,
+            ),
+            (
+                "dicom-image-set-upload-detail",
+                {"pk": dicom_image_set_upload.pk},
+                "view_dicomimagesetupload",
+                dicom_image_set_upload,
             ),
         ]:
             response = get_view_for_user(
@@ -50,6 +60,7 @@ class TestObjectPermissionRequiredViews:
 
     def test_permission_filtered_views(self, client):
         rius = RawImageUploadSessionFactory()
+        dicom_image_set_upload = DICOMImageSetUploadFactory()
         u = UserFactory()
 
         for view_name, kwargs, permission, obj in [
@@ -58,7 +69,13 @@ class TestObjectPermissionRequiredViews:
                 {},
                 "view_rawimageuploadsession",
                 rius,
-            )
+            ),
+            (
+                "dicom-image-set-upload-list",
+                {},
+                "view_dicomimagesetupload",
+                dicom_image_set_upload,
+            ),
         ]:
             assign_perm(permission, u, obj)
 
