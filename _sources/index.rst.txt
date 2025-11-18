@@ -48,4 +48,4 @@ Indices and tables
 * :ref:`search`
 
 .. _`Grand Challenge`: https://grand-challenge.org
-.. _`GitHub Repository`: https://github.com/comic/grand-challenge.org
+.. _`GitHub Repository`: https://github.com/DIAGNijmegen/grand-challenge
