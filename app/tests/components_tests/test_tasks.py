@@ -928,7 +928,10 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
             b'{"foo": "bar"}',
             "JSON does not fulfill schema: instance is not of type 'array'",
         ),
-        (b'{"foo": "bar"', "Invalid JSON"),
+        (
+            b'{"foo": "bar"',
+            "The file is not valid JSON. Expecting ',' delimiter:",
+        ),
     ],
 )
 @pytest.mark.django_db
