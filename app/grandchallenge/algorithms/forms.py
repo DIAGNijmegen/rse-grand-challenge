@@ -865,13 +865,13 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
             if "github.com" in repo_name:
                 raise ValidationError(
                     "Please only provide the repository name, not the full "
-                    "url. E.g. 'comic/grand-challenge.org'"
+                    "url. E.g. 'DIAGNijmegen/grand-challenge'"
                 )
 
             if not pattern.match(repo_name):
                 raise ValidationError(
                     "Please make sure you provide the repository name in the "
-                    "format '<owner>/<repo>', e.g. 'comic/grand-challenge.org'"
+                    "format '<owner>/<repo>', e.g. 'DIAGNijmegen/grand-challenge'"
                 )
 
             if (

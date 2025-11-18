@@ -1,7 +1,7 @@
 # grand-challenge.org
 
-[![Build Status](https://github.com/comic/grand-challenge.org/workflows/CI/badge.svg)](https://github.com/comic/grand-challenge.org/actions?query=workflow%3ACI+branch%3Amain)
-[![Documentation](https://img.shields.io/badge/docs-published-success)](https://comic.github.io/grand-challenge.org/)
+[![Build Status](https://github.com/DIAGNijmegen/grand-challenge/workflows/CI/badge.svg)](https://github.com/DIAGNijmegen/grand-challenge/actions?query=workflow%3ACI+branch%3Amain)
+[![Documentation](https://img.shields.io/badge/docs-published-success)](https://diagnijmegen.github.io/grand-challenge/)
 [![Black Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Cite Us with Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3356819.svg)](https://doi.org/10.5281/zenodo.3356819)
 
@@ -12,4 +12,4 @@ In the era of Deep Learning, developing robust machine learning solutions to pro
 * Challenges: Gather and assess machine learning solutions.
 * Algorithms: Deploy machine learning solutions for clinical validation.
 
-If you would like to start your own website, or contribute to the development of the framework, please see [the docs](https://comic.github.io/grand-challenge.org/).
+If you would like to start your own website, or contribute to the development of the framework, please see [the docs](https://diagnijmegen.github.io/grand-challenge/).
