@@ -972,8 +972,13 @@ def test_dicom_image_set_serialized(client):
                     "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
                 },
             ],
-        )
+        ),
+        # Fields set by the factory, but are not set for DicomImageSets
+        width=None,
+        height=None,
+        origin=None,
     )
+
     user = UserFactory()
     assign_perm("view_image", user, image)
 
@@ -984,9 +989,12 @@ def test_dicom_image_set_serialized(client):
         client=client,
     )
 
-    assert response.json()["dicom_image_set"] == {
+    returned_data = response.json()
+    assert returned_data["dicom_image_set"] == {
         "image_set_id": "test-image-set-id"
     }
+    assert returned_data["shape"] == []
+    assert returned_data["shape_without_color"] == []
 
 
 @pytest.mark.django_db

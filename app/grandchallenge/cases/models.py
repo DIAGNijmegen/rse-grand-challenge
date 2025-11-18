@@ -596,8 +596,10 @@ class Image(UUIDModel):
             result.append(self.timepoints)
         if self.depth is not None:
             result.append(self.depth)
-        result.append(self.height)
-        result.append(self.width)
+        if self.height is not None:
+            result.append(self.height)
+        if self.width is not None:
+            result.append(self.width)
         return result
 
     @property
@@ -610,9 +612,10 @@ class Image(UUIDModel):
             The shape of the image in NumPy ordering [(t), (z), y, x, (c)]
         """
         result = self.shape_without_color
-        color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
-        if color_components > 1:
-            result.append(color_components)
+        if self.color_space:
+            color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
+            if color_components > 1:
+                result.append(color_components)
         return result
 
     @property
