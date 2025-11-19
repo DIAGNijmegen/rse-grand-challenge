@@ -1196,6 +1196,9 @@ class DICOMImageSetUpload(UUIDModel):
 
         if adding:
             if self.creator:
+                assign_perm(
+                    f"view_{self._meta.model_name}", self.creator, self
+                )
                 follow(
                     user=self.creator,
                     obj=self,
@@ -1514,3 +1517,24 @@ class DICOMImageSetUpload(UUIDModel):
     def execute_task_on_success(self):
         if self.task_on_success:
             on_commit(signature(self.task_on_success).apply_async)
+
+    def get_absolute_url(self):
+        return reverse(
+            "cases:dicom-image-set-upload-detail", kwargs={"pk": self.pk}
+        )
+
+
+class DICOMImageSetUploadUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset({"view_dicomimagesetupload"})
+
+    content_object = models.ForeignKey(
+        DICOMImageSetUpload, on_delete=models.CASCADE
+    )
+
+
+class DICOMImageSetUploadGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
+    content_object = models.ForeignKey(
+        DICOMImageSetUpload, on_delete=models.CASCADE
+    )

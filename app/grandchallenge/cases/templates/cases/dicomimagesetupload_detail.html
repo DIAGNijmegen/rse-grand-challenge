@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+{% load workstations %}
+{% load pathlib %}
+{% load static %}
+
+{% block title %}
+    {{ object.pk }} - Uploads - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'cases:dicom-image-set-upload-list' %}">DICOM Uploads</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object.pk }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>DICOM Image Set Upload</h2>
+
+    {% if object.error_message %}
+        <div class="alert alert-danger">
+            {{ object.error_message }}
+        </div>
+    {% endif %}
+
+    <dl class="inline">
+        <dt>Created</dt>
+        <dd>{{ object.created }}</dd>
+
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
+
+        <dt>Status</dt>
+        <dd>
+            <span class="badge
+                {% if object.status == object.DICOMImageSetUploadStatusChoices.FAILED %}
+                    badge-danger
+                {% elif object.status == object.DICOMImageSetUploadStatusChoices.COMPLETED %}
+                    badge-success
+                {% else %}
+                    badge-info
+                {% endif %}">
+                    {{ object.get_status_display }}
+            </span>
+        </dd>
+    </dl>
+
+    {% if object.status == object.DICOMImageSetUploadStatusChoices.COMPLETED %}
+
+        <h2>Image</h2>
+
+        {% if not object.dicom_image_set.image %}
+            <div class="alert alert-danger">No image imported.</div>
+        {% else %}
+            {% with object.dicom_image_set.image as image %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless table-sm">
+                        <tbody>
+                            <tr>
+                                <td>{{ image.name }}</td>
+                                <td>{{ image.shape_without_color|join:"x" }}</td>
+                                <td>
+                                    <span class="badge badge-primary"
+                                          title="DICOM Image {{ image.name|stem }}">
+                                        DICOM Image {{ image.name|stem }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn badge badge-primary"
+                                       {% workstation_session_control_data workstation=workstation context_object=image image=image %}
+                                    >
+                                        <span>
+                                            <i class="fa fa-eye"></i> View Image
+                                        </span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endwith %}
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {% include 'workstations/partials/session-control.html' %}
+{% endblock %}

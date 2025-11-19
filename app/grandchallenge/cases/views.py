@@ -27,7 +27,11 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
 from grandchallenge.cases.filters import ImageFilterSet
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
+    Image,
+    RawImageUploadSession,
+)
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
@@ -352,3 +356,41 @@ class ImageSearchResultView(
             qs = qs.filter(q).order_by("name")
         self.object_list = qs
         return self.render_to_response(self.get_context_data(**kwargs))
+
+
+class DICOMImageSetUploadList(
+    LoginRequiredMixin, ViewObjectPermissionListMixin, PaginatedTableListView
+):
+    model = DICOMImageSetUpload
+    login_url = reverse_lazy("account_login")
+    row_template = "cases/dicomimagesetupload_row.html"
+    search_fields = ["pk"]
+    columns = [
+        Column(title="ID", sort_field="pk"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Status", sort_field="status"),
+        Column(title="Error Message", sort_field="error_message"),
+    ]
+    default_sort_column = 1
+
+
+class DICOMImageSetUploadDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = DICOMImageSetUpload
+    permission_required = (
+        f"{model._meta.app_label}.view_{model._meta.model_name}"
+    )
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {
+                "workstation": Workstation.objects.filter(
+                    slug=settings.DEFAULT_WORKSTATION_SLUG
+                ).get()
+            }
+        )
+        return context

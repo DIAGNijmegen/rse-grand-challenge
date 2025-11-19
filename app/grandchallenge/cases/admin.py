@@ -3,6 +3,8 @@ from django.contrib import admin
 from grandchallenge.cases.models import (
     DICOMImageSet,
     DICOMImageSetUpload,
+    DICOMImageSetUploadGroupObjectPermission,
+    DICOMImageSetUploadUserObjectPermission,
     Image,
     ImageFile,
     ImageGroupObjectPermission,
@@ -86,16 +88,6 @@ class PostProcessImageTaskAdmin(admin.ModelAdmin):
     search_fields = ("pk", "image__pk")
 
 
-admin.site.register(ImageUserObjectPermission, UserObjectPermissionAdmin)
-admin.site.register(ImageGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(
-    RawImageUploadSessionUserObjectPermission, UserObjectPermissionAdmin
-)
-admin.site.register(
-    RawImageUploadSessionGroupObjectPermission, GroupObjectPermissionAdmin
-)
-
-
 @admin.register(DICOMImageSet)
 class DICOMImageSetAdmin(admin.ModelAdmin):
     search_fields = ("pk", "image_set_id", "image__name")
@@ -115,3 +107,19 @@ class DICOMImageSetUploadAdmin(admin.ModelAdmin):
     )
     list_filter = ("status",)
     search_fields = ("creator__username", "pk", "error_message")
+
+
+admin.site.register(ImageUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(ImageGroupObjectPermission, GroupObjectPermissionAdmin)
+admin.site.register(
+    RawImageUploadSessionUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    RawImageUploadSessionGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    DICOMImageSetUploadUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    DICOMImageSetUploadGroupObjectPermission, GroupObjectPermissionAdmin
+)

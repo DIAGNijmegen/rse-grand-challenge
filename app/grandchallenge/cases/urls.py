@@ -1,6 +1,8 @@
 from django.urls import path
 
 from grandchallenge.cases.views import (
+    DICOMImageSetUploadDetail,
+    DICOMImageSetUploadList,
     ImageSearchResultView,
     ImageWidgetSelectView,
     RawImageUploadSessionDetail,
@@ -19,6 +21,16 @@ urlpatterns = [
         "uploads/<uuid:pk>/",
         RawImageUploadSessionDetail.as_view(),
         name="raw-image-upload-session-detail",
+    ),
+    path(
+        "dicom-uploads/",
+        DICOMImageSetUploadList.as_view(),
+        name="dicom-image-set-upload-list",
+    ),
+    path(
+        "dicom-uploads/<uuid:pk>/",
+        DICOMImageSetUploadDetail.as_view(),
+        name="dicom-image-set-upload-detail",
     ),
     path(
         "select-image-widget/",

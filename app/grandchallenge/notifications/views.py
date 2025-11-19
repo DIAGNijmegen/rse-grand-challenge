@@ -147,6 +147,10 @@ class FollowList(
                     content_type__app_label="cases",
                     content_type__model="rawimageuploadsession",
                 )
+                | Q(
+                    content_type__app_label="cases",
+                    content_type__model="dicomimagesetupload",
+                )
             )
             .exclude(flag="job-inactive")
             .filter(user=self.request.user)

@@ -1,0 +1,22 @@
+{% load humanize %}
+
+<a href="{{ object.get_absolute_url }}">{{ object.pk }}</a>
+<split></split>
+
+{{ object.created|naturaltime }}
+<split></split>
+
+<span class="badge
+    {% if object.status == object.DICOMImageSetUploadStatusChoices.FAILED %}
+        badge-danger
+    {% elif object.status == object.DICOMImageSetUploadStatusChoices.COMPLETED %}
+        badge-success
+    {% else %}
+        badge-info
+    {% endif %}">
+        {{ object.get_status_display }}
+</span>
+<split></split>
+
+{{ object.error_message }}
+<split></split>

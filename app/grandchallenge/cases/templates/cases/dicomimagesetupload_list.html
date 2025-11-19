@@ -1,0 +1,18 @@
+{% extends "datatables/list_base.html" %}
+{% load humanize %}
+
+{% block title %}
+    DICOM Uploads - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">DICOM Uploads</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>DICOM Image Set Uploads</h2>
+
+    {{ block.super }}
+{% endblock %}
