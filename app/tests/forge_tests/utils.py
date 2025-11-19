@@ -1,12 +1,14 @@
 import os
+import shutil
 import subprocess
+import tempfile
+import zipfile
 from collections import Counter
 from contextlib import contextmanager
 from copy import deepcopy
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
-
-from grand_challenge_forge import RESOURCES_PATH
 
 TEST_RESOURCES = (
     Path(os.path.dirname(os.path.realpath(__file__))) / "resources"
@@ -401,9 +403,59 @@ def _test_script_run(
 @contextmanager
 def mocked_binaries():
     """Mock the binaries in the PATH to avoid computationally intensive operations during testing."""
-    mocks_bin = RESOURCES_PATH / "mocks" / "bin"
+    mocks_bin = TEST_RESOURCES / "mocks" / "bin"
     current_path = os.environ.get("PATH", "")
     extended_path = f"{mocks_bin}:{current_path}"
 
     with patch.dict("os.environ", PATH=extended_path):
         yield
+
+
+@contextmanager
+def zipfile_to_filesystem(output_path, preserve_permissions=True):
+    """
+    Context manager that provides an in-memory zip file handle and optionally
+    extracts its contents.
+
+    Args
+    ----
+        output_dir (str, Path): Directory to extract the zip contents to
+        after completion.
+
+    Yields
+    ------
+        ZipFile: A ZipFile object that can be written to.
+    """
+    zip_handle = BytesIO()
+
+    with zipfile.ZipFile(zip_handle, "w") as zip_file:
+        yield zip_file
+
+    # Extract contents to disk if output_dir is specified
+
+    zip_handle.seek(0)
+    os.makedirs(output_path, exist_ok=True)
+
+    temp_zip = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
+    try:
+        temp_zip.write(zip_handle.getvalue())
+        temp_zip.close()
+
+        if preserve_permissions:
+            # Use a subprocess because the ZipFile.extractall does
+            # not keep permissions: https://github.com/python/cpython/issues/59999
+            subprocess.run(
+                [
+                    "unzip",
+                    "-o",
+                    temp_zip.name,
+                    "-d",
+                    str(output_path),
+                ],
+                check=True,
+                capture_output=True,
+            )
+        else:
+            shutil.unpack_archive(temp_zip.name, output_path)
+    finally:
+        os.remove(temp_zip.name)

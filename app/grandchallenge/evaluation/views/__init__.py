@@ -31,7 +31,6 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
-from grand_challenge_forge.forge import generate_challenge_pack
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
@@ -79,6 +78,7 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.forge.forge import generate_challenge_pack
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin

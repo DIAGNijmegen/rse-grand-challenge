@@ -8,11 +8,11 @@ import pytest
 from jinja2 import TemplateNotFound
 from jinja2.exceptions import SecurityError
 
-from grand_challenge_forge.generation_utils import (
+from grandchallenge.forge.generation_utils import (
     copy_and_render,
     get_jinja2_environment,
 )
-from tests.utils import TEST_RESOURCES
+from tests.forge_tests.utils import TEST_RESOURCES
 
 
 def test_jinja2_environment_sandbox():
@@ -64,7 +64,7 @@ def test_jinja2_environment_sandbox():
 )
 def test_copy_and_render_source_restrictions(name, context):
     with patch(
-        "grand_challenge_forge.generation_utils.PARTIALS_PATH",
+        "grandchallenge.forge.generation_utils.FORGE_PARTIALS_PATH",
         new=TEST_RESOURCES / "partials",
     ):
         with context:

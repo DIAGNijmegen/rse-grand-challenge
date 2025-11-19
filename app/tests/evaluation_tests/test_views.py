@@ -3181,11 +3181,11 @@ def test_phase_starter_kit_download(client):
     # Spot check for expected files in the zip
     expected_files = [
         "README.md",
-        Path(phase.slug) / "example-algorithm" / "Dockerfile",
-        Path(phase.slug) / "example-algorithm" / "inference.py",
-        Path(phase.slug) / "example-evaluation-method" / "Dockerfile",
-        Path(phase.slug) / "example-evaluation-method" / "evaluate.py",
-        Path(phase.slug) / "upload-to-archive" / "upload_files.py",
+        Path(phase.slug) / "example_algorithm" / "Dockerfile",
+        Path(phase.slug) / "example_algorithm" / "inference.py",
+        Path(phase.slug) / "example_evaluation_method" / "Dockerfile",
+        Path(phase.slug) / "example_evaluation_method" / "evaluate.py",
+        Path(phase.slug) / "upload_to_archive" / "upload_files.py",
     ]
     for file_name in expected_files:
         assert (

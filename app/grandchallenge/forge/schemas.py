@@ -1,9 +1,9 @@
 import logging
 
 import jsonschema
+from django.template.defaultfilters import truncatechars
 
-from grand_challenge_forge.exceptions import InvalidContextError
-from grand_challenge_forge.utils import truncate_with_epsilons
+from grandchallenge.forge.exceptions import InvalidContextError
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def validate_pack_context(context):
         logging.debug("Context valid")
     except jsonschema.exceptions.ValidationError as e:
         raise InvalidContextError(
-            f"Invalid pack context provided:\n'{truncate_with_epsilons(context)!r}'"
+            f"Invalid pack context provided:\n'{truncatechars(context, 32)!r}'"
         ) from e
 
 
@@ -135,5 +135,5 @@ def validate_algorithm_template_context(context):
     except jsonschema.exceptions.ValidationError as e:
         raise InvalidContextError(
             "Invalid algorithm template context provided:\n"
-            f"'{truncate_with_epsilons(context)!r}'"
+            f"'{truncatechars(context, 32)!r}'"
         ) from e

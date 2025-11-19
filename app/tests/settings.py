@@ -38,6 +38,7 @@ TEMPLATE_DEBUG = False
 DEBUG_LOGGING = False
 COMPRESS_OFFLINE = False
 COMPRESS_ENABLED = False
+FORGE_DISABLE_GPUS = True
 
 # Disable non-critical logging in tests
 logging.disable(logging.CRITICAL)

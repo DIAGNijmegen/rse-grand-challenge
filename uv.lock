@@ -1214,21 +1214,6 @@ wheels = [
 ]
 
 [[package]]
-name = "grand-challenge-forge"
-version = "0.7.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "black" },
-    { name = "click" },
-    { name = "jinja2" },
-    { name = "jsonschema" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/a9/91a9793f59dd53947c96b81b4ccaf1ce53aa215fc56621397628e8dcd91a/grand_challenge_forge-0.7.5.tar.gz", hash = "sha256:4bd57201f46ae0965eaa526393055819550a0f9464178724d9645dfd190c667d", size = 32083, upload-time = "2025-07-17T07:59:48.926Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/8d/aeb3412e9086ca020e39418fee90715b5fd675884baa3cb3d7066b746762/grand_challenge_forge-0.7.5-py3-none-any.whl", hash = "sha256:aa7c2f6de8233af92e1f03a5bf13bdc5e7c0265981f5408881c5e9376c0b6bad", size = 48192, upload-time = "2025-07-17T07:59:47.713Z" },
-]
-
-[[package]]
 name = "grand-challenge-org"
 version = "0.1.0"
 source = { virtual = "." }
@@ -1237,6 +1222,7 @@ dependencies = [
     { name = "aws-xray-sdk" },
     { name = "beautifulsoup4" },
     { name = "biopython" },
+    { name = "black" },
     { name = "bleach", extra = ["css"] },
     { name = "boto3" },
     { name = "cachetools" },
@@ -1272,10 +1258,10 @@ dependencies = [
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
     { name = "grand-challenge-dicom-de-identifier" },
-    { name = "grand-challenge-forge" },
     { name = "gunicorn" },
     { name = "httpx" },
     { name = "humanize" },
+    { name = "jinja2" },
     { name = "jsonschema" },
     { name = "kombu" },
     { name = "panimg" },
@@ -1301,12 +1287,14 @@ dev = [
     { name = "django-debug-toolbar" },
     { name = "factory-boy" },
     { name = "playwright" },
+    { name = "psutil" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "pytest-django" },
     { name = "pytest-mock" },
     { name = "pytest-randomly" },
     { name = "pytest-rerunfailures" },
+    { name = "pytest-timeout" },
     { name = "pytest-xdist" },
     { name = "sphinx" },
     { name = "sphinx-autobuild" },
@@ -1324,6 +1312,7 @@ requires-dist = [
     { name = "aws-xray-sdk" },
     { name = "beautifulsoup4" },
     { name = "biopython" },
+    { name = "black" },
     { name = "bleach", extras = ["css"] },
     { name = "boto3", specifier = ">1.18.8" },
     { name = "cachetools" },
@@ -1359,10 +1348,10 @@ requires-dist = [
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
     { name = "grand-challenge-dicom-de-identifier" },
-    { name = "grand-challenge-forge" },
     { name = "gunicorn" },
     { name = "httpx" },
     { name = "humanize" },
+    { name = "jinja2" },
     { name = "jsonschema" },
     { name = "kombu", specifier = "!=5.3.0,!=5.5.*,!=5.6.*" },
     { name = "panimg", specifier = ">=0.12.0,!=0.15.1" },
@@ -1388,12 +1377,14 @@ dev = [
     { name = "django-debug-toolbar" },
     { name = "factory-boy" },
     { name = "playwright" },
+    { name = "psutil" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "pytest-django" },
     { name = "pytest-mock" },
     { name = "pytest-randomly" },
     { name = "pytest-rerunfailures" },
+    { name = "pytest-timeout" },
     { name = "pytest-xdist" },
     { name = "sphinx" },
     { name = "sphinx-autobuild" },
@@ -2083,6 +2074,26 @@ wheels = [
 ]
 
 [[package]]
+name = "psutil"
+version = "7.1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/88/bdd0a41e5857d5d703287598cbf08dad90aed56774ea52ae071bae9071b6/psutil-7.1.3.tar.gz", hash = "sha256:6c86281738d77335af7aec228328e944b30930899ea760ecf33a4dba66be5e74", size = 489059, upload-time = "2025-11-02T12:25:54.619Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/93/0c49e776b8734fef56ec9c5c57f923922f2cf0497d62e0f419465f28f3d0/psutil-7.1.3-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:0005da714eee687b4b8decd3d6cc7c6db36215c9e74e5ad2264b90c3df7d92dc", size = 239751, upload-time = "2025-11-02T12:25:58.161Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/8d/b31e39c769e70780f007969815195a55c81a63efebdd4dbe9e7a113adb2f/psutil-7.1.3-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:19644c85dcb987e35eeeaefdc3915d059dac7bd1167cdcdbf27e0ce2df0c08c0", size = 240368, upload-time = "2025-11-02T12:26:00.491Z" },
+    { url = "https://files.pythonhosted.org/packages/62/61/23fd4acc3c9eebbf6b6c78bcd89e5d020cfde4acf0a9233e9d4e3fa698b4/psutil-7.1.3-cp313-cp313t-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:95ef04cf2e5ba0ab9eaafc4a11eaae91b44f4ef5541acd2ee91d9108d00d59a7", size = 287134, upload-time = "2025-11-02T12:26:02.613Z" },
+    { url = "https://files.pythonhosted.org/packages/30/1c/f921a009ea9ceb51aa355cb0cc118f68d354db36eae18174bab63affb3e6/psutil-7.1.3-cp313-cp313t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1068c303be3a72f8e18e412c5b2a8f6d31750fb152f9cb106b54090296c9d251", size = 289904, upload-time = "2025-11-02T12:26:05.207Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/82/62d68066e13e46a5116df187d319d1724b3f437ddd0f958756fc052677f4/psutil-7.1.3-cp313-cp313t-win_amd64.whl", hash = "sha256:18349c5c24b06ac5612c0428ec2a0331c26443d259e2a0144a9b24b4395b58fa", size = 249642, upload-time = "2025-11-02T12:26:07.447Z" },
+    { url = "https://files.pythonhosted.org/packages/df/ad/c1cd5fe965c14a0392112f68362cfceb5230819dbb5b1888950d18a11d9f/psutil-7.1.3-cp313-cp313t-win_arm64.whl", hash = "sha256:c525ffa774fe4496282fb0b1187725793de3e7c6b29e41562733cae9ada151ee", size = 245518, upload-time = "2025-11-02T12:26:09.719Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/94/46b9154a800253e7ecff5aaacdf8ebf43db99de4a2dfa18575b02548654e/psutil-7.1.3-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:2bdbcd0e58ca14996a42adf3621a6244f1bb2e2e528886959c72cf1e326677ab", size = 238359, upload-time = "2025-11-02T12:26:25.284Z" },
+    { url = "https://files.pythonhosted.org/packages/68/3a/9f93cff5c025029a36d9a92fef47220ab4692ee7f2be0fba9f92813d0cb8/psutil-7.1.3-cp36-abi3-macosx_11_0_arm64.whl", hash = "sha256:bc31fa00f1fbc3c3802141eede66f3a2d51d89716a194bf2cd6fc68310a19880", size = 239171, upload-time = "2025-11-02T12:26:27.23Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/b1/5f49af514f76431ba4eea935b8ad3725cdeb397e9245ab919dbc1d1dc20f/psutil-7.1.3-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3bb428f9f05c1225a558f53e30ccbad9930b11c3fc206836242de1091d3e7dd3", size = 263261, upload-time = "2025-11-02T12:26:29.48Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/95/992c8816a74016eb095e73585d747e0a8ea21a061ed3689474fabb29a395/psutil-7.1.3-cp36-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:56d974e02ca2c8eb4812c3f76c30e28836fffc311d55d979f1465c1feeb2b68b", size = 264635, upload-time = "2025-11-02T12:26:31.74Z" },
+    { url = "https://files.pythonhosted.org/packages/55/4c/c3ed1a622b6ae2fd3c945a366e64eb35247a31e4db16cf5095e269e8eb3c/psutil-7.1.3-cp37-abi3-win_amd64.whl", hash = "sha256:f39c2c19fe824b47484b96f9692932248a54c43799a84282cfe58d05a6449efd", size = 247633, upload-time = "2025-11-02T12:26:33.887Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/ad/33b2ccec09bf96c2b2ef3f9a6f66baac8253d7565d8839e024a6b905d45d/psutil-7.1.3-cp37-abi3-win_arm64.whl", hash = "sha256:bd0d69cee829226a761e92f28140bec9a5ee9d5b4fb4b0cc589068dbfff559b1", size = 244608, upload-time = "2025-11-02T12:26:36.136Z" },
+]
+
+[[package]]
 name = "psycopg"
 version = "3.2.12"
 source = { registry = "https://pypi.org/simple" }
@@ -2367,6 +2378,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/de/04/71e9520551fc8fe2cf5c1a1842e4e600265b0815f2016b7c27ec85688682/pytest_rerunfailures-16.1.tar.gz", hash = "sha256:c38b266db8a808953ebd71ac25c381cb1981a78ff9340a14bcb9f1b9bff1899e", size = 30889, upload-time = "2025-10-10T07:06:01.238Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/54/60eabb34445e3db3d3d874dc1dfa72751bfec3265bd611cb13c8b290adea/pytest_rerunfailures-16.1-py3-none-any.whl", hash = "sha256:5d11b12c0ca9a1665b5054052fcc1084f8deadd9328962745ef6b04e26382e86", size = 14093, upload-time = "2025-10-10T07:06:00.019Z" },
+]
+
+[[package]]
+name = "pytest-timeout"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/82/4c9ecabab13363e72d880f2fb504c5f750433b2b6f16e99f4ec21ada284c/pytest_timeout-2.4.0.tar.gz", hash = "sha256:7e68e90b01f9eff71332b25001f85c75495fc4e3a836701876183c4bcfd0540a", size = 17973, upload-time = "2025-05-05T19:44:34.99Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/b6/3127540ecdf1464a00e5a01ee60a1b09175f6913f0644ac748494d9c4b21/pytest_timeout-2.4.0-py3-none-any.whl", hash = "sha256:c42667e5cdadb151aeb5b26d114aff6bdf5a907f176a007a30b940d3d865b5c2", size = 14382, upload-time = "2025-05-05T19:44:33.502Z" },
 ]
 
 [[package]]

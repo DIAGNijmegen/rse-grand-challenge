@@ -1,26 +1,20 @@
 import json
 import logging
 import os
-import subprocess
-import tempfile
 import time
 import uuid
 import zipfile
-from contextlib import contextmanager
 from datetime import datetime, timezone
-from io import BytesIO
 from pathlib import Path
 
 import black
+from django.conf import settings
 from jinja2 import FileSystemLoader, StrictUndefined, TemplateNotFound
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
-from grand_challenge_forge import PARTIALS_PATH
-
-DEBUG = os.getenv("GRAND_CHALLENGE_FORGE_DEBUG", "false").lower() == "true"
-
-SCRIPT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
-RESOURCES_PATH = SCRIPT_PATH / "resources"
+FORGE_MODULE_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
+FORGE_RESOURCES_PATH = FORGE_MODULE_PATH / "resources"
+FORGE_PARTIALS_PATH = FORGE_MODULE_PATH / "partials"
 
 
 logger = logging.getLogger(__name__)
@@ -60,12 +54,12 @@ def generate_socket_value_stub_file(*, output_zip_file, target_zpath, socket):
     # Copy over an example
 
     if is_json(socket):
-        source = RESOURCES_PATH / "example.json"
+        source = FORGE_RESOURCES_PATH / "example.json"
     elif is_image(socket):
-        source = RESOURCES_PATH / "example.mha"
+        source = FORGE_RESOURCES_PATH / "example.mha"
         target_zpath = target_zpath / f"{str(uuid.uuid4())}.mha"
     else:
-        source = RESOURCES_PATH / "example.txt"
+        source = FORGE_RESOURCES_PATH / "example.txt"
 
     output_zip_file.write(
         source,
@@ -100,12 +94,12 @@ def socket_to_socket_value(socket):
 
 
 def get_jinja2_environment(searchpath=None):
-    from grand_challenge_forge.partials.filters import custom_filters
+    from grandchallenge.forge.partials.filters import custom_filters
 
     if searchpath:
-        searchpath = [searchpath, PARTIALS_PATH]
+        searchpath = [searchpath, FORGE_PARTIALS_PATH]
     else:
-        searchpath = PARTIALS_PATH
+        searchpath = FORGE_PARTIALS_PATH
 
     env = ImmutableSandboxedEnvironment(
         loader=FileSystemLoader(
@@ -129,7 +123,7 @@ def copy_and_render(
     target_zpath,
     context,
 ):
-    source_path = PARTIALS_PATH / templates_dir_name
+    source_path = FORGE_PARTIALS_PATH / templates_dir_name
 
     if not source_path.exists():
         raise TemplateNotFound(source_path)
@@ -157,7 +151,7 @@ def copy_and_render(
                 )
                 rendered_content = template.render(
                     **context,
-                    _no_gpus=DEBUG,
+                    _no_gpus=settings.FORGE_DISABLE_GPUS,
                 )
 
                 targetfile_zpath = output_file.with_suffix("")
@@ -187,9 +181,9 @@ def copy_and_render(
 
 
 def check_allowed_source(path):
-    if PARTIALS_PATH.resolve() not in path.resolve().parents:
+    if FORGE_PARTIALS_PATH.resolve() not in path.resolve().parents:
         raise PermissionError(
-            f"Only files under {PARTIALS_PATH} are allowed "
+            f"Only files under {FORGE_PARTIALS_PATH} are allowed "
             "to be copied or rendered"
         )
 
@@ -201,50 +195,3 @@ def apply_black(content):
         mode=black.Mode(),
     )
     return result
-
-
-@contextmanager
-def zipfile_to_filesystem(output_path):
-    """
-    Context manager that provides an in-memory zip file handle and optionally
-    extracts its contents.
-
-    Args
-    ----
-        output_dir (str, Path): Directory to extract the zip contents to
-        after completion.
-
-    Yields
-    ------
-        ZipFile: A ZipFile object that can be written to.
-    """
-    zip_handle = BytesIO()
-
-    with zipfile.ZipFile(zip_handle, "w") as zip_file:
-        yield zip_file
-
-    # Extract contents to disk if output_dir is specified
-    # Use a subprocess because the ZipFile.extractall does
-    # not keep permissions: https://github.com/python/cpython/issues/59999
-
-    zip_handle.seek(0)
-    os.makedirs(output_path, exist_ok=True)
-
-    temp_zip = tempfile.NamedTemporaryFile(suffix=".zip", delete=False)
-    try:
-        temp_zip.write(zip_handle.getvalue())
-        temp_zip.close()
-
-        subprocess.run(
-            [
-                "unzip",
-                "-o",
-                temp_zip.name,
-                "-d",
-                str(output_path),
-            ],
-            check=True,
-            capture_output=True,
-        )
-    finally:
-        os.remove(temp_zip.name)

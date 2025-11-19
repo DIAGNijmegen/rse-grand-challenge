@@ -2,12 +2,12 @@ from contextlib import nullcontext
 
 import pytest
 
-from grand_challenge_forge.exceptions import InvalidContextError
-from grand_challenge_forge.schemas import (
+from grandchallenge.forge.exceptions import InvalidContextError
+from grandchallenge.forge.schemas import (
     validate_algorithm_template_context,
     validate_pack_context,
 )
-from tests.utils import (
+from tests.forge_tests.utils import (
     algorithm_template_context_factory,
     pack_context_factory,
 )

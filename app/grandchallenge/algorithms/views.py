@@ -26,7 +26,6 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from grand_challenge_forge.forge import generate_algorithm_template
 from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
 from rest_framework.mixins import (
@@ -98,6 +97,7 @@ from grandchallenge.core.utils.grand_challenge_forge import (
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.models import Evaluation
+from grandchallenge.forge.forge import generate_algorithm_template
 from grandchallenge.github.views import GitHubInstallationRequiredMixin
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin

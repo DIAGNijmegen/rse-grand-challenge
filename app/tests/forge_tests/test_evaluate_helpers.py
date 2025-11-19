@@ -1,5 +1,3 @@
-import os
-import sys
 import time
 from functools import partial
 from multiprocessing import Process
@@ -8,25 +6,11 @@ from unittest import mock
 import psutil
 import pytest
 
-# Do some creating path hacking to be able to import the helpers
-parent_dir = os.path.abspath(
-    os.path.join(
-        "grand_challenge_forge",
-        "partials",
-        "example-evaluation-method",
-    )
-)
-sys.path.insert(0, parent_dir)
-
-from helpers import (  # noqa: E402
+from grandchallenge.forge.partials.example_evaluation_method.helpers import (
     PredictionProcessingError,
     _start_pool_worker,
     run_prediction_processing,
 )
-
-# Some of the test below, if things go wrong, can potentially deadlock.
-# So we set a maximum runtime for all these tests
-pytestmark = pytest.mark.timeout(4)
 
 
 def working_process(p):
@@ -79,6 +63,8 @@ def fail_on_prediction_2(p):
         return f"{p['pk']} result"
 
 
+@pytest.mark.timeout(4)
+@pytest.mark.forge_integration
 def test_prediction_processing():
     predictions = [{"pk": "prediction1"}, {"pk": "prediction2"}]
     result = run_prediction_processing(
@@ -87,6 +73,8 @@ def test_prediction_processing():
     assert {"prediction1 result", "prediction2 result"} == set(result)
 
 
+@pytest.mark.timeout(4)
+@pytest.mark.forge_integration
 def test_prediction_processing_error():
     predictions = [
         {"pk": "prediction1"}
@@ -95,6 +83,8 @@ def test_prediction_processing_error():
         run_prediction_processing(fn=failing_process, predictions=predictions)
 
 
+@pytest.mark.timeout(4)
+@pytest.mark.forge_integration
 def test_prediction_processing_killing_of_child_processes():
     # If something goes wrong, this test could deadlock
     # 5 seconds should be more than enough
@@ -109,6 +99,8 @@ def test_prediction_processing_killing_of_child_processes():
     assert len(result) == len(predictions)
 
 
+@pytest.mark.timeout(4)
+@pytest.mark.forge_integration
 def test_prediction_processing_catching_killing_of_child_processes():
     predictions = [{"pk": "prediction1"}, {"pk": "prediction2"}]
 
@@ -125,7 +117,10 @@ def test_prediction_processing_catching_killing_of_child_processes():
         return process
 
     try:
-        with mock.patch("helpers._start_pool_worker", add_child_terminator):
+        with mock.patch(
+            "grandchallenge.forge.partials.example_evaluation_method.helpers._start_pool_worker",
+            add_child_terminator,
+        ):
             with pytest.raises(PredictionProcessingError):
                 run_prediction_processing(
                     fn=forever_process, predictions=predictions
@@ -135,6 +130,8 @@ def test_prediction_processing_catching_killing_of_child_processes():
             child_stopper.terminate()
 
 
+@pytest.mark.timeout(4)
+@pytest.mark.forge_integration
 def test_prediction_processing_canceling_processes_correctly():
     predictions = [
         {"pk": "prediction1"},  # Should cancel this
@@ -142,7 +139,10 @@ def test_prediction_processing_canceling_processes_correctly():
         {"pk": "prediction3"},  # Should cancel this
         {"pk": "prediction4"},  # Should cancel this
     ]
-    with mock.patch("helpers.get_max_workers", lambda: 2):
+    with mock.patch(
+        "grandchallenge.forge.partials.example_evaluation_method.helpers.get_max_workers",
+        lambda: 2,
+    ):
         with pytest.raises(PredictionProcessingError) as exc:
             run_prediction_processing(
                 fn=fail_on_prediction_2,

@@ -34,7 +34,7 @@ RUN apt-get update \
         ruby-nokogiri \
         # git for CodeBuild integration
         git \
-        # for dbshell \
+        # for dbshell
         postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 

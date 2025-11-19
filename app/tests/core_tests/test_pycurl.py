@@ -1,5 +1,8 @@
 # pyvips should be imported before pycurl to reproduce error
-import pyvips
+try:
+    import pyvips
+except (ModuleNotFoundError, OSError):
+    pyvips = None
 
 
 def test_import_pycurl():

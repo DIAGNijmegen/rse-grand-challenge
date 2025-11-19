@@ -2,15 +2,16 @@ import json
 import logging
 import uuid
 from copy import deepcopy
-from importlib import metadata
 from pathlib import Path
 
-from grand_challenge_forge.generation_utils import (
+from django.conf import settings
+
+from grandchallenge.forge.generation_utils import (
     copy_and_render,
     generate_socket_value_stub_file,
     socket_to_socket_value,
 )
-from grand_challenge_forge.schemas import (
+from grandchallenge.forge.schemas import (
     validate_algorithm_template_context,
     validate_pack_context,
 )
@@ -26,13 +27,11 @@ def generate_challenge_pack(
 ):
     validate_pack_context(context)
 
-    context["grand_challenge_forge_version"] = metadata.version(
-        "grand-challenge-forge"
-    )
+    context["grand_challenge_forge_version"] = settings.COMMIT_ID
 
     # Generate the README.md file
     copy_and_render(
-        templates_dir_name="pack-readme",
+        templates_dir_name="pack_readme",
         output_zip_file=output_zip_file,
         target_zpath=target_zpath,
         context=context,
@@ -45,19 +44,19 @@ def generate_challenge_pack(
         generate_upload_to_archive_script(
             context=phase_context,
             output_zip_file=output_zip_file,
-            target_zpath=phase_zpath / "upload-to-archive",
+            target_zpath=phase_zpath / "upload_to_archive",
         )
 
         generate_example_algorithm(
             context=phase_context,
             output_zip_file=output_zip_file,
-            target_zpath=phase_zpath / "example-algorithm",
+            target_zpath=phase_zpath / "example_algorithm",
         )
 
         generate_example_evaluation(
             context=phase_context,
             output_zip_file=output_zip_file,
-            target_zpath=phase_zpath / "example-evaluation-method",
+            target_zpath=phase_zpath / "example_evaluation_method",
         )
 
 
@@ -99,7 +98,7 @@ def generate_upload_to_archive_script(
     )
 
     copy_and_render(
-        templates_dir_name="upload-to-archive-script",
+        templates_dir_name="upload_to_archive_script",
         output_zip_file=output_zip_file,
         target_zpath=target_zpath,
         context=context,
@@ -189,7 +188,7 @@ def generate_example_algorithm(*, output_zip_file, target_zpath, context):
     )
 
     copy_and_render(
-        templates_dir_name="example-algorithm",
+        templates_dir_name="example_algorithm",
         output_zip_file=output_zip_file,
         target_zpath=target_zpath,
         context=context,
@@ -233,7 +232,7 @@ def generate_example_evaluation(*, output_zip_file, target_zpath, context):
         )
 
     copy_and_render(
-        templates_dir_name="example-evaluation-method",
+        templates_dir_name="example_evaluation_method",
         output_zip_file=output_zip_file,
         target_zpath=target_zpath,
         context=context,
@@ -286,9 +285,7 @@ def generate_algorithm_template(
 ):
     validate_algorithm_template_context(context)
 
-    context["grand_challenge_forge_version"] = metadata.version(
-        "grand-challenge-forge"
-    )
+    context["grand_challenge_forge_version"] = settings.COMMIT_ID
 
     generate_example_algorithm(
         context={"phase": context["algorithm"]},
@@ -297,7 +294,7 @@ def generate_algorithm_template(
     )
 
     copy_and_render(
-        templates_dir_name="algorithm-template-readme",
+        templates_dir_name="algorithm_template_readme",
         output_zip_file=output_zip_file,
         target_zpath=target_zpath,
         context=context,

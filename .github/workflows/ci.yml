@@ -47,6 +47,25 @@ jobs:
                   make minio
                   docker compose run --rm celery_worker pytest --durations 10
 
+    forge-integration-tests:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up Python ${{ env.PYTHON_VERSION }}
+              uses: astral-sh/setup-uv@v6
+              with:
+                python-version: ${{ env.PYTHON_VERSION }}
+            - name: Install pycurl dependencies
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y libcurl4-openssl-dev libssl-dev
+            - name: Pull the pytorch container
+              run: docker pull --platform=linux/amd64 pytorch/pytorch
+            - name: Run the forge integration tests
+              run: |
+                cd app
+                uv run pytest -n 1 -m "forge_integration"
+
     javascript-tests:
         runs-on: ubuntu-latest
         steps:

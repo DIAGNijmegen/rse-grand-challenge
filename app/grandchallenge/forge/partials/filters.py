@@ -1,4 +1,4 @@
-from grand_challenge_forge import generation_utils
+from grandchallenge.forge import generation_utils
 
 custom_filters = {}
 

@@ -1,29 +1,29 @@
 import glob
+import importlib
 import json
+import os
 import zipfile
+from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import pytest
 
-from grand_challenge_forge.forge import (
+from grandchallenge.forge.forge import (
     generate_challenge_pack,
     generate_example_algorithm,
     generate_example_evaluation,
     generate_upload_to_archive_script,
 )
-from grand_challenge_forge.generation_utils import zipfile_to_filesystem
-from grand_challenge_forge.utils import (
-    change_directory,
-    directly_import_module,
-)
-from tests.utils import (
+from tests.forge_tests.utils import (
     _test_script_run,
     add_numerical_slugs,
     mocked_binaries,
     pack_context_factory,
     phase_context_factory,
+    zipfile_to_filesystem,
 )
 
 
@@ -56,10 +56,13 @@ def test_maximum_path_length():
             ), f"Path {file.filename} exceeds maximum characters"
 
 
-def test_for_pack_content(tmp_path, testrun_zpath):
+def test_for_pack_content(tmp_path):
+    testrun_zpath = Path(str(uuid4()))
     context = pack_context_factory()
 
-    with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
+    with zipfile_to_filesystem(
+        output_path=tmp_path, preserve_permissions=False
+    ) as zip_file:
         generate_challenge_pack(
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
@@ -73,15 +76,15 @@ def test_for_pack_content(tmp_path, testrun_zpath):
     for phase in context["challenge"]["phases"]:
         assert (pack_path / phase["slug"]).exists()
 
-        assert (pack_path / phase["slug"] / "upload-to-archive").exists()
+        assert (pack_path / phase["slug"] / "upload_to_archive").exists()
 
-        assert (pack_path / phase["slug"] / "example-algorithm").exists()
+        assert (pack_path / phase["slug"] / "example_algorithm").exists()
         for idx, interface in enumerate(phase["algorithm_interfaces"]):
             for input in interface["inputs"]:
                 expected_file = (
                     pack_path
                     / phase["slug"]
-                    / "example-algorithm"
+                    / "example_algorithm"
                     / "test"
                     / "input"
                     / f"interf{idx}"
@@ -89,13 +92,37 @@ def test_for_pack_content(tmp_path, testrun_zpath):
                 )
                 assert expected_file.exists()
 
-        eval_path = pack_path / phase["slug"] / "example-evaluation-method"
+        eval_path = pack_path / phase["slug"] / "example_evaluation_method"
         assert eval_path.exists()
         eval_input_path = eval_path / "test" / "input"
         assert (eval_input_path / "predictions.json").exists()
         for input in phase["evaluation_additional_inputs"]:
             expected_file = eval_input_path / input["relative_path"]
             assert expected_file.exists()
+
+
+def directly_import_module(name, path):
+    """Returns the named Python module loaded from the path"""
+    assert path.exists()
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    return module
+
+
+@contextmanager
+def change_directory(new_path):
+    # Save the current working directory
+    current_path = os.getcwd()
+
+    try:
+        # Change the working directory
+        os.chdir(new_path)
+        yield
+    finally:
+        # Change back to the original working directory
+        os.chdir(current_path)
 
 
 @pytest.mark.parametrize(
@@ -105,10 +132,13 @@ def test_for_pack_content(tmp_path, testrun_zpath):
         add_numerical_slugs(phase_context_factory()),
     ],
 )
-def test_pack_upload_to_archive_script(phase_context, tmp_path, testrun_zpath):
+def test_pack_upload_to_archive_script(phase_context, tmp_path):
     """Checks if the upload to archive script works as intended"""
+    testrun_zpath = Path(str(uuid4()))
 
-    with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
+    with zipfile_to_filesystem(
+        output_path=tmp_path, preserve_permissions=False
+    ) as zip_file:
         generate_upload_to_archive_script(
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
@@ -140,7 +170,9 @@ def test_pack_upload_to_archive_script(phase_context, tmp_path, testrun_zpath):
         assert gcapi.Client().add_cases_to_archive.call_count == 6
 
 
-def test_pack_example_algorithm_run_permissions(tmp_path, testrun_zpath):
+@pytest.mark.forge_integration
+def test_pack_example_algorithm_run_permissions(tmp_path):
+    testrun_zpath = Path(str(uuid4()))
     phase_context = phase_context_factory()
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
@@ -164,7 +196,10 @@ def test_pack_example_algorithm_run_permissions(tmp_path, testrun_zpath):
         add_numerical_slugs(phase_context_factory()),
     ],
 )
-def test_pack_example_algorithm_run(phase_context, tmp_path, testrun_zpath):
+@pytest.mark.forge_integration
+def test_pack_example_algorithm_run(phase_context, tmp_path):
+    testrun_zpath = Path(str(uuid4()))
+
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_algorithm(
             context=phase_context,
@@ -186,7 +221,9 @@ def test_pack_example_algorithm_run(phase_context, tmp_path, testrun_zpath):
             assert expected_file.exists()
 
 
-def test_pack_example_algorithm_save(tmp_path, testrun_zpath):
+@pytest.mark.forge_integration
+def test_pack_example_algorithm_save(tmp_path):
+    testrun_zpath = Path(str(uuid4()))
     phase_context = phase_context_factory()
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
@@ -202,7 +239,7 @@ def test_pack_example_algorithm_save(tmp_path, testrun_zpath):
         _test_script_run(script_path=algorithm_path / "do_save.sh")
 
     # Check if saved image exists
-    tar_filename = f"example-algorithm-{phase_context['phase']['slug']}"
+    tar_filename = f"example_algorithm_{phase_context['phase']['slug']}"
     pattern = str(algorithm_path / f"{tar_filename}_*.tar.gz")
     matching_files = glob.glob(pattern)
     assert len(matching_files) == 1, (
@@ -211,7 +248,10 @@ def test_pack_example_algorithm_save(tmp_path, testrun_zpath):
     )
 
 
-def test_pack_example_evaluation_run_permissions(tmp_path, testrun_zpath):
+@pytest.mark.forge_integration
+def test_pack_example_evaluation_run_permissions(tmp_path):
+    testrun_zpath = Path(str(uuid4()))
+
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_evaluation(
             context=phase_context_factory(),
@@ -263,9 +303,10 @@ def test_pack_example_evaluation_run_permissions(tmp_path, testrun_zpath):
         ),
     ),
 )
-def test_pack_example_evaluation_run(
-    phase_context, num_metrics, tmp_path, testrun_zpath
-):
+@pytest.mark.forge_integration
+def test_pack_example_evaluation_run(phase_context, num_metrics, tmp_path):
+    testrun_zpath = Path(str(uuid4()))
+
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_evaluation(
             context=phase_context,
@@ -288,7 +329,7 @@ def test_pack_example_evaluation_run(
     assert metrics_file.exists()
 
     # Read and validate the contents of the generated metrics.json file
-    with open(metrics_file, "r") as f:
+    with open(metrics_file) as f:
         metrics_data = json.load(f)
     assert len(metrics_data["results"]) == num_metrics
 
@@ -298,8 +339,11 @@ def test_pack_example_evaluation_run(
         assert expected_file.exists()
 
 
-def test_pack_example_evaluation_save(tmp_path, testrun_zpath):
+@pytest.mark.forge_integration
+def test_pack_example_evaluation_save(tmp_path):
+    testrun_zpath = Path(str(uuid4()))
     phase_context = phase_context_factory()
+
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_evaluation(
             context=phase_context,

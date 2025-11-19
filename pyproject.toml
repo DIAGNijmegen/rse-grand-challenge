@@ -55,7 +55,6 @@ dependencies = [
     "pyjwt",
     "beautifulsoup4",
     "pymdown-extensions",
-    "grand-challenge-forge",
     "biopython",
     "cachetools",
     "grand-challenge-dicom-de-identifier",
@@ -63,6 +62,9 @@ dependencies = [
     "aioboto3",
     "httpx",
     "django-pictures",
+    # Requirements for forge
+    "black",
+    "jinja2",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
@@ -97,6 +99,8 @@ dev = [
     "pytest-asyncio",
     "boto3-stubs[cloudwatch,codebuild,ecr,lambda,logs,medical-imaging,rds,s3,sagemaker,ses]",
     "celery-types",
+    "psutil",
+    "pytest-timeout",
 ]
 
 [tool.uv]
