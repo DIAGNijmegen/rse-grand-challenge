@@ -1822,6 +1822,25 @@ def test_validate_user_upload_resource_error_handling(
         assert msg in str(err)
 
 
+def test_validate_user_upload_json_decode_error_handling():
+    ci = ComponentInterfaceFactory.build(kind=InterfaceKindChoices.FLOAT)
+    civ = ComponentInterfaceValueFactory.build(interface=ci)
+
+    assert ci.is_json_kind  # sanity
+
+    class MockUserUpload:
+        is_completed = True
+
+        @classmethod
+        def read_object(cls, *_, **__):
+            return '{"foo": "bar"'  # invalid json
+
+    with pytest.raises(ValidationError) as err:
+        civ.validate_user_upload(user_upload=MockUserUpload)
+
+    assert "The file is not valid JSON. Expecting ',' delimiter" in str(err)
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "kind,expected_queue",

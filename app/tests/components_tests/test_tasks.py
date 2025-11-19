@@ -921,10 +921,25 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
     assert "some_async_task" not in str(callbacks)
 
 
+@pytest.mark.parametrize(
+    "upload_data, expected_error_message",
+    [
+        (
+            b'{"foo": "bar"}',
+            "JSON does not fulfill schema: instance is not of type 'array'",
+        ),
+        (
+            b'{"foo": "bar"',
+            "The file is not valid JSON. Expecting ',' delimiter:",
+        ),
+    ],
+)
 @pytest.mark.django_db
 def test_add_file_to_object_updates_job_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
+    upload_data,
+    expected_error_message,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -937,7 +952,7 @@ def test_add_file_to_object_updates_job_on_validation_fail(
 
     us = UserUploadFactory(filename="file.json", creator=creator)
     presigned_urls = us.generate_presigned_urls(part_numbers=[1])
-    response = put(presigned_urls["1"], data=b'{"foo": "bar"}')
+    response = put(presigned_urls["1"], data=upload_data)
     us.complete_multipart_upload(
         parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
     )
@@ -965,10 +980,7 @@ def test_add_file_to_object_updates_job_on_validation_fail(
     obj.refresh_from_db()
     assert obj.status == obj.CANCELLED
     assert "One or more of the inputs failed validation." == obj.error_message
-    assert (
-        "JSON does not fulfill schema: instance is not of type 'array'"
-        in str(obj.detailed_error_message)
-    )
+    assert expected_error_message in str(obj.detailed_error_message)
     assert "some_async_task" not in str(callbacks)
 
 
