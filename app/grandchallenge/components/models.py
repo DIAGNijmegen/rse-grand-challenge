@@ -1479,7 +1479,7 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
                 except JSONDecodeError as error:
                     raise ValidationError(
                         f"The file is not valid JSON. {error}"
-                    )
+                    ) from error
                 self.interface.validate_against_schema(value=value)
             elif self.interface.kind == InterfaceKindChoices.NEWICK:
                 validate_newick_tree_format(tree=user_upload.read_object())
