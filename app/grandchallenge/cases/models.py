@@ -1525,9 +1525,7 @@ class DICOMImageSetUpload(UUIDModel):
 
 
 class DICOMImageSetUploadUserObjectPermission(UserObjectPermissionBase):
-    allowed_permissions = frozenset(
-        {"change_dicomimagesetupload", "view_dicomimagesetupload"}
-    )
+    allowed_permissions = frozenset({"view_dicomimagesetupload"})
 
     content_object = models.ForeignKey(
         DICOMImageSetUpload, on_delete=models.CASCADE
