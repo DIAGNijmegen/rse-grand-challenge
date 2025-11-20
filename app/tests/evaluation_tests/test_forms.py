@@ -440,7 +440,6 @@ class TestSubmissionForm:
         )
 
         # Fetch from the db to get the cost annotations
-        # Maybe this is solved with GeneratedField (Django 5)?
         p = Phase.objects.get(pk=p.pk)
 
         ai = AlgorithmImageFactory(
@@ -499,7 +498,6 @@ class TestSubmissionForm:
         )
 
         # Fetch from the db to get the cost annotations
-        # Maybe this is solved with GeneratedField (Django 5)?
         p = Phase.objects.get(pk=p.pk)
 
         ai = AlgorithmImageFactory(
@@ -563,7 +561,6 @@ class TestSubmissionForm:
         )
 
         # Fetch from the db to get the cost annotations
-        # Maybe this is solved with GeneratedField (Django 5)?
         phase = Phase.objects.get(pk=phase.pk)
 
         form = SubmissionForm(
@@ -612,8 +609,8 @@ class TestSubmissionForm:
                 compute_costs_euros=10,
                 payment_type=PaymentTypeChoices.COMPLIMENTARY,
             )
+
         # Fetch from the db to get the cost annotations
-        # Maybe this is solved with GeneratedField (Django 5)?
         p_alg = Phase.objects.get(pk=p_alg.pk)
         p_pred = Phase.objects.get(pk=p_pred.pk)
 
@@ -709,7 +706,6 @@ class TestSubmissionForm:
         )
 
         # Fetch from the db to get the cost annotations
-        # Maybe this is solved with GeneratedField (Django 5)?
         p = Phase.objects.get(pk=p.pk)
 
         ai = AlgorithmImageFactory(
@@ -804,7 +800,6 @@ class TestSubmissionForm:
         )
 
         # Fetch from the db to get the cost annotations
-        # Maybe this is solved with GeneratedField (Django 5)?
         p = Phase.objects.get(pk=p.pk)
 
         ai = AlgorithmImageFactory(

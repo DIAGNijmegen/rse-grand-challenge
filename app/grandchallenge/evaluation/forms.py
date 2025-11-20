@@ -740,7 +740,6 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
                 )
 
         # Fetch from the db to get the cost annotations
-        # Maybe this is solved with GeneratedField (Django 5)?
         challenge = (
             Challenge.objects.filter(
                 pk=cleaned_data["submission"].phase.challenge.pk
