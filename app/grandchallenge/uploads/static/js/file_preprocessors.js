@@ -325,7 +325,10 @@ async function preprocessDicomFile(file) {
     const dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
     const originalDataset = dicomData.dict;
     const sopClassUID = originalDataset["00080016"]?.Value?.[0] || "";
-    const protocol = globalThis.GrandChallengeDICOMDeIdProcedure || {};
+    const protocol = globalThis.GrandChallengeDICOMDeIdProcedure;
+    if (typeof protocol === "undefined" || !protocol.sopClass) {
+        throw new Error("Protocol is not loaded");
+    }
     const sopClassRules = protocol.sopClass?.[sopClassUID] || {};
     const tagRules = sopClassRules.tag || {};
     const defaultAction = sopClassRules.default || protocol.default || "X";
