@@ -1,3 +1,4 @@
+{% load forge %}
 """
 The following is a simple example algorithm.
 
@@ -23,11 +24,11 @@ Happy programming!
 from pathlib import Path
 import json
 import torch
-{% if algorithm_input_sockets | has_image or algorithm_output_sockets | has_image -%}
+{% if algorithm_input_sockets|has_image or algorithm_output_sockets|has_image %}
 from glob import glob
 import SimpleITK
 import numpy
-{%- endif %}
+{% endif %}
 
 INPUT_PATH = Path("/input")
 OUTPUT_PATH = Path("/output")
@@ -39,7 +40,7 @@ def run():
 
     # Lookup the handler for this particular set of sockets (i.e. the interface)
     handler = {
-    {% for interface_name, interface_key in algorithm_interface_names|zip(algorithm_interface_keys) -%}
+    {% for interface_name, interface_key in algorithm_interface_names|zip:algorithm_interface_keys %}
     {{ interface_key }} : {{ interface_name }}_handler,
     {% endfor %}
     }[interface_key]
@@ -47,26 +48,25 @@ def run():
     # Call the handler
     return handler()
 
-{% for interface_name, interface in algorithm_interface_names|zip(phase.algorithm_interfaces) -%}
+{% for interface_name, interface in algorithm_interface_names|zip:phase.algorithm_interfaces %}
 def {{ interface_name }}_handler():
     # Read the input
-    {% for socket in interface["inputs"] -%}
-    {% set py_slug = socket.slug.replace("-", "_") -%}
-    {% if socket | is_image -%}
-    input_{{ py_slug }} = load_image_file_as_array(
+    {% for socket in interface.inputs %}
+    {% if socket|is_image %}
+    input_{{ socket.slug|dash_to_underscore }} = load_image_file_as_array(
         location=INPUT_PATH / "{{ socket.relative_path }}",
     )
-    {% endif -%}
-    {% if socket | is_json -%}
-    input_{{ py_slug }} = load_json_file(
+    {% endif %}
+    {% if socket|is_json %}
+    input_{{ socket.slug|dash_to_underscore }} = load_json_file(
          location=INPUT_PATH / "{{ socket.relative_path }}",
     )
-    {% endif -%}
-    {% if socket | is_file -%}
-    input_{{ py_slug }} = load_file(
+    {% endif %}
+    {% if socket|is_file %}
+    input_{{ socket.slug|dash_to_underscore }} = load_file(
          location=INPUT_PATH / "{{ socket.relative_path }}",
     )
-    {% endif -%}
+    {% endif %}
     {% endfor %}
 
     # Process the inputs: any way you'd like, here we show-case torch
@@ -88,41 +88,41 @@ def {{ interface_name }}_handler():
         print(f.read())
 
     # For now, let us make bogus predictions
-    {%- for socket in interface["outputs"] %}
-    output_{{ socket.slug.replace("-", "_")}} =
-        {%- if socket | has_example_value %}
-            {%- if socket.example_value is string -%}
+    {% for socket in interface.outputs %}
+    output_{{ socket.slug|dash_to_underscore }} = {% spaceless %}
+        {% if socket|has_example_value %}
+            {% if socket.example_value|is_string %}
                 "{{ socket.example_value }}"
-            {%- else -%}
+            {% else %}
                 {{ socket.example_value }}
-            {%- endif %}
-        {%- elif socket | is_image %} numpy.eye(4, 2)
-        {%- elif socket | is_json %} {"content": "should match the required format"}
-        {%- elif socket | is_file %} "content: should match the required format"
+            {% endif %}
+        {% elif socket|is_image %} numpy.eye(4, 2)
+        {% elif socket|is_json %} {"content": "should match the required format"}
+        {% elif socket|is_file %} "content: should match the required format"
         {% endif %}
-    {%- endfor %}
+        {% endspaceless %}
+    {% endfor %}
 
     # Save your output
-    {% for socket in interface["outputs"] -%}
-    {% set py_slug = socket.slug.replace("-", "_") -%}
-    {% if socket | is_image -%}
+    {% for socket in interface.outputs %}
+    {% if socket|is_image %}
     write_array_as_image_file(
         location=OUTPUT_PATH / "{{ socket.relative_path }}",
-        array=output_{{ py_slug }},
+        array=output_{{ socket.slug|dash_to_underscore }},
     )
-    {% endif -%}
-    {% if socket | is_json -%}
+    {% endif %}
+    {% if socket|is_json %}
     write_json_file(
         location=OUTPUT_PATH / "{{ socket.relative_path }}",
-        content=output_{{ py_slug }}
+        content=output_{{ socket.slug|dash_to_underscore }}
     )
-    {% endif -%}
-    {% if socket | is_file -%}
+    {% endif %}
+    {% if socket|is_file %}
     write_file(
         location=OUTPUT_PATH / "{{ socket.relative_path }}",
-        content=output_{{ py_slug }}
+        content=output_{{ socket.slug|dash_to_underscore }}
     )
-    {% endif -%}
+    {% endif %}
     {% endfor %}
     return 0
 {% endfor %}
@@ -141,15 +141,15 @@ def load_json_file(*, location):
     with open(location, 'r') as f:
         return json.loads(f.read())
 
-{%- if algorithm_output_sockets| has_json %}
+{% if algorithm_output_sockets|has_json %}
 def write_json_file(*, location, content):
     # Writes a json file
     with open(location, 'w') as f:
         f.write(json.dumps(content, indent=4))
-{%- endif %}
+{% endif %}
 
 
-{%- if algorithm_input_sockets | has_image %}
+{% if algorithm_input_sockets|has_image %}
 def load_image_file_as_array(*, location):
     # Use SimpleITK to read a file
     input_files = glob(str(location / "*.tif")) + glob(str(location / "*.tiff")) + glob(str(location / "*.mha"))
@@ -157,10 +157,10 @@ def load_image_file_as_array(*, location):
 
     # Convert it to a Numpy array
     return SimpleITK.GetArrayFromImage(result)
-{%- endif %}
+{% endif %}
 
 
-{%- if algorithm_output_sockets | has_image %}
+{% if algorithm_output_sockets|has_image %}
 def write_array_as_image_file(*, location, array):
     location.mkdir(parents=True, exist_ok=True)
 
@@ -173,10 +173,10 @@ def write_array_as_image_file(*, location, array):
         location / f"output{suffix}",
         useCompression=True,
     )
-{%- endif %}
+{% endif %}
 
 
-{%- if algorithm_input_sockets | has_file %}
+{% if algorithm_input_sockets|has_file %}
 # Note to the developer:
 #   the following function is very generic and should likely
 #   be adopted to something more specific for your algorithm/challenge
@@ -184,10 +184,10 @@ def load_file(*, location):
     # Reads the content of a file
     with open(location) as f:
         return f.read()
-{%- endif %}
+{% endif %}
 
 
-{%- if algorithm_output_sockets | has_file %}
+{% if algorithm_output_sockets|has_file %}
 # Note to the developer:
 #   the following function is very generic and should likely
 #   be adopted to something more specific for your algorithm/challenge
@@ -195,7 +195,7 @@ def write_file(*, location, content):
     # Write the content to a file
     with open(location, 'w') as f:
         return f.write(content)
-{%- endif %}
+{% endif %}
 
 
 def _show_torch_cuda_info():

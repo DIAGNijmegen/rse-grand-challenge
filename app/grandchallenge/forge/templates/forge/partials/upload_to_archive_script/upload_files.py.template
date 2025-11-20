@@ -36,13 +36,13 @@ API_TOKEN = "REPLACE-ME-WITH-YOUR-TOKEN"
 
 ARCHIVE_SLUG = "{{ phase.archive.slug }}"
 
-{% for interface_name, cases in expected_cases_per_interface.items() %}
-EXPECTED_CASE_FILES_FOR_{{ interface_name.upper() }} = [
-    {%- for case in cases %}
+{% for interface_name, cases in expected_cases_per_interface.items %}
+EXPECTED_CASE_FILES_FOR_{{ interface_name.upper }} = [
+    {% for case in cases %}
     {
-        {%- for socket_slug, case in case.items() %}
+        {% for socket_slug, case in case.items %}
         "{{ socket_slug }}": "{{ case }}",
-        {%- endfor %}
+        {% endfor %}
     },
     {% endfor %}
 ]
@@ -50,8 +50,8 @@ EXPECTED_CASE_FILES_FOR_{{ interface_name.upper() }} = [
 
 EXPECTED_CASES = [
 {% for interface_name in expected_cases_per_interface %}
-    *EXPECTED_CASE_FILES_FOR_{{ interface_name.upper() }},
-{%- endfor %}
+    *EXPECTED_CASE_FILES_FOR_{{ interface_name.upper }},
+{% endfor %}
 ]
 
 def main():

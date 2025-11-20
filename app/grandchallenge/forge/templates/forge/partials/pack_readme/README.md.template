@@ -24,7 +24,7 @@ Challenge phases pull their data from archives to test submissions on.
 
 Your challenge has the following archives:
 
-{% for archive in challenge.archives -%}
+{% for archive in challenge.archives %}
   * {{ archive.url }}
 {% endfor %}
 

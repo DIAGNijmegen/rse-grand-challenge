@@ -1,3 +1,4 @@
+{% load forge %}
 """
 The following is a simple example evaluation method.
 
@@ -28,14 +29,14 @@ https://grand-challenge.org/documentation/runtime-environment/
 Happy programming!
 """
 import json
-{% if algorithm_output_sockets | has_image or phase.evaluation_additional_inputs | has_image or phase.evaluation_additional_outputs | has_image  -%}
+{% if algorithm_output_sockets|has_image or phase.evaluation_additional_inputs|has_image or phase.evaluation_additional_outputs|has_image  %}
 from glob import glob
 import SimpleITK
-{%- endif %}
-{% if algorithm_output_sockets | has_image or algorithm_output_sockets | has_file or phase.evaluation_additional_inputs | has_file -%}
+{% endif %}
+{% if algorithm_output_sockets|has_image or algorithm_output_sockets|has_file or phase.evaluation_additional_inputs|has_file %}
 import re
-{%- endif %}
-{% if phase.evaluation_additional_outputs | has_image %}
+{% endif %}
+{% if phase.evaluation_additional_outputs|has_image %}
 import numpy
 {% endif %}
 import random
@@ -115,41 +116,41 @@ def main():
     {% if phase.evaluation_additional_outputs %}
 
     # For now, let us make bogus outputs for the evaluation
-    {%- for socket in phase.evaluation_additional_outputs  %}
-    output_{{ socket.slug.replace("-", "_")}} =
-        {%- if socket | has_example_value %}
-            {%- if socket.example_value is string -%}
+    {% for socket in phase.evaluation_additional_outputs  %}
+    output_{{ socket.slug|dash_to_underscore }} = {% spaceless %}
+        {% if socket|has_example_value %}
+            {% if socket.example_value|is_string %}
                 "{{ socket.example_value }}"
-            {%- else -%}
+            {% else %}
                 {{ socket.example_value }}
-            {%- endif %}
-        {%- elif socket | is_image %} numpy.eye(4, 2)
-        {%- elif socket | is_json %} {"content": "should match the required format"}
-        {%- elif socket | is_file %} "content: should match the required format"
+            {% endif %}
+        {% elif socket|is_image %} numpy.eye(4, 2)
+        {% elif socket|is_json %} {"content": "should match the required format"}
+        {% elif socket|is_file %} "content: should match the required format"
         {% endif %}
-    {%- endfor %}
+        {% endspaceless %}
+    {% endfor %}
 
     # Save your output
-    {% for socket in phase.evaluation_additional_outputs  -%}
-    {% set py_slug = socket.slug.replace("-", "_") -%}
-    {% if socket | is_image -%}
+    {% for socket in phase.evaluation_additional_outputs  %}
+    {% if socket|is_image %}
     write_array_as_image_file(
         location=OUTPUT_DIRECTORY / "{{ socket.relative_path }}",
-        array=output_{{ py_slug }},
+        array=output_{{ socket.slug|dash_to_underscore }},
     )
-    {% endif -%}
-    {% if socket | is_json -%}
+    {% endif %}
+    {% if socket|is_json %}
     write_json_file(
         location=OUTPUT_DIRECTORY / "{{ socket.relative_path }}",
-        content=output_{{ py_slug }}
+        content=output_{{ socket.slug|dash_to_underscore }}
     )
-    {% endif -%}
-    {% if socket | is_file -%}
+    {% endif %}
+    {% if socket|is_file %}
     write_file(
         location=OUTPUT_DIRECTORY / "{{ socket.relative_path }}",
-        content=output_{{ py_slug }}
+        content=output_{{ socket.slug|dash_to_underscore }}
     )
-    {% endif -%}
+    {% endif %}
     {% endfor %}
 
     {% endif %}
@@ -162,7 +163,7 @@ def process(job):
 
     # Lookup the handler for this particular set of sockets (i.e. the interface)
     handler = {
-    {% for interface_name, interface_key in algorithm_interface_names|zip(algorithm_interface_keys) -%}
+    {% for interface_name, interface_key in algorithm_interface_names|zip:algorithm_interface_keys %}
     {{ interface_key }} : process_{{ interface_name }},
     {% endfor %}
     }[interface_key]
@@ -170,29 +171,28 @@ def process(job):
     {% if phase.evaluation_additional_inputs %}
     # Read additional inputs from the submission
 
-    {% for socket in phase.evaluation_additional_inputs -%}
-    {% set py_slug = socket.slug.replace("-", "_") -%}
-    {% if socket | is_image -%}
-    submission_{{ py_slug }} = load_image_file_as_array(
+    {% for socket in phase.evaluation_additional_inputs %}
+    {% if socket|is_image %}
+    submission_{{ socket.slug|dash_to_underscore }} = load_image_file_as_array(
         location=INPUT_DIRECTORY / "{{ socket.relative_path }}",
     )
-    {% endif -%}
-    {% if socket | is_json -%}
-    submission_{{ py_slug }} = load_json_file(
+    {% endif %}
+    {% if socket|is_json %}
+    submission_{{ socket.slug|dash_to_underscore }} = load_json_file(
         location=INPUT_DIRECTORY / "{{ socket.relative_path }}",
     )
-    {% endif -%}
-    {% if socket | is_file -%}
-    submission_{{ py_slug }} = load_file(
+    {% endif %}
+    {% if socket|is_file %}
+    submission_{{ socket.slug|dash_to_underscore }} = load_file(
         location=INPUT_DIRECTORY / "{{ socket.relative_path }}",
     )
-    {% endif -%}
-    {%- endfor %}
+    {% endif %}
+    {% endfor %}
     # Finally, call the handler
     return handler(
         job,
-    {% for socket in phase.evaluation_additional_inputs -%}
-       submission_{{ socket.slug.replace("-", "_") }},
+    {% for socket in phase.evaluation_additional_inputs %}
+       submission_{{ socket.slug|dash_to_underscore }},
     {% endfor %}
     )
     {% else %}
@@ -201,11 +201,11 @@ def process(job):
     {% endif %}
 
 
-{% for interface_name, interface in algorithm_interface_names|zip(phase.algorithm_interfaces) -%}
+{% for interface_name, interface in algorithm_interface_names|zip:phase.algorithm_interfaces %}
 def process_{{ interface_name }}(job,
     {% if phase.evaluation_additional_inputs %}# The submission had additional inputs: {% endif %}
-    {% for socket in phase.evaluation_additional_inputs -%}
-    submission_{{ socket.slug.replace("-", "_") }},
+    {% for socket in phase.evaluation_additional_inputs %}
+    submission_{{ socket.slug|dash_to_underscore }},
     {% endfor %}
 ):
     """Processes a single algorithm job, looking at the outputs"""
@@ -214,9 +214,8 @@ def process_{{ interface_name }}(job,
     report += "\n"
 
     # Firstly, find the location of the results
-    {% for socket in interface["outputs"] %}
-    {%- set py_slug = socket.slug.replace("-", "_") -%}
-    location_{{ py_slug }} = get_file_location(
+    {% for socket in interface.outputs %}
+    location_{{ socket.slug|dash_to_underscore }} = get_file_location(
             job_pk=job["pk"],
             values=job["outputs"],
             slug="{{ socket.slug }}",
@@ -224,42 +223,40 @@ def process_{{ interface_name }}(job,
     {% endfor %}
 
     # Secondly, read the results
-    {% for socket in interface["outputs"] -%}
-    {% set py_slug = socket.slug.replace("-", "_") -%}
-    {% if socket | is_image -%}
-    result_{{ py_slug }} = load_image_file_as_array(
-        location=location_{{ py_slug }},
+    {% for socket in interface.outputs %}
+    {% if socket|is_image %}
+    result_{{ socket.slug|dash_to_underscore }} = load_image_file_as_array(
+        location=location_{{ socket.slug|dash_to_underscore }},
     )
-    {% endif -%}
-    {% if socket | is_json -%}
-    result_{{ py_slug }} = load_json_file(
-        location=location_{{ py_slug }},
+    {% endif %}
+    {% if socket|is_json %}
+    result_{{ socket.slug|dash_to_underscore }} = load_json_file(
+        location=location_{{ socket.slug|dash_to_underscore }},
     )
-    {% endif -%}
-    {% if socket | is_file -%}
-    result_{{ py_slug }} = load_file(
-        location=location_{{ py_slug }},
+    {% endif %}
+    {% if socket|is_file %}
+    result_{{ socket.slug|dash_to_underscore }} = load_file(
+        location=location_{{ socket.slug|dash_to_underscore }},
     )
-    {% endif -%}
-    {%- endfor %}
+    {% endif %}
+    {% endfor %}
 
 
     # Thirdly, retrieve the input file name to match it with your ground truth
-    {% for socket in interface["inputs"] -%}
-    {% set py_slug = socket.slug.replace("-", "_") -%}
-    {% if socket | is_image -%}
-    image_name_{{ py_slug }} = get_image_name(
+    {% for socket in interface.inputs %}
+    {% if socket|is_image %}
+    image_name_{{ socket.slug|dash_to_underscore }} = get_image_name(
             values=job["inputs"],
             slug="{{ socket.slug }}",
     )
-    {% endif -%}
-    {% if socket | is_file -%}
-    file_name_{{ py_slug }} = get_file_name(
+    {% endif %}
+    {% if socket|is_file %}
+    file_name_{{ socket.slug|dash_to_underscore }} = get_file_name(
             values=job["inputs"],
             slug="{{ socket.slug }}",
     )
-    {% endif -%}
-    {%- endfor %}
+    {% endif %}
+    {% endfor %}
 
     # Fourthly, load your ground truth
 
@@ -299,7 +296,7 @@ def get_interface_key(job):
     socket_slugs = [sv["interface"]["slug"] for sv in job["inputs"]]
     return tuple(sorted(socket_slugs))
 
-{%- if algorithm_input_sockets | has_image or phase.evaluation_additional_inputs | has_image %}
+{% if algorithm_input_sockets|has_image or phase.evaluation_additional_inputs|has_image %}
 def get_image_name(*, values, slug):
     # This tells us the user-provided name of the input or output image
     for value in values:
@@ -307,10 +304,10 @@ def get_image_name(*, values, slug):
             return value["image"]["name"]
 
     raise RuntimeError(f"Image with interface {slug} not found!")
-{%- endif %}
+{% endif %}
 
 
-{%- if algorithm_input_sockets | has_file or phase.evaluation_additional_inputs | has_file %}
+{% if algorithm_input_sockets|has_file or phase.evaluation_additional_inputs|has_file %}
 def get_file_name(*, values, slug):
     # This tells us the user-provided name of the input file
     for value in values:
@@ -323,7 +320,7 @@ def get_file_name(*, values, slug):
             else:
                 raise RuntimeError("Could not parse filename.")
     raise RuntimeError(f"File with interface {slug} not found!")
-{%- endif %}
+{% endif %}
 
 
 def get_interface_relative_path(*, values, slug):
@@ -346,7 +343,7 @@ def load_json_file(*, location):
     with open(location) as f:
         return json.loads(f.read())
 
-{%- if algorithm_output_sockets | has_image or phase.evaluation_additional_inputs | has_image%}
+{% if algorithm_output_sockets|has_image or phase.evaluation_additional_inputs|has_image%}
 def load_image_file_as_array(*, location):
     # Use SimpleITK to read a file
     input_files = glob(str(location / "*.tiff")) + glob(str(location / "*.mha"))
@@ -354,28 +351,28 @@ def load_image_file_as_array(*, location):
 
     # Convert it to a Numpy array
     return SimpleITK.GetArrayFromImage(result)
-{%- endif %}
+{% endif %}
 
-{%- if algorithm_output_sockets | has_file or phase.evaluation_additional_inputs | has_file %}
+{% if algorithm_output_sockets|has_file or phase.evaluation_additional_inputs|has_file %}
 def load_file(*, location):
     # Reads the content of a file
     with open(location) as f:
         return f.read()
-{%- endif %}
+{% endif %}
 
 
 def write_metrics(*, metrics):
     # Write a json document used for ranking results on the leaderboard
     write_json_file(location=OUTPUT_DIRECTORY / "metrics.json", content=metrics)
 
-{%- if phase.evaluation_additional_outputs | has_file %}
+{% if phase.evaluation_additional_outputs|has_file %}
 def write_file(*, location, content):
     # Write the content to a file
     with open(location, 'w') as f:
         return f.write(content)
-{%- endif %}
+{% endif %}
 
-{%- if phase.evaluation_additional_outputs  | has_image %}
+{% if phase.evaluation_additional_outputs|has_image %}
 def write_array_as_image_file(*, location, array):
     location.mkdir(parents=True, exist_ok=True)
 
@@ -388,7 +385,7 @@ def write_array_as_image_file(*, location, array):
         location / f"output{suffix}",
         useCompression=True,
     )
-{%- endif %}
+{% endif %}
 
 
 def write_json_file(*, location, content):

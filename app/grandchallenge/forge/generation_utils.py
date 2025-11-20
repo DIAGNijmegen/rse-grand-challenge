@@ -4,17 +4,16 @@ import os
 import time
 import uuid
 import zipfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 import black
 from django.conf import settings
-from jinja2 import FileSystemLoader, StrictUndefined, TemplateNotFound
-from jinja2.sandbox import ImmutableSandboxedEnvironment
+from django.template import TemplateDoesNotExist
+from django.template.loader import render_to_string
 
 FORGE_MODULE_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 FORGE_RESOURCES_PATH = FORGE_MODULE_PATH / "resources"
-FORGE_PARTIALS_PATH = FORGE_MODULE_PATH / "partials"
+FORGE_PARTIALS_PATH = FORGE_MODULE_PATH / "templates" / "forge" / "partials"
 
 
 logger = logging.getLogger(__name__)
@@ -93,29 +92,6 @@ def socket_to_socket_value(socket):
     }
 
 
-def get_jinja2_environment(searchpath=None):
-    from grandchallenge.forge.partials.filters import custom_filters
-
-    if searchpath:
-        searchpath = [searchpath, FORGE_PARTIALS_PATH]
-    else:
-        searchpath = FORGE_PARTIALS_PATH
-
-    env = ImmutableSandboxedEnvironment(
-        loader=FileSystemLoader(
-            searchpath=searchpath,
-            followlinks=True,
-        ),
-        undefined=StrictUndefined,
-        keep_trailing_newline=True,
-    )
-    env.filters = custom_filters
-    env.filters["zip"] = zip
-    env.globals["now"] = datetime.now(timezone.utc)
-
-    return env
-
-
 def copy_and_render(
     *,
     templates_dir_name,
@@ -126,9 +102,7 @@ def copy_and_render(
     source_path = FORGE_PARTIALS_PATH / templates_dir_name
 
     if not source_path.exists():
-        raise TemplateNotFound(source_path)
-
-    env = get_jinja2_environment(searchpath=source_path)
+        raise TemplateDoesNotExist(source_path)
 
     for root, _, files in os.walk(source_path, followlinks=True):
         root = Path(root)
@@ -145,19 +119,23 @@ def copy_and_render(
 
             check_allowed_source(path=source_file)
 
-            if file.endswith(".j2"):  # Jinja2 template
-                template = env.get_template(
-                    name=str(source_file.relative_to(source_path))
-                )
-                rendered_content = template.render(
-                    **context,
-                    _no_gpus=settings.FORGE_DISABLE_GPUS,
+            if file.endswith(".template"):
+                rendered_content = render_to_string(
+                    template_name=source_file,
+                    context={
+                        **context,
+                        "no_gpus": settings.FORGE_DISABLE_GPUS,
+                    },
                 )
 
                 targetfile_zpath = output_file.with_suffix("")
 
                 if targetfile_zpath.suffix == ".py":
+                    # Replace escaped characters
+                    rendered_content = rendered_content.replace("&#x27;", "'")
                     rendered_content = apply_black(rendered_content)
+                else:
+                    rendered_content = f"{rendered_content.strip()}\n"
 
                 # Collect information about the file to be written to the zip file
                 # (permissions, et cetera)

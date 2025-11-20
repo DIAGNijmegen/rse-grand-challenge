@@ -6,7 +6,7 @@ from unittest import mock
 import psutil
 import pytest
 
-from grandchallenge.forge.partials.example_evaluation_method.helpers import (
+from grandchallenge.forge.templates.forge.partials.example_evaluation_method.helpers import (
     PredictionProcessingError,
     _start_pool_worker,
     run_prediction_processing,
@@ -118,7 +118,7 @@ def test_prediction_processing_catching_killing_of_child_processes():
 
     try:
         with mock.patch(
-            "grandchallenge.forge.partials.example_evaluation_method.helpers._start_pool_worker",
+            "grandchallenge.forge.templates.forge.partials.example_evaluation_method.helpers._start_pool_worker",
             add_child_terminator,
         ):
             with pytest.raises(PredictionProcessingError):
@@ -140,7 +140,7 @@ def test_prediction_processing_canceling_processes_correctly():
         {"pk": "prediction4"},  # Should cancel this
     ]
     with mock.patch(
-        "grandchallenge.forge.partials.example_evaluation_method.helpers.get_max_workers",
+        "grandchallenge.forge.templates.forge.partials.example_evaluation_method.helpers.get_max_workers",
         lambda: 2,
     ):
         with pytest.raises(PredictionProcessingError) as exc:

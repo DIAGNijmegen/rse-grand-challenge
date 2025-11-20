@@ -1,0 +1,5 @@
+{% load forge %}
+{% if algorithm_input_sockets|has_image or algorithm_output_sockets|has_image %}
+SimpleITK
+numpy
+{% endif %}

@@ -64,7 +64,6 @@ dependencies = [
     "django-pictures",
     # Requirements for forge
     "black",
-    "jinja2",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
