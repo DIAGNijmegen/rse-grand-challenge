@@ -27,6 +27,7 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
         aspect_ratios=["1/1"],
         width_field="logo_width",
         height_field="logo_height",
+        max_length=255,
     )
     logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
     logo_height = models.PositiveSmallIntegerField(editable=False, null=True)

@@ -61,6 +61,7 @@ class UserProfile(models.Model):
         aspect_ratios=["1/1"],
         width_field="mugshot_width",
         height_field="mugshot_height",
+        max_length=255,
     )
     mugshot_width = models.PositiveSmallIntegerField(editable=False, null=True)
     mugshot_height = models.PositiveSmallIntegerField(

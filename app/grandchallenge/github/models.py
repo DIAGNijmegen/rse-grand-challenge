@@ -100,7 +100,10 @@ class GitHubWebhookMessage(models.Model):
     )
     payload = models.JSONField(default=None, null=True)
     zipfile = models.FileField(
-        null=True, upload_to=zipfile_path, storage=private_s3_storage
+        null=True,
+        upload_to=zipfile_path,
+        storage=private_s3_storage,
+        max_length=255,
     )
     license_check_result = models.JSONField(blank=True, default=dict)
     stdout = models.TextField(blank=True)

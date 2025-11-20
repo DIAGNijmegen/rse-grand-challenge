@@ -1537,6 +1537,7 @@ class Submission(FieldChangeMixin, UUIDModel):
         ],
         storage=protected_s3_storage,
         blank=True,
+        max_length=255,
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
@@ -1545,6 +1546,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             MimeTypeValidator(allowed_types=("text/plain", "application/pdf"))
         ],
         blank=True,
+        max_length=255,
     )
     comment = models.CharField(
         max_length=128,
@@ -1766,6 +1768,7 @@ class EvaluationGroundTruth(Tarball):
             ".tar.gz file of the ground truth that will be extracted to /opt/ml/input/data/ground_truth/ during inference"
         ),
         storage=private_s3_storage,
+        max_length=255,
     )
 
     @property

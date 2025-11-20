@@ -912,7 +912,7 @@ class ImageFile(FieldChangeMixin, UUIDModel):
         upload_to=image_file_path,
         blank=False,
         storage=protected_s3_storage,
-        max_length=200,
+        max_length=255,
     )
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,

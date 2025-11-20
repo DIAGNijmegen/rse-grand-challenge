@@ -179,6 +179,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         aspect_ratios=["1/1"],
         width_field="logo_width",
         height_field="logo_height",
+        max_length=255,
     )
     logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
     logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
@@ -190,6 +191,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         aspect_ratios=[None],
         width_field="social_image_width",
         height_field="social_image_height",
+        max_length=255,
     )
     social_image_width = models.PositiveSmallIntegerField(
         editable=False, null=True
@@ -988,6 +990,7 @@ class AlgorithmModel(Tarball):
             ".tar.gz file of the algorithm model that will be extracted to /opt/ml/model/ during inference"
         ),
         storage=protected_s3_storage,
+        max_length=255,
     )
 
     class Meta(Tarball.Meta):

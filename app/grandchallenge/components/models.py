@@ -1290,6 +1290,7 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
                 )
             ),
         ],
+        max_length=255,
     )
     image = models.ForeignKey(
         to=Image, null=True, blank=True, on_delete=models.PROTECT
@@ -2018,7 +2019,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
     image = models.FileField(
         blank=True,
         upload_to=docker_image_path,
-        max_length=255,
         validators=[
             ExtensionValidator(
                 allowed_extensions=(".tar", ".tar.gz", ".tar.xz")
@@ -2030,6 +2030,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
         storage=private_s3_storage,
+        max_length=255,
     )
     image_sha256 = models.CharField(editable=False, max_length=71)
     latest_shimmed_version = models.CharField(

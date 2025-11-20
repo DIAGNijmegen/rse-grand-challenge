@@ -268,6 +268,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         aspect_ratios=["1/1"],
         width_field="logo_width",
         height_field="logo_height",
+        max_length=255,
     )
     logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
     logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
@@ -279,6 +280,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         aspect_ratios=[None],
         width_field="social_image_width",
         height_field="social_image_height",
+        max_length=255,
     )
     social_image_width = models.PositiveSmallIntegerField(
         editable=False, null=True
@@ -297,6 +299,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         aspect_ratios=[None],
         width_field="banner_width",
         height_field="banner_height",
+        max_length=255,
     )
     banner_width = models.PositiveSmallIntegerField(editable=False, null=True)
     banner_height = models.PositiveSmallIntegerField(editable=False, null=True)
@@ -1010,6 +1013,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             ExtensionValidator(allowed_extensions=(".pdf",)),
             MimeTypeValidator(allowed_types=("application/pdf",)),
         ],
+        max_length=255,
     )
     challenge_setup = models.TextField(
         help_text="Describe the challenge set-up."
