@@ -42,6 +42,7 @@ class UserUploadMultipleWidget(UserUploadWidgetMixin, MultipleHiddenInput):
 class DICOMUserUploadMultipleWidget(UserUploadMultipleWidget):
     class Media:
         js = (
+            "vendored/@diagnijmegen/rse-grand-challenge-dicom-de-id-procedure/dist/grand-challenge-dicom-de-id-procedure.umd.min.js",
             "vendored/dcmjs/build/dcmjs.min.js",
             "js/file_preprocessors.js",
         )
