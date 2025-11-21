@@ -326,7 +326,7 @@ async function preprocessDicomFile(file) {
     const originalDataset = dicomData.dict;
     const sopClassUID = originalDataset["00080016"]?.Value?.[0] || "";
     const protocol = globalThis.GrandChallengeDICOMDeIdProcedure;
-    if (typeof protocol === "undefined" || !protocol.sopClass) {
+    if (typeof protocol === "undefined") {
         throw new Error("Protocol is not loaded");
     }
     const sopClassRules = protocol.sopClass?.[sopClassUID] || {};
