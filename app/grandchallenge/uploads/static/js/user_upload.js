@@ -108,6 +108,9 @@
                                 await preprocessor.preprocessor(file.data);
                             uppy.setFileState(file.id, { data: processedFile });
                         } catch (e) {
+                            window.alert(
+                                `Could not upload ${file.name} (${file.type}): ${e.message}`,
+                            );
                             uppy.removeFile(file.id);
                         }
                         return;
