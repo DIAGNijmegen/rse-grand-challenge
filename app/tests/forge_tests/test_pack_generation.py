@@ -148,8 +148,12 @@ def test_pack_upload_to_archive_script(phase_context, tmp_path):
     script_dir = tmp_path / testrun_zpath
 
     with change_directory(script_dir):
-        gcapi = MagicMock()
-        with patch.dict("sys.modules", gcapi=gcapi):
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_gcapi = MagicMock()
+        mock_gcapi.Client.return_value = mock_client
+
+        with patch.dict("sys.modules", {"gcapi": mock_gcapi}):
             # Load the script as a module
             upload_files = directly_import_module(
                 name="upload_files",
@@ -157,17 +161,17 @@ def test_pack_upload_to_archive_script(phase_context, tmp_path):
             )
 
             # Run the script, but noop print
-            def debug_print(arg):
+            def debug_print(_):
                 pass
 
             with patch("builtins.print", debug_print):
                 upload_files.main()
 
         # Assert that it reaches out via gcapi
-        assert gcapi.Client.call_count == 1
+        assert mock_gcapi.Client.call_count == 1
 
         # Two interface, each with 3 cases
-        assert gcapi.Client().add_cases_to_archive.call_count == 6
+        assert mock_client.add_case_to_archive.call_count == 2 * 3
 
 
 @pytest.mark.forge_integration

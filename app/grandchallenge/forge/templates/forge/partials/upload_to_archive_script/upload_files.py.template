@@ -16,7 +16,7 @@ Get a token from Grand Challenge:
   https://grand-challenge.org/settings/api-tokens/create/
 
 For additional information about using gc-api and tokens, visit:
-  https://grand-challenge.org/documentation/what-can-gc-api-be-used-for/#your-personal-api-token
+  https://diagnijmegen.github.io/rse-gcapi/getting-started/
 
 Note that Grand-Challenge does its own post-processing on the files and the archive
 will be filled with the result of this post-processing.
@@ -36,14 +36,17 @@ API_TOKEN = "REPLACE-ME-WITH-YOUR-TOKEN"
 
 ARCHIVE_SLUG = "{{ phase.archive.slug }}"
 
+# Note that SocketValueSpec also allows you to specify
+# other sources than `file`, such as multiple `files`, and a direct `value`
+
 {% for interface_name, cases in expected_cases_per_interface.items %}
 EXPECTED_CASE_FILES_FOR_{{ interface_name.upper }} = [
     {% for case in cases %}
-    {
+    [
         {% for socket_slug, case in case.items %}
-        "{{ socket_slug }}": "{{ case }}",
+        gcapi.SocketValueSpec(socket_slug="{{ socket_slug }}", file="{{ case }}"),
         {% endfor %}
-    },
+    ],
     {% endfor %}
 ]
 {% endfor %}
@@ -56,12 +59,12 @@ EXPECTED_CASES = [
 
 def main():
     # Uploads files to the Grand-Challenge archive
-
-    client = gcapi.Client(token=API_TOKEN)
     total_number_of_cases = len(EXPECTED_CASES)
-    for idx, case in enumerate(EXPECTED_CASES):
-        print(f"Uploading {idx + 1}/{total_number_of_cases} to {ARCHIVE_SLUG}")
-        client.add_cases_to_archive(archive=ARCHIVE_SLUG, archive_items=[case])
+
+    with gcapi.Client(token=API_TOKEN) as client:
+      for idx, case in enumerate(EXPECTED_CASES):
+          print(f"Uploading {idx + 1}/{total_number_of_cases} to {ARCHIVE_SLUG}")
+          client.add_case_to_archive(archive_slug=ARCHIVE_SLUG, values=case)
 
     return 0
 
