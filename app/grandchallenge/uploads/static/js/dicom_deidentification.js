@@ -353,29 +353,6 @@ async function preprocessDicomFile(file) {
     return new File([newBuffer], file.name, { type: file.type });
 }
 
-/**
- * Registers file preprocessors used by Uppy to preprocess files.
- *
- * Each preprocessor object in the array must have the following properties:
- *
- * @property {function(File): Promise<boolean>} fileMatcher - An asynchronous
- * function that takes a File object as input and returns a Promise that
- * resolves tot a boolean indicating whether the file should be processed by
- * this preprocessor. Typically, this function checks the file extension or
- * inspects the file contents to determine if it matches the expected file
- * type (e.g., DICOM).
- *
- * @property {function(File): Promise<File>} preprocessor - An asynchronous
- * function that takes a File object as input and returns a Promise that
- * resolves to a new, processed File object. This function performs any
- * necessary preprocessing (such as de-identification, conversion, or
- * validation) before the file is uploaded or further handled by Uppy.
- */
-globalThis.CLIENT_SIDE_DICOM_DEIDENTIFICATION = {
-    fileMatcher: isDicomFile,
-    preprocessor: preprocessDicomFile,
-};
-
 // Export for testing in Node.js environment
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {

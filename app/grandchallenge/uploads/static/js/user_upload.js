@@ -102,23 +102,19 @@
 
         if (isDicomWidget) {
             uppy.on("file-added", async file => {
-                if (globalThis.CLIENT_SIDE_DICOM_DEIDENTIFICATION) {
-                    for (const preprocessor of globalThis.CLIENT_SIDE_DICOM_DEIDENTIFICATION) {
-                        if (await preprocessor.fileMatcher(file)) {
-                            try {
-                                const processedFile =
-                                    await preprocessor.preprocessor(file.data);
-                                uppy.setFileState(file.id, {
-                                    data: processedFile,
-                                });
-                            } catch (e) {
-                                window.alert(
-                                    `Could not upload ${file.name} (${file.type}): ${e.message}`,
-                                );
-                                uppy.removeFile(file.id);
-                            }
-                            break; // stop checking other preprocessors
-                        }
+                if (await isDicomFile(file)) {
+                    try {
+                        const processedFile = await preprocessDicomFile(
+                            file.data,
+                        );
+                        uppy.setFileState(file.id, {
+                            data: processedFile,
+                        });
+                    } catch (e) {
+                        window.alert(
+                            `Could not upload ${file.name} (${file.type}): ${e.message}`,
+                        );
+                        uppy.removeFile(file.id);
                     }
                 }
 
