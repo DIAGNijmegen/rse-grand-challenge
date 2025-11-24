@@ -58,11 +58,11 @@ echo "=+= Doing a forward pass"
 ## Note the extra arguments that are passed here:
 # '--network none'
 #    entails there is no internet connection
-# 'gpus all'
+# '--gpus all'
 #    enables access to any GPUs present
 # '--volume <NAME>:/tmp'
 #   is added because on Grand Challenge this directory cannot be used to store permanent files
-# '-volume ../ground_truth:/opt/ml/input/data/ground_truth:ro'
+# '--volume ../ground_truth:/opt/ml/input/data/ground_truth:ro'
 #   is added to provide access to the (optional) tarball-upload locally
 docker run --rm {% if not no_gpus %}--gpus all {% endif %}\
     --platform=linux/amd64 \

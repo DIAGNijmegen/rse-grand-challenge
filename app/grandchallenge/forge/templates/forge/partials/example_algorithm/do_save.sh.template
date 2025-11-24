@@ -47,9 +47,9 @@ echo "This can take a while."
 output_tarball_name="${SCRIPT_DIR}/model.tar.gz"
 
 tar -czf $output_tarball_name -C "${SCRIPT_DIR}/model" .
-printf "Saved as: \e[model.tar.gz\e[0m\n"
+printf "Saved as: \e[32mmodel.tar.gz\e[0m\n"
 
 echo "==== Done"
 echo ""
 
-printf "\e[31mIMPORTANT: Please add the model.tar.gz as seperate Model to your Algorithm!\e[0m\n"
+printf "\e[31mIMPORTANT: Please upload the model.tar.gz as seperate Model to your Algorithm!\e[0m\n"
