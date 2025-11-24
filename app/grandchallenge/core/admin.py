@@ -10,7 +10,7 @@ from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 
 
 class MarkdownFlatPageForm(FlatpageForm):
-    class Meta(FlatpageForm.Meta):
+    class Meta:
         widgets = {"content": MarkdownEditorAdminWidget()}
 
 

@@ -27,14 +27,16 @@ def schedule_emails(modeladmin, queryset, request, action):
 
 class EmailAdminForm(ModelForm):
     class Meta:
-        model = Email
         widgets = {"body": MarkdownEditorAdminWidget}
-        exclude = ()
 
 
 @admin.register(Email)
 class EmailAdmin(ModelAdmin):
     list_display = ("subject", "sent", "sent_at")
+    readonly_fields = (
+        "sent_at",
+        "status_report",
+    )
     actions = [*SendActionChoices]
     form = EmailAdminForm
 

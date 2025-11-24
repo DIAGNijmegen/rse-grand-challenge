@@ -16,15 +16,8 @@ from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 
 
 class AdminPostForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in ["authors"]:
-            self.fields[field].widget.can_add_related = False
-
     class Meta:
-        model = Post
         widgets = {"content": MarkdownEditorAdminWidget}
-        exclude = ()
 
 
 @admin.register(Post)
@@ -32,7 +25,10 @@ class PostAdmin(ModelAdmin):
     form = AdminPostForm
     list_display = ("pk", "slug", "title", "published", "highlight")
     list_filter = ("tags", "highlight")
-    autocomplete_fields = ("authors",)
+    readonly_fields = ("authors",)
+
+    def has_add_permission(self, *args, **kwargs):
+        return False
 
 
 @admin.register(Tag)

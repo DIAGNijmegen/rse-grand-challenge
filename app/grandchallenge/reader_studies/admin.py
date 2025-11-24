@@ -24,7 +24,6 @@ from grandchallenge.reader_studies.models import (
 
 @admin.register(ReaderStudy)
 class ReaderStudyAdmin(admin.ModelAdmin):
-    exclude = ("images",)
     list_display = (
         "title",
         "slug",

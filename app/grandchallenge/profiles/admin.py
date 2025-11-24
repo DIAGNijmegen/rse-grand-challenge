@@ -61,6 +61,9 @@ class UserProfileAdmin(UserAdmin):
     def has_2fa_enabled(self, obj):
         return is_mfa_enabled(obj)
 
+    def has_add_permission(self, *args, **kwargs):
+        return False
+
 
 @admin.register(BannedEmailAddress)
 class BannedEmailAddressAdmin(admin.ModelAdmin):

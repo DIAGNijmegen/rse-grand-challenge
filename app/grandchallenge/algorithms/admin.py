@@ -5,7 +5,6 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Sum
-from django.forms import ModelForm
 from django.utils.html import format_html
 
 from grandchallenge.algorithms.models import (
@@ -44,12 +43,6 @@ from grandchallenge.core.utils.grand_challenge_forge import (
 from grandchallenge.utilization.models import JobUtilization
 
 
-class AlgorithmAdminForm(ModelForm):
-    class Meta:
-        model = Algorithm
-        fields = "__all__"
-
-
 @admin.register(Algorithm)
 class AlgorithmAdmin(admin.ModelAdmin):
     ordering = ("-created",)
@@ -67,7 +60,6 @@ class AlgorithmAdmin(admin.ModelAdmin):
     )
     list_filter = ("public", "job_requires_gpu_type", "workstation__slug")
     search_fields = ("title", "slug")
-    form = AlgorithmAdminForm
 
     actions = ["unpublish_algorithms"]
 
@@ -273,7 +265,6 @@ class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
 @admin.register(AlgorithmModel)
 class AlgorithmModelAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    exclude = ("model",)
     list_display = ("algorithm", "created", "is_desired_version", "comment")
     list_filter = ("is_desired_version",)
     search_fields = ("algorithm__title", "comment")
@@ -284,6 +275,7 @@ class AlgorithmModelAdmin(admin.ModelAdmin):
         "size_in_storage",
         "user_upload",
         "import_status",
+        "model",
     )
 
 

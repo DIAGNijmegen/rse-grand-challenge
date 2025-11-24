@@ -248,11 +248,16 @@ class CombinedLeaderboardAdmin(admin.ModelAdmin):
 
 @admin.register(EvaluationGroundTruth)
 class EvaluationGroundTruthAdmin(admin.ModelAdmin):
-    exclude = ("ground_truth",)
     list_display = ("phase", "created", "is_desired_version", "comment")
     list_filter = ("is_desired_version",)
     search_fields = ("phase__slug", "comment")
-    readonly_fields = ("creator", "phase", "sha256", "size_in_storage")
+    readonly_fields = (
+        "creator",
+        "phase",
+        "sha256",
+        "size_in_storage",
+        "ground_truth",
+    )
 
 
 @admin.register(PhaseAlgorithmInterface)

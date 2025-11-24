@@ -8,9 +8,7 @@ from grandchallenge.policies.models import Policy
 
 class PolicyAdminForm(ModelForm):
     class Meta:
-        model = Policy
         widgets = {"body": MarkdownEditorAdminWidget()}
-        fields = "__all__"
 
 
 @admin.register(Policy)
