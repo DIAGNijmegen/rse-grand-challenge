@@ -101,6 +101,8 @@
         });
 
         if (isDicomWidget) {
+            // Use the file-added event instead of registering a preprocessor function with `uppy.addPreProcessor()`
+            // so we can deal with the raw file blob, instead of the uppy mutated file data.
             uppy.on("file-added", async file => {
                 try {
                     const processedFile = await preprocessDicomFile(file.data);
@@ -109,6 +111,7 @@
                     window.alert(
                         `Could not upload ${file.name} (${file.type}): ${e.message}`,
                     );
+                    // Set autoProceed to false to avoid race condition here.
                     uppy.removeFile(file.id);
                 }
 
