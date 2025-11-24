@@ -1,6 +1,5 @@
 const {
     getDummyValue,
-    isDicomFile,
     preprocessDicomFile,
     _uidMap,
 } = require("../../../grandchallenge/uploads/static/js/dicom_deidentification");
@@ -58,80 +57,6 @@ describe("getDummyValue", () => {
     });
 });
 
-describe("isDicomFile", () => {
-    // Helper to create mock DICOM content with optional magic bytes.
-    const createDicomContent = (magic = "DICM") => {
-        const buffer = new ArrayBuffer(132);
-        const view = new Uint8Array(buffer);
-        // Set the magic bytes at offset 128
-        view.set(new TextEncoder().encode(magic), 128);
-        return buffer;
-    };
-
-    const validDicomContent = createDicomContent("DICM");
-    const invalidDicomContent = createDicomContent("XXXX");
-    const shortContent = new ArrayBuffer(100);
-
-    const testCases = [
-        {
-            name: "a valid DICOM file with .dcm extension",
-            filename: "test.dcm",
-            content: validDicomContent,
-            expected: true,
-        },
-        {
-            name: "a valid DICOM file with .dicom extension",
-            filename: "test.dicom",
-            content: validDicomContent,
-            expected: true,
-        },
-        {
-            name: "a valid DICOM file with an uppercase .DCM extension",
-            filename: "test.DCM",
-            content: validDicomContent,
-            expected: true,
-        },
-        {
-            name: "a file with a non-DICOM extension",
-            filename: "test.txt",
-            content: validDicomContent,
-            expected: false,
-        },
-        {
-            name: "a file with a DICOM extension but incorrect magic bytes",
-            filename: "test.dcm",
-            content: invalidDicomContent,
-            expected: false,
-        },
-        {
-            name: "a file that is too short to contain the magic bytes",
-            filename: "test.dcm",
-            content: shortContent,
-            expected: false,
-        },
-        {
-            name: "a file with a DICOM extension but empty content",
-            filename: "test.dcm",
-            content: new ArrayBuffer(0),
-            expected: false,
-        },
-    ];
-
-    test.each(testCases)(
-        "should return $expected for $name",
-        async ({ filename, content, expected }) => {
-            // Create a mock Uppy file object, which has a `data` property
-            // containing the actual File/Blob object. This matches what the
-            // function receives in the browser.
-            const uppyFile = {
-                name: filename,
-                data: new File([content], filename),
-            };
-            await expect(isDicomFile(uppyFile)).resolves.toBe(expected);
-        },
-    );
-});
-
 describe("preprocessDicomFile", () => {
     const createDicomFileBuffer = tags => {
         const meta = {
@@ -165,6 +90,22 @@ describe("preprocessDicomFile", () => {
             "dcmjs is not available",
         );
         global.dcmjs = originalDcmjs;
+    });
+
+    test("should reject non-dicom files", async () => {
+        const buffer = createDicomFileBuffer({});
+        const validFile = new File([buffer], "valid");
+
+        await expect(preprocessDicomFile(validFile)).resolves.toBeDefined();
+
+        const view = new Uint8Array(buffer);
+        // Set the magic bytes at offset 128, for valid dicom this is "DICM"
+        view.set(new TextEncoder().encode("XXXX"), 128);
+
+        const invalidFile = new File([buffer], "invalid");
+        await expect(preprocessDicomFile(invalidFile)).rejects.toThrow(
+            "Invalid DICOM file, expected header is missing",
+        );
     });
 
     test("should remove tags by default ('X') and keep specified tags ('K')", async () => {

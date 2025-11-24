@@ -113,27 +113,6 @@ function getDummyValue(vr) {
     }
 }
 
-// Helper to check if a file is a DICOM file by extension or magic byte
-async function isDicomFile(file) {
-    const dicomExtensions = [".dcm", ".dicom"];
-    if (!dicomExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
-        return false;
-    }
-
-    // Check magic byte: DICOM files have "DICM" at byte offset 128
-    const header = new Uint8Array(
-        await file.data.slice(128, 132).arrayBuffer(),
-    );
-    const isDicomMagic =
-        header.length === 4 &&
-        header[0] === 0x44 && // 'D'
-        header[1] === 0x49 && // 'I'
-        header[2] === 0x43 && // 'C'
-        header[3] === 0x4d; // 'M'
-
-    return isDicomMagic;
-}
-
 const uidMap = new Map(); // Map to store unique identifiers for UIDs
 
 // Recursive de-identification for a dataset (object with DICOM tags)
@@ -357,7 +336,6 @@ async function preprocessDicomFile(file) {
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         getDummyValue,
-        isDicomFile,
         preprocessDicomFile,
         // For testing only
         _uidMap: uidMap,

@@ -7,7 +7,7 @@ global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
 // JSDOM doesn't implement Blob.arrayBuffer() yet, which is needed by the
-// isDicomFile() test. This polyfill implements it using FileReader.
+// preprocessDicomFile() test. This polyfill implements it using FileReader.
 if (global.Blob && !global.Blob.prototype.arrayBuffer) {
     global.Blob.prototype.arrayBuffer = function () {
         return new Promise((resolve, reject) => {

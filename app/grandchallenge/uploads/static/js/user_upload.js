@@ -102,23 +102,17 @@
 
         if (isDicomWidget) {
             uppy.on("file-added", async file => {
-                if (await isDicomFile(file)) {
-                    try {
-                        const processedFile = await preprocessDicomFile(
-                            file.data,
-                        );
-                        uppy.setFileState(file.id, {
-                            data: processedFile,
-                        });
-                    } catch (e) {
-                        window.alert(
-                            `Could not upload ${file.name} (${file.type}): ${e.message}`,
-                        );
-                        uppy.removeFile(file.id);
-                    }
+                try {
+                    const processedFile = await preprocessDicomFile(file.data);
+                    uppy.setFileState(file.id, { data: processedFile });
+                } catch (e) {
+                    window.alert(
+                        `Could not upload ${file.name} (${file.type}): ${e.message}`,
+                    );
+                    uppy.removeFile(file.id);
                 }
 
-                // Auto-upload after preprocessing (or immediately if no preprocessor matched)
+                // Auto-upload after preprocessing
                 if (uppy.getFile(file.id)) {
                     uppy.upload().catch(err => console.error(err));
                 }
