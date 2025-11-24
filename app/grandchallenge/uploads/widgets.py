@@ -44,7 +44,7 @@ class DICOMUserUploadMultipleWidget(UserUploadMultipleWidget):
         js = (
             "vendored/@diagnijmegen/rse-grand-challenge-dicom-de-id-procedure/dist/grand-challenge-dicom-de-id-procedure.umd.min.js",
             "vendored/dcmjs/build/dcmjs.min.js",
-            "js/file_preprocessors.js",
+            "js/dicom_deidentification.js",
         )
 
     def get_context(self, *args, **kwargs):

@@ -371,12 +371,10 @@ async function preprocessDicomFile(file) {
  * necessary preprocessing (such as de-identification, conversion, or
  * validation) before the file is uploaded or further handled by Uppy.
  */
-globalThis.UPPY_FILE_PREPROCESSORS = [
-    {
-        fileMatcher: isDicomFile,
-        preprocessor: preprocessDicomFile,
-    },
-];
+globalThis.CLIENT_SIDE_DICOM_DEIDENTIFICATION = {
+    fileMatcher: isDicomFile,
+    preprocessor: preprocessDicomFile,
+};
 
 // Export for testing in Node.js environment
 if (typeof module !== "undefined" && module.exports) {

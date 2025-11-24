@@ -3,7 +3,7 @@ const {
     isDicomFile,
     preprocessDicomFile,
     _uidMap,
-} = require("../../../grandchallenge/uploads/static/js/file_preprocessors");
+} = require("../../../grandchallenge/uploads/static/js/dicom_deidentification");
 
 describe("getDummyValue", () => {
     const testCases = [

@@ -102,8 +102,8 @@
 
         if (isDicomWidget) {
             uppy.on("file-added", async file => {
-                if (globalThis.UPPY_FILE_PREPROCESSORS) {
-                    for (const preprocessor of globalThis.UPPY_FILE_PREPROCESSORS) {
+                if (globalThis.CLIENT_SIDE_DICOM_DEIDENTIFICATION) {
+                    for (const preprocessor of globalThis.CLIENT_SIDE_DICOM_DEIDENTIFICATION) {
                         if (await preprocessor.fileMatcher(file)) {
                             try {
                                 const processedFile =

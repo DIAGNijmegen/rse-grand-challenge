@@ -46,7 +46,7 @@ def test_dicom_user_upload_media_includes_expected_js():
         "vendored/uppy/uppy.min.js",
         "js/user_upload.js",
         "vendored/dcmjs/build/dcmjs.min.js",
-        "js/file_preprocessors.js",
+        "js/dicom_deidentification.js",
     ):
         assert js_file in widget.media._js
 
