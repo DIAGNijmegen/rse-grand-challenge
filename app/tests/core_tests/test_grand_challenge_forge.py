@@ -69,14 +69,14 @@ def test_get_challenge_pack_context():
     )
 
     context = get_forge_challenge_pack_context(challenge)
-    assert context["challenge"]["slug"] == challenge.slug
+    assert context["slug"] == challenge.slug
 
-    assert len(context["challenge"]["archives"]) == 1
+    assert len(context["archives"]) == 1
     for key in ["slug", "url"]:
-        assert key in context["challenge"]["archives"][0]
+        assert key in context["archives"][0]
 
-    assert len(context["challenge"]["phases"]) == 2
-    for phase in context["challenge"]["phases"]:
+    assert len(context["phases"]) == 2
+    for phase in context["phases"]:
         for phase_key in [
             "slug",
             "archive",
@@ -106,9 +106,7 @@ def test_get_challenge_pack_context():
             ):
                 assert ci_key in component_interface
 
-    algorithm_interface = context["challenge"]["phases"][0][
-        "algorithm_interfaces"
-    ][0]
+    algorithm_interface = context["phases"][0]["algorithm_interfaces"][0]
 
     # Test assigned example value
     example_values = [
@@ -135,12 +133,12 @@ def test_get_challenge_pack_context():
     context = get_forge_challenge_pack_context(
         challenge, phase_pks=[phase_1.pk]
     )
-    assert len(context["challenge"]["phases"]) == 1
+    assert len(context["phases"]) == 1
 
     context = get_forge_challenge_pack_context(
         challenge, phase_pks=[phase_3.pk]
     )
-    assert len(context["challenge"]["phases"]) == 0
+    assert len(context["phases"]) == 0
 
 
 @pytest.mark.django_db
@@ -161,10 +159,10 @@ def test_get_algorithm_template_context():
     context = get_forge_algorithm_template_context(algorithm=algorithm)
 
     for key in ["title", "slug", "url", "algorithm_interfaces"]:
-        assert key in context["algorithm"]
+        assert key in context
 
-    inputs = context["algorithm"]["algorithm_interfaces"][0]["inputs"]
-    outputs = context["algorithm"]["algorithm_interfaces"][0]["inputs"]
+    inputs = context["algorithm_interfaces"][0]["inputs"]
+    outputs = context["algorithm_interfaces"][0]["inputs"]
 
     input_slugs = [input["slug"] for input in inputs]
     assert len(input_slugs) == len(inputs)

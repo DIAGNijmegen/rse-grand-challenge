@@ -1,6 +1,5 @@
 from typing import Any
 
-from django.conf import settings
 from pydantic import BaseModel, computed_field
 
 
@@ -23,6 +22,8 @@ class ForgeInterface(BaseModel):
 
 
 class ForgeAlgorithmContext:
+    algorithm_interfaces: list[ForgeInterface]
+
     @computed_field
     @property
     def algorithm_interface_names(self) -> list[str]:
@@ -62,7 +63,6 @@ class ForgeAlgorithmContext:
 class ForgePhase(ForgeAlgorithmContext, BaseModel):
     slug: str
     archive: ForgeArchive
-    algorithm_interfaces: list[ForgeInterface]
     evaluation_additional_inputs: list[ForgeSocket]
     evaluation_additional_outputs: list[ForgeSocket]
 
@@ -71,7 +71,6 @@ class ForgeAlgorithm(ForgeAlgorithmContext, BaseModel):
     title: str
     slug: str
     url: str
-    algorithm_interfaces: list[ForgeInterface]
 
 
 class ForgeChallenge(BaseModel):
@@ -79,27 +78,3 @@ class ForgeChallenge(BaseModel):
     url: str
     archives: list[ForgeArchive]
     phases: list[ForgePhase]
-
-
-class ForgeContext:
-    @computed_field
-    @property
-    def grand_challenge_forge_version(self) -> str:
-        return settings.COMMIT_ID
-
-    @computed_field
-    @property
-    def no_gpus(self) -> bool:
-        return settings.FORGE_DISABLE_GPUS
-
-
-class ForgePackContext(ForgeContext, BaseModel):
-    challenge: ForgeChallenge
-
-
-class ForgeAlgorithmTemplateContext(ForgeContext, BaseModel):
-    algorithm: ForgeAlgorithm
-
-
-class ForgePhaseContext(ForgeContext, BaseModel):
-    phase: ForgePhase | ForgeAlgorithm  # Accepts both under phase?!

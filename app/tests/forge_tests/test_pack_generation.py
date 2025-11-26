@@ -17,6 +17,7 @@ from grandchallenge.forge.forge import (
     generate_example_evaluation,
     generate_upload_to_archive_script,
 )
+from grandchallenge.forge.models import ForgeChallenge, ForgePhase
 from tests.forge_tests.utils import (
     _test_script_run,
     add_numerical_slugs,
@@ -29,13 +30,13 @@ from tests.forge_tests.utils import (
 
 def test_maximum_path_length():
     pack_context = pack_context_factory()
-    phase = pack_context["challenge"]["phases"][0]
+    phase = pack_context["phases"][0]
     # Set a long slug to test maximum path length
     phase["slug"] = "a" * 50  # Typical max length for a slug
     phase["algorithm_interfaces"][0]["inputs"][0]["relative_path"] = (
         "b" * 65  # Maximum length current relative path
     )
-    pack_context["challenge"]["phases"] = [phase]
+    pack_context["phases"] = [phase]
 
     # Windows has a maximum path length of 260 characters
     windows_max_path_length = 260
@@ -47,7 +48,7 @@ def test_maximum_path_length():
         generate_challenge_pack(
             output_zip_file=zip_file,
             target_zpath=Path("/"),
-            context=pack_context,
+            challenge=ForgeChallenge(**pack_context),
         )
 
         for file in zip_file.filelist:
@@ -66,14 +67,14 @@ def test_for_pack_content(tmp_path):
         generate_challenge_pack(
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
-            context=context,
+            challenge=ForgeChallenge(**context),
         )
 
     pack_path = tmp_path / testrun_zpath
 
     assert (pack_path / "README.md").exists()
 
-    for phase in context["challenge"]["phases"]:
+    for phase in context["phases"]:
         assert (pack_path / phase["slug"]).exists()
 
         assert (pack_path / phase["slug"] / "upload_to_archive").exists()
@@ -142,7 +143,7 @@ def test_pack_upload_to_archive_script(phase_context, tmp_path):
         generate_upload_to_archive_script(
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
-            context=phase_context,
+            context_object=ForgePhase(**phase_context),
         )
 
     script_dir = tmp_path / testrun_zpath
@@ -181,7 +182,7 @@ def test_pack_example_algorithm_run_permissions(tmp_path):
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_algorithm(
-            context=phase_context,
+            context_object=ForgePhase(**phase_context),
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
         )
@@ -206,7 +207,7 @@ def test_pack_example_algorithm_run(phase_context, tmp_path):
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_algorithm(
-            context=phase_context,
+            context_object=ForgePhase(**phase_context),
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
         )
@@ -215,9 +216,7 @@ def test_pack_example_algorithm_run(phase_context, tmp_path):
 
     _test_script_run(script_path=algorithm_path / "do_test_run.sh")
 
-    for idx, interface in enumerate(
-        phase_context["phase"]["algorithm_interfaces"]
-    ):
+    for idx, interface in enumerate(phase_context["algorithm_interfaces"]):
         output_dir = algorithm_path / "test" / "output" / f"interf{idx}"
         # Check if output is generated
         for output in interface["outputs"]:
@@ -232,7 +231,7 @@ def test_pack_example_algorithm_save(tmp_path):
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_algorithm(
-            context=phase_context,
+            context_object=ForgePhase(**phase_context),
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
         )
@@ -243,7 +242,7 @@ def test_pack_example_algorithm_save(tmp_path):
         _test_script_run(script_path=algorithm_path / "do_save.sh")
 
     # Check if saved image exists
-    tar_filename = f"example_algorithm_{phase_context['phase']['slug']}"
+    tar_filename = f"example_algorithm_{phase_context['slug']}"
     pattern = str(algorithm_path / f"{tar_filename}_*.tar.gz")
     matching_files = glob.glob(pattern)
     assert len(matching_files) == 1, (
@@ -258,7 +257,7 @@ def test_pack_example_evaluation_run_permissions(tmp_path):
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_evaluation(
-            context=phase_context_factory(),
+            context_object=ForgePhase(**phase_context_factory()),
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
         )
@@ -313,7 +312,7 @@ def test_pack_example_evaluation_run(phase_context, num_metrics, tmp_path):
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_evaluation(
-            context=phase_context,
+            context_object=ForgePhase(**phase_context),
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
         )
@@ -324,7 +323,7 @@ def test_pack_example_evaluation_run(phase_context, num_metrics, tmp_path):
 
     # Sanity
     assert not metrics_file.exists()
-    for output in phase_context["phase"]["evaluation_additional_outputs"]:
+    for output in phase_context["evaluation_additional_outputs"]:
         expected_file = output_dir / output["relative_path"]
         assert not expected_file.exists()
 
@@ -338,7 +337,7 @@ def test_pack_example_evaluation_run(phase_context, num_metrics, tmp_path):
     assert len(metrics_data["results"]) == num_metrics
 
     # Check if the additional outputs are generated
-    for output in phase_context["phase"]["evaluation_additional_outputs"]:
+    for output in phase_context["evaluation_additional_outputs"]:
         expected_file = output_dir / output["relative_path"]
         assert expected_file.exists()
 
@@ -350,7 +349,7 @@ def test_pack_example_evaluation_save(tmp_path):
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_example_evaluation(
-            context=phase_context,
+            context_object=ForgePhase(**phase_context),
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
         )
@@ -361,7 +360,7 @@ def test_pack_example_evaluation_save(tmp_path):
         _test_script_run(script_path=evaluation_path / "do_save.sh")
 
     # Check if saved image exists
-    tar_filename = f"example-evaluation-{phase_context['phase']['slug']}"
+    tar_filename = f"example-evaluation-{phase_context['slug']}"
     pattern = str(evaluation_path / f"{tar_filename}_*.tar.gz")
     matching_files = glob.glob(pattern)
     assert len(matching_files) == 1, (

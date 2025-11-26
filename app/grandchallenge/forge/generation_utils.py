@@ -6,6 +6,7 @@ import zipfile
 from pathlib import Path
 
 import black
+from django.conf import settings
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
@@ -118,7 +119,11 @@ def copy_and_render(
             if file.endswith(".template"):
                 rendered_content = render_to_string(
                     template_name=source_file,
-                    context=context,
+                    context={
+                        **context,
+                        "grand_challenge_forge_version": settings.COMMIT_ID,
+                        "no_gpus": settings.FORGE_DISABLE_GPUS,
+                    },
                 )
 
                 targetfile_zpath = output_file.with_suffix("")

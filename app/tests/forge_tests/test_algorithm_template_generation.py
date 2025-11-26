@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 
 from grandchallenge.forge.forge import generate_algorithm_template
+from grandchallenge.forge.models import ForgeAlgorithm
 from tests.forge_tests.utils import (
     _test_script_run,
     algorithm_template_context_factory,
@@ -18,7 +19,7 @@ def test_for_algorithm_template_content(tmp_path):
         output_path=tmp_path, preserve_permissions=False
     ) as zip_file:
         generate_algorithm_template(
-            context=algorithm_template_context_factory(),
+            algorithm=ForgeAlgorithm(**algorithm_template_context_factory()),
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
         )
@@ -46,7 +47,7 @@ def test_algorithm_template_run(tmp_path):
 
     with zipfile_to_filesystem(output_path=tmp_path) as zip_file:
         generate_algorithm_template(
-            context=algorithm_template_context,
+            algorithm=ForgeAlgorithm(**algorithm_template_context),
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
         )

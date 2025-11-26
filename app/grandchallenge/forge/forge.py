@@ -1,7 +1,6 @@
 import json
 import logging
 import uuid
-from copy import deepcopy
 from pathlib import Path
 
 from grandchallenge.forge.generation_utils import (
@@ -10,9 +9,9 @@ from grandchallenge.forge.generation_utils import (
     socket_to_socket_value,
 )
 from grandchallenge.forge.models import (
-    ForgeAlgorithmTemplateContext,
-    ForgePackContext,
-    ForgePhaseContext,
+    ForgeAlgorithm,
+    ForgeChallenge,
+    ForgePhase,
 )
 
 logger = logging.getLogger(__name__)
@@ -20,11 +19,14 @@ logger = logging.getLogger(__name__)
 
 def generate_challenge_pack(
     *,
-    context,
+    challenge,
     target_zpath,
     output_zip_file,
 ):
-    context = ForgePackContext(**context).model_dump()
+    if not isinstance(challenge, ForgeChallenge):
+        raise ValueError("challenge must be an instance of ForgeChallenge")
+
+    context = {"challenge": challenge.model_dump()}
 
     # Generate the README.md file
     copy_and_render(
@@ -36,22 +38,21 @@ def generate_challenge_pack(
 
     for phase in context["challenge"]["phases"]:
         phase_zpath = target_zpath / phase["slug"]
-        phase_context = {"phase": phase}
 
         generate_upload_to_archive_script(
-            context=phase_context,
+            context_object=ForgePhase(**phase),
             output_zip_file=output_zip_file,
             target_zpath=phase_zpath / "upload_to_archive",
         )
 
         generate_example_algorithm(
-            context=phase_context,
+            context_object=ForgePhase(**phase),
             output_zip_file=output_zip_file,
             target_zpath=phase_zpath / "example_algorithm",
         )
 
         generate_example_evaluation(
-            context=phase_context,
+            context_object=ForgePhase(**phase),
             output_zip_file=output_zip_file,
             target_zpath=phase_zpath / "example_evaluation_method",
         )
@@ -59,11 +60,18 @@ def generate_challenge_pack(
 
 def generate_upload_to_archive_script(
     *,
-    output_zip_file,
+    context_object,
     target_zpath,
-    context,
+    output_zip_file,
 ):
-    context = deepcopy(context)
+    if not isinstance(context_object, ForgePhase | ForgeAlgorithm):
+        raise ValueError(
+            "context_object must be an instance of ForgePhase or ForgeAlgorithm"
+        )
+
+    context = {
+        "phase": context_object.model_dump()
+    }  # TODO both things are called phase?
 
     expected_cases_per_interface = {}
     for idx, interface in enumerate(context["phase"]["algorithm_interfaces"]):
@@ -124,11 +132,18 @@ def generate_archive_cases(
 
 def generate_example_algorithm(
     *,
-    context,
+    context_object,
     target_zpath,
     output_zip_file,
 ):
-    context = ForgePhaseContext(**context).model_dump()
+    if not isinstance(context_object, ForgePhase | ForgeAlgorithm):
+        raise ValueError(
+            "context_object must be an instance of ForgePhase or ForgeAlgorithm"
+        )
+
+    context = {
+        "phase": context_object.model_dump()
+    }  # TODO both things are called phase?
 
     interface_names = []
     for idx, interface in enumerate(context["phase"]["algorithm_interfaces"]):
@@ -164,12 +179,18 @@ def generate_example_algorithm(
 
 def generate_example_evaluation(
     *,
-    context,
+    context_object,
     target_zpath,
     output_zip_file,
 ):
+    if not isinstance(context_object, ForgePhase | ForgeAlgorithm):
+        raise ValueError(
+            "context_object must be an instance of ForgePhase or ForgeAlgorithm"
+        )
 
-    context = ForgePhaseContext(**context).model_dump()
+    context = {
+        "phase": context_object.model_dump()
+    }  # TODO both things are called phase?
 
     input_zdir = target_zpath / "test" / "input"
 
@@ -249,14 +270,17 @@ def generate_prediction_files(*, output_zip_file, target_zpath, predictions):
 
 def generate_algorithm_template(
     *,
-    context,
+    algorithm,
     target_zpath,
     output_zip_file,
 ):
-    context = ForgeAlgorithmTemplateContext(**context).model_dump()
+    if not isinstance(algorithm, ForgeAlgorithm):
+        raise ValueError("algorithm must be an instance of ForgeAlgorithm")
+
+    context = {"algorithm": algorithm.model_dump()}
 
     generate_example_algorithm(
-        context={"phase": context["algorithm"]},
+        context_object=ForgeAlgorithm(**context["algorithm"]),
         output_zip_file=output_zip_file,
         target_zpath=target_zpath,
     )

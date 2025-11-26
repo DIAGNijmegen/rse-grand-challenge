@@ -3,10 +3,7 @@ from contextlib import nullcontext
 import pytest
 from pydantic_core import ValidationError
 
-from grandchallenge.forge.models import (
-    ForgeAlgorithmTemplateContext,
-    ForgePackContext,
-)
+from grandchallenge.forge.models import ForgeAlgorithm, ForgeChallenge
 from tests.forge_tests.utils import (
     algorithm_template_context_factory,
     pack_context_factory,
@@ -34,7 +31,7 @@ from tests.forge_tests.utils import (
 )
 def test_pack_context_validity(json_context, condition):
     with condition:
-        ForgePackContext(**json_context)
+        ForgeChallenge(**json_context)
 
 
 @pytest.mark.parametrize(
@@ -54,4 +51,4 @@ def test_pack_context_validity(json_context, condition):
 )
 def test_algorithm_template_context_validity(json_context, condition):
     with condition:
-        ForgeAlgorithmTemplateContext(**json_context)
+        ForgeAlgorithm(**json_context)

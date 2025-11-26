@@ -98,6 +98,7 @@ from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.forge.forge import generate_algorithm_template
+from grandchallenge.forge.models import ForgeAlgorithm
 from grandchallenge.github.views import GitHubInstallationRequiredMixin
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -1150,7 +1151,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
         buffer = io.BytesIO()
         with ZipFile(buffer, "w") as zipf:
             generate_algorithm_template(
-                context=forge_context,
+                algorithm=ForgeAlgorithm(**forge_context),
                 output_zip_file=zipf,
                 target_zpath=Path(""),
             )

@@ -84,23 +84,19 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
         }
 
     return {
-        "challenge": {
-            "slug": challenge.slug,
-            "url": challenge.get_absolute_url(),
-            "phases": [process_phase(p) for p in phases],
-            "archives": [process_archive(a) for a in archives],
-        }
+        "slug": challenge.slug,
+        "url": challenge.get_absolute_url(),
+        "phases": [process_phase(p) for p in phases],
+        "archives": [process_archive(a) for a in archives],
     }
 
 
 def get_forge_algorithm_template_context(algorithm):
     return {
-        "algorithm": {
-            "title": algorithm.title,
-            "slug": algorithm.slug,
-            "url": algorithm.get_absolute_url(),
-            "algorithm_interfaces": _process_algorithm_interfaces(
-                algorithm.interfaces.all()
-            ),
-        }
+        "title": algorithm.title,
+        "slug": algorithm.slug,
+        "url": algorithm.get_absolute_url(),
+        "algorithm_interfaces": _process_algorithm_interfaces(
+            algorithm.interfaces.all()
+        ),
     }

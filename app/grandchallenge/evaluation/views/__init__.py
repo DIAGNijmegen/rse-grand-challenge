@@ -79,6 +79,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.forge.forge import generate_challenge_pack
+from grandchallenge.forge.models import ForgeChallenge
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin
@@ -1517,7 +1518,7 @@ class PhaseStarterKitDownload(
         buffer = io.BytesIO()
         with ZipFile(buffer, "w") as zipf:
             generate_challenge_pack(
-                context=forge_context,
+                challenge=ForgeChallenge(**forge_context),
                 output_zip_file=zipf,
                 target_zpath=Path(""),
             )
