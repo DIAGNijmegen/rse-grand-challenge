@@ -557,7 +557,7 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
         on_commit(
             handle_dicom_import_error.signature(
                 kwargs={
-                    "upload_session_pk": dicom_imageset_upload_pk,
+                    "dicom_imageset_upload_pk": dicom_imageset_upload_pk,
                     "error_message": error_message,
                 }
             ).apply_async
@@ -626,7 +626,7 @@ def handle_health_imaging_import_job_event(*, event):
         on_commit(
             handle_dicom_import_error.signature(
                 kwargs={
-                    "upload_session_pk": pk,
+                    "dicom_imageset_upload_pk": pk,
                     "error_message": "An unexpected error occurred",
                 }
             ).apply_async
