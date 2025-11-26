@@ -52,6 +52,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.forge.models import ForgeAlgorithm, ForgeInterface
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
@@ -122,6 +123,13 @@ class AlgorithmInterface(UUIDModel):
     )
 
     objects = AlgorithmInterfaceManager()
+
+    @cached_property
+    def forge_model(self):
+        return ForgeInterface(
+            inputs=[socket.forge_model for socket in self.inputs.all()],
+            outputs=[socket.forge_model for socket in self.outputs.all()],
+        )
 
     class Meta:
         ordering = ("created",)
@@ -524,6 +532,17 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     @property
     def algorithm_interface_list_url(self):
         return reverse("algorithms:interface-list", kwargs={"slug": self.slug})
+
+    @cached_property
+    def forge_model(self):
+        return ForgeAlgorithm(
+            title=self.title,
+            slug=self.slug,
+            url=self.get_absolute_url(),
+            algorithm_interfaces=[
+                interface.forge_model for interface in self.interfaces.all()
+            ],
+        )
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()

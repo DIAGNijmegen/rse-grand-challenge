@@ -1,5 +1,3 @@
-import json
-
 from django.conf import settings
 from django.contrib import admin, messages
 from django.forms import ModelForm
@@ -14,9 +12,6 @@ from grandchallenge.components.admin import (
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
-)
-from grandchallenge.core.utils.grand_challenge_forge import (
-    get_forge_challenge_pack_context,
 )
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
@@ -104,7 +99,6 @@ class PhaseAdmin(admin.ModelAdmin):
     autocomplete_fields = ("archive",)
     readonly_fields = (
         "give_algorithm_editors_job_view_permissions",
-        "challenge_forge_json",
         "algorithm_interfaces",
     )
     form = PhaseAdminForm
@@ -112,16 +106,6 @@ class PhaseAdmin(admin.ModelAdmin):
     @admin.display(boolean=True)
     def open_for_submissions(self, instance):
         return instance.open_for_submissions
-
-    @staticmethod
-    def challenge_forge_json(obj):
-        json_desc = get_forge_challenge_pack_context(
-            challenge=obj.challenge,
-            phase_pks=[obj.pk],
-        )
-        return format_html(
-            "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
-        )
 
 
 @admin.action(

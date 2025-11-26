@@ -1,4 +1,3 @@
-import json
 from datetime import timedelta
 
 from django.contrib import admin, messages
@@ -26,9 +25,6 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.core.templatetags.costs import millicents_to_euro
-from grandchallenge.core.utils.grand_challenge_forge import (
-    get_forge_challenge_pack_context,
-)
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse
 
@@ -38,7 +34,6 @@ class ChallengeAdmin(ModelAdmin):
     readonly_fields = (
         "short_name",
         "creator",
-        "challenge_forge_json",
         "algorithm_phase_configuration_link",
         "algorithm_interface_configuration_links",
     )
@@ -66,13 +61,6 @@ class ChallengeAdmin(ModelAdmin):
 
     def available_compute_euros(self, obj):
         return millicents_to_euro(obj.available_compute_euro_millicents)
-
-    @staticmethod
-    def challenge_forge_json(obj):
-        json_desc = get_forge_challenge_pack_context(challenge=obj)
-        return format_html(
-            "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
-        )
 
     @staticmethod
     def algorithm_phase_configuration_link(obj):

@@ -1,5 +1,3 @@
-import json
-
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
@@ -37,16 +35,13 @@ from grandchallenge.core.admin import (
 )
 from grandchallenge.core.templatetags.costs import millicents_to_euro
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.core.utils.grand_challenge_forge import (
-    get_forge_algorithm_template_context,
-)
 from grandchallenge.utilization.models import JobUtilization
 
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    readonly_fields = ("algorithm_forge_json", "public")
+    readonly_fields = ("public",)
     list_display = (
         "title",
         "created",
@@ -65,13 +60,6 @@ class AlgorithmAdmin(admin.ModelAdmin):
 
     def container_count(self, obj):
         return obj.container_count
-
-    @staticmethod
-    def algorithm_forge_json(obj):
-        json_desc = get_forge_algorithm_template_context(algorithm=obj)
-        return format_html(
-            "<pre>{json_desc}</pre>", json_desc=json.dumps(json_desc, indent=2)
-        )
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)

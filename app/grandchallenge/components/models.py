@@ -88,6 +88,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
+from grandchallenge.forge.models import ForgeSocket
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
@@ -692,6 +693,18 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
             except ValidationError:
                 pass
         return value_required
+
+    @cached_property
+    def forge_model(self):
+        return ForgeSocket(
+            slug=self.slug,
+            kind=self.get_kind_display(),
+            super_kind=self.super_kind.label,
+            relative_path=self.relative_path,
+            example_value=(
+                self.json_kind_example.value if self.is_json_kind else None
+            ),
+        )
 
     class Meta:
         ordering = ("pk",)

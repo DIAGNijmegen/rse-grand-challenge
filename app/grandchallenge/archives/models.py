@@ -29,6 +29,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
+from grandchallenge.forge.models import ForgeArchive
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
@@ -297,6 +298,13 @@ class Archive(
             return set(allowed_slugs)
         else:
             raise AttributeError
+
+    @cached_property
+    def forge_model(self):
+        return ForgeArchive(
+            slug=self.slug,
+            url=self.get_absolute_url(),
+        )
 
 
 class ArchiveUserObjectPermission(UserObjectPermissionBase):

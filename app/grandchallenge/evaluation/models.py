@@ -79,6 +79,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
+from grandchallenge.forge.models import ForgeChallenge, ForgePhase
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.notifications.models import (
     Notification,
@@ -1316,6 +1317,41 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "evaluation:interface-list",
             kwargs={"challenge_short_name": self.challenge, "slug": self.slug},
         )
+
+    @cached_property
+    def forge_model(self):
+        if self.archive:
+            phase_model = ForgePhase(
+                slug=self.slug,
+                archive=self.archive.forge_model,
+                algorithm_interfaces=[
+                    interface.forge_model
+                    for interface in self.algorithm_interfaces.all()
+                ],
+                evaluation_additional_inputs=[
+                    socket.forge_model
+                    for socket in self.additional_evaluation_inputs.all()
+                ],
+                evaluation_additional_outputs=[
+                    socket.forge_model
+                    for socket in self.evaluation_outputs.exclude(
+                        slug="metrics-json-file"
+                    )
+                ],
+            )
+            return ForgeChallenge(
+                slug=self.challenge.slug,
+                url=self.challenge.get_absolute_url(),
+                phases=[phase_model],
+                archives=[self.archive.forge_model],
+            )
+        else:
+            return ForgeChallenge(
+                slug=self.challenge.slug,
+                url=self.challenge.get_absolute_url(),
+                phases=[],
+                archives=[],
+            )
 
 
 class CheckForOverlappingSocketsMixin:

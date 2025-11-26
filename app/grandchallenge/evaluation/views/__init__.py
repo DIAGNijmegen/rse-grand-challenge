@@ -49,9 +49,6 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionListMixin,
     filter_by_permission,
 )
-from grandchallenge.core.utils.grand_challenge_forge import (
-    get_forge_challenge_pack_context,
-)
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
 from grandchallenge.evaluation.forms import (
@@ -79,7 +76,6 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.forge.forge import generate_challenge_pack
-from grandchallenge.forge.models import ForgeChallenge
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin
@@ -1510,15 +1506,10 @@ class PhaseStarterKitDownload(
     def get(self, *_, **__):
         phase = self.phase
 
-        forge_context = get_forge_challenge_pack_context(
-            challenge=phase.challenge,
-            phase_pks=[phase.pk],
-        )
-
         buffer = io.BytesIO()
         with ZipFile(buffer, "w") as zipf:
             generate_challenge_pack(
-                challenge=ForgeChallenge(**forge_context),
+                challenge=phase.forge_model,
                 output_zip_file=zipf,
                 target_zpath=Path(""),
             )
