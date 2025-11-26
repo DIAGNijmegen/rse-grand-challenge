@@ -4,7 +4,7 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-DOCKER_IMAGE_TAG="example-evaluation-{{ phase.slug }}"
+DOCKER_IMAGE_TAG="example-evaluation-{{ object.slug }}"
 
 DOCKER_NOOP_VOLUME="${DOCKER_IMAGE_TAG}-volume"
 

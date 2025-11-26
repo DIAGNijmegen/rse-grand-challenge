@@ -6,7 +6,7 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # Set default container name
-DOCKER_IMAGE_TAG="example-evaluation-{{ phase.slug }}"
+DOCKER_IMAGE_TAG="example-evaluation-{{ object.slug }}"
 
 echo ""
 echo "= STEP 1 = (Re)build the image"

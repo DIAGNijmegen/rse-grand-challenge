@@ -1,11 +1,11 @@
-# 🚀 {{ algorithm.title }} Template
+# 🚀 {{ object.title }} Template
 
 Thank you for hosting your algorithm on Grand-Challenge.org, we appreciate it!
 
 ## Content
 
 This Algorithm Template contains a tailored example to help you run [your
-algorithm on Grand-Challenge.org]({{ algorithm.url }}).
+algorithm on Grand-Challenge.org]({{ object.url }}).
 
 It contains the following:
 * ️🦾 A set of example bash scripts (.sh) to _help_ you test your algorithm locally and export it as a container for upload.
@@ -19,7 +19,7 @@ If the documentation does not answer your question, feel free to reach out to us
 
 The examples in this template illustrate one approach, but they are not the only option. Any container image will do as long as it:
 
-{% for interface in algorithm.algorithm_interfaces %}
+{% for interface in object.algorithm_interfaces %}
 {% if not loop.first %}or input/outputs as follows:{% endif %}
 {% for input in interface.inputs %}
 - reads from the `/input/{{ input.relative_path}}`

@@ -4,7 +4,7 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-DOCKER_IMAGE_TAG="example_algorithm_{{ phase.slug }}"
+DOCKER_IMAGE_TAG="example_algorithm_{{ object.slug }}"
 
 DOCKER_NOOP_VOLUME="${DOCKER_IMAGE_TAG}-volume"
 
@@ -33,7 +33,7 @@ cleanup() {
 # This allows for the Docker user to read
 chmod -R -f o+rX "$INPUT_DIR" "${SCRIPT_DIR}/model"
 
-{% for interface_name in phase.algorithm_interface_names %}
+{% for interface_name in object.algorithm_interface_names %}
 if [ -d "${OUTPUT_DIR}/{{ interface_name }}" ]; then
   # This allows for the Docker user to write
   chmod -f o+rwX "${OUTPUT_DIR}/{{ interface_name }}"
@@ -82,7 +82,7 @@ run_docker_forward_pass() {
   echo "=+= Wrote results to ${OUTPUT_DIR}/${interface_dir}"
 }
 
-{% for interface_name in phase.algorithm_interface_names %}
+{% for interface_name in object.algorithm_interface_names %}
 run_docker_forward_pass "{{ interface_name }}"
 {% endfor %}
 

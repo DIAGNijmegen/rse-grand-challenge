@@ -1,5 +1,5 @@
 {% load forge %}
-{% if phase.algorithm_input_sockets|has_image or phase.algorithm_output_sockets|has_image %}
+{% if object.algorithm_input_sockets|has_image or object.algorithm_output_sockets|has_image %}
 SimpleITK
 numpy
 {% endif %}

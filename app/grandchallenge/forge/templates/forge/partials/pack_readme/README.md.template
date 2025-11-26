@@ -1,10 +1,10 @@
-# 📦 {{ challenge.slug }} challenge pack
+# 📦 {{ object.slug }} challenge pack
 Thank you for hosting your challenge on Grand-Challenge.org, we appreciate it!
 
 ## Content
 
 This Challenge Pack is a collection of challenge-tailored examples to help you on your
-way to host your [{{ challenge.slug }} challenge]({{ challenge.url }}).
+way to host your [{{ object.slug }} challenge]({{ object.url }}).
 
 
 It contains the following:
@@ -24,7 +24,7 @@ Challenge phases pull their data from archives to test submissions on.
 
 Your challenge has the following archives:
 
-{% for archive in challenge.archives %}
+{% for archive in object.archives %}
   * {{ archive.url }}
 {% endfor %}
 

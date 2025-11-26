@@ -5,7 +5,7 @@ files to an archive.
 Remember, an archive is used to pull data per phase for a challenge. Each
 phase has a designated archive. The archive is approached using its slug.
 
-For your challenge, and this phase it is '{{phase.archive.slug }}'.
+For your challenge, and this phase it is '{{ object.archive.slug }}'.
 
 Before you can run this script, you need to:
  * install gc-api (`pip install gcapi`)
@@ -22,7 +22,7 @@ Note that Grand-Challenge does its own post-processing on the files and the arch
 will be filled with the result of this post-processing.
 
 Check your uploaded results here:
- {{ phase.archive.url }}
+ {{ object.archive.url }}
 
 And the intermediate processing state here:
   https://grand-challenge.org/cases/uploads/
@@ -34,7 +34,7 @@ import gcapi
 
 API_TOKEN = "REPLACE-ME-WITH-YOUR-TOKEN"
 
-ARCHIVE_SLUG = "{{ phase.archive.slug }}"
+ARCHIVE_SLUG = "{{ object.archive.slug }}"
 
 # Note that SocketValueSpec also allows you to specify
 # other sources than `file`, such as multiple `files`, and a direct `value`

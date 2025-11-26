@@ -4,7 +4,7 @@
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-DOCKER_IMAGE_TAG="example_algorithm_{{ phase.slug }}"
+DOCKER_IMAGE_TAG="example_algorithm_{{ object.slug }}"
 
 docker build \
   --platform=linux/amd64 \

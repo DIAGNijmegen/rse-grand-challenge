@@ -9,6 +9,9 @@ import black
 from django.conf import settings
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
+from pydantic import BaseModel
+
+from grandchallenge.forge.models import ForgeSocketValue, ForgeSuperKindEnum
 
 FORGE_MODULE_PATH = Path(__file__).parent
 FORGE_RESOURCES_PATH = FORGE_MODULE_PATH / "resources"
@@ -18,32 +21,14 @@ FORGE_PARTIALS_PATH = FORGE_MODULE_PATH / "templates" / "forge" / "partials"
 logger = logging.getLogger(__name__)
 
 
-def is_json(socket):
-    return socket["relative_path"].endswith(".json")
-
-
-def is_image(socket):
-    return socket["super_kind"] == "Image"
-
-
-def is_file(socket):
-    return socket["super_kind"] == "File" and not socket[
-        "relative_path"
-    ].endswith(".json")
-
-
-def has_example_value(socket):
-    return "example_value" in socket and socket["example_value"] is not None
-
-
 def generate_socket_value_stub_file(*, output_zip_file, target_zpath, socket):
     """Creates a stub based on a component interface"""
-    if has_example_value(socket):
+    if socket.has_example_value:
         zinfo = zipfile.ZipInfo(str(target_zpath))
         output_zip_file.writestr(
             zinfo,
             json.dumps(
-                socket["example_value"],
+                socket.example_value,
                 indent=4,
             ),
         )
@@ -51,9 +36,9 @@ def generate_socket_value_stub_file(*, output_zip_file, target_zpath, socket):
 
     # Copy over an example
 
-    if is_json(socket):
+    if socket.is_json:
         source = FORGE_RESOURCES_PATH / "example.json"
-    elif is_image(socket):
+    elif socket.is_image:
         source = FORGE_RESOURCES_PATH / "example.mha"
         target_zpath = target_zpath / f"{str(uuid.uuid4())}.mha"
     else:
@@ -68,27 +53,31 @@ def generate_socket_value_stub_file(*, output_zip_file, target_zpath, socket):
 
 
 def socket_to_socket_value(socket):
-    """Creates a stub dict repr of a socket valuee"""
-    sv = {
-        "file": None,
-        "image": None,
-        "value": None,
-    }
-    if socket["super_kind"] == "Image":
-        sv["image"] = {
-            "name": "the_original_filename_of_the_file_that_was_uploaded.suffix",
-        }
-    if socket["super_kind"] == "File":
-        sv["file"] = (
-            f"https://grand-challenge.org/media/some-link/"
-            f"{socket['relative_path']}"
+    if socket.super_kind == ForgeSuperKindEnum.IMAGE:
+        return ForgeSocketValue(
+            image={
+                "name": "the_original_filename_of_the_file_that_was_uploaded.suffix",
+            },
+            socket=socket,
         )
-    if socket["super_kind"] == "Value":
-        sv["value"] = socket.get("example_value", {"some_key": "some_value"})
-    return {
-        **sv,
-        "interface": socket,
-    }
+    elif socket.super_kind == ForgeSuperKindEnum.FILE:
+        return ForgeSocketValue(
+            file=f"https://grand-challenge.org/media/some-link/{socket.relative_path}",
+            socket=socket,
+        )
+    elif socket.super_kind == ForgeSuperKindEnum.VALUE:
+        if socket.has_example_value:
+            return ForgeSocketValue(
+                value=socket.example_value,
+                socket=socket,
+            )
+        else:
+            return ForgeSocketValue(
+                value={"some_key": "some_value"},
+                socket=socket,
+            )
+    else:
+        raise NotImplementedError
 
 
 def copy_and_render(
@@ -96,8 +85,21 @@ def copy_and_render(
     templates_dir_name,
     output_zip_file,
     target_zpath,
-    context,
+    context_object,
+    extra_context=None,
 ):
+    if not isinstance(context_object, BaseModel):
+        raise ValueError("context_object must be an instance of BaseModel")
+
+    context = {
+        "object": context_object,
+        "grand_challenge_forge_version": settings.COMMIT_ID,
+        "no_gpus": settings.FORGE_DISABLE_GPUS,
+    }
+
+    if extra_context:
+        context.update(**extra_context)
+
     source_path = FORGE_PARTIALS_PATH / templates_dir_name
 
     if not source_path.exists():
@@ -119,11 +121,7 @@ def copy_and_render(
             if file.endswith(".template"):
                 rendered_content = render_to_string(
                     template_name=source_file,
-                    context={
-                        **context,
-                        "grand_challenge_forge_version": settings.COMMIT_ID,
-                        "no_gpus": settings.FORGE_DISABLE_GPUS,
-                    },
+                    context=context,
                 )
 
                 targetfile_zpath = output_file.with_suffix("")

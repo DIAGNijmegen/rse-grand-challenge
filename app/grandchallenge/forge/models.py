@@ -1,19 +1,58 @@
+from datetime import timedelta
+from enum import Enum
 from typing import Any
+from uuid import UUID
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, HttpUrl, RootModel
+
+from grandchallenge.components.models import (
+    ComponentJob,
+    InterfaceKindChoices,
+    InterfaceSuperKindChoices,
+)
 
 
 class ForgeArchive(BaseModel):
     slug: str
-    url: str
+    url: HttpUrl
+
+
+ForgeKindEnum = Enum(
+    "ForgeKindEnum", {str(m.name): str(m.label) for m in InterfaceKindChoices}
+)
+
+ForgeSuperKindEnum = Enum(
+    "ForgeSuperKindEnum",
+    {str(m.name): str(m.label) for m in InterfaceSuperKindChoices},
+)
 
 
 class ForgeSocket(BaseModel):
     slug: str
     relative_path: str
-    kind: str
-    super_kind: str
+    kind: ForgeKindEnum
+    super_kind: ForgeSuperKindEnum
     example_value: Any = None
+
+    @property
+    def is_json(self):
+        return self.relative_path.endswith(".json")
+
+    @property
+    def is_image(self):
+        return self.super_kind == ForgeSuperKindEnum.IMAGE
+
+    @property
+    def is_file(self):
+        return (
+            self.super_kind == ForgeSuperKindEnum.FILE
+            and not self.relative_path.endswith(".json")
+        )
+
+    @property
+    def has_example_value(self):
+        # TODO this does not allow for NULL example values
+        return self.example_value is not None
 
 
 class ForgeInterface(BaseModel):
@@ -24,14 +63,12 @@ class ForgeInterface(BaseModel):
 class ForgeAlgorithmContext:
     algorithm_interfaces: list[ForgeInterface]
 
-    @computed_field
     @property
     def algorithm_interface_names(self) -> list[str]:
         return [
             f"interf{idx}" for idx, _ in enumerate(self.algorithm_interfaces)
         ]
 
-    @computed_field
     @property
     def algorithm_interface_keys(self) -> list[tuple[str]]:
         algorithm_interface_keys = []
@@ -41,7 +78,6 @@ class ForgeAlgorithmContext:
             )
         return algorithm_interface_keys
 
-    @computed_field
     @property
     def algorithm_input_sockets(self) -> list[ForgeSocket]:
         return [
@@ -50,7 +86,6 @@ class ForgeAlgorithmContext:
             for socket in interface.inputs
         ]
 
-    @computed_field
     @property
     def algorithm_output_sockets(self) -> list[ForgeSocket]:
         return [
@@ -70,11 +105,38 @@ class ForgePhase(ForgeAlgorithmContext, BaseModel):
 class ForgeAlgorithm(ForgeAlgorithmContext, BaseModel):
     title: str
     slug: str
-    url: str
+    url: HttpUrl
 
 
 class ForgeChallenge(BaseModel):
     slug: str
-    url: str
+    url: HttpUrl
     archives: list[ForgeArchive]
     phases: list[ForgePhase]
+
+
+class ForgeSocketValue(BaseModel):
+    socket: ForgeSocket
+    file: str | None = None
+    image: dict[str, str] | None = None
+    value: Any = None
+
+
+ForgeSocketValues = RootModel[list[ForgeSocketValue]]
+
+ForgeStatusEnum = Enum(
+    "ForgeStatusEnum",
+    {str(value): str(label) for value, label in ComponentJob.STATUS_CHOICES},
+)
+
+
+class ForgePrediction(BaseModel):
+    pk: UUID
+    inputs: list[ForgeSocketValue]
+    outputs: list[ForgeSocketValue]
+    exec_duration: timedelta | None
+    invoke_duration: timedelta | None
+    status: ForgeStatusEnum
+
+
+ForgePredictions = RootModel[list[ForgePrediction]]
