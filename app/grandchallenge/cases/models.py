@@ -1178,9 +1178,9 @@ class DICOMImageSetUpload(UUIDModel):
     linked_object = GenericForeignKey(
         "linked_object_content_type", "linked_object_object_id"
     )
-    linked_socket_slug = models.CharField(
-        max_length=255,
+    linked_socket_pk = models.IntegerField(
         editable=False,
+        null=True,
     )
 
     class Meta:

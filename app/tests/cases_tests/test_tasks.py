@@ -560,7 +560,7 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED,
         linked_object=obj,
-        linked_socket_slug=ci.slug,
+        linked_socket_pk=ci.pk,
         task_on_success=some_async_task.signature(
             kwargs={"foo": "bar"}, immutable=True
         ),
