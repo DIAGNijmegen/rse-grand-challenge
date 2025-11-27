@@ -551,18 +551,6 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
             "Upload is not ready for de-identification and importing into Health Imaging."
         )
 
-    def _handle_error(*, error_message):
-        upload.user_uploads.all().delete()
-        upload.delete_input_files()
-        on_commit(
-            handle_dicom_import_error.signature(
-                kwargs={
-                    "dicom_imageset_upload_pk": dicom_imageset_upload_pk,
-                    "error_message": error_message,
-                }
-            ).apply_async
-        )
-
     try:
         upload.deidentify_user_uploads()
         upload.start_dicom_import_job()
@@ -573,10 +561,10 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
     ) as error:
         raise RetryStep from error
     except RejectedDICOMFileError as error:
-        _handle_error(error_message=error.justification)
+        upload.handle_error(error_message=error.justification)
     except Exception as error:
         logger.error(error, exc_info=True)
-        _handle_error(error_message="An unexpected error occurred")
+        upload.handle_error(error_message="An unexpected error occurred")
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
         upload.save()
@@ -629,18 +617,6 @@ def handle_health_imaging_import_job_event(*, event):
     if upload.status != DICOMImageSetUploadStatusChoices.STARTED:
         return
 
-    def _handle_error(*, error):
-        logger.error(error, exc_info=True)
-        on_commit(
-            handle_dicom_import_error.signature(
-                kwargs={
-                    "dicom_imageset_upload_pk": pk,
-                    "error_message": "An unexpected error occurred",
-                }
-            ).apply_async
-        )
-        upload.delete_input_files()
-
     health_imaging_client = boto3.client(
         "medical-imaging",
         region_name=settings.AWS_DEFAULT_REGION,
@@ -676,9 +652,11 @@ def handle_health_imaging_import_job_event(*, event):
         ):
             raise RetryStep from error
         else:
-            _handle_error(error=error)
+            logger.error(error, exc_info=True)
+            upload.handle_error(error_message="An unexpected error occurred")
     except Exception as error:
-        _handle_error(error=error)
+        logger.error(error, exc_info=True)
+        upload.handle_error(error_message="An unexpected error occurred")
 
 
 @acks_late_micro_short_task(retry_on=(RetryStep,))

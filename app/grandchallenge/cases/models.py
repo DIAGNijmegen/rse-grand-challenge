@@ -1528,6 +1528,20 @@ class DICOMImageSetUpload(UUIDModel):
             linked_object=self.linked_object,
         )
 
+    def handle_error(self, *, error_message):
+        from grandchallenge.cases.tasks import handle_dicom_import_error
+
+        self.user_uploads.all().delete()
+        self.delete_input_files()
+        on_commit(
+            handle_dicom_import_error.signature(
+                kwargs={
+                    "dicom_imageset_upload_pk": self.pk,
+                    "error_message": error_message,
+                }
+            ).apply_async
+        )
+
 
 class DICOMImageSetUploadUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset({"view_dicomimagesetupload"})
