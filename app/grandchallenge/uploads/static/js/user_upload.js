@@ -111,7 +111,8 @@
                     window.alert(
                         `Could not upload ${file.name} (${file.type}): ${e.message}`,
                     );
-                    // Set autoProceed to false to avoid race condition here.
+                    // `autoProceed` must be set to `false` to avoid race condition here. Otherwise, removeFile may get
+                    // called before uppy file initialization is complete, leading to errors.
                     uppy.removeFile(file.id);
                 }
 
