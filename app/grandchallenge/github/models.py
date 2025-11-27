@@ -149,6 +149,12 @@ class GitHubWebhookMessage(models.Model):
                 f"budget. Please assign more LFS budget on GitHub for "
                 f"this repo so that we can clone it."
             )
+        elif "warning: Clone succeeded, but checkout failed" in self.stdout:
+            return (
+                f"Repository {self.repo_name} is too large to checkout, "
+                f"please remove any large files from your git history, "
+                f"or upload the built container and model separately."
+            )
         else:
             return ""
 
