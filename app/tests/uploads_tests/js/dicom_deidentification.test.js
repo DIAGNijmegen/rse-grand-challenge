@@ -1,3 +1,5 @@
+const Uppy = require("../../../grandchallenge/core/static/vendored/uppy/uppy.min.js");
+global.Uppy = Uppy;
 const {
     getDummyValue,
     preprocessDicomFile,
