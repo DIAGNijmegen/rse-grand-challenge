@@ -35,24 +35,22 @@ def generate_phase_pack(
         context_object=phase,
     )
 
-    phase_zpath = target_zpath / phase.slug
-
     generate_upload_to_archive_script(
         context_object=phase,
         output_zip_file=output_zip_file,
-        target_zpath=phase_zpath / "upload_to_archive",
+        target_zpath=target_zpath / "upload_to_archive",
     )
 
     generate_example_algorithm(
         context_object=phase,
         output_zip_file=output_zip_file,
-        target_zpath=phase_zpath / "example_algorithm",
+        target_zpath=target_zpath / "example_algorithm",
     )
 
     generate_example_evaluation(
         context_object=phase,
         output_zip_file=output_zip_file,
-        target_zpath=phase_zpath / "example_evaluation_method",
+        target_zpath=target_zpath / "example_evaluation_method",
     )
 
 

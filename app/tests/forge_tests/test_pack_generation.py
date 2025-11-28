@@ -71,16 +71,13 @@ def test_for_pack_content(tmp_path):
 
     assert (pack_path / "README.md").exists()
 
-    assert (pack_path / phase["slug"]).exists()
+    assert (pack_path / "upload_to_archive").exists()
 
-    assert (pack_path / phase["slug"] / "upload_to_archive").exists()
-
-    assert (pack_path / phase["slug"] / "example_algorithm").exists()
+    assert (pack_path / "example_algorithm").exists()
     for idx, interface in enumerate(phase["algorithm_interfaces"]):
         for input in interface["inputs"]:
             expected_file = (
                 pack_path
-                / phase["slug"]
                 / "example_algorithm"
                 / "test"
                 / "input"
@@ -89,7 +86,7 @@ def test_for_pack_content(tmp_path):
             )
             assert expected_file.exists()
 
-    eval_path = pack_path / phase["slug"] / "example_evaluation_method"
+    eval_path = pack_path / "example_evaluation_method"
     assert eval_path.exists()
     eval_input_path = eval_path / "test" / "input"
     assert (eval_input_path / "predictions.json").exists()
