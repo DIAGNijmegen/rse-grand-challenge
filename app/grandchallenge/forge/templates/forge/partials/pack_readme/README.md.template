@@ -10,7 +10,7 @@ set up your {{ object.slug }} phase for
 
 It contains the following:
 * ️🦾 An example script to _automate uploading_ data to an archive
-* 🦿 An example _submission algorithm_ that can be uploaded to run as a submission in a this phase
+* 🦿 An example _submission algorithm_ that can be uploaded to run as a submission in this phase
 * 🧮 An example _evaluation method_ that evaluates algorithm submissions and generates performance
   metrics for ranking
 
