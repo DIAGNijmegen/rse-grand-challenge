@@ -1,19 +1,18 @@
-# 📦 {{ object.slug }} challenge pack
+# 📦 {{ object.challenge.slug }} {{ object.slug }} phase pack
 Thank you for hosting your challenge on Grand-Challenge.org, we appreciate it!
 
 ## Content
 
-This Challenge Pack is a collection of challenge-tailored examples to help you on your
-way to host your [{{ object.slug }} challenge]({{ object.url }}).
+This Phase Pack is a collection of tailored examples to help you
+set up your {{ object.slug }} phase for
+[{{ object.challenge.slug }} challenge]({{ object.challenge.url }}).
 
 
 It contains the following:
 * ️🦾 An example script to _automate uploading_ data to an archive
-* 🦿 An example _submission algorithm_ that can be uploaded to run as a submission in a challenge phase
+* 🦿 An example _submission algorithm_ that can be uploaded to run as a submission in this phase
 * 🧮 An example _evaluation method_ that evaluates algorithm submissions and generates performance
   metrics for ranking
-
-The examples are categorized per phase.
 
 Please note that this is a supplementary pack to the [documentation](https://grand-challenge.org/documentation/challenges/).
 If the documentation does not answer your question, feel free to reach out to us at
@@ -22,11 +21,7 @@ If the documentation does not answer your question, feel free to reach out to us
 ## Archives
 Challenge phases pull their data from archives to test submissions on.
 
-Your challenge has the following archives:
-
-{% for archive in object.archives %}
-  * {{ archive.url }}
-{% endfor %}
+Your {{ object.slug }} phase uses the archive {{ object.archive.url }}.
 
 
 ## Now What?

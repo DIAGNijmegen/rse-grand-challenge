@@ -79,6 +79,7 @@ from grandchallenge.evaluation.utils import (
     StatusChoices,
     SubmissionKindChoices,
 )
+from grandchallenge.forge.models import ForgeChallenge
 from grandchallenge.incentives.models import Incentive
 from grandchallenge.invoices.models import (
     PaymentStatusChoices,
@@ -921,6 +922,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             return self.visible_phases[0]
         except IndexError:
             return None
+
+    @cached_property
+    def forge_model(self):
+        return ForgeChallenge(
+            slug=self.slug,
+            url=self.get_absolute_url(),
+        )
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):

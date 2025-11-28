@@ -63,13 +63,9 @@ def test_get_challenge_pack_context():
     )
 
     for phase in {phase_1, phase_2}:
-        assert phase.forge_model.slug == challenge.slug
-        assert len(phase.forge_model.archives) == 1
-        assert len(phase.forge_model.phases) == 1
+        assert phase.forge_model.challenge.slug == challenge.slug
 
-        algorithm_interface = phase.forge_model.phases[0].algorithm_interfaces[
-            0
-        ]
+        algorithm_interface = phase.forge_model.algorithm_interfaces[0]
 
         # Test assigned example value
         example_values = [
@@ -91,7 +87,8 @@ def test_get_challenge_pack_context():
         assert outputs[1].slug in output_slugs
         assert outputs[2].slug in output_slugs
 
-    assert len(phase_3.forge_model.phases) == 0
+    with pytest.raises(NotImplementedError):
+        phase_3.forge_model
 
 
 @pytest.mark.django_db

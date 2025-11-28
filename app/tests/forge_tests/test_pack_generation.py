@@ -12,31 +12,28 @@ from uuid import uuid4
 import pytest
 
 from grandchallenge.forge.forge import (
-    generate_challenge_pack,
     generate_example_algorithm,
     generate_example_evaluation,
+    generate_phase_pack,
     generate_upload_to_archive_script,
 )
-from grandchallenge.forge.models import ForgeChallenge, ForgePhase
+from grandchallenge.forge.models import ForgePhase
 from tests.forge_tests.utils import (
     _test_script_run,
     add_numerical_slugs,
     mocked_binaries,
-    pack_context_factory,
     phase_context_factory,
     zipfile_to_filesystem,
 )
 
 
 def test_maximum_path_length():
-    pack_context = pack_context_factory()
-    phase = pack_context["phases"][0]
+    phase = phase_context_factory()
     # Set a long slug to test maximum path length
     phase["slug"] = "a" * 50  # Typical max length for a slug
     phase["algorithm_interfaces"][0]["inputs"][0]["relative_path"] = (
         "b" * 65  # Maximum length current relative path
     )
-    pack_context["phases"] = [phase]
 
     # Windows has a maximum path length of 260 characters
     windows_max_path_length = 260
@@ -45,10 +42,10 @@ def test_maximum_path_length():
     max_path_length = windows_max_path_length - typical_download_path_length
 
     with zipfile.ZipFile(BytesIO(), "w") as zip_file:
-        generate_challenge_pack(
+        generate_phase_pack(
             output_zip_file=zip_file,
             target_zpath=Path("/"),
-            challenge=ForgeChallenge(**pack_context),
+            phase=ForgePhase(**phase),
         )
 
         for file in zip_file.filelist:
@@ -59,47 +56,46 @@ def test_maximum_path_length():
 
 def test_for_pack_content(tmp_path):
     testrun_zpath = Path(str(uuid4()))
-    context = pack_context_factory()
+    phase = phase_context_factory()
 
     with zipfile_to_filesystem(
         output_path=tmp_path, preserve_permissions=False
     ) as zip_file:
-        generate_challenge_pack(
+        generate_phase_pack(
             output_zip_file=zip_file,
             target_zpath=testrun_zpath,
-            challenge=ForgeChallenge(**context),
+            phase=ForgePhase(**phase),
         )
 
     pack_path = tmp_path / testrun_zpath
 
     assert (pack_path / "README.md").exists()
 
-    for phase in context["phases"]:
-        assert (pack_path / phase["slug"]).exists()
+    assert (pack_path / phase["slug"]).exists()
 
-        assert (pack_path / phase["slug"] / "upload_to_archive").exists()
+    assert (pack_path / phase["slug"] / "upload_to_archive").exists()
 
-        assert (pack_path / phase["slug"] / "example_algorithm").exists()
-        for idx, interface in enumerate(phase["algorithm_interfaces"]):
-            for input in interface["inputs"]:
-                expected_file = (
-                    pack_path
-                    / phase["slug"]
-                    / "example_algorithm"
-                    / "test"
-                    / "input"
-                    / f"interf{idx}"
-                    / input["relative_path"]
-                )
-                assert expected_file.exists()
-
-        eval_path = pack_path / phase["slug"] / "example_evaluation_method"
-        assert eval_path.exists()
-        eval_input_path = eval_path / "test" / "input"
-        assert (eval_input_path / "predictions.json").exists()
-        for input in phase["evaluation_additional_inputs"]:
-            expected_file = eval_input_path / input["relative_path"]
+    assert (pack_path / phase["slug"] / "example_algorithm").exists()
+    for idx, interface in enumerate(phase["algorithm_interfaces"]):
+        for input in interface["inputs"]:
+            expected_file = (
+                pack_path
+                / phase["slug"]
+                / "example_algorithm"
+                / "test"
+                / "input"
+                / f"interf{idx}"
+                / input["relative_path"]
+            )
             assert expected_file.exists()
+
+    eval_path = pack_path / phase["slug"] / "example_evaluation_method"
+    assert eval_path.exists()
+    eval_input_path = eval_path / "test" / "input"
+    assert (eval_input_path / "predictions.json").exists()
+    for input in phase["evaluation_additional_inputs"]:
+        expected_file = eval_input_path / input["relative_path"]
+        assert expected_file.exists()
 
 
 def directly_import_module(name, path):

@@ -10,7 +10,6 @@ from grandchallenge.forge.generation_utils import (
 )
 from grandchallenge.forge.models import (
     ForgeAlgorithm,
-    ForgeChallenge,
     ForgePhase,
     ForgePrediction,
     ForgePredictions,
@@ -20,43 +19,41 @@ from grandchallenge.forge.models import (
 logger = logging.getLogger(__name__)
 
 
-def generate_challenge_pack(
+def generate_phase_pack(
     *,
-    challenge,
+    phase,
     target_zpath,
     output_zip_file,
 ):
-    if not isinstance(challenge, ForgeChallenge):
-        raise ValueError("challenge must be an instance of ForgeChallenge")
+    if not isinstance(phase, ForgePhase):
+        raise ValueError("phase must be an instance of ForgePhase")
 
-    # Generate the README.md file
     copy_and_render(
         templates_dir_name="pack_readme",
         output_zip_file=output_zip_file,
         target_zpath=target_zpath,
-        context_object=challenge,
+        context_object=phase,
     )
 
-    for phase in challenge.phases:
-        phase_zpath = target_zpath / phase.slug
+    phase_zpath = target_zpath / phase.slug
 
-        generate_upload_to_archive_script(
-            context_object=phase,
-            output_zip_file=output_zip_file,
-            target_zpath=phase_zpath / "upload_to_archive",
-        )
+    generate_upload_to_archive_script(
+        context_object=phase,
+        output_zip_file=output_zip_file,
+        target_zpath=phase_zpath / "upload_to_archive",
+    )
 
-        generate_example_algorithm(
-            context_object=phase,
-            output_zip_file=output_zip_file,
-            target_zpath=phase_zpath / "example_algorithm",
-        )
+    generate_example_algorithm(
+        context_object=phase,
+        output_zip_file=output_zip_file,
+        target_zpath=phase_zpath / "example_algorithm",
+    )
 
-        generate_example_evaluation(
-            context_object=phase,
-            output_zip_file=output_zip_file,
-            target_zpath=phase_zpath / "example_evaluation_method",
-        )
+    generate_example_evaluation(
+        context_object=phase,
+        output_zip_file=output_zip_file,
+        target_zpath=phase_zpath / "example_evaluation_method",
+    )
 
 
 def generate_upload_to_archive_script(

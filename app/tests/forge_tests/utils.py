@@ -11,168 +11,73 @@ from pathlib import Path
 from unittest.mock import patch
 
 TEST_RESOURCES = Path(__file__).parent / "resources"
-DEFAULT_PACK_CONTEXT_STUB = {
-    "slug": "challenge-slug",
-    "url": "https://challenge-slug.grand-challenge.org/",
-    "archives": [
+
+DEFAULT_PHASE_CONTEXT_STUB = {
+    "challenge": {
+        "slug": "challenge-slug",
+        "url": "https://challenge-slug.grand-challenge.org/",
+    },
+    "slug": "phase-slug",
+    "archive": {
+        "slug": "archive-slug",
+        "url": "https://grand-challenge.org/archives/archive-slug/",
+    },
+    "algorithm_interfaces": [
         {
-            "slug": "archive-slug",
-            "url": "https://grand-challenge.org/archives/archive-slug/",
-        },
-        {
-            "slug": "another-archive-slug",
-            "url": "https://grand-challenge.org/archives/another-archive-slug/",
-        },
-        {
-            "slug": "yet-another-archive-slug",
-            "url": "https://grand-challenge.org/archives/yet-another-archive-slug/",
-        },
-    ],
-    "phases": [
-        {
-            "slug": "phase-slug",
-            "archive": {
-                "slug": "archive-slug",
-                "url": "https://grand-challenge.org/archives/archive-slug/",
-            },
-            "algorithm_interfaces": [
+            "inputs": [
                 {
-                    "inputs": [
-                        {
-                            "slug": "input-socket-slug",
-                            "kind": "Segmentation",
-                            "super_kind": "Image",
-                            "relative_path": "images/input-value",
-                            "example_value": None,
-                        },
-                        {
-                            "slug": "another-input-socket-slug",
-                            "kind": "Anything",
-                            "super_kind": "File",
-                            "relative_path": "another-input-value.json",
-                            "example_value": {"key": "value"},
-                        },
-                        {
-                            "slug": "yet-another-input-socket-slug",
-                            "kind": "Anything",
-                            "super_kind": "Value",
-                            "relative_path": "yet-another-input-value.json",
-                            "example_value": {"key": "value"},
-                        },
-                        {
-                            "slug": "yet-another-non-json-input-socket-slug",
-                            "kind": "Anything",
-                            "super_kind": "File",
-                            "relative_path": "yet-another-non-json-input-value",
-                            "example_value": None,
-                        },
-                    ],
-                    "outputs": [
-                        {
-                            "slug": "output-socket-slug",
-                            "kind": "Image",
-                            "super_kind": "Image",
-                            "relative_path": "images/output-value",
-                            "example_value": None,
-                        },
-                        {
-                            "slug": "another-output-socket-slug",
-                            "kind": "Anything",
-                            "super_kind": "File",
-                            "relative_path": "output-value.json",
-                            "example_value": {"key": "value"},
-                        },
-                        {
-                            "slug": "yet-another-output-socket-slug",
-                            "kind": "Anything",
-                            "super_kind": "Value",
-                            "relative_path": "yet-another-output-value.json",
-                            "example_value": {"key": "value"},
-                        },
-                        {
-                            "slug": "yet-another-non-json-output-socket-slug",
-                            "kind": "Anything",
-                            "super_kind": "File",
-                            "relative_path": "yet-another-non-json-output-value",
-                            "example_value": None,
-                        },
-                    ],
-                },
-                {
-                    "inputs": [
-                        {
-                            "slug": "input-socket-slug-interface-2",
-                            "kind": "Segmentation",
-                            "super_kind": "Image",
-                            "relative_path": "images/input-value",
-                            "example_value": None,
-                        }
-                    ],
-                    "outputs": [
-                        {
-                            "slug": "output-socket-slug-interface-2",
-                            "kind": "Image",
-                            "super_kind": "Image",
-                            "relative_path": "images/output-value",
-                            "example_value": None,
-                        }
-                    ],
-                },
-            ],
-            "evaluation_additional_inputs": [
-                {
-                    "slug": "additional-input-socket-slug",
+                    "slug": "input-socket-slug",
                     "kind": "Segmentation",
                     "super_kind": "Image",
                     "relative_path": "images/input-value",
                     "example_value": None,
                 },
                 {
-                    "slug": "additional-another-input-socket-slug",
+                    "slug": "another-input-socket-slug",
                     "kind": "Anything",
                     "super_kind": "File",
                     "relative_path": "another-input-value.json",
                     "example_value": {"key": "value"},
                 },
                 {
-                    "slug": "additional-yet-another-input-socket-slug",
+                    "slug": "yet-another-input-socket-slug",
                     "kind": "Anything",
                     "super_kind": "Value",
                     "relative_path": "yet-another-input-value.json",
                     "example_value": {"key": "value"},
                 },
                 {
-                    "slug": "additional-yet-another-non-json-input-socket-slug",
+                    "slug": "yet-another-non-json-input-socket-slug",
                     "kind": "Anything",
                     "super_kind": "File",
                     "relative_path": "yet-another-non-json-input-value",
                     "example_value": None,
                 },
             ],
-            "evaluation_additional_outputs": [
+            "outputs": [
                 {
-                    "slug": "additional-output-socket-slug",
+                    "slug": "output-socket-slug",
                     "kind": "Image",
                     "super_kind": "Image",
                     "relative_path": "images/output-value",
                     "example_value": None,
                 },
                 {
-                    "slug": "additional-another-output-socket-slug",
+                    "slug": "another-output-socket-slug",
                     "kind": "Anything",
                     "super_kind": "File",
                     "relative_path": "output-value.json",
                     "example_value": {"key": "value"},
                 },
                 {
-                    "slug": "additional-yet-another-output-socket-slug",
+                    "slug": "yet-another-output-socket-slug",
                     "kind": "Anything",
                     "super_kind": "Value",
                     "relative_path": "yet-another-output-value.json",
                     "example_value": {"key": "value"},
                 },
                 {
-                    "slug": "additional-yet-another-non-json-output-socket-slug",
+                    "slug": "yet-another-non-json-output-socket-slug",
                     "kind": "Anything",
                     "super_kind": "File",
                     "relative_path": "yet-another-non-json-output-value",
@@ -181,35 +86,84 @@ DEFAULT_PACK_CONTEXT_STUB = {
             ],
         },
         {
-            "slug": "another-phase-slug",
-            "archive": {
-                "slug": "another-archive-slug",
-                "url": "https://grand-challenge.org/archives/another-archive-slug/",
-            },
-            "algorithm_interfaces": [
+            "inputs": [
                 {
-                    "inputs": [
-                        {
-                            "slug": "input-socket-slug-interface-2",
-                            "kind": "Segmentation",
-                            "super_kind": "Image",
-                            "relative_path": "images/input-value",
-                            "example_value": None,
-                        }
-                    ],
-                    "outputs": [
-                        {
-                            "slug": "output-socket-slug-interface-2",
-                            "kind": "Image",
-                            "super_kind": "Image",
-                            "relative_path": "images/output-value",
-                            "example_value": None,
-                        }
-                    ],
-                },
+                    "slug": "input-socket-slug-interface-2",
+                    "kind": "Segmentation",
+                    "super_kind": "Image",
+                    "relative_path": "images/input-value",
+                    "example_value": None,
+                }
             ],
-            "evaluation_additional_inputs": [],
-            "evaluation_additional_outputs": [],
+            "outputs": [
+                {
+                    "slug": "output-socket-slug-interface-2",
+                    "kind": "Image",
+                    "super_kind": "Image",
+                    "relative_path": "images/output-value",
+                    "example_value": None,
+                }
+            ],
+        },
+    ],
+    "evaluation_additional_inputs": [
+        {
+            "slug": "additional-input-socket-slug",
+            "kind": "Segmentation",
+            "super_kind": "Image",
+            "relative_path": "images/input-value",
+            "example_value": None,
+        },
+        {
+            "slug": "additional-another-input-socket-slug",
+            "kind": "Anything",
+            "super_kind": "File",
+            "relative_path": "another-input-value.json",
+            "example_value": {"key": "value"},
+        },
+        {
+            "slug": "additional-yet-another-input-socket-slug",
+            "kind": "Anything",
+            "super_kind": "Value",
+            "relative_path": "yet-another-input-value.json",
+            "example_value": {"key": "value"},
+        },
+        {
+            "slug": "additional-yet-another-non-json-input-socket-slug",
+            "kind": "Anything",
+            "super_kind": "File",
+            "relative_path": "yet-another-non-json-input-value",
+            "example_value": None,
+        },
+    ],
+    "evaluation_additional_outputs": [
+        {
+            "slug": "additional-output-socket-slug",
+            "kind": "Image",
+            "super_kind": "Image",
+            "relative_path": "images/output-value",
+            "example_value": None,
+        },
+        {
+            "slug": "additional-another-output-socket-slug",
+            "kind": "Anything",
+            "super_kind": "File",
+            "relative_path": "output-value.json",
+            "example_value": {"key": "value"},
+        },
+        {
+            "slug": "additional-yet-another-output-socket-slug",
+            "kind": "Anything",
+            "super_kind": "Value",
+            "relative_path": "yet-another-output-value.json",
+            "example_value": {"key": "value"},
+        },
+        {
+            "slug": "additional-yet-another-non-json-output-socket-slug",
+            "kind": "Anything",
+            "super_kind": "File",
+            "relative_path": "yet-another-non-json-output-value",
+            "example_value": None,
         },
     ],
 }
@@ -340,23 +294,8 @@ def add_numerical_slugs(d):
     return d
 
 
-def pack_context_factory(**kwargs):
-    result = deepcopy(DEFAULT_PACK_CONTEXT_STUB)
-    result.update(kwargs)
-
-    make_slugs_unique(result)
-
-    result["phases"] = [
-        phase_context_factory(**phase) for phase in result["phases"]
-    ]
-    return result
-
-
 def phase_context_factory(**kwargs):
-    result = deepcopy(
-        # use first phase as default
-        DEFAULT_PACK_CONTEXT_STUB["phases"][0]
-    )
+    result = deepcopy(DEFAULT_PHASE_CONTEXT_STUB)
     result.update(kwargs)
     return make_slugs_unique(result)
 

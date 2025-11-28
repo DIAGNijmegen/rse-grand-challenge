@@ -95,24 +95,23 @@ class ForgeAlgorithmContext:
         ]
 
 
+class ForgeChallenge(BaseModel):
+    slug: str
+    url: HttpUrl
+
+
 class ForgePhase(ForgeAlgorithmContext, BaseModel):
     slug: str
     archive: ForgeArchive
     evaluation_additional_inputs: list[ForgeSocket]
     evaluation_additional_outputs: list[ForgeSocket]
+    challenge: ForgeChallenge
 
 
 class ForgeAlgorithm(ForgeAlgorithmContext, BaseModel):
     title: str
     slug: str
     url: HttpUrl
-
-
-class ForgeChallenge(BaseModel):
-    slug: str
-    url: HttpUrl
-    archives: list[ForgeArchive]
-    phases: list[ForgePhase]
 
 
 class ForgeSocketValue(BaseModel):

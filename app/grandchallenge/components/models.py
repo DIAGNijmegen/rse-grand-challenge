@@ -88,7 +88,6 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
-from grandchallenge.forge.models import ForgeSocket
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.validators import validate_gzip_mimetype
 from grandchallenge.workstation_configs.models import (
@@ -696,6 +695,8 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
 
     @cached_property
     def forge_model(self):
+        from grandchallenge.forge.models import ForgeSocket
+
         return ForgeSocket(
             slug=self.slug,
             kind=self.get_kind_display(),
