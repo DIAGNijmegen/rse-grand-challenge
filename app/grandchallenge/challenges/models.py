@@ -689,14 +689,14 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         OnboardingTask.objects.create(
             challenge=self,
             title="Plan Onboarding Meeting",
-            description="Create a Challenge Pack and have an onboarding meeting with challenge organizers.",
+            description="Have an onboarding meeting with challenge organizers.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
             deadline=self.created + timedelta(weeks=2),
         )
         OnboardingTask.objects.create(
             challenge=self,
             title="Have Onboarding Meeting",
-            description="Receive a Challenge Pack and have an onboarding meeting with support staff.",
+            description="Download the phase starter kits and have an onboarding meeting with support staff.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=3),
         )
@@ -721,7 +721,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             challenge=self,
             title="Create Example Algorithm",
             description="Implement and document a baseline example algorithm for participants to use as a reference. "
-            "Use the provided challenge pack as a starting point.",
+            "Use the provided phase pack as a starting point.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=6, seconds=0),
         )
@@ -729,7 +729,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             challenge=self,
             title="Create Evaluation Method",
             description="Implement and document the evaluation method for assessing participant submissions. "
-            "Use the provided challenge pack as a starting point.",
+            "Use the provided phase pack as a starting point.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=6, seconds=1),
         )
