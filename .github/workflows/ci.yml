@@ -133,3 +133,5 @@ jobs:
                   retry -t 5 -- make push_http
                   retry -t 5 -- /bin/bash -c 'aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base'
                   retry -t 5 -- make push_web_test_base
+            - name: Create Summary
+              run: echo "## Container Tag\n\`$(make container_tag)\`\n >> $GITHUB_STEP_SUMMARY
