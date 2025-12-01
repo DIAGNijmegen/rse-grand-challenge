@@ -3,10 +3,8 @@ FROM --platform=linux/amd64 public.ecr.aws/deep-learning-containers/pytorch-infe
 # When using only a CPU, use: public.ecr.aws/deep-learning-containers/pytorch-inference:2.6.0-cpu-py312-ubuntu22.04-sagemaker
 # These are sourced from: https://gallery.ecr.aws/deep-learning-containers/pytorch-inference
 
-# By using this brand of sagemaker-ready container images we get the benefit from reduced
-# pulling time in the runtime environment: making inferences more cost efficient.
-
-# Note: it is not required for an algorithm to work: using other containers as base will work.
+# Note: a SageMaker-branded container image is not required for an algorithm to work:
+# using other containers as a base will work.
 
 # Ensures that Python output to stdout/stderr is not buffered: prevents missing information when terminating
 ENV PYTHONUNBUFFERED=1
