@@ -794,6 +794,8 @@ def test_civ_post_panimg_image_upload_valid(request, kind):
 def test_civ_post_dicom_image_upload_valid(request):
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
+    uploads[1].filename += "a"
+    uploads[1].save()
     interface = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.DICOM_IMAGE_SET
     )
