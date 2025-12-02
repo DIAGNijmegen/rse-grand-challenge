@@ -144,6 +144,9 @@ HANGING_PROTOCOL_SCHEMA = {
                 "minimum": 0,
                 "maximum": 1,
             },
+            "scalebar_visible": {
+                "type": "boolean",
+            },
         },
         "additionalProperties": False,
         "allOf": [

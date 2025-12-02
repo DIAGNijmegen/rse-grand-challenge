@@ -66,6 +66,7 @@ from tests.hanging_protocols_tests.factories import HangingProtocolFactory
                     "relative_start_position": 0.5,
                     "label": "Test label",
                     "opacity": 0.5,
+                    "scalebar_visible": True,
                 }
             ],
             nullcontext(),
