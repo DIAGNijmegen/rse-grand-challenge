@@ -2430,3 +2430,47 @@ def test_algorithm_create_redirect(client):
             "This phase is not currently open for submissions, please try again later."
         ]
     }
+
+
+@pytest.mark.django_db
+def test_algorithm_template_button_visibility(client):
+    alg = AlgorithmFactory()
+    editor = UserFactory()
+    alg.add_editor(editor)
+    assign_perm("algorithms.add_algorithm", editor)
+
+    # Test when no interfaces are present
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert "Download Algorithm Image Template" not in response.rendered_content
+    assert (
+        "required before a template can be downloaded."
+        in response.rendered_content
+    )
+
+    # Test when interfaces are present
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface)
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert "Download Algorithm Image Template" in response.rendered_content
+    assert (
+        "required before a template can be downloaded."
+        not in response.rendered_content
+    )

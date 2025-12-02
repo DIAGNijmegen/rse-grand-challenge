@@ -438,11 +438,17 @@
                         It provides a solid foundation for developing an algorithm image or setting up a GitHub repository
                     </p>
 
-                    <a class="btn btn-primary"
-                        href="{% url 'algorithms:image-template' slug=object.slug %}">
-                        <i class="fa fa-download pr-1"></i>Download Algorithm Image Template
-                    </a>
-
+                    {% if algorithm.interfaces.exists %}
+                        <a class="btn btn-primary"
+                           href="{% url 'algorithms:image-template' slug=object.slug %}">
+                            <i class="fa fa-download pr-1"></i>Download Algorithm Image Template
+                        </a>
+                    {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>This algorithm has no <strong>input/output interface(s)</strong>
+                        configured, which is required before a template can be downloaded.
+                    </div>
+                    {% endif %}
                 </div>
             {% endif %}
 
