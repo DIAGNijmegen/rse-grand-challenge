@@ -35,6 +35,7 @@ from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
 )
 from tests.uploads_tests.factories import (
+    UserUploadFactory,
     create_completed_upload,
     create_upload_from_file,
 )
@@ -674,8 +675,62 @@ def test_upload_with_too_many_preprocessing(client, settings):
     task.status = PostProcessImageTaskStatusChoices.COMPLETED
     task.save()
 
-    respose = do_request()
-    assert respose.status_code == 201
+    response = do_request()
+    assert response.status_code == 201
+
+
+@pytest.mark.django_db
+def test_api_patch_upload_with_too_many_preprocessing(client, settings):
+    settings.CASES_MAX_NUM_USER_POST_PROCESSING_TASKS = 1
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+    item = ArchiveItemFactory(archive=archive)
+
+    uploads = UserUploadFactory.create_batch(2, creator=user)
+    uploads[1].filename += "a"
+    uploads[1].save()
+
+    PostProcessImageTaskFactory()  # Active for another user
+    task = PostProcessImageTaskFactory(image__origin__creator=user)
+
+    def do_request():
+        return get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            user=user,
+            client=client,
+            method=client.put,
+            content_type="application/json",
+            data={
+                "values": [
+                    {
+                        "interface": "generic-medical-image",
+                        "file": None,
+                        "image": None,
+                        "image_name": None,
+                        "upload_session": None,
+                        "user_upload": None,
+                        "user_uploads": [upload.api_url for upload in uploads],
+                        "value": None,
+                    },
+                ]
+            },
+        )
+
+    response = do_request()
+    assert response.status_code == 400
+    assert (
+        "You currently have 1 active image post processing tasks. Please wait for them to complete before trying again."
+        in response.json()["values"][0]["non_field_errors"]
+    )
+
+    task.status = PostProcessImageTaskStatusChoices.COMPLETED
+    task.save()
+
+    response = do_request()
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

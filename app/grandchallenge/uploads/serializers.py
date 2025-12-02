@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.conf import settings
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import (
     CharField,
@@ -55,7 +56,10 @@ class UserUploadCreateSerializer(UserUploadSerializer):
         if data.get("creator") is None:
             data["creator"] = self.context["request"].user
 
-        if UserUpload.objects.filter(creator=data["creator"]).count() > 2000:
+        if (
+            UserUpload.objects.filter(creator=data["creator"]).count()
+            > settings.CASES_MAX_NUM_USER_UPLOADS
+        ):
             raise ValidationError(
                 "You have created too many uploads. Please try again later."
             )

@@ -1,4 +1,3 @@
-from django.conf import settings
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField
@@ -10,12 +9,11 @@ from rest_framework.relations import (
 
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.archives.tasks import add_images_to_archive
+from grandchallenge.cases.forms import validate_user_uploads_for_case_import
 from grandchallenge.cases.models import (
     DICOMImageSet,
     Image,
     ImageFile,
-    PostProcessImageTask,
-    PostProcessImageTaskStatusChoices,
     RawImageUploadSession,
 )
 from grandchallenge.components.models import ComponentInterface
@@ -211,28 +209,9 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         attrs["creator"] = self.context["request"].user
 
-        uploads = attrs.get("user_uploads", [])
-
-        num_user_post_processing_tasks = PostProcessImageTask.objects.filter(
-            status=PostProcessImageTaskStatusChoices.INITIALIZED,
-            image__origin__creator=attrs["creator"],
-        ).count()
-        if (
-            num_user_post_processing_tasks
-            >= settings.CASES_MAX_NUM_USER_POST_PROCESSING_TASKS
-        ):
-            raise ValidationError(
-                f"You currently have {num_user_post_processing_tasks} active image post processing tasks. "
-                "Please wait for them to complete before trying again."
-            )
-
-        if len(uploads) > 100:
-            raise ValidationError(
-                "Too many files uploaded. A maximum of 100 files may be uploaded per session."
-            )
-
-        if len({f.filename for f in uploads}) != len(uploads):
-            raise ValidationError("Filenames must be unique")
+        validate_user_uploads_for_case_import(
+            user=attrs["creator"], user_uploads=attrs["user_uploads"]
+        )
 
         num_targets = sum(f in attrs for f in self.targets)
         if num_targets > 1:

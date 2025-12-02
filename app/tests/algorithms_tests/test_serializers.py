@@ -280,6 +280,8 @@ def test_algorithm_job_post_serializer_create_with_image_user_uploads(
     settings.task_always_eager = (True,)
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
+    uploads[1].filename += "a"
+    uploads[1].save()
     algorithm_image = AlgorithmImageFactory(
         is_manifest_valid=True, is_in_registry=True, is_desired_version=True
     )

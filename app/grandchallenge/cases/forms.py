@@ -1,8 +1,13 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms import ModelMultipleChoiceField
 
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import (
+    PostProcessImageTask,
+    PostProcessImageTaskStatusChoices,
+    RawImageUploadSession,
+)
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
@@ -35,11 +40,13 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
     def __init__(self, *args, user, linked_task=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._user = user
+
         self.fields["user_uploads"].queryset = filter_by_permission(
             queryset=UserUpload.objects.filter(
                 status=UserUpload.StatusChoices.COMPLETED
             ),
-            user=user,
+            user=self._user,
             codename="change_userupload",
         )
 
@@ -48,8 +55,10 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
     def clean_user_uploads(self):
         user_uploads = self.cleaned_data["user_uploads"]
 
-        if len({f.filename for f in user_uploads}) != len(user_uploads):
-            raise ValidationError("Filenames must be unique.")
+        validate_user_uploads_for_case_import(
+            user=self._user,
+            user_uploads=user_uploads,
+        )
 
         return user_uploads
 
@@ -61,3 +70,30 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = RawImageUploadSession
         fields = ("user_uploads",)
+
+
+def validate_user_uploads_for_case_import(*, user, user_uploads):
+    if not user or not user_uploads:
+        raise RuntimeError("user and user_uploads must be set")
+
+    num_user_post_processing_tasks = PostProcessImageTask.objects.filter(
+        status=PostProcessImageTaskStatusChoices.INITIALIZED,
+        image__origin__creator=user,
+    ).count()
+
+    if (
+        num_user_post_processing_tasks
+        >= settings.CASES_MAX_NUM_USER_POST_PROCESSING_TASKS
+    ):
+        raise ValidationError(
+            f"You currently have {num_user_post_processing_tasks} active image post processing tasks. "
+            "Please wait for them to complete before trying again."
+        )
+
+    if len(user_uploads) > settings.CASES_MAX_NUM_USER_UPLOADS:
+        raise ValidationError(
+            "Too many files uploaded. A maximum of 100 files may be uploaded per session."
+        )
+
+    if len({f.filename for f in user_uploads}) != len(user_uploads):
+        raise ValidationError("Filenames must be unique")

@@ -1434,6 +1434,9 @@ CASES_POST_PROCESSORS = os.environ.get(
 CASES_MAX_NUM_USER_POST_PROCESSING_TASKS = int(
     os.environ.get("CASES_MAX_NUM_USER_POST_PROCESSING_TASKS", "16")
 )
+CASES_MAX_NUM_USER_UPLOADS = int(
+    os.environ.get("CASES_MAX_NUM_USER_UPLOADS", "2000")
+)
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in Image.sitk_image
 MAX_SITK_FILE_SIZE = 256 * MEGABYTE

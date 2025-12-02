@@ -1888,6 +1888,8 @@ def test_display_set_update_with_image_user_uploads(
     settings.task_always_eager = (True,)
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
+    uploads[1].filename += "a"
+    uploads[1].save()
     reader_study = ReaderStudyFactory()
     reader_study.add_editor(user)
     display_set = DisplaySetFactory(reader_study=reader_study)

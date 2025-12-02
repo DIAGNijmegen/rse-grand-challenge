@@ -846,6 +846,8 @@ def test_api_archive_item_update_with_image_user_uploads(
     settings.task_always_eager = (True,)
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
+    uploads[1].filename += "a"
+    uploads[1].save()
     archive = ArchiveFactory()
     archive.add_editor(user)
     archive_item = ArchiveItemFactory(archive=archive)
@@ -856,7 +858,7 @@ def test_api_archive_item_update_with_image_user_uploads(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        get_view_for_user(
+        response = get_view_for_user(
             viewname="api:archives-item-detail",
             reverse_kwargs={"pk": archive_item.pk},
             user=user,
@@ -879,6 +881,7 @@ def test_api_archive_item_update_with_image_user_uploads(
             },
         )
 
+    assert response.status_code == 200
     assert mock_process_images_method.call_count == 1
 
 

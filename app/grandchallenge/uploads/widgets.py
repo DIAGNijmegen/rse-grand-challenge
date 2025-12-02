@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.forms.widgets import HiddenInput, MultipleHiddenInput
 
 
@@ -59,6 +60,8 @@ class DICOMUserUploadMultipleWidget(UserUploadMultipleWidget):
 
     def get_context(self, *args, **kwargs):
         context = super().get_context(*args, **kwargs)
-        context["widget"]["attrs"]["max_number_files"] = 2000
+        context["widget"]["attrs"][
+            "max_number_files"
+        ] = settings.CASES_MAX_NUM_USER_UPLOADS
         context["widget"]["type"] = "dicom"
         return context

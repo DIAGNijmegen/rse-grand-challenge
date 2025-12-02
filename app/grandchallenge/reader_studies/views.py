@@ -1042,7 +1042,8 @@ class DisplaySetViewSet(
     def get_serializer_class(self):
         if self.action in ["partial_update", "update", "create"]:
             return DisplaySetPostSerializer
-        return DisplaySetSerializer
+        else:
+            return DisplaySetSerializer
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

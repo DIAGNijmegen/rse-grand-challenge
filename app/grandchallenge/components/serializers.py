@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import SlugRelatedField
 
+from grandchallenge.cases.forms import validate_user_uploads_for_case_import
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.backends.exceptions import (
@@ -222,6 +223,12 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 )
         else:
             raise NotImplementedError(f"Unsupported interface {interface}")
+
+        if attrs.get("user_uploads"):
+            validate_user_uploads_for_case_import(
+                user=self.context["request"].user,
+                user_uploads=attrs["user_uploads"],
+            )
 
         if (
             not attrs.get("upload_session")
