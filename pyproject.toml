@@ -40,7 +40,7 @@ dependencies = [
     "django-allauth[mfa,socialaccount]",
     "requests",
     "Pillow",
-    "panimg!=0.15.1,>=0.12.0",
+    "panimg>=0.16.0",
     "django-activity-stream",
     "django-permissions-policy",
     "aws-xray-sdk",
