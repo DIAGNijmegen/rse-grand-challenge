@@ -1,11 +1,11 @@
 {% load forge %}
-{% if object.algorithm_input_sockets|has_image or object.algorithm_output_sockets|has_image or object.algorithm_input_sockets|has_dicom_image_set %}
+{% if object.algorithm_input_sockets|has_image or object.algorithm_output_sockets|has_image or object.algorithm_input_sockets|has_dicom_image_set or object.algorithm_output_sockets|has_dicom_image_set %}
 numpy
 {% endif %}
 {% if object.algorithm_input_sockets|has_image or object.algorithm_output_sockets|has_image %}
 SimpleITK
 {% endif %}
-{% if object.algorithm_input_sockets|has_dicom_image_set %}
+{% if object.algorithm_input_sockets|has_dicom_image_set or object.algorithm_output_sockets|has_dicom_image_set %}
 pydicom
 # Required to decompress some DICOM transfer syntaxes
 pylibjpeg
