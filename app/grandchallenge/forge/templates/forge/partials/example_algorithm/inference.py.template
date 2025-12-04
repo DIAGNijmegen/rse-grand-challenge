@@ -25,14 +25,14 @@ from pathlib import Path
 import json
 import torch
 
-{% if object.algorithm_input_sockets|has_image or object.algorithm_output_sockets|has_image or object.algorithm_input_sockets|has_dicom_image_set %}
+{% if object.algorithm_input_sockets|has_image or object.algorithm_output_sockets|has_image or object.algorithm_input_sockets|has_dicom_image_set or object.algorithm_output_sockets|has_dicom_image_set %}
 from glob import glob
 import numpy
 {% endif %}
 {% if object.algorithm_input_sockets|has_image or object.algorithm_output_sockets|has_image %}
 import SimpleITK
 {% endif %}
-{% if object.algorithm_input_sockets|has_dicom_image_set %}
+{% if object.algorithm_input_sockets|has_dicom_image_set or object.algorithm_output_sockets|has_dicom_image_set%}
 import pydicom
 {% endif %}
 
