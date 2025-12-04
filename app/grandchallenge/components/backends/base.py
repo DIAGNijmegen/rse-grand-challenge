@@ -809,7 +809,7 @@ class Executor(ABC):
                 Key=self._inference_result_key,
             )
         except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] == "404":
+            if error.response["Error"]["Code"] in {"404", "NoSuchKey"}:
                 raise UncleanExit(
                     "The invocation request did not return a result"
                 ) from error
@@ -965,10 +965,13 @@ class Executor(ABC):
                     parse_constant=lambda x: None,  # Removes -inf, inf and NaN
                 )
             civ = interface.create_instance(value=result)
-        except botocore.exceptions.ClientError:
-            raise ComponentException(
-                f"Output file {interface.relative_path!r} was not produced"
-            )
+        except botocore.exceptions.ClientError as error:
+            if error.response["Error"]["Code"] in {"404", "NoSuchKey"}:
+                raise ComponentException(
+                    f"Output file {interface.relative_path!r} was not produced"
+                )
+            else:
+                raise
         except MemoryError:
             raise ComponentException(
                 f"The output file {interface.relative_path!r} is too large"
@@ -996,10 +999,13 @@ class Executor(ABC):
                 )
                 fileobj.seek(0)
                 civ = interface.create_instance(fileobj=fileobj)
-        except botocore.exceptions.ClientError:
-            raise ComponentException(
-                f"Output file {interface.relative_path!r} was not produced"
-            )
+        except botocore.exceptions.ClientError as error:
+            if error.response["Error"]["Code"] in {"404", "NoSuchKey"}:
+                raise ComponentException(
+                    f"Output file {interface.relative_path!r} was not produced"
+                )
+            else:
+                raise
         except ValidationError as e:
             raise ComponentException(
                 f"The output file {interface.relative_path!r} is not valid. {format_validation_error_message(error=e)}"
