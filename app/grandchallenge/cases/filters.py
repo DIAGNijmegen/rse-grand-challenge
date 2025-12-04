@@ -5,7 +5,6 @@ from drf_spectacular.utils import extend_schema_field
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
-from grandchallenge.core.filters import EmptyStringFilter
 from grandchallenge.reader_studies.models import ReaderStudy
 
 
@@ -47,10 +46,6 @@ class ImageFilterSet(FilterSet):
         field_name="componentinterfacevalue__display_sets__reader_study__pk",
         to_field_name="pk",
     )
-    patient_id__isempty = EmptyStringFilter(field_name="patient_id")
-    study_description__isempty = EmptyStringFilter(
-        field_name="study_description"
-    )
 
     class Meta:
         model = Image
@@ -61,14 +56,4 @@ class ImageFilterSet(FilterSet):
             "archive",
             "reader_study",
             "name",
-            "patient_id",
-            "patient_name",
-            "patient_birth_date",
-            "patient_age",
-            "patient_sex",
-            "study_date",
-            "study_instance_uid",
-            "series_instance_uid",
-            "study_description",
-            "series_description",
         )

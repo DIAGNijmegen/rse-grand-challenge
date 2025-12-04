@@ -1352,7 +1352,7 @@ requires-dist = [
     { name = "humanize" },
     { name = "jsonschema" },
     { name = "kombu", specifier = "!=5.3.0,!=5.5.*,!=5.6.*" },
-    { name = "panimg", specifier = ">=0.12.0,!=0.15.1" },
+    { name = "panimg", specifier = ">=0.16.0" },
     { name = "pillow" },
     { name = "psycopg", extras = ["c"], specifier = ">3.1.8" },
     { name = "pydantic" },
@@ -1908,7 +1908,7 @@ wheels = [
 
 [[package]]
 name = "panimg"
-version = "0.15.2"
+version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1927,9 +1927,9 @@ dependencies = [
     { name = "tifffile" },
     { name = "wsidicom" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/50/ec694b302553b1622e30c400a960480dbbe8c4bfb298301fc09eb128503e/panimg-0.15.2.tar.gz", hash = "sha256:426d82864bd9bb7a1c4857fe57195516d2215c89e5892fa0024754d47805e946", size = 38950, upload-time = "2025-01-23T16:39:12.639Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3b/72/63e4966e897982c25feb243a0a41cebd1db437c80d367de895ae5ba0b903/panimg-0.16.0.tar.gz", hash = "sha256:877efa7b0376b2792e67856c21d175112645088f913d2bdcc8c5e99349518790", size = 54618, upload-time = "2025-12-03T12:15:47.408Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/10/f65973ee2d6fb3797de302b7e960d37e4a5e904bfbd4727f36bcfc9f79aa/panimg-0.15.2-py3-none-any.whl", hash = "sha256:1bb9441ef61679a9869e6f43ebfcd8890722d6d0843ba1e967a3826998d0cea6", size = 50898, upload-time = "2025-01-23T16:39:10.788Z" },
+    { url = "https://files.pythonhosted.org/packages/60/90/ddf6cacc4280b687e6cbfde636fcee2be56fc051f0732dc41084924c9fe3/panimg-0.16.0-py3-none-any.whl", hash = "sha256:bb4ba81a2b0f6bbc3f4f59dde5d8ade8543477b70c5fbb1953f4c506329059cf", size = 50684, upload-time = "2025-12-03T12:15:48.672Z" },
 ]
 
 [[package]]
@@ -2654,6 +2654,7 @@ wheels = [
 name = "simpleitk"
 version = "2.5.3"
 source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/2b/6d48d5d8e9876edbd706b7da8a87ba5148e3458e98dfe2afa6af3b5e199e/simpleitk-2.5.3.tar.gz", hash = "sha256:859c15d9865120a5668952ec4da63393203b978008697907fc3bb3c8329aaa32", size = 2087079, upload-time = "2025-11-26T16:15:26.143Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/31/bf/31c0d48389cf7599f793bd6c2ed8a5047fdaba5538501062bd07ee78bc87/simpleitk-2.5.3-cp311-abi3-macosx_10_9_x86_64.whl", hash = "sha256:eda739126d3cdda29266b722c3bb182a534ee4b4b60a6e565c20e1ebbd7ca2da", size = 44622636, upload-time = "2025-11-21T13:42:03.904Z" },
     { url = "https://files.pythonhosted.org/packages/da/f5/aaaf24206d325a0b685a60e411877272e947607a5216a6f56643212571e5/simpleitk-2.5.3-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:5438fb87b7e3380b1ba02b2447bf9f474560b51a649b2ad6973195c6515a43a5", size = 38516574, upload-time = "2025-11-21T13:42:07.902Z" },

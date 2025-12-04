@@ -42,6 +42,42 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
     modality = ImagingModalitySerializer(allow_null=True, read_only=True)
     dicom_image_set = DICOMImageSetSerializer(allow_null=True, read_only=True)
 
+    # Deprecated fields, see https://github.com/DIAGNijmegen/rse-roadmap/issues/446
+    patient_id = serializers.SerializerMethodField(
+        method_name="get_empty_string"
+    )
+    patient_name = serializers.SerializerMethodField(
+        method_name="get_empty_string"
+    )
+    patient_birth_date = serializers.SerializerMethodField(
+        method_name="get_none"
+    )
+    patient_age = serializers.SerializerMethodField(
+        method_name="get_empty_string"
+    )
+    patient_sex = serializers.SerializerMethodField(
+        method_name="get_empty_string"
+    )
+    study_date = serializers.SerializerMethodField(method_name="get_none")
+    study_instance_uid = serializers.SerializerMethodField(
+        method_name="get_empty_string"
+    )
+    series_instance_uid = serializers.SerializerMethodField(
+        method_name="get_empty_string"
+    )
+    study_description = serializers.SerializerMethodField(
+        method_name="get_empty_string"
+    )
+    series_description = serializers.SerializerMethodField(
+        method_name="get_empty_string"
+    )
+
+    def get_empty_string(self, obj) -> str:
+        return ""
+
+    def get_none(self, obj) -> str | None:
+        return None
+
     class Meta:
         model = Image
         fields = (

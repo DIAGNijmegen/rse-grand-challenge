@@ -3,9 +3,8 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.forms.utils import ErrorList
-from django.http import Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.timezone import now
@@ -18,10 +17,8 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
-from rest_framework.decorators import action
 from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -485,37 +482,6 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
-
-    @action(detail=True)
-    def patients(self, request, pk=None):
-        archive = self.get_object()
-        patients = (
-            Image.objects.filter(
-                componentinterfacevalue__archive_items__archive=archive
-            )
-            .order_by("patient_id")
-            .values_list("patient_id", flat=True)
-            .distinct("patient_id")
-        )
-        return Response(patients)
-
-    @action(detail=True)
-    def studies(self, request, pk=None):
-        try:
-            patient_id = self.request.query_params["patient_id"]
-        except MultiValueDictKeyError:
-            raise Http404
-        archive = self.get_object()
-        studies = (
-            Image.objects.filter(
-                componentinterfacevalue__archive_items__archive=archive,
-                patient_id=patient_id,
-            )
-            .order_by("study_description")
-            .values_list("study_description", flat=True)
-            .distinct("study_description")
-        )
-        return Response(studies)
 
 
 class ArchiveItemViewSet(
