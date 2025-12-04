@@ -3,6 +3,7 @@ global.Uppy = Uppy;
 const {
     getDummyValue,
     preprocessDicomFile,
+    DicomDeidentifierPlugin,
     _uidMap,
 } = require("../../../grandchallenge/uploads/static/js/dicom_deidentification");
 
@@ -368,5 +369,176 @@ describe("preprocessDicomFile", () => {
                 /^grand-challenge-dicom-client-de-identifier:procedure:v2:date:/,
             );
         });
+    });
+});
+
+describe("DicomDeidentifierPlugin", () => {
+    let uppy;
+    let plugin;
+
+    beforeEach(() => {
+        global.GrandChallengeDICOMDeIdProcedure = {};
+
+        uppy = new Uppy.Core();
+        uppy.use(DicomDeidentifierPlugin);
+        plugin = uppy.getPlugin("DicomDeidentifierPlugin");
+    });
+
+    afterEach(() => {
+        uppy.close();
+        _uidMap.clear();
+    });
+
+    const createDicomFileBuffer = tags => {
+        const meta = {
+            "00020010": { vr: "UI", Value: ["1.2.840.10008.1.2.1"] }, // TransferSyntaxUID
+        };
+        const dicomDict = new global.dcmjs.data.DicomDict(meta);
+        dicomDict.dict = tags;
+        return dicomDict.write();
+    };
+
+    test("should preprocess all files through Uppy", async () => {
+        global.GrandChallengeDICOMDeIdProcedure = {
+            default: "X",
+            sopClass: { "": { tag: { "(0008,0050)": { default: "K" } } } },
+            version: "1.0",
+        };
+
+        const buffer1 = createDicomFileBuffer({
+            "00100010": { vr: "PN", Value: ["Patient One"] },
+            "00080050": { vr: "SH", Value: ["ACC001"] },
+        });
+        const buffer2 = createDicomFileBuffer({
+            "00100010": { vr: "PN", Value: ["Patient Two"] },
+            "00080050": { vr: "SH", Value: ["ACC002"] },
+        });
+
+        const file1 = new File([buffer1], "file1.dcm", {
+            type: "application/dicom",
+        });
+        const file2 = new File([buffer2], "file2.dcm", {
+            type: "application/dicom",
+        });
+
+        uppy.addFile({ name: file1.name, type: file1.type, data: file1 });
+        uppy.addFile({ name: file2.name, type: file2.type, data: file2 });
+
+        const fileIDs = Object.keys(uppy.getState().files);
+        await plugin.prepareUpload(fileIDs);
+
+        const processedFile1 = uppy.getFile(fileIDs[0]).data;
+        const processedFile2 = uppy.getFile(fileIDs[1]).data;
+
+        const dataset1 = global.dcmjs.data.DicomMessage.readFile(
+            await processedFile1.arrayBuffer(),
+        ).dict;
+
+        const dataset2 = global.dcmjs.data.DicomMessage.readFile(
+            await processedFile2.arrayBuffer(),
+        ).dict;
+
+        expect(dataset1["00100010"]).toBeUndefined();
+        expect(dataset1["00080050"].Value[0]).toBe("ACC001");
+        expect(dataset1["00120062"].Value[0]).toBe("YES"); // PatientIdentityRemoved
+
+        expect(dataset2["00100010"]).toBeUndefined();
+        expect(dataset2["00080050"].Value[0]).toBe("ACC002");
+        expect(dataset2["00120062"].Value[0]).toBe("YES"); // PatientIdentityRemoved
+    });
+
+    test("should remove files that fail preprocessing and show alert", async () => {
+        const alertSpy = jest.spyOn(window, "alert").mockImplementation();
+
+        const buffer = createDicomFileBuffer({
+            "00100010": { vr: "PN", Value: ["Patient Name"] },
+        });
+        const file = new File([buffer], "reject.dcm", {
+            type: "application/dicom",
+        });
+
+        global.GrandChallengeDICOMDeIdProcedure = {
+            sopClass: {
+                "": {
+                    tag: {
+                        "(0010,0010)": {
+                            default: "R",
+                            justification: "Test rejection",
+                        },
+                    },
+                },
+            },
+        };
+
+        uppy.addFile({ name: file.name, type: file.type, data: file });
+        const fileIDs = Object.keys(uppy.getState().files);
+
+        await plugin.prepareUpload(fileIDs);
+
+        expect(uppy.getFile(fileIDs[0])).toBeUndefined();
+        expect(alertSpy).toHaveBeenCalledWith(
+            expect.stringContaining(
+                "Could not upload reject.dcm (application/dicom):",
+            ),
+        );
+
+        alertSpy.mockRestore();
+    });
+
+    test("should handle mixed success and failure files", async () => {
+        const alertSpy = jest.spyOn(window, "alert").mockImplementation();
+
+        const successBuffer = createDicomFileBuffer({
+            "00080050": { vr: "SH", Value: ["ACC123"] },
+        });
+        const rejectBuffer = createDicomFileBuffer({
+            "00100010": { vr: "PN", Value: ["Patient Name"] },
+        });
+
+        const successFile = new File([successBuffer], "success.dcm", {
+            type: "application/dicom",
+        });
+        const rejectFile = new File([rejectBuffer], "reject.dcm", {
+            type: "application/dicom",
+        });
+
+        global.GrandChallengeDICOMDeIdProcedure = {
+            default: "K",
+            sopClass: {
+                "": {
+                    tag: {
+                        "(0010,0010)": {
+                            default: "R",
+                            justification: "Test rejection",
+                        },
+                    },
+                },
+            },
+            version: "1.0",
+        };
+
+        uppy.addFile({
+            name: successFile.name,
+            type: successFile.type,
+            data: successFile,
+        });
+        uppy.addFile({
+            name: rejectFile.name,
+            type: rejectFile.type,
+            data: rejectFile,
+        });
+
+        const fileIDs = Object.keys(uppy.getState().files);
+        const results = await plugin.prepareUpload(fileIDs);
+
+        expect(results.length).toBe(2);
+        expect(results[0].status).toBe("fulfilled");
+        expect(results[1].status).toBe("rejected");
+
+        const remainingFiles = Object.values(uppy.getState().files);
+        expect(remainingFiles.length).toBe(1);
+        expect(remainingFiles[0].name).toBe("success.dcm");
+
+        alertSpy.mockRestore();
     });
 });

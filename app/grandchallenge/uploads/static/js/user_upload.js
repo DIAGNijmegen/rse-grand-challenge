@@ -24,7 +24,7 @@
             document.getElementById(`${inputId}AllowedFileTypes`).textContent,
         );
         const maxNumberOfFiles = widget.getAttribute("data-max-number-files");
-        const isDicomWidget = widget.dataset.type === "dicom";
+        const widgetType = widget.dataset.type;
 
         const uppy = new Uppy.Core({
             id: `${window.location.pathname}-${inputId}`,
@@ -63,6 +63,10 @@
             completeMultipartUpload: completeMultipartUpload,
         });
 
+        if (widgetType === "dicom") {
+            uppy.use(DicomDeidentifierPlugin, {});
+        }
+
         uppy.on("upload-success", (file, response) => {
             const uploadedPK = file.s3Multipart.key.split("/")[2];
             const fileList = document.getElementById(`${inputId}-file-list`);
@@ -99,10 +103,6 @@
             );
             fileList.prepend(newFile);
         });
-
-        if (isDicomWidget) {
-            uppy.use(DicomDeidentifierPlugin, {});
-        }
     }
 
     function getCookie(name) {

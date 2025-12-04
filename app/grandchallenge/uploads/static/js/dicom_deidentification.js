@@ -336,7 +336,7 @@ class DicomDeidentifierPlugin extends Uppy.Core.BasePlugin {
     constructor(uppy, opts) {
         super(uppy, opts);
 
-        this.id = opts.id || "DicomDeidentifierPlugin";
+        this.id = opts?.id || "DicomDeidentifierPlugin";
         this.type = "modifier";
 
         this.prepareUpload = this.prepareUpload.bind(this);
@@ -376,6 +376,7 @@ if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         getDummyValue,
         preprocessDicomFile,
+        DicomDeidentifierPlugin,
         // For testing only
         _uidMap: uidMap,
     };
