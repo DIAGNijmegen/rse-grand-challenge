@@ -1,6 +1,14 @@
 {% load forge %}
-{% if object.algorithm_input_sockets|has_panimg_kind or object.algorithm_output_sockets|has_panimg_kind or object.evaluation_additional_inputs|has_panimg_kind or object.evaluation_additional_outputs|has_panimg_kind %}
+{% if object.algorithm_output_sockets|has_panimg_kind or object.evaluation_additional_inputs|has_panimg_kind or object.evaluation_additional_outputs|has_panimg_kind %}
 SimpleITK
+{% endif %}
+{% if object.algorithm_output_sockets|has_image_kind or object.evaluation_additional_inputs|has_image_kind or object.evaluation_additional_outputs|has_image_kind  %}
 numpy
 {% endif %}
 psutil
+{% if object.evaluation_additional_inputs|has_dicom_image_kind %}
+pydicom
+# Required to decompress some DICOM transfer syntaxes
+pylibjpeg
+pylibjpeg-libjpeg
+{% endif %}

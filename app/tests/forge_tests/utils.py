@@ -130,6 +130,12 @@ DEFAULT_PHASE_CONTEXT_STUB = {
             "relative_path": "yet-another-non-json-input-value",
             "is_file_kind": True,
         },
+        {
+            "slug": "dicom-image-set-additional-input-socket-slug",
+            "relative_path": "images/dicom-image-set-additional-input-socket-slug",
+            "is_dicom_image_kind": True,
+            "is_image_kind": True,
+        },
     ],
     "evaluation_additional_outputs": [
         {
