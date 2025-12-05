@@ -58,7 +58,7 @@ def run():
 def {{ interface_name }}_handler():
     # Read the input
     {% for socket in interface.inputs %}
-    {% if socket.is_dicom_image_set %}
+    {% if socket.is_dicom_image_kind %}
     input_{{ socket.slug|dash_to_underscore }} = load_dicom_image_set_as_array(
         location=INPUT_PATH / "{{ socket.relative_path }}",
     )
