@@ -1,7 +1,7 @@
 {% load static %}
 {% load url %}
 
-<select class="custom-select"
+<select class="select form-control"
         name="widget-choice-{{ widget.name }}"
         id="widget-select-{{ widget.name }}"
         hx-get="{% url 'components:select-file-widget' %}"
