@@ -7,7 +7,7 @@ import pydicom
 def load_dicom_image_set_as_array(*, location):
 
     # Get all DICOM files in the directory
-    dicom_files = glob(str(location / "*.dcm"))
+    dicom_files = glob.glob(str(location / "*.dcm"))
 
     # Read all slices
     slices = [pydicom.dcmread(f, force=True) for f in dicom_files]
