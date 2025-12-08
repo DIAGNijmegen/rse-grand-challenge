@@ -11,6 +11,7 @@ from django.forms import (
     ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
+    Script,
     Select,
 )
 from django.forms.widgets import ChoiceWidget, TextInput
@@ -37,7 +38,7 @@ class ImageWidgetChoices(TextChoices):
 
 class ImageSourceChoiceWidget(Select):
     class Media:
-        js = ("cases/js/source_choice_widget.mjs",)
+        js = (Script("cases/js/source_choice_widget.mjs", type="module"),)
 
 
 class ImageSourceChoiceField(ChoiceField):
