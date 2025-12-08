@@ -140,34 +140,34 @@ def get_interface_key():
     socket_slugs = [sv["socket"]["slug"] for sv in inputs]
     return tuple(sorted(socket_slugs))
 
-{% include "forge/partials/functions/load_json.py" %}
+{% include "forge/partials/functions/load_json.py.template" %}
 
 {% if object.algorithm_output_sockets|has_json_kind %}
-{% include "forge/partials/functions/write_json.py" %}
+{% include "forge/partials/functions/write_json.py.template" %}
 {% endif %}
 
 {% if object.algorithm_input_sockets|has_panimg_kind %}
-{% include "forge/partials/functions/load_image.py" %}
+{% include "forge/partials/functions/load_image.py.template" %}
 {% endif %}
 
 {% if object.algorithm_input_sockets|has_dicom_image_kind %}
-{% include "forge/partials/functions/load_dicom_image.py" %}
+{% include "forge/partials/functions/load_dicom_image.py.template" %}
 {% endif %}
 
 {% if object.algorithm_output_sockets|has_panimg_kind %}
-{% include "forge/partials/functions/write_image.py" %}
+{% include "forge/partials/functions/write_image.py.template" %}
 {% endif %}
 
 {% if object.algorithm_output_sockets|has_dicom_image_kind %}
-{% include "forge/partials/functions/write_dicom_image.py" %}
+{% include "forge/partials/functions/write_dicom_image.py.template" %}
 {% endif %}
 
 {% if object.algorithm_input_sockets|has_file_kind %}
-{% include "forge/partials/functions/load_file.py" %}
+{% include "forge/partials/functions/load_file.py.template" %}
 {% endif %}
 
 {% if object.algorithm_output_sockets|has_file_kind %}
-{% include "forge/partials/functions/write_file.py" %}
+{% include "forge/partials/functions/write_file.py.template" %}
 {% endif %}
 
 
