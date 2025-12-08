@@ -6,7 +6,7 @@ SimpleITK
 numpy
 {% endif %}
 psutil
-{% if object.evaluation_additional_inputs|has_dicom_image_kind %}
+{% if object.evaluation_additional_inputs|has_dicom_image_kind or object.evaluation_additional_outputs|has_dicom_image_kind  %}
 pydicom
 # Required to decompress some DICOM transfer syntaxes
 pylibjpeg

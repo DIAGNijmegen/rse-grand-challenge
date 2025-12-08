@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1
 
 RUN groupadd -r user && useradd -m --no-log-init -r -g user user
 
-{% if object.evaluation_additional_inputs|has_dicom_image_kind %}
+{% if object.evaluation_additional_inputs|has_dicom_image_kind or object.evaluation_additional_outputs|has_dicom_image_kind %}
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libjpeg-dev \

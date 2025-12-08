@@ -83,6 +83,12 @@ DEFAULT_PHASE_CONTEXT_STUB = {
                     "relative_path": "yet-another-non-json-output-value",
                     "is_file_kind": True,
                 },
+                {
+                    "slug": "dicom-image-set-output-socket-slug",
+                    "relative_path": "images/dicom-image-set-output-value",
+                    "is_dicom_image_kind": True,
+                    "is_image_kind": True,
+                },
             ],
         },
         {
@@ -163,6 +169,12 @@ DEFAULT_PHASE_CONTEXT_STUB = {
             "relative_path": "yet-another-non-json-output-value",
             "is_file_kind": True,
         },
+        {
+            "slug": "dicom-image-set-output-socket-slug",
+            "relative_path": "images/dicom-image-set-output-value",
+            "is_dicom_image_kind": True,
+            "is_image_kind": True,
+        },
     ],
 }
 
@@ -231,6 +243,12 @@ DEFAULT_ALGORITHM_CONTEXT_STUB = {
                     "slug": "yet-another-non-json-output-socket-slug",
                     "relative_path": "yet-another-non-json-output-value",
                     "is_file_kind": True,
+                },
+                {
+                    "slug": "dicom-image-set-output-socket-slug",
+                    "relative_path": "images/dicom-image-set-output-value",
+                    "is_dicom_image_kind": True,
+                    "is_image_kind": True,
                 },
             ],
         },

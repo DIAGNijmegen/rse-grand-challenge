@@ -58,7 +58,7 @@ def run():
 def {{ interface_name }}_handler():
     # Read the input
     {% for socket in interface.inputs %}
-    {% if socket.is_dicom_image_set %}
+    {% if socket.is_dicom_image_kind %}
     input_{{ socket.slug|dash_to_underscore }} = load_dicom_image_set_as_array(
         location=INPUT_PATH / "{{ socket.relative_path }}",
     )
@@ -104,7 +104,7 @@ def {{ interface_name }}_handler():
             {% else %}
                 {{ socket.example_value }}
             {% endif %}
-        {% elif socket.is_panimg_kind %} numpy.eye(4, 2)
+        {% elif socket.is_image_kind %} numpy.eye(4, 2)
         {% elif socket.is_json_kind %} {"content": "should match the required format"}
         {% elif socket.is_file_kind %} "content: should match the required format"
         {% endif %}
@@ -115,6 +115,11 @@ def {{ interface_name }}_handler():
     {% for socket in interface.outputs %}
     {% if socket.is_panimg_kind %}
     write_array_as_image_file(
+        location=OUTPUT_PATH / "{{ socket.relative_path }}",
+        array=output_{{ socket.slug|dash_to_underscore }},
+    )
+    {% elif socket.is_dicom_image_kind %}
+    write_array_as_dicom_image_set(
         location=OUTPUT_PATH / "{{ socket.relative_path }}",
         array=output_{{ socket.slug|dash_to_underscore }},
     )
@@ -206,6 +211,38 @@ def write_array_as_image_file(*, location, array):
     )
 {% endif %}
 
+{% if object.algorithm_output_sockets|has_dicom_image_kind %}
+def write_array_as_dicom_image_set(*, location, array):
+    location.mkdir(parents=True, exist_ok=True)
+
+    # Writing DICOM Image data correctly is non-trivial!
+
+    # Below is a minimal and incomplete example that requires
+    # many additional basic-image attributes to be added
+    # still
+
+    ds = pydicom.Dataset()
+
+    # Required meta info
+    ds.file_meta = pydicom.dataset.FileMetaDataset()
+    ds.file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
+
+
+    # Basic image attributes
+    ds.Rows, ds.Columns = array.shape
+    ds.SamplesPerPixel = 1
+    ds.PhotometricInterpretation = "MONOCHROME2"
+    ds.BitsAllocated = array.dtype.itemsize * 8
+    ds.BitsStored = ds.BitsAllocated
+    ds.HighBit = ds.BitsAllocated - 1
+    ds.PixelRepresentation = 0   # 0 = unsigned
+
+    # Pixel data
+    ds.PixelData = array.tobytes()
+
+    # Save
+    pydicom.dcmwrite(location / "output.dcm", ds)
+{% endif %}
 
 {% if object.algorithm_input_sockets|has_file_kind %}
 # Note to the developer:
