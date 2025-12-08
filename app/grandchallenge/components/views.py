@@ -195,7 +195,7 @@ class MultipleCIVProcessingBaseView(
         kwargs.update(
             {
                 "user": self.request.user,
-                "auto_id": f"id-{uuid.uuid4()}",
+                "form_id": uuid.uuid4(),
                 "base_obj": self.base_object,
                 "instance": instance,
             }
@@ -269,7 +269,7 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
             "base_obj": self.base_object,
             "interface": self.request.GET.get("interface"),
             "user": self.request.user,
-            "auto_id": f"id-{uuid.uuid4()}",
+            "form_id": uuid.uuid4(),
             "htmx_url": self.get_htmx_url(),
         }
 

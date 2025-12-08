@@ -1620,7 +1620,7 @@ def test_display_set_add_interface_form():
         interface=None,
         user=user,
         htmx_url="foo",
-        auto_id="1",
+        form_id="1",
     )
     assert sorted(form.fields.keys()) == ["interface-1"]
 
@@ -1630,7 +1630,7 @@ def test_display_set_add_interface_form():
         interface=ci_file.pk,
         user=user,
         htmx_url="foo",
-        auto_id="1",
+        form_id="1",
     )
     assert sorted(form.fields.keys()) == [
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}",
@@ -1647,7 +1647,7 @@ def test_display_set_add_interface_form():
         interface=ci_value.pk,
         user=user,
         htmx_url="foo",
-        auto_id="1",
+        form_id="1",
     )
     assert sorted(form.fields.keys()) == [
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}",
@@ -1664,7 +1664,7 @@ def test_display_set_add_interface_form():
         interface=ci_image.pk,
         user=user,
         htmx_url="foo",
-        auto_id="1",
+        form_id="1",
     )
     assert sorted(form.fields.keys()) == [
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}",

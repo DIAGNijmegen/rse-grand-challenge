@@ -1,6 +1,6 @@
 const initChoiceWidgets = () => {
     const elements = document.querySelectorAll(
-        "[id^='__INTERFACE_FIELD__'][id$='__widget_choice']",
+        "[id^='id___INTERFACE_FIELD__'][id$='__widget_choice']",
     );
     for (const el of elements) {
         const prefixedSocketSlug = el.id.replace(/__widget_choice$/, "");
