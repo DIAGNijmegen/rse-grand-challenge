@@ -96,14 +96,17 @@ class InterfaceFormFieldsFactory:
             if interface.is_dicom_image_kind:
                 return {
                     f"{prefixed_interface_slug}__widget_choice": ImageSourceChoiceField(
-                        current_socket_value=current_socket_value
+                        current_socket_value=current_socket_value,
+                        **kwargs,
                     ),
                     f"{prefixed_interface_slug}__upload": DICOMUploadField(
                         user=user,
-                        **kwargs,
+                        label="",
+                        required=False,
                     ),
                     f"{prefixed_interface_slug}__search": ModelChoiceField(
                         queryset=image_search_queryset,
+                        label="",
                         required=False,
                         widget=ImageSearchWidget(),
                     ),
