@@ -249,6 +249,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
             "title"
         ):
             current_value = None
+            current_socket_value = None
 
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
@@ -275,6 +276,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                 current_value = instance.values.filter(
                     interface__slug=interface.slug
                 ).first()
+                current_socket_value = current_value
 
             self.fields.update(
                 InterfaceFormFieldsFactory(
@@ -282,7 +284,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                     user=self.user,
                     required=False,
                     initial=current_value,
-                    current_socket_value=current_value,
+                    current_socket_value=current_socket_value,
                 )
             )
 
