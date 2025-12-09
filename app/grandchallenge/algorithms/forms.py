@@ -35,6 +35,7 @@ from django_select2.forms import Select2MultipleWidget, Select2Widget
 
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmImage,
     AlgorithmInterface,
     AlgorithmModel,
@@ -1221,3 +1222,19 @@ class JobInterfaceSelectForm(SaveFormInitMixin, Form):
             )
             for interface in self._algorithm.interfaces.all()
         }
+
+
+class AlgorithmAlgorithmInterfaceDeleteForm(ModelForm):
+
+    class Meta:
+        model = AlgorithmAlgorithmInterface
+        fields = []
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.instance.algorithm.interfaces.count() == 1:
+            raise ValidationError(
+                "Cannot delete the only algorithm interface."
+            )
+
+        return cleaned_data

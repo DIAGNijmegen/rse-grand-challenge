@@ -261,6 +261,10 @@ class PhaseAlgorithmInterfaceAdmin(admin.ModelAdmin):
         # through table entries should only be updated through the UI
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        # through table entries should only be deleted through the UI
+        return False
+
 
 admin.site.register(PhaseUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(PhaseGroupObjectPermission, GroupObjectPermissionAdmin)

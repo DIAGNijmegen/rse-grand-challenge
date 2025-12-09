@@ -48,6 +48,7 @@ from grandchallenge.evaluation.models import (
     EvaluationGroundTruth,
     Method,
     Phase,
+    PhaseAlgorithmInterface,
     Submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -1015,3 +1016,21 @@ class AlgorithmInterfaceForPhaseCopyForm(PhaseMixin, Form):
         for phase in self.cleaned_data["phases"]:
             for interface in self._phase.algorithm_interfaces.all():
                 phase.algorithm_interface_manager.add(interface)
+
+
+class PhaseAlgorithmInterfaceDeleteForm(ModelForm):
+
+    class Meta:
+        model = PhaseAlgorithmInterface
+        fields = []
+
+    def clean(self):
+        cleaned_data = super().clean()
+        phase = self.instance.phase
+        if (
+            phase.submission_kind == SubmissionKindChoices.ALGORITHM
+            and phase.algorithm_interfaces.count() == 1
+        ):
+            raise ValidationError("Cannot delete the only phase interface.")
+
+        return cleaned_data
