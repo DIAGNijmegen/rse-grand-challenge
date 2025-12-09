@@ -215,7 +215,7 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "some-overlay",
             },
             [
-                '<select class="custom-select"',
+                '<select class="select form-control"',
                 f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}some-overlay"',
             ],
         ),
@@ -225,7 +225,7 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "some-medical-image",
             },
             [
-                '<select class="custom-select"',
+                '<select class="select form-control"',
                 f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),
@@ -357,7 +357,7 @@ def test_algorithm_create(client, uploaded_image):
                 "store_in_database": False,
             },
             [
-                '<select class="custom-select"',
+                '<select class="select form-control"',
                 f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}anything"',
             ],
         ),
