@@ -264,7 +264,7 @@ class FlexibleImageField(MultiValueField):
             return non_empty_values[0]
 
 
-DICOMUploadWidgetSuffixes = ["dicom-image-name", "dicom-user-uploads"]
+DICOM_UPLOAD_WIDGET_SUFFIXES = ["dicom-image-name", "dicom-user-uploads"]
 
 
 class DICOMUploadWithName(NamedTuple):
@@ -281,8 +281,8 @@ class DICOMImageSetNameInput(TextInput):
 class DICOMUploadWidget(MultiWidget):
     def __init__(self, attrs=None):
         widgets = {
-            DICOMUploadWidgetSuffixes[0]: DICOMImageSetNameInput(),
-            DICOMUploadWidgetSuffixes[1]: DICOMUserUploadMultipleWidget(),
+            DICOM_UPLOAD_WIDGET_SUFFIXES[0]: DICOMImageSetNameInput(),
+            DICOM_UPLOAD_WIDGET_SUFFIXES[1]: DICOMUserUploadMultipleWidget(),
         }
         super().__init__(widgets, attrs)
 

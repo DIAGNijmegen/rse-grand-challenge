@@ -18,11 +18,12 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
+from grandchallenge.cases.widgets import DICOM_UPLOAD_WIDGET_SUFFIXES
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
 from grandchallenge.components.form_fields import (
+    FLEXIBLE_WIDGET_SUFFIXES,
     INTERFACE_FORM_FIELD_PREFIX,
     InterfaceFormFieldsFactory,
 )
@@ -117,13 +118,13 @@ class InterfaceFormFieldsMixin:
         fields_required = {}
         for name in self.fields:
             if name.startswith(INTERFACE_FORM_FIELD_PREFIX) and name.endswith(
-                "__widget_choice"
+                "_widget_choice"
             ):
-                base_name = name[: -len("__widget_choice")]
+                base_name = name[: -len("_widget_choice")]
                 bound_field = self[name]
                 for choice, field_name in {
-                    "IMAGE_SEARCH": f"{base_name}__search",
-                    "IMAGE_UPLOAD": f"{base_name}__upload",
+                    "IMAGE_SEARCH": f"{base_name}_search",
+                    "IMAGE_UPLOAD": f"{base_name}_upload",
                 }.items():
                     if bound_field.data == choice:
                         fields_required[field_name] = self[
@@ -148,13 +149,13 @@ class InterfaceFormFieldsMixin:
 
         for key, choice in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX) and key.endswith(
-                "__widget_choice"
+                "_widget_choice"
             ):
-                base_key = key[: -len("__widget_choice")]
+                base_key = key[: -len("_widget_choice")]
                 widget_fields = {
                     "IMAGE_SELECTED": key,
-                    "IMAGE_SEARCH": f"{base_key}__search",
-                    "IMAGE_UPLOAD": f"{base_key}__upload",
+                    "IMAGE_SEARCH": f"{base_key}_search",
+                    "IMAGE_UPLOAD": f"{base_key}_upload",
                 }
 
                 for widget_type, widget_key in widget_fields.items():
@@ -332,7 +333,10 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
     @staticmethod
     def parse_slug(*, slug):
         interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
-        for known_suffix in DICOMUploadWidgetSuffixes:
+
+        for known_suffix in (
+            DICOM_UPLOAD_WIDGET_SUFFIXES + FLEXIBLE_WIDGET_SUFFIXES
+        ):
             if interface_slug.endswith(f"_{known_suffix}"):
                 base_slug = interface_slug[: -len(f"_{known_suffix}")]
                 return base_slug
