@@ -285,6 +285,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                     user=self.user,
                     required=False,
                     initial=current_value,
+                    current_socket_value=current_value,
                 )
             )
 
