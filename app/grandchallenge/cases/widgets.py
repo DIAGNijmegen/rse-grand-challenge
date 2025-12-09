@@ -48,6 +48,7 @@ class ImageSourceChoiceField(ChoiceField):
         self,
         *args,
         current_socket_value=None,
+        required=True,
         **kwargs,
     ):
         self.current_socket_value = current_socket_value
@@ -73,7 +74,7 @@ class ImageSourceChoiceField(ChoiceField):
 
         super().__init__(
             *args,
-            required=True,
+            required=required,
             choices=choices,
             **kwargs,
         )
