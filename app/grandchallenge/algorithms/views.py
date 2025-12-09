@@ -38,6 +38,7 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
+    AlgorithmAlgorithmInterfaceDeleteForm,
     AlgorithmDescriptionForm,
     AlgorithmForm,
     AlgorithmImageForm,
@@ -1160,7 +1161,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
 
 
 class AlgorithmInterfacePermissionMixin(AccessMixin):
-    @property
+    @cached_property
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
@@ -1243,8 +1244,9 @@ class AlgorithmInterfaceForAlgorithmDelete(
     AlgorithmInterfacePermissionMixin, DeleteView
 ):
     model = AlgorithmAlgorithmInterface
+    form_class = AlgorithmAlgorithmInterfaceDeleteForm
 
-    @property
+    @cached_property
     def algorithm_interface(self):
         return get_object_or_404(
             klass=AlgorithmAlgorithmInterface,
@@ -1260,6 +1262,11 @@ class AlgorithmInterfaceForAlgorithmDelete(
             "algorithms:interface-list",
             kwargs={"slug": self.algorithm.slug},
         )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"instance": self.algorithm_interface})
+        return kwargs
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
