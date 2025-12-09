@@ -3,7 +3,10 @@ from django.test import Client
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.cases.widgets import DICOM_UPLOAD_WIDGET_SUFFIXES
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.form_fields import (
+    FLEXIBLE_WIDGET_SUFFIXES,
+    INTERFACE_FORM_FIELD_PREFIX,
+)
 from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests import RESOURCE_PATH
@@ -84,6 +87,9 @@ def test_upload_some_images(
         f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar",
         f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{DICOM_UPLOAD_WIDGET_SUFFIXES[0]}",
         f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{DICOM_UPLOAD_WIDGET_SUFFIXES[1]}",
+        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{FLEXIBLE_WIDGET_SUFFIXES[0]}",
+        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{FLEXIBLE_WIDGET_SUFFIXES[1]}",
+        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{FLEXIBLE_WIDGET_SUFFIXES[2]}",
     ],
 )
 @pytest.mark.django_db
