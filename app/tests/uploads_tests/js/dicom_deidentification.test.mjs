@@ -1,11 +1,14 @@
-const Uppy = require("../../../grandchallenge/core/static/vendored/uppy/uppy.min.js");
+import { jest } from "@jest/globals";
+import Uppy from "../../../grandchallenge/core/static/vendored/uppy/uppy.min.js";
 global.Uppy = Uppy;
 const {
     getDummyValue,
     preprocessDicomFile,
     DicomDeidentifierPlugin,
-    _uidMap,
-} = require("../../../grandchallenge/uploads/static/js/dicom_deidentification");
+    uidMap: _uidMap,
+} = await import(
+    "../../../grandchallenge/uploads/static/js/dicom_deidentification"
+);
 
 describe("getDummyValue", () => {
     const testCases = [

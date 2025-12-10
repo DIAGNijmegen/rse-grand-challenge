@@ -371,13 +371,5 @@ export class DicomDeidentifierPlugin extends Uppy.Core.BasePlugin {
     }
 }
 
-// Export for testing in Node.js environment
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = {
-        getDummyValue,
-        preprocessDicomFile,
-        DicomDeidentifierPlugin,
-        // For testing only
-        _uidMap: uidMap,
-    };
-}
+// For testing only
+export { getDummyValue, preprocessDicomFile, uidMap };
