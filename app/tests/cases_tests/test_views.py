@@ -150,7 +150,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.value,
             "prefixed-interface-slug": ci.slug,
         },
     )
@@ -161,7 +161,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.value,
             "prefixed-interface-slug": ci.slug,
         },
     )
@@ -172,7 +172,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.value,
             "prefixed-interface-slug": ci.slug,
         },
     )
