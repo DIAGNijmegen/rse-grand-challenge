@@ -278,11 +278,13 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                 except AttributeError:
                     current_value = self.data.get(prefixed_interface_slug)
 
-            if not current_value and instance:
-                current_value = instance.values.filter(
+            if instance:
+                current_socket_value = instance.values.filter(
                     interface__slug=interface.slug
                 ).first()
                 current_socket_value = current_value
+                if not current_value:
+                    current_value = current_socket_value
 
             self.fields.update(
                 InterfaceFormFieldsFactory(
