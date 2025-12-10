@@ -3,8 +3,6 @@ global.Uppy = Uppy;
 const {
     getDummyValue,
     preprocessDicomFile,
-    DicomDeidentifierPlugin,
-    _uidMap,
 } = require("../../../grandchallenge/uploads/static/js/dicom_deidentification");
 
 describe("getDummyValue", () => {
@@ -82,7 +80,7 @@ describe("preprocessDicomFile", () => {
 
     beforeEach(() => {
         global.GrandChallengeDICOMDeIdProcedure = {};
-        _uidMap.clear();
+        globalThis.uidMap.clear();
     });
 
     test("should throw an error if dcmjs is not available", async () => {
@@ -164,7 +162,7 @@ describe("preprocessDicomFile", () => {
         expect(newUID).not.toBe(originalUID);
 
         // Check consistency with a new file using the same original UID
-        expect(_uidMap.get(originalUID)).toBe(newUID);
+        expect(globalThis.uidMap.get(originalUID)).toBe(newUID);
         const file2 = createDicomFile({
             "00080018": { vr: "UI", Value: [originalUID] },
         });
@@ -182,8 +180,8 @@ describe("preprocessDicomFile", () => {
         const dataset3 = await getProcessedDataset(processedFile3);
         const newUID3 = dataset3["00080018"].Value[0];
         expect(newUID3).not.toBe(newUID);
-        expect(_uidMap.get(differentUID)).toBe(newUID3);
-        expect(_uidMap.size).toBe(2);
+        expect(globalThis.uidMap.get(differentUID)).toBe(newUID3);
+        expect(globalThis.uidMap.size).toBe(2);
     });
 
     test("should reject files with 'R' action", async () => {
@@ -258,7 +256,7 @@ describe("preprocessDicomFile", () => {
         const processedSequence = dataset["00540016"].Value;
 
         expect(processedSequence[0]["00081150"].Value[0]).toBe(
-            _uidMap.get("1.2.840.10008.5.1.4.1.1.6.1"),
+            globalThis.uidMap.get("1.2.840.10008.5.1.4.1.1.6.1"),
         );
     });
 
@@ -380,13 +378,13 @@ describe("DicomDeidentifierPlugin", () => {
         global.GrandChallengeDICOMDeIdProcedure = {};
 
         uppy = new Uppy.Core();
-        uppy.use(DicomDeidentifierPlugin);
+        uppy.use(globalThis.DicomDeidentifierPlugin);
         plugin = uppy.getPlugin("DicomDeidentifierPlugin");
     });
 
     afterEach(() => {
         uppy.close();
-        _uidMap.clear();
+        globalThis.uidMap.clear();
     });
 
     const createDicomFileBuffer = tags => {

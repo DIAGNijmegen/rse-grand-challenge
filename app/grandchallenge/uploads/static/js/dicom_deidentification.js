@@ -113,7 +113,7 @@ function getDummyValue(vr) {
     }
 }
 
-const uidMap = new Map(); // Map to store unique identifiers for UIDs
+globalThis.uidMap = globalThis.uidMap || new Map(); // Map to store unique identifiers for UIDs
 
 // Recursive de-identification for a dataset (object with DICOM tags)
 function deidentifyDataset(
@@ -228,18 +228,18 @@ function deidentifyDataset(
                 break;
             case "U":
                 if (tagValue) {
-                    if (!uidMap.has(tagValue)) {
-                        uidMap.set(
+                    if (!globalThis.uidMap.has(tagValue)) {
+                        globalThis.uidMap.set(
                             tagValue,
                             dcmjs.data.DicomMetaDictionary.uid(),
                         );
                     }
                     newDataset[tagKey] = {
                         ...dataset[tagKey],
-                        Value: [uidMap.get(tagValue)],
+                        Value: [globalThis.uidMap.get(tagValue)],
                     };
                     debugChanges[`${protocolTagKey} - ${name}`] =
-                        `CONSISTENTLY REPLACED value: "${tagValue}" with: "${uidMap.get(tagValue)}"`;
+                        `CONSISTENTLY REPLACED value: "${tagValue}" with: "${globalThis.uidMap.get(tagValue)}"`;
                 }
                 break;
             default:
@@ -332,52 +332,51 @@ async function preprocessDicomFile(file) {
     return new File([newBuffer], file.name, { type: file.type });
 }
 
-class DicomDeidentifierPlugin extends Uppy.Core.BasePlugin {
-    constructor(uppy, opts) {
-        super(uppy, opts);
+globalThis.DicomDeidentifierPlugin =
+    globalThis.DicomDeidentifierPlugin ||
+    class DicomDeidentifierPlugin extends Uppy.Core.BasePlugin {
+        constructor(uppy, opts) {
+            super(uppy, opts);
 
-        this.id = opts?.id || "DicomDeidentifierPlugin";
-        this.type = "modifier";
+            this.id = opts?.id || "DicomDeidentifierPlugin";
+            this.type = "modifier";
 
-        this.prepareUpload = this.prepareUpload.bind(this);
-    }
+            this.prepareUpload = this.prepareUpload.bind(this);
+        }
 
-    async prepareUpload(fileIDs) {
-        const promises = fileIDs.map(async fileID => {
-            const file = this.uppy.getFile(fileID);
+        async prepareUpload(fileIDs) {
+            const promises = fileIDs.map(async fileID => {
+                const file = this.uppy.getFile(fileID);
 
-            try {
-                const processedFile = await preprocessDicomFile(file.data);
-                this.uppy.setFileState(fileID, { data: processedFile });
-                return Promise.resolve();
-            } catch (err) {
-                this.uppy.removeFile(fileID);
-                window.alert(
-                    `Could not upload ${file.name} (${file.type}): ${err.message}`,
-                );
-                return Promise.reject(err);
-            }
-        });
+                try {
+                    const processedFile = await preprocessDicomFile(file.data);
+                    this.uppy.setFileState(fileID, { data: processedFile });
+                    return Promise.resolve();
+                } catch (err) {
+                    this.uppy.removeFile(fileID);
+                    window.alert(
+                        `Could not upload ${file.name} (${file.type}): ${err.message}`,
+                    );
+                    return Promise.reject(err);
+                }
+            });
 
-        return Promise.allSettled(promises);
-    }
+            return Promise.allSettled(promises);
+        }
 
-    install() {
-        this.uppy.addPreProcessor(this.prepareUpload);
-    }
+        install() {
+            this.uppy.addPreProcessor(this.prepareUpload);
+        }
 
-    uninstall() {
-        this.uppy.removePreProcessor(this.prepareUpload);
-    }
-}
+        uninstall() {
+            this.uppy.removePreProcessor(this.prepareUpload);
+        }
+    };
 
 // Export for testing in Node.js environment
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
         getDummyValue,
         preprocessDicomFile,
-        DicomDeidentifierPlugin,
-        // For testing only
-        _uidMap: uidMap,
     };
 }

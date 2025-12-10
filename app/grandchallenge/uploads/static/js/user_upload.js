@@ -64,7 +64,7 @@
         });
 
         if (widgetType === "dicom") {
-            uppy.use(DicomDeidentifierPlugin, {});
+            uppy.use(globalThis.DicomDeidentifierPlugin, {});
         }
 
         uppy.on("upload-success", (file, response) => {
