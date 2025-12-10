@@ -174,9 +174,11 @@ class InterfaceFormFieldsMixin:
                         except KeyError:
                             pass
                     else:
-                        if widget_key != key and widget_key in self.errors:
-                            # Ignore validation errors for search or upload
-                            # widget if it is not the selected choice.
+                        if (
+                            widget_type in ["IMAGE_SEARCH", "IMAGE_UPLOAD"]
+                            and widget_key in self.errors
+                        ):
+                            # Ignore errors if it is not the selected choice.
                             del self._errors[widget_key]
 
         cleaned_data.update(data_to_add)
