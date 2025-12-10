@@ -372,4 +372,4 @@ export class DicomDeidentifierPlugin extends Uppy.Core.BasePlugin {
 }
 
 // For testing only
-export { getDummyValue, preprocessDicomFile, uidMap };
+export { getDummyValue, preprocessDicomFile };
