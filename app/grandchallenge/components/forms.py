@@ -147,7 +147,7 @@ class InterfaceFormFieldsMixin:
         keys_to_remove = []
         data_to_add = {}
 
-        for key, choice in cleaned_data.items():
+        for key in cleaned_data.keys():
             if any(
                 [
                     key.startswith(flex_prefix + INTERFACE_FORM_FIELD_PREFIX)
@@ -159,6 +159,7 @@ class InterfaceFormFieldsMixin:
             if key.startswith(
                 "flexible_widget_choice" + INTERFACE_FORM_FIELD_PREFIX
             ):
+                choice = self[key].data
                 base_key = key[len("flexible_widget_choice") :]
                 widget_fields = {
                     "IMAGE_SELECTED": key,
