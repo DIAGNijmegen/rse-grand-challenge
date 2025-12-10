@@ -1,14 +1,13 @@
 const initChoiceWidgets = () => {
     const elements = document.querySelectorAll(
-        "select[id^='id___INTERFACE_FIELD__'][id$='_widget_choice']",
+        "select[id^='id_flexible_widget_choice__INTERFACE_FIELD__']",
     );
     for (const el of elements) {
-        const prefixedSocketSlug = el.id.replace(/_widget_choice$/, "");
         const searchWidget = document.getElementById(
-            `div_${prefixedSocketSlug}_search`,
+            `div_${el.id.replace(/^id_flexible_widget_choice/, "id_flexible_search")}`,
         );
         const uploadWidget = document.getElementById(
-            `div_${prefixedSocketSlug}_upload`,
+            `div_${el.id.replace(/^id_flexible_widget_choice/, "id_flexible_upload")}`,
         );
 
         if (!searchWidget || !uploadWidget) {

@@ -284,7 +284,7 @@ def test_dicom_upload_widget_prepopulated_value():
     fields = InterfaceFormFieldsFactory(
         interface=ci, user=user, current_socket_value=civ
     )
-    field = fields[f"{prefixed_interface_slug}_widget_choice"]
+    field = fields[f"flexible_widget_choice{prefixed_interface_slug}"]
     assert field.current_socket_value == civ
     assert field.clean("IMAGE_SELECTED") == civ
 
@@ -293,7 +293,7 @@ def test_dicom_upload_widget_prepopulated_value():
         field.clean("UNDEFINED")
 
     fields = InterfaceFormFieldsFactory(interface=ci, user=user)
-    field = fields[f"{prefixed_interface_slug}_widget_choice"]
+    field = fields[f"flexible_widget_choice{prefixed_interface_slug}"]
     assert field.current_socket_value is None
     with pytest.raises(ValidationError, match="Select a valid choice."):
         field.clean("IMAGE_SELECTED")

@@ -43,7 +43,11 @@ file_upload_text = (
 
 
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
-FLEXIBLE_WIDGET_SUFFIXES = ["widget_choice", "upload", "search"]
+FLEXIBLE_WIDGET_PREFIXES = [
+    "flexible_widget_choice",
+    "flexible_upload",
+    "flexible_search",
+]
 
 
 class InterfaceFormFieldsFactory:
@@ -96,16 +100,16 @@ class InterfaceFormFieldsFactory:
             )
             if interface.is_dicom_image_kind:
                 return {
-                    f"{prefixed_interface_slug}_widget_choice": ImageSourceChoiceField(
+                    f"flexible_widget_choice{prefixed_interface_slug}": ImageSourceChoiceField(
                         current_socket_value=current_socket_value,
                         **kwargs,
                     ),
-                    f"{prefixed_interface_slug}_upload": DICOMUploadField(
+                    f"flexible_upload{prefixed_interface_slug}": DICOMUploadField(
                         user=user,
                         label="",
                         required=False,
                     ),
-                    f"{prefixed_interface_slug}_search": ModelChoiceField(
+                    f"flexible_search{prefixed_interface_slug}": ModelChoiceField(
                         queryset=image_search_queryset,
                         label="",
                         required=False,
