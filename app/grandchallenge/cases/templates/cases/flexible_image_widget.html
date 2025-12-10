@@ -1,7 +1,7 @@
 {% load static %}
 {% load url %}
 
-<select class="select form-control"
+<select class="custom-select"
         name="widget-choice-{{ widget.name }}"
         id="widget-select-{{ widget.name }}"
         hx-get="{% url 'cases:select-image-widget' %}"
