@@ -20,7 +20,7 @@ def helpers():
     # Create a temporary directory and copy the template as a real Python module
     temp_dir = tempfile.mkdtemp()
     template_path = Path(
-        "app/grandchallenge/forge/templates/forge/partials/example_evaluation_method/helpers.py.template"
+        "grandchallenge/forge/templates/forge/partials/example_evaluation_method/helpers.py.template"
     )
     helpers_path = Path(temp_dir) / "helpers.py"
     shutil.copy(template_path, helpers_path)
