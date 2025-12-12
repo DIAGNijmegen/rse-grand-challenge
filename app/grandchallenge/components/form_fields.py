@@ -57,7 +57,7 @@ class InterfaceFormFieldFactory:
     def __new__(
         cls,
         *,
-        interface=None,
+        interface,
         user=None,
         required=True,
         initial=None,
@@ -87,6 +87,7 @@ class InterfaceFormFieldFactory:
             else:
                 return FlexibleImageField(
                     user=user,
+                    interface=interface,
                     initial=initial,
                     **kwargs,
                 )

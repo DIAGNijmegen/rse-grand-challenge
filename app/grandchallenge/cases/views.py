@@ -255,7 +255,7 @@ class RawImageUploadSessionViewSet(
 class ImageWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         prefixed_interface_slug = self.request.GET.get(
-            "prefixed-interface-slug"
+            "prefixed-interface-slug", ""
         )
         get_object_or_404(
             ComponentInterface,
@@ -346,6 +346,15 @@ class ImageSearchResultView(
     def get(self, request, *args, **kwargs):
         qs = self.get_queryset()
         prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
+        interface = get_object_or_404(
+            ComponentInterface,
+            slug=prefixed_interface_slug.replace(
+                INTERFACE_FORM_FIELD_PREFIX, ""
+            ),
+        )
+        qs = qs.filter(
+            dicom_image_set__isnull=not interface.is_dicom_image_kind
+        )
         query = request.GET.get("query-" + prefixed_interface_slug)
         if query:
             q = reduce(
