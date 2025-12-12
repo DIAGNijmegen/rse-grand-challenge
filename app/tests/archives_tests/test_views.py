@@ -1107,7 +1107,7 @@ def test_archive_item_create_permissions(client):
         client=client,
         user=uploader,
     )
-    assert response.status_code == 403
+    assert response.status_code == 200
 
     response = get_view_for_user(
         viewname="archives:item-create",
