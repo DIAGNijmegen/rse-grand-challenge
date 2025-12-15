@@ -99,6 +99,15 @@ from grandchallenge.workstation_configs.models import (
 logger = logging.getLogger(__name__)
 
 
+RESERVED_SOCKET_SLUGS = {
+    "predictions-csv-file",
+    "predictions-json-file",
+    "predictions-zip-file",
+    "metrics-json-file",
+    "results-json-file",
+}
+
+
 class InterfaceKindChoices(models.TextChoices):
     """Interface kind choices."""
 
@@ -2513,6 +2522,12 @@ class CIVForObjectMixin:
             pass
 
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
+
+        if ci.slug in RESERVED_SOCKET_SLUGS:
+            raise ValidationError(
+                f"Socket {ci.title!r} is reserved and cannot be used."
+            )
+
         current_civ = self.get_current_value_for_interface(
             interface=ci, user=user
         )

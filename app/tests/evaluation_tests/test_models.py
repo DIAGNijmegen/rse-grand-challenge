@@ -9,10 +9,10 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.timezone import now
 
-from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import (
+    RESERVED_SOCKET_SLUGS,
     CIVData,
     ComponentInterface,
     InterfaceKindChoices,

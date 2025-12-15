@@ -6,7 +6,7 @@ from dal import autocomplete
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
-from django.forms import HiddenInput, Media
+from django.forms import HiddenInput, Media, ValidationError
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -24,7 +24,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
@@ -35,6 +34,7 @@ from grandchallenge.components.form_fields import (
 )
 from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
 from grandchallenge.components.models import (
+    RESERVED_SOCKET_SLUGS,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKinds,
@@ -175,7 +175,12 @@ class MultipleCIVProcessingBaseView(
         raise NotImplementedError
 
     def form_valid(self, form):
-        form.process_object_data()
+        try:
+            form.process_object_data()
+        except ValidationError as e:
+            form.add_error(None, e)
+            return self.form_invalid(form)
+
         response = super().form_valid(form)
         return HttpResponse(
             response.url,
