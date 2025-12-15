@@ -2,6 +2,7 @@ import shutil
 import sys
 import tempfile
 import time
+from concurrent.futures import Future
 from functools import partial
 from multiprocessing import Process
 from pathlib import Path
@@ -168,9 +169,6 @@ def test_prediction_processing_canceling_processes_correctly(helpers):
         {"pk": "prediction2"},  # <- Should fail at this
         {"pk": "prediction3"},
         {"pk": "prediction4"},
-        {"pk": "prediction5"},
-        {"pk": "prediction6"},
-        {"pk": "prediction7"},
     ]
     with mock.patch.object(
         helpers,
@@ -186,3 +184,41 @@ def test_prediction_processing_canceling_processes_correctly(helpers):
         # Returning here on time is sufficient to ensure that things work as intended
         # Sanity: check that there is indeed only
         assert len(exc.value.predictions) == 1
+
+
+@pytest.mark.forge_integration
+def test_collect_errors(helpers):
+
+    future0 = Future()  # Finished no exception
+    future0.set_running_or_notify_cancel()
+    future0.set_result("foo")
+    assert future0.done()
+
+    future1 = Future()  # Finished with exception
+    future1.set_running_or_notify_cancel()
+    future1.set_exception(RuntimeError("Simulated failure"))
+    assert future1.done()
+
+    future2 = Future()  # Running
+    future2.set_running_or_notify_cancel()
+    assert future2.running()
+
+    future3 = Future()  # Canceled
+    future3.cancel()
+    assert future3.cancelled()
+
+    future4 = Future()  # Pending
+    assert not any([future4.done(), future4.running(), future4.cancelled()])
+
+    future_to_predictions = {
+        future0: {"pk": "prediction0"},
+        future1: {"pk": "prediction1"},
+        future2: {"pk": "prediction2"},
+        future3: {"pk": "prediction3"},
+        future4: {"pk": "prediction4"},
+    }
+
+    errors = {}
+    helpers._collect_errors(future_to_predictions, errors)
+
+    assert set(errors.keys()) == {"prediction1"}
