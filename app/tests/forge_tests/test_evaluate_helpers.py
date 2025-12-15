@@ -45,7 +45,7 @@ def working_process(p):
 
 
 def failing_process(*_):
-    raise RuntimeError("Stimulated Failing Process")
+    raise RuntimeError("Simulated Failing Process")
 
 
 def child_process():
