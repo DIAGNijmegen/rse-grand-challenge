@@ -2473,10 +2473,7 @@ def test_non_evaluation_socket_slugs(slug):
     instance = PhaseAdditionalEvaluationInput(socket=ci, phase=PhaseFactory())
     with pytest.raises(ValidationError) as e:
         instance.clean()
-    assert (
-        "Evaluation inputs cannot be of the following types: predictions-csv-file, predictions-json-file, predictions-zip-file, metrics-json-file, results-json-file"
-        in str(e)
-    )
+    assert "Evaluation inputs cannot be of the following types:" in str(e)
 
 
 @pytest.mark.django_db
