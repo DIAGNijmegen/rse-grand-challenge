@@ -322,7 +322,7 @@ def test_api_archive_item_reserved_sockets(
 
     assert response.status_code == 400
     assert (
-        "Socket 'Metrics JSON File' is reserved and cannot be used."
+        "Socket 'metrics-json-file' is reserved and cannot be used."
         in response.json()[0]
     )
     assert item.values.count() == 0
