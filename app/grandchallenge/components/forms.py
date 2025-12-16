@@ -288,8 +288,9 @@ class MultipleCIVForm(Form):
                 )
 
         try:
-            self.instance.validate_civ_data_objects_and_execute_linked_task(
-                civ_data_objects=civ_data_objects, user=self.user
+            self.instance.process_civ_data_objects_and_execute_linked_task(
+                civ_data_objects=self.cleaned_data["civ_data_objects"],
+                user=self.user,
             )
         except CIVNotEditableException as e:
             error_handler = self.instance.get_error_handler()
