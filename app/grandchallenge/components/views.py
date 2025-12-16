@@ -140,7 +140,12 @@ class ComponentInterfaceAutocomplete(
                 ComponentInterface.objects.all()
                 .filter(**extra_filter_kwargs)
                 .exclude(
-                    slug__in=obj.linked_component_interfaces.values("slug")
+                    slug__in={
+                        *obj.linked_component_interfaces.values_list(
+                            "slug", flat=True
+                        ),
+                        *RESERVED_SOCKET_SLUGS,
+                    }
                 )
                 .exclude(pk__in=self.forwarded.values())
             )

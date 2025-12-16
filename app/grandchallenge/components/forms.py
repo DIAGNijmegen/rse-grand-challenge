@@ -26,7 +26,11 @@ from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     InterfaceFormFieldFactory,
 )
-from grandchallenge.components.models import CIVData, ComponentInterface
+from grandchallenge.components.models import (
+    RESERVED_SOCKET_SLUGS,
+    CIVData,
+    ComponentInterface,
+)
 from grandchallenge.core.forms import SaveFormInitMixin, UserMixin
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.evaluation.models import Method
@@ -356,7 +360,12 @@ class SingleCIVForm(Form):
             ComponentInterface.objects.all()
             .filter(**socket_filter_kwargs)
             .exclude(
-                slug__in=base_obj.linked_component_interfaces.values("slug")
+                slug__in={
+                    *base_obj.linked_component_interfaces.values_list(
+                        "slug", flat=True
+                    ),
+                    *RESERVED_SOCKET_SLUGS,
+                }
             )
         )
 
