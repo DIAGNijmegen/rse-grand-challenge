@@ -6,6 +6,7 @@ import zipfile
 from pathlib import Path
 
 import black
+import isort
 from django.conf import settings
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
@@ -150,6 +151,9 @@ def copy_and_render(
                     rendered_content = rendered_content.replace("&#x27;", "'")
                     rendered_content = rendered_content.replace("&quot;", '"')
                     rendered_content = rendered_content.replace("&lt;", "<")
+
+                    # First apply isort, then black
+                    rendered_content = apply_isort(rendered_content)
                     rendered_content = apply_black(rendered_content)
                 else:
                     rendered_content = f"{rendered_content.strip()}\n"
@@ -181,6 +185,18 @@ def check_allowed_source(path):
             f"Only files under {FORGE_PARTIALS_PATH} are allowed "
             "to be copied or rendered"
         )
+
+
+def apply_isort(content):
+    # Format rendered Python code string using isort
+    result = isort.code(
+        content,
+        config=isort.Config(
+            profile="black",
+            float_to_top=True,
+        ),
+    )
+    return result
 
 
 def apply_black(content):

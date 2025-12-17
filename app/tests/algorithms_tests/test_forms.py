@@ -8,6 +8,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import (
+    AlgorithmAlgorithmInterfaceDeleteForm,
     AlgorithmForm,
     AlgorithmForPhaseForm,
     AlgorithmInterfaceForm,
@@ -20,6 +21,7 @@ from grandchallenge.algorithms.forms import (
 )
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmPermissionRequest,
     Job,
 )
@@ -1718,3 +1720,32 @@ class TestAlgorithmInterfaceForm:
         new_io = form.save()
 
         assert io == new_io
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "num_interfaces,expected_valid",
+    [
+        (1, False),
+        (2, True),
+        (3, True),
+    ],
+)
+def test_algorithm_algorithm_interface_delete_form(
+    num_interfaces, expected_valid
+):
+    algorithm = AlgorithmFactory()
+    algorithm.interfaces.set(
+        AlgorithmInterfaceFactory.create_batch(num_interfaces)
+    )
+
+    form = AlgorithmAlgorithmInterfaceDeleteForm(
+        instance=AlgorithmAlgorithmInterface.objects.filter(
+            algorithm=algorithm
+        ).first(),
+        data={},
+    )
+
+    assert form.is_valid() == expected_valid
+    if not expected_valid:
+        assert "Cannot delete the only algorithm interface" in str(form.errors)

@@ -1,5 +1,9 @@
 {% load remove_whitespace %}
 
+{% for error in form.non_field_errors %}
+    <div class="alert alert-danger">{{error}}</div>
+{% endfor %}
+
 <h2>Confirm Algorithm Interface Deletion</h2>
 <form action="" method="post">
     {% csrf_token %}

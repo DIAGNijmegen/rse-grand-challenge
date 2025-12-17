@@ -255,7 +255,7 @@ class RawImageUploadSessionViewSet(
 class ImageWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         prefixed_interface_slug = self.request.GET.get(
-            "prefixed-interface-slug"
+            "prefixed-interface-slug", ""
         )
         get_object_or_404(
             ComponentInterface,

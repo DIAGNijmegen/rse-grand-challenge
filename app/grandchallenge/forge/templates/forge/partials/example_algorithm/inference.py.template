@@ -25,15 +25,8 @@ from pathlib import Path
 import json
 import torch
 
-{% if object.algorithm_input_sockets|has_image_kind or object.algorithm_output_sockets|has_image_kind %}
-from glob import glob
+{% if object.algorithm_output_sockets|has_image_kind %}
 import numpy
-{% endif %}
-{% if object.algorithm_input_sockets|has_panimg_kind or object.algorithm_output_sockets|has_panimg_kind %}
-import SimpleITK
-{% endif %}
-{% if object.algorithm_input_sockets|has_dicom_image_kind or object.algorithm_output_sockets|has_dicom_image_kind %}
-import pydicom
 {% endif %}
 
 INPUT_PATH = Path("/input")
@@ -58,7 +51,7 @@ def run():
 def {{ interface_name }}_handler():
     # Read the input
     {% for socket in interface.inputs %}
-    {% if socket.is_dicom_image_set %}
+    {% if socket.is_dicom_image_kind %}
     input_{{ socket.slug|dash_to_underscore }} = load_dicom_image_set_as_array(
         location=INPUT_PATH / "{{ socket.relative_path }}",
     )
@@ -104,7 +97,7 @@ def {{ interface_name }}_handler():
             {% else %}
                 {{ socket.example_value }}
             {% endif %}
-        {% elif socket.is_panimg_kind %} numpy.eye(4, 2)
+        {% elif socket.is_image_kind %} numpy.eye(4, 2)
         {% elif socket.is_json_kind %} {"content": "should match the required format"}
         {% elif socket.is_file_kind %} "content: should match the required format"
         {% endif %}
@@ -115,6 +108,11 @@ def {{ interface_name }}_handler():
     {% for socket in interface.outputs %}
     {% if socket.is_panimg_kind %}
     write_array_as_image_file(
+        location=OUTPUT_PATH / "{{ socket.relative_path }}",
+        array=output_{{ socket.slug|dash_to_underscore }},
+    )
+    {% elif socket.is_dicom_image_kind %}
+    write_array_as_dicom_image_set(
         location=OUTPUT_PATH / "{{ socket.relative_path }}",
         array=output_{{ socket.slug|dash_to_underscore }},
     )
@@ -142,90 +140,34 @@ def get_interface_key():
     socket_slugs = [sv["socket"]["slug"] for sv in inputs]
     return tuple(sorted(socket_slugs))
 
-def load_json_file(*, location):
-    # Reads a json file
-    with open(location, 'r') as f:
-        return json.loads(f.read())
+{% include "forge/partials/functions/load_json.py.template" %}
 
 {% if object.algorithm_output_sockets|has_json_kind %}
-def write_json_file(*, location, content):
-    # Writes a json file
-    with open(location, 'w') as f:
-        f.write(json.dumps(content, indent=4))
+{% include "forge/partials/functions/write_json.py.template" %}
 {% endif %}
 
 {% if object.algorithm_input_sockets|has_panimg_kind %}
-def load_image_file_as_array(*, location):
-    # Use SimpleITK to read a file
-    input_files = glob(str(location / "*.tif")) + glob(str(location / "*.tiff")) + glob(str(location / "*.mha"))
-    result = SimpleITK.ReadImage(input_files[0])
-
-    # Convert it to a Numpy array
-    return SimpleITK.GetArrayFromImage(result)
+{% include "forge/partials/functions/load_image.py.template" %}
 {% endif %}
-
 
 {% if object.algorithm_input_sockets|has_dicom_image_kind %}
-def load_dicom_image_set_as_array(*, location):
-    # Get all DICOM files in the directory
-    dicom_files = glob(str(location / "*.dcm"))
-
-    # Read all slices
-    slices = [pydicom.dcmread(f, force=True) for f in dicom_files]
-    decompressed_slices = [slice.decompress() for slice in slices]
-
-    # Extracting pixel-data is non-trivial:
-    # - Slices need to be sorted in case of a 3D volume or 4D volume
-    # - Pixel data will need to be decompressed, supporting different transfer syntaxes
-    # - Any required transformations need to be performed (e.g. scaling via RescaleIntercept/RescaleSlope)
-    # - ... et cetera
-    # Please refer to Pydicom's documentation: https://pydicom.github.io/pydicom/1.1/pydicom_user_guide.html
-
-    # Here we'll just return a null array with an approximately correct shape
-    if len(dicom_files) > 2:
-        result = numpy.array([[[0]]]) # 3D
-    else:
-        result = numpy.array([[0]]) # 2D
-
-    return result
+{% include "forge/partials/functions/load_dicom_image.py.template" %}
 {% endif %}
-
 
 {% if object.algorithm_output_sockets|has_panimg_kind %}
-def write_array_as_image_file(*, location, array):
-    location.mkdir(parents=True, exist_ok=True)
-
-    # You may need to change the suffix to .tif to match the expected output
-    suffix = ".mha"
-
-    image = SimpleITK.GetImageFromArray(array)
-    SimpleITK.WriteImage(
-        image,
-        location / f"output{suffix}",
-        useCompression=True,
-    )
+{% include "forge/partials/functions/write_image.py.template" %}
 {% endif %}
 
+{% if object.algorithm_output_sockets|has_dicom_image_kind %}
+{% include "forge/partials/functions/write_dicom_image.py.template" %}
+{% endif %}
 
 {% if object.algorithm_input_sockets|has_file_kind %}
-# Note to the developer:
-#   the following function is very generic and should likely
-#   be adopted to something more specific for your algorithm/challenge
-def load_file(*, location):
-    # Reads the content of a file
-    with open(location) as f:
-        return f.read()
+{% include "forge/partials/functions/load_file.py.template" %}
 {% endif %}
 
-
 {% if object.algorithm_output_sockets|has_file_kind %}
-# Note to the developer:
-#   the following function is very generic and should likely
-#   be adopted to something more specific for your algorithm/challenge
-def write_file(*, location, content):
-    # Write the content to a file
-    with open(location, 'w') as f:
-        return f.write(content)
+{% include "forge/partials/functions/write_file.py.template" %}
 {% endif %}
 
 

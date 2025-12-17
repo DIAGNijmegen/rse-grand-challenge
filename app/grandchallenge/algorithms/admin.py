@@ -35,13 +35,14 @@ from grandchallenge.core.admin import (
 )
 from grandchallenge.core.templatetags.costs import millicents_to_euro
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.utilization.models import JobUtilization
 
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    readonly_fields = ("public",)
+    readonly_fields = ("public", "algorithm_interfaces_configuration_link")
     list_display = (
         "title",
         "created",
@@ -78,6 +79,16 @@ class AlgorithmAdmin(admin.ModelAdmin):
 
         self.message_user(
             request, f"{len(queryset)} algorithm(s) unpublished."
+        )
+
+    @staticmethod
+    def algorithm_interfaces_configuration_link(obj):
+        return format_html(
+            "<a target=_blank href='{url}'>🔗</a>",
+            url=reverse(
+                "algorithms:interface-list",
+                kwargs={"slug": obj.slug},
+            ),
         )
 
 
@@ -304,7 +315,6 @@ class AlgorithmInterfaceAdmin(admin.ModelAdmin):
 class AlgorithmAlgorithmInterfaceAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
-        "interface",
         "algorithm",
     )
     list_filter = ("algorithm",)
@@ -315,6 +325,10 @@ class AlgorithmAlgorithmInterfaceAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         # through table entries should only be updated through the UI
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # through table entries should only be deleted through the UI
         return False
 
 

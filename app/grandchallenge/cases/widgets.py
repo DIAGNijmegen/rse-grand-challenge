@@ -13,8 +13,9 @@ from django.forms import (
     MultiWidget,
     Script,
     Select,
+    TextInput,
 )
-from django.forms.widgets import ChoiceWidget, TextInput
+from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -168,12 +169,15 @@ class FlexibleImageField(MultiValueField):
     def __init__(  # noqa C901
         self,
         *args,
+        interface,
         user=None,
         initial=None,
         **kwargs,
     ):
         image_search_queryset = filter_by_permission(
-            queryset=Image.objects.all(),
+            queryset=Image.objects.filter(
+                dicom_image_set__isnull=not interface.is_dicom_image_kind
+            ),
             user=user,
             codename="view_image",
         )

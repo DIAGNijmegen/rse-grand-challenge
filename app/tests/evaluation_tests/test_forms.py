@@ -26,10 +26,16 @@ from grandchallenge.evaluation.forms import (
     EvaluationForm,
     EvaluationGroundTruthForm,
     EvaluationGroundTruthVersionManagementForm,
+    PhaseAlgorithmInterfaceDeleteForm,
     PhaseUpdateForm,
     SubmissionForm,
 )
-from grandchallenge.evaluation.models import Evaluation, Phase, Submission
+from grandchallenge.evaluation.models import (
+    Evaluation,
+    Phase,
+    PhaseAlgorithmInterface,
+    Submission,
+)
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import (
     PaymentStatusChoices,
@@ -1537,3 +1543,33 @@ def test_reschedule_evaluation_not_possible_for_external_evaluations():
 
     assert not form.is_valid()
     assert "You cannot re-evaluate an external evaluation." in str(form.errors)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "num_interfaces,expected_valid,submission_kind",
+    [
+        (1, False, SubmissionKindChoices.ALGORITHM),
+        (2, True, SubmissionKindChoices.ALGORITHM),
+        (3, True, SubmissionKindChoices.ALGORITHM),
+        (1, True, SubmissionKindChoices.CSV),
+        (2, True, SubmissionKindChoices.CSV),
+        (3, True, SubmissionKindChoices.CSV),
+    ],
+)
+def test_phase_algorithm_interface_delete_form(
+    num_interfaces, expected_valid, submission_kind
+):
+    phase = PhaseFactory(submission_kind=submission_kind)
+    phase.algorithm_interfaces.set(
+        AlgorithmInterfaceFactory.create_batch(size=num_interfaces)
+    )
+
+    form = PhaseAlgorithmInterfaceDeleteForm(
+        instance=PhaseAlgorithmInterface.objects.filter(phase=phase).first(),
+        data={},
+    )
+
+    assert form.is_valid() == expected_valid
+    if not expected_valid:
+        assert "Cannot delete the only phase interface" in str(form.errors)

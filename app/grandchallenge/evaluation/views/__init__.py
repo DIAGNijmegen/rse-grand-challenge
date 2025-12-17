@@ -61,6 +61,7 @@ from grandchallenge.evaluation.forms import (
     EvaluationGroundTruthVersionManagementForm,
     MethodForm,
     MethodUpdateForm,
+    PhaseAlgorithmInterfaceDeleteForm,
     PhaseCreateForm,
     PhaseUpdateForm,
     SubmissionForm,
@@ -1347,7 +1348,7 @@ class PhaseArchiveInfo(
 
 
 class AlgorithmInterfaceForPhaseMixin:
-    @property
+    @cached_property
     def phase(self):
         return get_object_or_404(
             Phase,
@@ -1448,8 +1449,9 @@ class AlgorithmInterfaceForPhaseDelete(
     DeleteView,
 ):
     model = PhaseAlgorithmInterface
+    form_class = PhaseAlgorithmInterfaceDeleteForm
 
-    @property
+    @cached_property
     def algorithm_interface(self):
         return get_object_or_404(
             klass=PhaseAlgorithmInterface,
@@ -1459,6 +1461,15 @@ class AlgorithmInterfaceForPhaseDelete(
 
     def get_object(self, queryset=None):
         return self.algorithm_interface
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "instance": self.algorithm_interface,
+            }
+        )
+        return kwargs
 
     def get_success_url(self):
         return reverse(

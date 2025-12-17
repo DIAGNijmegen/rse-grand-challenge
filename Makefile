@@ -49,7 +49,7 @@ build_web_dist:
 		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
 		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
 		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
-		--network grand-challenge_default \
+		--network rse-grand-challenge_default \
 		--target dist \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest \

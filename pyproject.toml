@@ -64,6 +64,7 @@ dependencies = [
     "django-pictures",
     # Requirements for forge
     "black",
+    "isort",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"

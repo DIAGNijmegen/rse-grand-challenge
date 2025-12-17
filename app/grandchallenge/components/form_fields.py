@@ -125,6 +125,7 @@ class InterfaceFormFieldsFactory:
                 return {
                     prefixed_interface_slug: FlexibleImageField(
                         user=user,
+                        interface=interface,
                         initial=initial,
                         **kwargs,
                     )
