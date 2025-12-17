@@ -78,23 +78,23 @@ def socket_to_socket_value(socket):
             image={
                 "name": "the_original_filename_of_the_file_that_was_uploaded_or_image_set",
             },
-            socket=socket,
+            interface=socket,
         )
     elif socket.is_file_kind:
         return ForgeSocketValue(
             file=f"https://grand-challenge.org/media/some-link/{socket.relative_path}",
-            socket=socket,
+            interface=socket,
         )
     elif socket.is_json_kind:
         if socket.has_example_value:
             return ForgeSocketValue(
                 value=socket.example_value,
-                socket=socket,
+                interface=socket,
             )
         else:
             return ForgeSocketValue(
                 value={"some_key": "some_value"},
-                socket=socket,
+                interface=socket,
             )
     else:
         raise NotImplementedError

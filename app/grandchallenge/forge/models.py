@@ -90,7 +90,7 @@ class ForgeAlgorithm(ForgeAlgorithmContext, BaseModel):
 
 
 class ForgeSocketValue(BaseModel):
-    socket: ForgeSocket
+    interface: ForgeSocket
     file: str | None = None
     image: dict[str, str] | None = None
     value: Any = None

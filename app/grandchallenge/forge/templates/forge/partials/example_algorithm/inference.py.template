@@ -137,7 +137,7 @@ def get_interface_key():
     inputs = load_json_file(
         location=INPUT_PATH / "inputs.json",
     )
-    socket_slugs = [sv["socket"]["slug"] for sv in inputs]
+    socket_slugs = [sv["interface"]["slug"] for sv in inputs]
     return tuple(sorted(socket_slugs))
 
 {% include "forge/partials/functions/load_json.py.template" %}

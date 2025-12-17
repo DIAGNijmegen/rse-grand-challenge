@@ -243,8 +243,8 @@ def generate_prediction_files(*, output_zip_file, target_zpath, predictions):
                 output_zip_file=output_zip_file,
                 target_zpath=prediction_zpath
                 / "output"
-                / socket_value.socket.relative_path,
-                socket=socket_value.socket,
+                / socket_value.interface.relative_path,
+                socket=socket_value.interface,
             )
 
 
