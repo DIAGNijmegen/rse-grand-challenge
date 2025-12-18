@@ -316,6 +316,8 @@ class SortedCIVSerializer(serializers.ListSerializer):
 class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
     # Serializes images in place rather than with hyperlinks for internal usage
     image = SimpleImageSerializer(required=False)
+    # Keep interface field for legacy support. Legacy algorithms and
+    # evaluations expect this key in inputs.json.
     interface = ComponentInterfaceSerializer()
     socket = ComponentInterfaceSerializer(source="interface")
 
