@@ -45,11 +45,11 @@ def test_interface_form_field_image_queryset_filter():
     upload1.status = UserUpload.StatusChoices.COMPLETED
     upload1.save()
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
-    field = (
-        InterfaceFormFieldsMixin()
-        .get_fields_for_interface(interface=ci, user=user)
-        .popitem()[1]
+    fields = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
     )
+    assert len(fields) == 1
+    field = fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"]
     assert im1 in field.fields[0].queryset.all()
     assert im2 not in field.fields[0].queryset.all()
     assert upload1 in field.fields[1].queryset.all()
