@@ -276,16 +276,34 @@ class MultipleCIVForm(Form):
 
         return interface_slug
 
-    def process_object_data(self):
-        civ_data_objects = []
-        for key, value in self.cleaned_data.items():
+    def clean(self):
+        cleaned_data = super().clean()
+
+        keys_to_remove = []
+        inputs = []
+
+        for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
-                civ_data_objects.append(
+                keys_to_remove.append(key)
+                inputs.append(
                     CIVData(
                         interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
                         value=value,
                     )
                 )
+
+        for key in keys_to_remove:
+            cleaned_data.pop(key)
+
+        # Mark as CIV data and not base-object data
+        cleaned_data[INTERFACE_FORM_FIELD_PREFIX + "civ_data_objects"] = inputs
+
+        return cleaned_data
+
+    def process_object_data(self):
+        civ_data_objects = self.cleaned_data.pop(
+            INTERFACE_FORM_FIELD_PREFIX + "civ_data_objects"
+        )
 
         try:
             self.instance.validate_civ_data_objects_and_execute_linked_task(

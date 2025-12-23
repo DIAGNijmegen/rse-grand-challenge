@@ -2359,6 +2359,7 @@ class CIVData:
         self._dicom_upload_with_name = None
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
+        self.interface = ci
 
         if ci.super_kind == ci.SuperKind.VALUE:
             self._init_json_civ_data()
@@ -2424,6 +2425,11 @@ class CIVData:
             self.dicom_upload_with_name,
             self.file_civ,
         ]
+
+        if self.interface_slug in RESERVED_SOCKET_SLUGS:
+            raise ValidationError(
+                f"Socket {self.interface.title!r} is reserved and cannot be used."
+            )
 
         # Ensure at most one of these properties is set
         # None can be an acceptable value, so 0 is ok
@@ -2521,12 +2527,7 @@ class CIVForObjectMixin:
         except AttributeError:
             pass
 
-        ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
-
-        if ci.slug in RESERVED_SOCKET_SLUGS:
-            raise ValidationError(
-                f"Socket {ci.title!r} is reserved and cannot be used."
-            )
+        ci = civ_data.interface
 
         current_civ = self.get_current_value_for_interface(
             interface=ci, user=user

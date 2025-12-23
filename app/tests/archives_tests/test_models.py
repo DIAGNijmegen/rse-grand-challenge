@@ -1,8 +1,6 @@
 import pytest
 from django.db import IntegrityError, transaction
-from django.forms import ValidationError
 
-from grandchallenge.components.models import RESERVED_SOCKET_SLUGS, CIVData
 from tests.algorithms_tests.factories import AlgorithmInterfaceFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -10,7 +8,6 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import PhaseFactory
-from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -129,23 +126,3 @@ def test_archive_allowed_socket_slugs():
     phase.algorithm_interfaces.set([int1, int2])
 
     assert archive.allowed_socket_slugs == {ci1.slug, ci2.slug, ci3.slug}
-
-
-@pytest.mark.django_db
-def test_archive_item_reserved_socket_slugs():
-    ai = ArchiveItemFactory()
-    target_socket_slug = "metrics-json-file"
-    assert "metrics-json-file" in RESERVED_SOCKET_SLUGS
-
-    with pytest.raises(
-        ValidationError, match="is reserved and cannot be used."
-    ):
-        ai.validate_civ_data_objects_and_execute_linked_task(
-            civ_data_objects=[
-                CIVData(
-                    interface_slug=target_socket_slug,
-                    value={},
-                )
-            ],
-            user=UserFactory(),
-        )

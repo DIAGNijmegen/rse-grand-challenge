@@ -6,7 +6,7 @@ from dal import autocomplete
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
-from django.forms import HiddenInput, Media, ValidationError
+from django.forms import HiddenInput, Media
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -180,12 +180,7 @@ class MultipleCIVProcessingBaseView(
         raise NotImplementedError
 
     def form_valid(self, form):
-        try:
-            form.process_object_data()
-        except ValidationError as e:
-            form.add_error(None, e)
-            return self.form_invalid(form)
-
+        form.process_object_data()
         response = super().form_valid(form)
         return HttpResponse(
             response.url,

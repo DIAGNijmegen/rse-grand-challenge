@@ -379,7 +379,7 @@ class CIVSetPostSerializerMixin:
                 user=request.user,
             )
             logger.error(e, exc_info=True)
-        except (CINotAllowedException, ValidationError) as e:
+        except CINotAllowedException as e:
             raise DRFValidationError(e)
 
         if not self.partial:
