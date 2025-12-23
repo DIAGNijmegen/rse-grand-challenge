@@ -10,11 +10,10 @@ from grandchallenge.cases.widgets import (
     DICOMUploadField,
     DICOMUploadWithName,
     FlexibleImageField,
+    ImageSourceChoiceField,
+    ImageWidgetChoices,
 )
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormFieldFactory,
-)
+from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests.factories import (
@@ -202,26 +201,24 @@ def test_flexible_image_widget_prepopulated_value():
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
 
-    field = InterfaceFormFieldFactory(
-        interface=ci, user=user_with_perm, initial=civ
+    field = FlexibleImageField(user=user_with_perm, interface=ci, initial=civ)
+    assert field.widget.attrs["current_value"] == [civ.image]
+    assert field.initial == civ.image.pk
+
+    field = FlexibleImageField(
+        user=user_with_perm, interface=ci, initial=civ.image.pk
     )
     assert field.widget.attrs["current_value"] == [civ.image]
     assert field.initial == civ.image.pk
 
-    field = InterfaceFormFieldFactory(
-        interface=ci, user=user_with_perm, initial=civ.image.pk
-    )
-    assert field.widget.attrs["current_value"] == [civ.image]
-    assert field.initial == civ.image.pk
-
-    field = InterfaceFormFieldFactory(
-        interface=ci, user=user_without_perm, initial=civ
+    field = FlexibleImageField(
+        user=user_without_perm, interface=ci, initial=civ
     )
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
 
-    field = InterfaceFormFieldFactory(
-        interface=ci, user=user_without_perm, initial=civ.image.pk
+    field = FlexibleImageField(
+        user=user_without_perm, interface=ci, initial=civ.image.pk
     )
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
@@ -305,9 +302,7 @@ def test_dicom_upload_widget_prepopulated_value():
     )
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
 
-    field = InterfaceFormFieldFactory(
-        interface=ci, user=user_with_perm, initial=civ
-    )
+    field = DICOMUploadField(user=user_with_perm, initial=civ)
     assert field.widget.attrs["current_value"] == civ.image
     assert field.initial.name == civ.image.name
     assert field.initial.user_uploads == [
@@ -315,8 +310,41 @@ def test_dicom_upload_widget_prepopulated_value():
         for upload in civ.image.dicom_image_set.dicom_image_set_upload.user_uploads.all()
     ]
 
-    field = InterfaceFormFieldFactory(
-        interface=ci, user=user_without_perm, initial=civ
-    )
+    field = DICOMUploadField(user=user_without_perm, initial=civ)
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
+
+
+@pytest.mark.django_db
+def test_image_source_choice_widget_prepopulated_value():
+    im = ImageFactory(
+        name="test_image",
+        dicom_image_set=DICOMImageSetFactory(),
+    )
+    ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.DICOM_IMAGE_SET
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
+
+    field = ImageSourceChoiceField(current_socket_value=civ)
+
+    assert field.current_socket_value == civ
+    assert field.choices == [
+        ("IMAGE_SELECTED", "test_image"),
+        ("IMAGE_SEARCH", "Select an existing image"),
+        ("IMAGE_UPLOAD", "Upload a new image"),
+    ]
+    assert field.clean(ImageWidgetChoices.IMAGE_SELECTED.value) == im
+
+    field = ImageSourceChoiceField()
+
+    assert field.choices == [
+        ("", "Choose data source..."),
+        ("IMAGE_SEARCH", "Select an existing image"),
+        ("IMAGE_UPLOAD", "Upload a new image"),
+    ]
+    assert field.current_socket_value is None
+    with pytest.raises(ValidationError, match="Select a valid choice."):
+        field.clean(ImageWidgetChoices.IMAGE_SELECTED.value)
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(ImageWidgetChoices.UNDEFINED.value)

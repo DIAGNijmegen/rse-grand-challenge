@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
@@ -193,7 +193,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.value,
             "prefixed-interface-slug": ci.slug,
         },
     )
@@ -204,7 +204,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.value,
             "prefixed-interface-slug": ci.slug,
         },
     )
@@ -215,7 +215,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.value,
             "prefixed-interface-slug": ci.slug,
         },
     )
