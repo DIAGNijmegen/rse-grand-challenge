@@ -21,9 +21,8 @@
     </p>
 
     <p>
-        The email address that you provide here will be only be used once to verify your identity,
-        and will not be used for any further communications. This only applies if it is different than
-        your primary email address.
+        The email address that you provide, if different from your current, will be only be used once to verify your identity,
+        and will not be used for any further communications.
     </p>
 
     <p class="alert alert-warning">
@@ -48,11 +47,10 @@
     </fieldset>
 
     <p>
-        You must provide your full name. The affiliation you indicate should match the email you use for verification below.
-    </p>
-
-    <p>
-        If you would like to update this information, please <a href="{% url 'profile-update' %}">edit your profile</a> before making a verification request.
+        You must provide your full name. If you would like to update this information, please <a href="{% url 'profile-update' %}">edit your profile</a>
+        before making a verification request. The affiliation you indicate should match the email you use for verification below.
+        If you instead would like to change your email address, you can <a href="{% url 'account_email' %}">edit your current email address</a>
+        before making a verification request.
     </p>
 
     {% crispy form %}
