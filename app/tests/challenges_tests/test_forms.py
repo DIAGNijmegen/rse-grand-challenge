@@ -62,6 +62,7 @@ def test_challenge_request_budget_fields_required():
         "algorithm_inputs": "foo",
         "algorithm_outputs": "foo",
         "average_size_of_test_case_in_mb": 1,
+        "average_size_of_prediction_in_mb": 1,
         "inference_time_limit_in_minutes": 11,
         "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
         "algorithm_maximum_settable_memory_gb": 32,
