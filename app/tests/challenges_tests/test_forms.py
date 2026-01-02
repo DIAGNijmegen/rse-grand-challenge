@@ -61,14 +61,15 @@ def test_challenge_request_budget_fields_required():
         "challenge_fee_agreement": True,
         "algorithm_inputs": "foo",
         "algorithm_outputs": "foo",
-        "average_size_of_test_image_in_mb": 1,
+        "average_size_of_test_case_in_mb": 1,
+        "average_size_of_prediction_in_mb": 1,
         "inference_time_limit_in_minutes": 11,
         "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
         "algorithm_maximum_settable_memory_gb": 32,
         "phase_1_number_of_submissions_per_team": 1,
         "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 1,
-        "phase_2_number_of_test_images": 1,
+        "phase_1_number_of_test_cases": 1,
+        "phase_2_number_of_test_cases": 1,
     }
     form2 = ChallengeRequestForm(data=data2, creator=user)
     assert form2.is_valid()
@@ -94,11 +95,12 @@ def test_budget_update_form():
     # all budget fields need to be filled
     data = {
         "expected_number_of_teams": 100,
-        "average_size_of_test_image_in_mb": 10,
+        "average_size_of_test_case_in_mb": 10,
+        "average_size_of_prediction_in_mb": 10,
         "phase_1_number_of_submissions_per_team": 10,
         "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 100,
-        "phase_2_number_of_test_images": 500,
+        "phase_1_number_of_test_cases": 100,
+        "phase_2_number_of_test_cases": 500,
         "number_of_tasks": 1,
     }
     form = ChallengeRequestBudgetUpdateForm(
@@ -116,11 +118,12 @@ def test_budget_update_form():
             "T4",
         ],
         "algorithm_maximum_settable_memory_gb": 32,
-        "average_size_of_test_image_in_mb": 10,
+        "average_size_of_test_case_in_mb": 10,
+        "average_size_of_prediction_in_mb": 10,
         "phase_1_number_of_submissions_per_team": 10,
         "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 100,
-        "phase_2_number_of_test_images": 500,
+        "phase_1_number_of_test_cases": 100,
+        "phase_2_number_of_test_cases": 500,
         "number_of_tasks": 1,
     }
     form2 = ChallengeRequestBudgetUpdateForm(

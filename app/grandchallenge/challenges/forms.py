@@ -135,11 +135,11 @@ general_information_items_2 = (
 )
 phase_1_items = (
     "phase_1_number_of_submissions_per_team",
-    "phase_1_number_of_test_images",
+    "phase_1_number_of_test_cases",
 )
 phase_2_items = (
     "phase_2_number_of_submissions_per_team",
-    "phase_2_number_of_test_images",
+    "phase_2_number_of_test_cases",
 )
 structured_challenge_submission_help_text = (
     "If you have uploaded a PDF or "
@@ -175,7 +175,8 @@ class ChallengeRequestForm(forms.ModelForm):
             *general_information_items_2,
             "expected_number_of_teams",
             "number_of_tasks",
-            "average_size_of_test_image_in_mb",
+            "average_size_of_test_case_in_mb",
+            "average_size_of_prediction_in_mb",
             "inference_time_limit_in_minutes",
             "algorithm_selectable_gpu_type_choices",
             "algorithm_maximum_settable_memory_gb",
@@ -253,7 +254,7 @@ class ChallengeRequestForm(forms.ModelForm):
                 "If your challenge has multiple tasks, we multiply "
                 "the phase 1 and 2 cost estimates by the number of tasks. "
                 "For that to work, please provide the average number of "
-                "test images and the average number of submissions across "
+                "test cases and the average number of submissions across "
                 "tasks for the two phases below. For examples check "
                 "<a href='https://grand-challenge.org/documentation/"
                 "create-your-own-challenge/'>here</a>."
@@ -267,7 +268,7 @@ class ChallengeRequestForm(forms.ModelForm):
             "inference_time_limit_in_minutes": (
                 "The average time that you expect an algorithm job to take in minutes. "
                 "This time estimate should account for everything that needs to happen "
-                "for an algorithm container to process <u>one single image, including "
+                "for an algorithm container to process <u>one single case, including "
                 "model loading, i/o, preprocessing and inference.</u>"
             ),
             "data_license": (
@@ -278,21 +279,26 @@ class ChallengeRequestForm(forms.ModelForm):
                 "data used to evaluate algorithm submissions. Read more about this <a href='"
                 "https://grand-challenge.org/documentation/data-storage/'>here</a>."
             ),
-            "phase_1_number_of_test_images": (
-                "Number of test images for this phase. If you're <a href="
+            "phase_1_number_of_test_cases": (
+                "Number of test cases for this phase. If you're <a href="
                 "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-                "bundling images</a>, enter the number of batches (not the number of single images)."
+                "bundling cases</a>, enter the number of batches (not the number of single cases)."
             ),
-            "phase_2_number_of_test_images": (
-                "Number of test images for this phase. If you're <a href="
+            "phase_2_number_of_test_cases": (
+                "Number of test cases for this phase. If you're <a href="
                 "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-                "bundling images</a>, enter the number of batches (not the number of single images). "
+                "bundling cases</a>, enter the number of batches (not the number of single cases). "
                 "Enter 0 here if you only have one phase."
             ),
-            "average_size_of_test_image_in_mb": (
-                "Average size of test image in MB. If you're <a href="
+            "average_size_of_test_case_in_mb": (
+                "Average size of a test case in MB. If you're <a href="
                 "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-                "bundling images</a>, provide the size of the batch (not the size of a single image)."
+                "bundling cases</a>, provide the size of the batch (not the size of a single case)."
+            ),
+            "average_size_of_prediction_in_mb": (
+                "Average size of a prediction in MB. If you're <a href="
+                "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
+                "bundling cases</a>, provide the size of the batch (not the size of a single case)."
             ),
             "phase_1_number_of_submissions_per_team": (
                 "How many submissions do you expect per team to this phase? "
@@ -403,7 +409,8 @@ class ChallengeRequestForm(forms.ModelForm):
                     ),
                     "expected_number_of_teams",
                     "number_of_tasks",
-                    "average_size_of_test_image_in_mb",
+                    "average_size_of_test_case_in_mb",
+                    "average_size_of_prediction_in_mb",
                     "inference_time_limit_in_minutes",
                     "algorithm_selectable_gpu_type_choices",
                     "algorithm_maximum_settable_memory_gb",
@@ -413,7 +420,7 @@ class ChallengeRequestForm(forms.ModelForm):
                                 "<br><p>Challenges usually consist of 2 phases: "
                                 "a <b>preliminary debug phase</b>, and "
                                 "a <b>final test phase</b>. "
-                                "The number of test images used for these "
+                                "The number of test cases used for these "
                                 "phases and often the amount of times that "
                                 "users can submit to them differs, which is "
                                 "why we ask for separate estimates for the two "
@@ -542,11 +549,12 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             "inference_time_limit_in_minutes",
             "algorithm_selectable_gpu_type_choices",
             "algorithm_maximum_settable_memory_gb",
-            "average_size_of_test_image_in_mb",
+            "average_size_of_test_case_in_mb",
+            "average_size_of_prediction_in_mb",
             "phase_1_number_of_submissions_per_team",
-            "phase_1_number_of_test_images",
+            "phase_1_number_of_test_cases",
             "phase_2_number_of_submissions_per_team",
-            "phase_2_number_of_test_images",
+            "phase_2_number_of_test_cases",
         )
         labels = {
             "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
@@ -558,7 +566,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             "inference_time_limit_in_minutes": (
                 "The average time that you expect an algorithm job to take in minutes. "
                 "This time estimate should account for everything that needs to happen "
-                "for an algorithm container to process <u>one single image, including "
+                "for an algorithm container to process <u>one single case, including "
                 "model loading, i/o, preprocessing and inference.</u>"
             ),
         }

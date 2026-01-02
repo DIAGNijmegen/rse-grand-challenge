@@ -120,11 +120,12 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
     )
     expected_number_of_teams = 10
     inference_time_limit_in_minutes = 10
-    average_size_of_test_image_in_mb = 10
+    average_size_of_test_case_in_mb = 10
+    average_size_of_prediction_in_mb = 0
     phase_1_number_of_submissions_per_team = 10
     phase_2_number_of_submissions_per_team = 0
-    phase_1_number_of_test_images = 100
-    phase_2_number_of_test_images = 0
+    phase_1_number_of_test_cases = 100
+    phase_2_number_of_test_cases = 0
     number_of_tasks = 1
     structured_challenge_submission_doi = "10.5281/zenodo.6362337"
 

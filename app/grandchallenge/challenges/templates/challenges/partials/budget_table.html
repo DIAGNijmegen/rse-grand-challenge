@@ -44,10 +44,10 @@ Based on the following information provided by the challenge requester:
         This is an unusually high number of total submissions (more than 500). Reconsider the number of submissions for each phase.
     </div>
 {% endif %}
-{% if object.phase_1_number_of_test_images > 1000 or object.phase_2_number_of_test_images > 1000 %}
+{% if object.phase_1_number_of_test_cases > 1000 or object.phase_2_number_of_test_cases > 1000 %}
     <div class="alert alert-warning">
         <i class="fa fa-exclamation-triangle"></i>
-        The user specified more than 1000 images in one or both phases. Grand Challenge starts one algorithm job per image. Consider batching them to limit costs and overhead.
+        The user specified more than 1000 cases in one or both phases. Grand Challenge starts one algorithm job per case. Consider batching them to limit costs and overhead.
     </div>
 {% endif %}
 
@@ -118,7 +118,7 @@ Based on the following information provided by the challenge requester:
             {% for phase in object.costs_for_phases %}
                 <tr>
                     <td>Compute {{ phase.name }}</td>
-                    <td>{{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams times {{ phase.number_of_test_images }} images times {{ object.inference_time_limit_in_minutes }} minutes average job time per image</td>
+                    <td>{{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams times {{ phase.number_of_test_cases }} cases times {{ object.inference_time_limit_in_minutes }} minutes average job time per case</td>
                     <td class="text-right">{{ object.compute_costs_euros_per_hour|euro }}</td>
                     <td>{{ phase.compute_time|total_hours|floatformat }}</td>
                     <td>Hours</td>
@@ -126,7 +126,7 @@ Based on the following information provided by the challenge requester:
                 </tr>
                 <tr>
                     <td>Data storage {{ phase.name }}</td>
-                    <td>{{ phase.number_of_test_images }} images, average size {{ object.average_size_of_test_image_in_mb }} MB, for 5 years</td>
+                    <td>{{ phase.number_of_test_cases }} cases times average case size {{ object.average_size_of_test_case_in_mb }} MB, plus average prediction size {{ object.average_size_of_prediction_in_mb }} MB times {{ phase.number_of_test_cases }} cases times {{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams, for 5 years</td>
                     <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
                     <td>{{ phase.data_storage_size_gb|floatformat }}</td>
                     <td>GB</td>

@@ -1077,10 +1077,16 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             "assign to algorithm inference jobs for submission."
         ),
     )
-    average_size_of_test_image_in_mb = models.PositiveIntegerField(
-        help_text="Average size of a test image in MB.",
+    average_size_of_test_case_in_mb = models.PositiveIntegerField(
+        help_text="Average size of a test case in MB.",
         validators=[
             MinValueValidator(limit_value=1),
+            MaxValueValidator(limit_value=10000),
+        ],
+    )
+    average_size_of_prediction_in_mb = models.PositiveIntegerField(
+        help_text="Average size of prediction output per test case in MB.",
+        validators=[
             MaxValueValidator(limit_value=10000),
         ],
     )
@@ -1090,11 +1096,11 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     phase_2_number_of_submissions_per_team = models.PositiveIntegerField(
         help_text="How many submissions do you expect per team in this phase?",
     )
-    phase_1_number_of_test_images = models.PositiveIntegerField(
-        help_text="Number of test images for this phase.",
+    phase_1_number_of_test_cases = models.PositiveIntegerField(
+        help_text="Number of test cases for this phase.",
     )
-    phase_2_number_of_test_images = models.PositiveIntegerField(
-        help_text="Number of test images for this phase.",
+    phase_2_number_of_test_cases = models.PositiveIntegerField(
+        help_text="Number of test cases for this phase.",
     )
     number_of_tasks = models.PositiveIntegerField(
         default=1,
@@ -1118,15 +1124,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "your challenge going to be? "
         "Please describe in detail "
         "what the input(s) reflect(s), for example, "
-        "MRI scan of the brain, or chest X-ray. Grand Challenge only "
-        "supports .mha and .tiff image files and json files for algorithms.",
+        "MRI scan of the brain, or chest X-ray.",
     )
     algorithm_outputs = models.TextField(
         help_text="What are the outputs to the algorithms submitted as solutions to "
         "your challenge going to be? "
         "Please describe in detail what the output(s) "
         "reflect(s), for example, probability of a positive PCR result, or "
-        "stroke lesion segmentation. ",
+        "stroke lesion segmentation.",
     )
     structured_challenge_submission_doi = IdentifierField(
         blank=True,
@@ -1195,11 +1200,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             "inference_time_limit_in_minutes",
             "algorithm_selectable_gpu_type_choices",
             "algorithm_maximum_settable_memory_gb",
-            "average_size_of_test_image_in_mb",
+            "average_size_of_test_case_in_mb",
+            "average_size_of_prediction_in_mb",
             "phase_1_number_of_submissions_per_team",
-            "phase_1_number_of_test_images",
+            "phase_1_number_of_test_cases",
             "phase_2_number_of_submissions_per_team",
-            "phase_2_number_of_test_images",
+            "phase_2_number_of_test_cases",
         )
         return {
             field.verbose_name: field.value_to_string(self)
@@ -1229,15 +1235,11 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def phase_1_num_algorithm_jobs(self):
-        return (
-            self.phase_1_num_submissions * self.phase_1_number_of_test_images
-        )
+        return self.phase_1_num_submissions * self.phase_1_number_of_test_cases
 
     @property
     def phase_2_num_algorithm_jobs(self):
-        return (
-            self.phase_2_num_submissions * self.phase_2_number_of_test_images
-        )
+        return self.phase_2_num_submissions * self.phase_2_number_of_test_cases
 
     @property
     def total_num_algorithm_jobs(self):
@@ -1263,18 +1265,29 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def phase_1_data_storage_size_bytes(self):
-        return (
-            self.phase_1_number_of_test_images
-            * (self.average_size_of_test_image_in_mb * settings.MEGABYTE)
+        result = (
+            self.phase_1_number_of_test_cases
+            * self.average_size_of_test_case_in_mb
+            * settings.MEGABYTE
             * self.number_of_tasks
+        ) + (
+            self.phase_1_num_algorithm_jobs
+            * self.average_size_of_prediction_in_mb
+            * settings.MEGABYTE
         )
+        return result
 
     @property
     def phase_2_data_storage_size_bytes(self):
         return (
-            self.phase_2_number_of_test_images
-            * (self.average_size_of_test_image_in_mb * settings.MEGABYTE)
+            self.phase_2_number_of_test_cases
+            * self.average_size_of_test_case_in_mb
+            * settings.MEGABYTE
             * self.number_of_tasks
+        ) + (
+            self.phase_2_num_algorithm_jobs
+            * self.average_size_of_prediction_in_mb
+            * settings.MEGABYTE
         )
 
     @property
@@ -1480,7 +1493,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             {
                 "name": "Phase 1",
                 "number_of_submissions_per_team": self.phase_1_number_of_submissions_per_team,
-                "number_of_test_images": self.phase_1_number_of_test_images,
+                "number_of_test_cases": self.phase_1_number_of_test_cases,
                 "compute_time": self.phase_1_compute_time,
                 "compute_costs_euros": self.phase_1_compute_costs_euros,
                 "data_storage_size_gb": self.phase_1_data_storage_size_bytes
@@ -1491,7 +1504,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             {
                 "name": "Phase 2",
                 "number_of_submissions_per_team": self.phase_2_number_of_submissions_per_team,
-                "number_of_test_images": self.phase_2_number_of_test_images,
+                "number_of_test_cases": self.phase_2_number_of_test_cases,
                 "compute_time": self.phase_2_compute_time,
                 "compute_costs_euros": self.phase_2_compute_costs_euros,
                 "data_storage_size_gb": self.phase_2_data_storage_size_bytes
