@@ -126,7 +126,7 @@ Based on the following information provided by the challenge requester:
                 </tr>
                 <tr>
                     <td>Data storage {{ phase.name }}</td>
-                    <td>{{ phase.number_of_test_cases }} cases, average size {{ object.average_size_of_test_case_in_mb }} MB, for 5 years</td>
+                    <td>{{ phase.number_of_test_cases }} cases times average case size {{ object.average_size_of_test_case_in_mb }} MB, plus average prediction size {{ object.average_size_of_prediction_in_mb }} MB times {{ phase.number_of_test_cases }} cases times {{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams, for 5 years</td>
                     <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
                     <td>{{ phase.data_storage_size_gb|floatformat }}</td>
                     <td>GB</td>

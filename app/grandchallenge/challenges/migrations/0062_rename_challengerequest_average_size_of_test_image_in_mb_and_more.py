@@ -68,4 +68,16 @@ class Migration(migrations.Migration):
                 help_text="Number of test cases for this phase."
             ),
         ),
+        migrations.AddField(
+            model_name="challengerequest",
+            name="average_size_of_prediction_in_mb",
+            field=models.PositiveIntegerField(
+                default=0,
+                help_text="Average size of prediction output per test case in MB.",
+                validators=[
+                    django.core.validators.MaxValueValidator(limit_value=10000)
+                ],
+            ),
+            preserve_default=False,
+        ),
     ]

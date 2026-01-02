@@ -68,112 +68,160 @@ def test_challenge_creation_from_request():
     assert challenge_request.creator in challenge.admins_group.user_set.all()
 
 
-def test_challenge_request_budget_calculation(settings):
+@pytest.mark.parametrize(
+    "challenge_request,expected_costs_for_phases,expected_docker_storage_gb,expected_docker_storage_costs,expected_total_costs",
+    [
+        (  # 1 task
+            ChallengeRequest(
+                expected_number_of_teams=10,
+                inference_time_limit_in_minutes=10,
+                average_size_of_test_case_in_mb=100,
+                average_size_of_prediction_in_mb=101,
+                phase_1_number_of_submissions_per_team=10,
+                phase_2_number_of_submissions_per_team=100,
+                phase_1_number_of_test_cases=100,
+                phase_2_number_of_test_cases=500,
+                number_of_tasks=1,
+            ),
+            [
+                {  # Phase 1
+                    "number_of_submissions_per_team": 10,
+                    "number_of_test_cases": 100,
+                    "compute_time": timedelta(minutes=10) * 10 * 10 * 100,
+                    "compute_costs_euros": 1958.11,
+                    "data_storage_size_gb": (100 * 100 / 1024)
+                    + (100 * 101 * 10 * 10 / 1024),
+                    "data_storage_costs_euros": 669.39,
+                    "total_euros": 2627.5,
+                },
+                {  # Phase 2
+                    "number_of_submissions_per_team": 100,
+                    "number_of_test_cases": 500,
+                    "compute_time": timedelta(minutes=10) * 10 * 100 * 500,
+                    "compute_costs_euros": 97905.48,
+                    "data_storage_size_gb": (500 * 100 / 1024)
+                    + (500 * 101 * 100 * 10 / 1024),
+                    "data_storage_costs_euros": 33173.81,
+                    "total_euros": 131079.29,
+                },
+            ],
+            6 * 10 * 100,  # expected_docker_storage_gb
+            4032.05,  # expected_docker_storage_costs
+            137738.84,  # expected_total_costs
+        ),
+        (  # 2 tasks
+            ChallengeRequest(
+                expected_number_of_teams=10,
+                inference_time_limit_in_minutes=10,
+                average_size_of_test_case_in_mb=100,
+                average_size_of_prediction_in_mb=101,
+                phase_1_number_of_submissions_per_team=10,
+                phase_2_number_of_submissions_per_team=100,
+                phase_1_number_of_test_cases=100,
+                phase_2_number_of_test_cases=500,
+                number_of_tasks=2,
+            ),
+            [
+                {  # Phase 1
+                    "number_of_submissions_per_team": 10,
+                    "number_of_test_cases": 100,
+                    "compute_time": timedelta(minutes=10) * 10 * 10 * 100 * 2,
+                    "compute_costs_euros": 3916.22,
+                    "data_storage_size_gb": (
+                        (100 * 100 / 1024) + (100 * 101 * 10 * 10 / 1024)
+                    )
+                    * 2,
+                    "data_storage_costs_euros": 1338.77,
+                    "total_euros": 5254.99,
+                },
+                {  # Phase 2
+                    "number_of_submissions_per_team": 100,
+                    "number_of_test_cases": 500,
+                    "compute_time": timedelta(minutes=10) * 10 * 100 * 500 * 2,
+                    "compute_costs_euros": 195810.96,
+                    "data_storage_size_gb": (
+                        (500 * 100 / 1024) + (500 * 101 * 100 * 10 / 1024)
+                    )
+                    * 2,
+                    "data_storage_costs_euros": 66347.62,
+                    "total_euros": 262158.58,
+                },
+            ],
+            6 * 10 * 100 * 2,  # expected_docker_storage_gb
+            8064.09,  # expected_docker_storage_costs
+            275477.66,  # expected_total_costs
+        ),
+        (  # 1 task + 0 prediction size
+            ChallengeRequest(
+                expected_number_of_teams=10,
+                inference_time_limit_in_minutes=10,
+                average_size_of_test_case_in_mb=100,
+                average_size_of_prediction_in_mb=0,
+                phase_1_number_of_submissions_per_team=10,
+                phase_2_number_of_submissions_per_team=100,
+                phase_1_number_of_test_cases=100,
+                phase_2_number_of_test_cases=500,
+                number_of_tasks=1,
+            ),
+            [
+                {
+                    # "name": "Phase 1",
+                    "number_of_submissions_per_team": 10,
+                    "number_of_test_cases": 100,
+                    "compute_time": timedelta(minutes=10) * 10 * 10 * 100,
+                    "compute_costs_euros": 1958.11,
+                    "data_storage_size_gb": 100 * 100 / 1024,
+                    "data_storage_costs_euros": 6.57,
+                    "total_euros": 1964.68,
+                },
+                {
+                    # "name": "Phase 2",
+                    "number_of_submissions_per_team": 100,
+                    "number_of_test_cases": 500,
+                    "compute_time": timedelta(minutes=10) * 10 * 100 * 500,
+                    "compute_costs_euros": 97905.48,
+                    "data_storage_size_gb": 500 * 100 / 1024,
+                    "data_storage_costs_euros": 32.82,
+                    "total_euros": 97938.30,
+                },
+            ],
+            6 * 10 * 100,  # expected_docker_storage_gb
+            4032.05,  # expected_docker_storage_costs
+            103935.03,  # expected_total_costs
+        ),
+    ],
+)
+def test_challenge_request_budget_calculation(
+    settings,
+    challenge_request,
+    expected_costs_for_phases,
+    expected_docker_storage_gb,
+    expected_docker_storage_costs,
+    expected_total_costs,
+):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
-    challenge_request = ChallengeRequest(
-        expected_number_of_teams=10,
-        inference_time_limit_in_minutes=10,
-        average_size_of_test_case_in_mb=100,
-        phase_1_number_of_submissions_per_team=10,
-        phase_2_number_of_submissions_per_team=100,
-        phase_1_number_of_test_cases=100,
-        phase_2_number_of_test_cases=500,
-        number_of_tasks=1,
-    )
 
-    costs_for_phases = [
-        {
-            # "name": "Phase 1",
-            "number_of_submissions_per_team": 10,
-            "number_of_test_cases": 100,
-            "compute_time": timedelta(minutes=10) * 10 * 10 * 100,
-            "compute_costs_euros": 1958.11,
-            "data_storage_size_gb": 100 * 100 / 1024,
-            "data_storage_costs_euros": 6.57,
-            "total_euros": 1964.68,
-        },
-        {
-            # "name": "Phase 2",
-            "number_of_submissions_per_team": 100,
-            "number_of_test_cases": 500,
-            "compute_time": timedelta(minutes=10) * 10 * 100 * 500,
-            "compute_costs_euros": 97905.48,
-            "data_storage_size_gb": 500 * 100 / 1024,
-            "data_storage_costs_euros": 32.82,
-            "total_euros": 97938.30,
-        },
-    ]
     for i_phase in range(2):
-        for k, v in costs_for_phases[i_phase].items():
+        for k, v in expected_costs_for_phases[i_phase].items():
             assert (
                 pytest.approx(
                     challenge_request.costs_for_phases[i_phase][k], abs=0.01
                 )
                 == v
-            )
-    assert challenge_request.docker_storage_size_gb == 6 * 10 * 100
-    assert challenge_request.docker_storage_costs_euros == 4032.05
+            ), f"Phase {i_phase + 1}: {k}"
+
+    assert (
+        challenge_request.docker_storage_size_gb == expected_docker_storage_gb
+    )
+    assert (
+        challenge_request.docker_storage_costs_euros
+        == expected_docker_storage_costs
+    )
     assert (
         pytest.approx(
             challenge_request.total_compute_and_storage_costs_euros, abs=0.01
         )
-        == 103935.03
-    )
-
-    for phase in challenge_request.costs_for_phases:
-        assert (
-            phase["total_euros"]
-            == phase["compute_costs_euros"] + phase["data_storage_costs_euros"]
-        )
-
-    assert (
-        pytest.approx(challenge_request.total_compute_and_storage_costs_euros)
-        == challenge_request.costs_for_phases[0]["total_euros"]
-        + challenge_request.costs_for_phases[1]["total_euros"]
-        + challenge_request.docker_storage_costs_euros
-    )
-
-    challenge_request.number_of_tasks = 2
-
-    del challenge_request.costs_for_phases
-
-    costs_for_phases = [
-        {
-            # "name": "Phase 1",
-            "number_of_submissions_per_team": 10,
-            "number_of_test_cases": 100,
-            "compute_time": timedelta(minutes=10) * 10 * 10 * 100 * 2,
-            "compute_costs_euros": 3916.22,
-            "data_storage_size_gb": 100 * 100 / 1024 * 2,
-            "data_storage_costs_euros": 13.13,
-            "total_euros": 3929.35,
-        },
-        {
-            # "name": "Phase 2",
-            "number_of_submissions_per_team": 100,
-            "number_of_test_cases": 500,
-            "compute_time": timedelta(minutes=10) * 10 * 100 * 500 * 2,
-            "compute_costs_euros": 195810.96,
-            "data_storage_size_gb": 500 * 100 / 1024 * 2,
-            "data_storage_costs_euros": 65.63,
-            "total_euros": 195876.59,
-        },
-    ]
-    for i_phase in range(2):
-        for k, v in costs_for_phases[i_phase].items():
-            assert (
-                pytest.approx(
-                    challenge_request.costs_for_phases[i_phase][k], abs=0.01
-                )
-                == v
-            )
-    assert challenge_request.docker_storage_size_gb == 6 * 10 * 100 * 2
-    assert challenge_request.docker_storage_costs_euros == 8064.09
-    assert (
-        pytest.approx(
-            challenge_request.total_compute_and_storage_costs_euros, abs=0.01
-        )
-        == 207870.03
+        == expected_total_costs
     )
 
     for phase in challenge_request.costs_for_phases:

@@ -176,6 +176,7 @@ class ChallengeRequestForm(forms.ModelForm):
             "expected_number_of_teams",
             "number_of_tasks",
             "average_size_of_test_case_in_mb",
+            "average_size_of_prediction_in_mb",
             "inference_time_limit_in_minutes",
             "algorithm_selectable_gpu_type_choices",
             "algorithm_maximum_settable_memory_gb",
@@ -294,6 +295,11 @@ class ChallengeRequestForm(forms.ModelForm):
                 "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
                 "bundling cases</a>, provide the size of the batch (not the size of a single case)."
             ),
+            "average_size_of_prediction_in_mb": (
+                "Average size of a prediction in MB. If you're <a href="
+                "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
+                "bundling cases</a>, provide the size of the batch (not the size of a single case)."
+            ),
             "phase_1_number_of_submissions_per_team": (
                 "How many submissions do you expect per team to this phase? "
                 "You can enforce a submission limit in the settings for each phase "
@@ -404,6 +410,7 @@ class ChallengeRequestForm(forms.ModelForm):
                     "expected_number_of_teams",
                     "number_of_tasks",
                     "average_size_of_test_case_in_mb",
+                    "average_size_of_prediction_in_mb",
                     "inference_time_limit_in_minutes",
                     "algorithm_selectable_gpu_type_choices",
                     "algorithm_maximum_settable_memory_gb",
@@ -543,6 +550,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             "algorithm_selectable_gpu_type_choices",
             "algorithm_maximum_settable_memory_gb",
             "average_size_of_test_case_in_mb",
+            "average_size_of_prediction_in_mb",
             "phase_1_number_of_submissions_per_team",
             "phase_1_number_of_test_cases",
             "phase_2_number_of_submissions_per_team",

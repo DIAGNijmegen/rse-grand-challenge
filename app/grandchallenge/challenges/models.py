@@ -1084,6 +1084,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             MaxValueValidator(limit_value=10000),
         ],
     )
+    average_size_of_prediction_in_mb = models.PositiveIntegerField(
+        help_text="Average size of prediction output per test case in MB.",
+        validators=[
+            MaxValueValidator(limit_value=10000),
+        ],
+    )
     phase_1_number_of_submissions_per_team = models.PositiveIntegerField(
         help_text="How many submissions do you expect per team in this phase?",
     )
@@ -1195,6 +1201,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             "algorithm_selectable_gpu_type_choices",
             "algorithm_maximum_settable_memory_gb",
             "average_size_of_test_case_in_mb",
+            "average_size_of_prediction_in_mb",
             "phase_1_number_of_submissions_per_team",
             "phase_1_number_of_test_cases",
             "phase_2_number_of_submissions_per_team",
@@ -1258,18 +1265,29 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def phase_1_data_storage_size_bytes(self):
-        return (
+        result = (
             self.phase_1_number_of_test_cases
-            * (self.average_size_of_test_case_in_mb * settings.MEGABYTE)
+            * self.average_size_of_test_case_in_mb
+            * settings.MEGABYTE
             * self.number_of_tasks
+        ) + (
+            self.phase_1_num_algorithm_jobs
+            * self.average_size_of_prediction_in_mb
+            * settings.MEGABYTE
         )
+        return result
 
     @property
     def phase_2_data_storage_size_bytes(self):
         return (
             self.phase_2_number_of_test_cases
-            * (self.average_size_of_test_case_in_mb * settings.MEGABYTE)
+            * self.average_size_of_test_case_in_mb
+            * settings.MEGABYTE
             * self.number_of_tasks
+        ) + (
+            self.phase_2_num_algorithm_jobs
+            * self.average_size_of_prediction_in_mb
+            * settings.MEGABYTE
         )
 
     @property
