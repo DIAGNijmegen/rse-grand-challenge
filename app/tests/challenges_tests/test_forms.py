@@ -96,6 +96,7 @@ def test_budget_update_form():
     data = {
         "expected_number_of_teams": 100,
         "average_size_of_test_case_in_mb": 10,
+        "average_size_of_prediction_in_mb": 10,
         "phase_1_number_of_submissions_per_team": 10,
         "phase_2_number_of_submissions_per_team": 1,
         "phase_1_number_of_test_cases": 100,
@@ -118,6 +119,7 @@ def test_budget_update_form():
         ],
         "algorithm_maximum_settable_memory_gb": 32,
         "average_size_of_test_case_in_mb": 10,
+        "average_size_of_prediction_in_mb": 10,
         "phase_1_number_of_submissions_per_team": 10,
         "phase_2_number_of_submissions_per_team": 1,
         "phase_1_number_of_test_cases": 100,
