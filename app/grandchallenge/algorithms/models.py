@@ -1172,7 +1172,7 @@ class Job(CIVForObjectMixin, ComponentJob):
         AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
     )
     algorithm_interface = models.ForeignKey(
-        AlgorithmInterface, on_delete=models.PROTECT, null=True, blank=True
+        AlgorithmInterface, on_delete=models.PROTECT
     )
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
