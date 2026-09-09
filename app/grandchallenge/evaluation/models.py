@@ -1905,6 +1905,10 @@ class BatchJob(ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
+    def create_utilization(self):
+        # TODO: add BatchJobUtilization model
+        pass
+
 
 class BatchJobUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()
