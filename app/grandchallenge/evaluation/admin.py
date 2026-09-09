@@ -328,6 +328,12 @@ class BatchJobAdmin(admin.ModelAdmin):
     def algorithm(self, obj):
         return obj.algorithm_image.algorithm
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(BatchJobTask)
 class BatchJobTaskAdmin(admin.ModelAdmin):
@@ -349,6 +355,12 @@ class BatchJobTaskAdmin(admin.ModelAdmin):
         "exec_duration",
         "invoke_duration",
     )
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(EvaluationGroundTruth)
