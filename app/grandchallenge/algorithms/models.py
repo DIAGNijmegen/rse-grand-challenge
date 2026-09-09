@@ -1182,6 +1182,43 @@ class Job(CIVForObjectMixin, ComponentJob):
         to=ComponentInterfaceValue,
         related_name="%(app_label)s_%(class)ss_as_output",
     )
+    exec_duration = models.DurationField(
+        null=True,
+        default=None,
+        editable=False,
+        help_text=(
+            "The duration of the execution, if measured. "
+            "Excludes data validation, container pulling, model downloading, "
+            "data downloading and data uploading times. "
+            "Includes model loading time, input data loading time, "
+            "processing time, output data writing time and "
+            "any delays from shared hardware issues."
+        ),
+    )
+    invoke_duration = models.DurationField(
+        null=True,
+        default=None,
+        editable=False,
+        help_text=(
+            "The duration of the invocation, if measured. "
+            "Excludes data validation, container pulling, model downloading, "
+            "data downloading and data uploading times. "
+            "Potentially excludes model loading time, depending on the "
+            "users implementation. "
+            "Includes input data loading time, "
+            "processing time, output data writing time and "
+            "any delays from shared hardware issues."
+        ),
+    )
+    input_prefixes = models.JSONField(
+        default=dict,
+        editable=False,
+        help_text=(
+            "Map of the ComponentInterfaceValue id to the path prefix to use "
+            "for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at "
+            "/input/foo/bar/<relative_path>"
+        ),
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
