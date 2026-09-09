@@ -32,6 +32,7 @@ from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
     ComponentJobManager,
     ImportStatusChoices,
@@ -2168,6 +2169,14 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     )
     ground_truth = models.ForeignKey(
         EvaluationGroundTruth, null=True, blank=True, on_delete=models.PROTECT
+    )
+    inputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_input",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_output",
     )
 
     published = models.BooleanField(default=True, db_index=True)

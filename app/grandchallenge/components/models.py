@@ -1776,15 +1776,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         default=False, editable=False, help_text="Whether to use warm pools"
     )
 
-    inputs = models.ManyToManyField(
-        to=ComponentInterfaceValue,
-        related_name="%(app_label)s_%(class)ss_as_input",
-    )
-    outputs = models.ManyToManyField(
-        to=ComponentInterfaceValue,
-        related_name="%(app_label)s_%(class)ss_as_output",
-    )
-
     objects = ComponentJobManager.as_manager()
 
     @property

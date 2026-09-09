@@ -1174,6 +1174,14 @@ class Job(CIVForObjectMixin, ComponentJob):
     algorithm_interface = models.ForeignKey(
         AlgorithmInterface, on_delete=models.PROTECT, null=True, blank=True
     )
+    inputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_input",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_output",
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
