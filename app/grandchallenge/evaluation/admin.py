@@ -16,6 +16,10 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.evaluation.models import (
+    BatchJob,
+    BatchJobGroupObjectPermission,
+    BatchJobTask,
+    BatchJobUserObjectPermission,
     Evaluation,
     EvaluationGroundTruth,
     EvaluationGroundTruthGroupObjectPermission,
@@ -282,6 +286,71 @@ class EvaluationAdmin(admin.ModelAdmin):
         )
 
 
+@admin.register(BatchJob)
+class BatchJobAdmin(admin.ModelAdmin):
+    list_display = (
+        "pk",
+        "created",
+        "submission",
+        "algorithm",
+        "requires_gpu_type",
+        "requires_memory_gb",
+        "use_warm_pool",
+        "status",
+        "error_message",
+    )
+    list_filter = (
+        "status",
+        "requires_gpu_type",
+        "use_warm_pool",
+        "submission__phase__challenge__short_name",
+    )
+    list_select_related = (
+        "submission__phase__challenge",
+        "algorithm_image",
+    )
+    search_fields = (
+        "submission__pk",
+        "submission__creator__username",
+        "submission__phase__challenge__short_name",
+    )
+    readonly_fields = (
+        "status",
+        "submission",
+        "algorithm_image",
+        "algorithm_model",
+        "attempt",
+        "error_message",
+        "task_on_success",
+        "task_on_failure",
+    )
+
+    def algorithm(self, obj):
+        return obj.algorithm_image.algorithm
+
+
+@admin.register(BatchJobTask)
+class BatchJobTaskAdmin(admin.ModelAdmin):
+    list_display = (
+        "pk",
+        "created",
+        "batch_job",
+        "exec_duration",
+        "invoke_duration",
+    )
+    list_select_related = ("batch_job__submission__phase__challenge",)
+    list_filter = ("batch_job__submission__phase__challenge__short_name",)
+    search_fields = ("pk", "batch_job__pk", "batch_job__submission__pk")
+    readonly_fields = (
+        "batch_job",
+        "algorithm_interface",
+        "inputs",
+        "outputs",
+        "exec_duration",
+        "invoke_duration",
+    )
+
+
 @admin.register(EvaluationGroundTruth)
 class EvaluationGroundTruthAdmin(admin.ModelAdmin):
     exclude = ("ground_truth",)
@@ -342,3 +411,5 @@ admin.site.register(
 admin.site.register(
     EvaluationGroundTruthGroupObjectPermission, GroupObjectPermissionAdmin
 )
+admin.site.register(BatchJobUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(BatchJobGroupObjectPermission, GroupObjectPermissionAdmin)

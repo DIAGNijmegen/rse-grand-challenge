@@ -2,11 +2,17 @@ import factory
 
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import (
+    BatchJob,
+    BatchJobTask,
     Evaluation,
     EvaluationGroundTruth,
     Method,
     Phase,
     Submission,
+)
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
 )
 from tests.factories import ChallengeFactory, UserFactory, hash_sha256
 
@@ -58,3 +64,22 @@ class EvaluationGroundTruthFactory(factory.django.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
     ground_truth = factory.django.FileField()
     checksum = factory.sequence(lambda n: hash_sha256(f"ground_truth{n}"))
+
+
+class BatchJobFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = BatchJob
+
+    submission = factory.SubFactory(SubmissionFactory)
+    algorithm_image = factory.SubFactory(AlgorithmImageFactory)
+    requires_memory_gb = 4
+    requires_gpu_type = GPUTypeChoices.NO_GPU
+    time_limit = 60
+
+
+class BatchJobTaskFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = BatchJobTask
+
+    batch_job = factory.SubFactory(BatchJobFactory)
+    algorithm_interface = factory.SubFactory(AlgorithmInterfaceFactory)

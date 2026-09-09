@@ -9,6 +9,7 @@ from django.core import mail
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.timezone import now
+from guardian.shortcuts import get_group_perms
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
@@ -46,6 +47,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import (
+    BatchJobFactory,
     EvaluationFactory,
     EvaluationGroundTruthFactory,
     MethodFactory,
@@ -2587,3 +2589,29 @@ def test_visibility_icon(
     icon = evaluation.visibility_icon
     assert expected_classes in icon
     assert expected_title_fragment in icon
+
+
+@pytest.mark.django_db
+def test_batch_job_container():
+    algorithm_image = AlgorithmImageFactory()
+    batch_job = BatchJobFactory(algorithm_image=algorithm_image)
+
+    assert batch_job.container == algorithm_image
+
+
+@pytest.mark.django_db
+def test_batch_job_executor_kwargs():
+    algorithm_model = AlgorithmModelFactory()
+    batch_job = BatchJobFactory(algorithm_model=algorithm_model)
+
+    assert (
+        batch_job.executor_kwargs["algorithm_model"] == algorithm_model.model
+    )
+
+
+@pytest.mark.django_db
+def test_batch_job_view_permission_assigned_to_challenge_admins():
+    batch_job = BatchJobFactory()
+    admins_group = batch_job.submission.phase.challenge.admins_group
+
+    assert "view_batchjob" in get_group_perms(admins_group, batch_job)

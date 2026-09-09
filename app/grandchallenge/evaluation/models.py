@@ -1864,6 +1864,108 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
+class BatchJob(ComponentJob):
+    algorithm_image = models.ForeignKey(
+        AlgorithmImage, on_delete=models.PROTECT
+    )
+    algorithm_model = models.ForeignKey(
+        AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
+    )
+    submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
+
+    class Meta(ComponentJob.Meta):
+        ordering = ("created",)
+
+    def __str__(self):
+        return f"Batch Job {self.pk}"
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm(
+            "view_batchjob",
+            self.submission.phase.challenge.admins_group,
+            self,
+        )
+
+    @property
+    def container(self):
+        return self.algorithm_image
+
+    @property
+    def executor_kwargs(self):
+        executor_kwargs = super().executor_kwargs
+        if self.algorithm_model:
+            executor_kwargs["algorithm_model"] = self.algorithm_model.model
+        return executor_kwargs
+
+
+class BatchJobUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
+    content_object = models.ForeignKey(BatchJob, on_delete=models.CASCADE)
+
+
+class BatchJobGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_batchjob"})
+
+    content_object = models.ForeignKey(BatchJob, on_delete=models.CASCADE)
+
+
+class BatchJobTask(UUIDModel):
+    batch_job = models.ForeignKey(
+        BatchJob, on_delete=models.CASCADE, related_name="tasks"
+    )
+    algorithm_interface = models.ForeignKey(
+        AlgorithmInterface, on_delete=models.PROTECT
+    )
+    inputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_input",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_output",
+    )
+    exec_duration = models.DurationField(
+        null=True,
+        default=None,
+        editable=False,
+        help_text=(
+            "The duration of the execution, if measured. "
+            "Excludes data validation, container pulling, model downloading, "
+            "data downloading and data uploading times. "
+            "Includes model loading time, input data loading time, "
+            "processing time, output data writing time and "
+            "any delays from shared hardware issues."
+        ),
+    )
+    invoke_duration = models.DurationField(
+        null=True,
+        default=None,
+        editable=False,
+        help_text=(
+            "The duration of the invocation, if measured. "
+            "Excludes data validation, container pulling, model downloading, "
+            "data downloading and data uploading times. "
+            "Potentially excludes model loading time, depending on the "
+            "users implementation. "
+            "Includes input data loading time, "
+            "processing time, output data writing time and "
+            "any delays from shared hardware issues."
+        ),
+    )
+
+    class Meta(UUIDModel.Meta):
+        ordering = ("created",)
+
+
 class EvaluationManager(ComponentJobManager):
     def get_evaluations_with_same_inputs(
         self,
