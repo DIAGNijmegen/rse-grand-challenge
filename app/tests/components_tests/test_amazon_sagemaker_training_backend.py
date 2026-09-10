@@ -101,6 +101,7 @@ def test_instance_type_incompatible(memory_limit, requires_gpu_type):
     (
         ("A", "job", "algorithms"),
         ("E", "evaluation", "evaluation"),
+        ("B", "batchjob", "evaluation"),
     ),
 )
 def test_get_job_params_match(key, model_name, app_label, settings):

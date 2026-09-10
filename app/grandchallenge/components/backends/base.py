@@ -9,6 +9,7 @@ import logging
 import os
 import secrets
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from datetime import timedelta
 from json import JSONDecodeError
 from math import ceil
@@ -82,6 +83,13 @@ class JobParams(NamedTuple):
 class CIVProvisioningTask(NamedTuple):
     key: str
     task: functools.partial
+
+
+class ProvisioningTask(NamedTuple):
+    pk: str
+    input_civs: Iterable[ComponentInterfaceValue]
+    input_prefixes: dict[str, str]
+    output_prefix: str
 
 
 def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
@@ -377,14 +385,31 @@ class Executor(ABC):
         self.__s3_client = None
 
     def provision(self, *, input_civs, input_prefixes):
-        # We cannot run everything async as it requires database access.
-        # So first we gather the async tasks that need to be run,
-        # then execute them in the event loop for the current thread
-        # using a method wrapped in @async_to_sync.
-        provisioning_tasks = self._get_provisioning_tasks(
-            input_civs=input_civs, input_prefixes=input_prefixes
-        )
-        self._provision(tasks=provisioning_tasks)
+        tasks = [
+            ProvisioningTask(
+                pk=self._job_id,
+                input_civs=input_civs,
+                input_prefixes=input_prefixes,
+                output_prefix=self._io_prefix,
+            )
+        ]
+        self._provision(tasks=self._get_provisioning_tasks(tasks=tasks))
+
+    def provision_batch_job(self, *, batch_job):
+        tasks = [
+            ProvisioningTask(
+                pk=f"{self._job_id}-{task.pk}",
+                input_civs=task.inputs.prefetch_related(
+                    "interface", "image__files"
+                ).all(),
+                input_prefixes={},
+                output_prefix=self._output_prefix_for_task(
+                    task_pk=str(task.pk)
+                ),
+            )
+            for task in batch_job.tasks.all()
+        ]
+        self._provision(tasks=self._get_provisioning_tasks(tasks=tasks))
 
     @abstractmethod
     def execute(self): ...
@@ -484,6 +509,9 @@ class Executor(ABC):
     def _io_prefix(self):
         return safe_join("/io", *self.job_path_parts)
 
+    def _output_prefix_for_task(self, *, task_pk):
+        return safe_join(self._io_prefix, task_pk)
+
     @property
     def _invocation_prefix(self):
         return safe_join("/invocations", *self.job_path_parts)
@@ -582,31 +610,47 @@ class Executor(ABC):
                             )
                         )
 
-    def _get_provisioning_tasks(self, *, input_civs, input_prefixes):
+    def _get_provisioning_tasks(self, *, tasks):
         provisioning_tasks = []
-        invocation_inputs = []
+        inference_tasks = []
 
-        for civ in self._with_inputs_json(input_civs=input_civs):
-            for civ_provisioning_task in self._get_civ_provisioning_tasks(
-                civ=civ, input_prefixes=input_prefixes
-            ):
-                provisioning_tasks.append(civ_provisioning_task.task)
-                invocation_inputs.append(
-                    InferenceIO(
-                        relative_path=str(
-                            os.path.relpath(
-                                civ_provisioning_task.key, self._io_prefix
-                            )
-                        ),
-                        bucket_name=self._input_bucket_name,
-                        bucket_key=civ_provisioning_task.key,
-                        decompress=civ.decompress,
+        for task in tasks:
+            invocation_inputs = []
+
+            for civ in self._with_inputs_json(input_civs=task.input_civs):
+                for civ_provisioning_task in self._get_civ_provisioning_tasks(
+                    civ=civ,
+                    input_prefixes=task.input_prefixes,
+                    output_prefix=task.output_prefix,
+                ):
+                    provisioning_tasks.append(civ_provisioning_task.task)
+                    invocation_inputs.append(
+                        InferenceIO(
+                            relative_path=str(
+                                os.path.relpath(
+                                    civ_provisioning_task.key,
+                                    task.output_prefix,
+                                )
+                            ),
+                            bucket_name=self._input_bucket_name,
+                            bucket_key=civ_provisioning_task.key,
+                            decompress=civ.decompress,
+                        )
                     )
+
+            inference_tasks.append(
+                InferenceTask(
+                    pk=task.pk,
+                    inputs=invocation_inputs,
+                    output_bucket_name=self._output_bucket_name,
+                    output_prefix=task.output_prefix,
+                    timeout=self._time_limit,
                 )
+            )
 
         provisioning_tasks.append(
             self._get_create_invocation_json_task(
-                invocation_inputs=invocation_inputs
+                inference_tasks=inference_tasks
             ).task
         )
 
@@ -621,16 +665,17 @@ class Executor(ABC):
         *,
         civ,
         input_prefixes,
+        output_prefix,
         filename=None,
     ):
         relative_path = civ.interface.relative_path
 
         if str(civ.pk) in input_prefixes:
             key = safe_join(
-                self._io_prefix, input_prefixes[str(civ.pk)], relative_path
+                output_prefix, input_prefixes[str(civ.pk)], relative_path
             )
         else:
-            key = safe_join(self._io_prefix, relative_path)
+            key = safe_join(output_prefix, relative_path)
 
         if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
             if filename:
@@ -642,7 +687,9 @@ class Executor(ABC):
 
         return key
 
-    def _get_civ_provisioning_tasks(self, *, civ, input_prefixes):
+    def _get_civ_provisioning_tasks(
+        self, *, civ, input_prefixes, output_prefix
+    ):
         if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
             if civ.interface.is_dicom_image_kind:
                 session = boto3.Session(
@@ -660,6 +707,7 @@ class Executor(ABC):
                     key = self._get_key_for_target_relative_path(
                         civ=civ,
                         input_prefixes=input_prefixes,
+                        output_prefix=output_prefix,
                         filename=f"{instance_request.sop_instance_uid}.dcm",
                     )
 
@@ -677,6 +725,7 @@ class Executor(ABC):
                 key = self._get_key_for_target_relative_path(
                     civ=civ,
                     input_prefixes=input_prefixes,
+                    output_prefix=output_prefix,
                     filename=Path(image_file.name).name,
                 )
 
@@ -685,7 +734,9 @@ class Executor(ABC):
                 )
         elif civ.interface.super_kind == civ.interface.SuperKind.FILE:
             key = self._get_key_for_target_relative_path(
-                civ=civ, input_prefixes=input_prefixes
+                civ=civ,
+                input_prefixes=input_prefixes,
+                output_prefix=output_prefix,
             )
 
             yield self._get_copy_input_object_task(
@@ -693,7 +744,9 @@ class Executor(ABC):
             )
         elif civ.interface.super_kind == civ.interface.SuperKind.VALUE:
             key = self._get_key_for_target_relative_path(
-                civ=civ, input_prefixes=input_prefixes
+                civ=civ,
+                input_prefixes=input_prefixes,
+                output_prefix=output_prefix,
             )
 
             yield self._get_upload_input_content_task(
@@ -704,19 +757,15 @@ class Executor(ABC):
                 f"Unknown interface super kind: {civ.interface.super_kind}"
             )
 
-    def _get_create_invocation_json_task(self, *, invocation_inputs):
-        inference_task = InferenceTask(
-            pk=self._job_id,
-            inputs=invocation_inputs,
-            output_bucket_name=self._output_bucket_name,
-            output_prefix=self._io_prefix,
-            timeout=self._time_limit,
-        )
-
+    def _get_create_invocation_json_task(self, *, inference_tasks):
         if self._use_task_list:
-            content = to_json([inference_task])
+            content = to_json(inference_tasks)
         else:
-            content = to_json(inference_task)
+            if len(inference_tasks) != 1:
+                raise NotImplementedError(
+                    "A single task is required when not using a task list."
+                )
+            content = to_json(inference_tasks[0])
 
         return self._get_upload_input_content_task(
             content=content,

@@ -60,6 +60,7 @@ class ModelChoices(TextChoices):
     # The labels must be in the form "<app_label>-<model_name>"
     ALGORITHMS_JOB = "A", "algorithms-job"
     EVALUATION_EVALUATION = "E", "evaluation-evaluation"
+    EVALUATION_BATCHJOB = "B", "evaluation-batchjob"
 
 
 class AmazonSageMakerTrainingLogsService:

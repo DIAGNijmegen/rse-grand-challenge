@@ -20,6 +20,7 @@ from grandchallenge.components.backends.base import (
     ASYNC_CONCURRENCY,
     Executor,
     InferenceResult,
+    ProvisioningTask,
     RuntimeSetupResult,
     s3_stream_response,
 )
@@ -40,6 +41,10 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.components_tests.resources.backends import IOCopyExecutor
+from tests.evaluation_tests.factories import (
+    BatchJobFactory,
+    BatchJobTaskFactory,
+)
 from tests.factories import ImageFactory, ImageFileFactory
 
 
@@ -508,16 +513,22 @@ def test_dicom_get_provisioning_tasks():
     )
 
     tasks = executor._get_provisioning_tasks(
-        input_civs=[
-            panimage_civ,
-            dicom_civ,
-            prefixed_panimage_civ,
-            prefixed_dicom_civ,
-        ],
-        input_prefixes={
-            str(prefixed_panimage_civ.pk): "prefix/1",
-            str(prefixed_dicom_civ.pk): "prefix/2",
-        },
+        tasks=[
+            ProvisioningTask(
+                pk=executor._job_id,
+                input_civs=[
+                    panimage_civ,
+                    dicom_civ,
+                    prefixed_panimage_civ,
+                    prefixed_dicom_civ,
+                ],
+                input_prefixes={
+                    str(prefixed_panimage_civ.pk): "prefix/1",
+                    str(prefixed_dicom_civ.pk): "prefix/2",
+                },
+                output_prefix=executor._io_prefix,
+            )
+        ]
     )
 
     normalized_tasks = [normalize_partial(t) for t in tasks]
@@ -726,13 +737,197 @@ def test_dodgy_sop_instance_uid():
 
     with pytest.raises(SuspiciousFileOperation) as exec_info:
         executor._get_provisioning_tasks(
-            input_civs=[dicom_civ], input_prefixes={}
+            tasks=[
+                ProvisioningTask(
+                    pk=executor._job_id,
+                    input_civs=[dicom_civ],
+                    input_prefixes={},
+                    output_prefix=executor._io_prefix,
+                )
+            ]
         )
 
     assert (
         "images/fds.dcm) is located outside of the base path component"
         in str(exec_info.value)
     )
+
+
+@pytest.mark.django_db
+def test_multiple_provisioning_tasks_build_one_inference_task_each():
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
+    )
+
+    value_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY,
+        relative_path="value.json",
+        store_in_database=True,
+    )
+    first_civ = value_interface.create_instance(value="first")
+    second_civ = value_interface.create_instance(value="second")
+
+    first_prefix = executor._output_prefix_for_task(task_pk="1234")
+    second_prefix = executor._output_prefix_for_task(task_pk="5678")
+
+    tasks = executor._get_provisioning_tasks(
+        tasks=[
+            ProvisioningTask(
+                pk="test-test-1234",
+                input_civs=[first_civ],
+                input_prefixes={},
+                output_prefix=first_prefix,
+            ),
+            ProvisioningTask(
+                pk="test-test-5678",
+                input_civs=[second_civ],
+                input_prefixes={},
+                output_prefix=second_prefix,
+            ),
+        ]
+    )
+
+    normalized_tasks = [normalize_partial(t) for t in tasks]
+
+    invocation_task = normalized_tasks[-1]
+    assert invocation_task["func"] == "s3_upload_content"
+    assert (
+        invocation_task["key"]
+        == f"/invocations/test/test/{job_pk}/invocation.json"
+    )
+
+    inference_tasks = invocation_task["content"]
+    assert len(inference_tasks) == 2
+
+    assert inference_tasks[0]["pk"] == "test-test-1234"
+    assert inference_tasks[0]["output_prefix"] == first_prefix
+    assert {i["relative_path"] for i in inference_tasks[0]["inputs"]} == {
+        "value.json",
+        "inputs.json",
+    }
+
+    assert inference_tasks[1]["pk"] == "test-test-5678"
+    assert inference_tasks[1]["output_prefix"] == second_prefix
+    assert {i["relative_path"] for i in inference_tasks[1]["inputs"]} == {
+        "value.json",
+        "inputs.json",
+    }
+
+
+@pytest.mark.django_db
+def test_relative_paths_use_task_output_prefix():
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
+    )
+
+    value_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY,
+        relative_path="value.json",
+        store_in_database=True,
+    )
+    civ = value_interface.create_instance(value="foo")
+
+    output_prefix = executor._output_prefix_for_task(task_pk="1234")
+
+    tasks = executor._get_provisioning_tasks(
+        tasks=[
+            ProvisioningTask(
+                pk="test-test-1234",
+                input_civs=[civ],
+                input_prefixes={},
+                output_prefix=output_prefix,
+            )
+        ]
+    )
+
+    normalized_tasks = [normalize_partial(t) for t in tasks]
+
+    value_task = normalized_tasks[0]
+    assert value_task["func"] == "s3_upload_content"
+    assert value_task["key"] == f"{output_prefix}/value.json"
+
+    inference_task = normalized_tasks[-1]["content"][0]
+    value_input = next(
+        i
+        for i in inference_task["inputs"]
+        if i["relative_path"] == "value.json"
+    )
+    assert value_input["bucket_key"] == f"{output_prefix}/value.json"
+
+
+@pytest.mark.django_db
+def test_provision_batch_job(settings):
+    batch_job = BatchJobFactory()
+
+    str_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.STRING,
+        relative_path="string.json",
+        store_in_database=True,
+    )
+
+    first_task = BatchJobTaskFactory(batch_job=batch_job)
+    first_task.inputs.add(str_interface.create_instance(value="first"))
+    second_task = BatchJobTaskFactory(batch_job=batch_job)
+    second_task.inputs.add(str_interface.create_instance(value="second"))
+
+    executor = IOCopyExecutor(**batch_job.executor_kwargs)
+
+    executor.provision_batch_job(batch_job=batch_job)
+
+    first_prefix = executor._output_prefix_for_task(task_pk=str(first_task.pk))
+    second_prefix = executor._output_prefix_for_task(
+        task_pk=str(second_task.pk)
+    )
+
+    with io.BytesIO() as fileobj:
+        executor._s3_client.download_fileobj(
+            Fileobj=fileobj,
+            Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            Key=executor._invocation_key,
+        )
+        fileobj.seek(0)
+        invocation = json.loads(fileobj.read().decode("utf-8"))
+
+    assert len(invocation) == 2
+
+    inference_tasks_by_prefix = {
+        inference_task["output_prefix"]: inference_task
+        for inference_task in invocation
+    }
+    assert set(inference_tasks_by_prefix) == {first_prefix, second_prefix}
+
+    for prefix in (first_prefix, second_prefix):
+        inference_task = inference_tasks_by_prefix[prefix]
+        assert {i["relative_path"] for i in inference_task["inputs"]} == {
+            "string.json",
+            "inputs.json",
+        }
+        assert (
+            next(
+                i
+                for i in inference_task["inputs"]
+                if i["relative_path"] == "string.json"
+            )["bucket_key"]
+            == f"{prefix}/string.json"
+        )
 
 
 def test_signing_key_env_set():
