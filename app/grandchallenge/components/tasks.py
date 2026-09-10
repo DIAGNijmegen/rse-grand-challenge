@@ -876,10 +876,14 @@ def provision_job(
 
     try:
         executor.provision(
-            input_civs=job.inputs.prefetch_related(
-                "interface", "image__files"
-            ).all(),
-            input_prefixes=job.input_prefixes,
+            task_specs=[
+                executor.build_inference_task_spec(
+                    input_civs=job.inputs.prefetch_related(
+                        "interface", "image__files"
+                    ).all(),
+                    input_prefixes=job.input_prefixes,
+                )
+            ]
         )
     except ComponentException as error:
         job.update_status(

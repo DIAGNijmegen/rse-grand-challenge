@@ -384,36 +384,27 @@ class Executor(ABC):
 
         self.__s3_client = None
 
-    def provision(self, *, input_civs, input_prefixes):
-        tasks = self._get_provisioning_tasks(
-            task_specs=[
-                InferenceTaskSpec(
-                    pk=self._job_id,
-                    input_civs=input_civs,
-                    input_prefixes=input_prefixes,
-                    output_prefix=self._io_prefix,
-                )
-            ]
-        )
+    def provision(self, *, task_specs):
+        # We cannot run everything async as it requires database access.
+        # So first we gather the async tasks that need to be run,
+        # then execute them in the event loop for the current thread
+        # using a method wrapped in @async_to_sync.
+        tasks = self._get_provisioning_tasks(task_specs=task_specs)
         self._provision(tasks=tasks)
 
-    def provision_batch_job(self, *, batch_job):
-        tasks = self._get_provisioning_tasks(
-            task_specs=[
-                InferenceTaskSpec(
-                    pk=f"{self._job_id}-{task.pk}",
-                    input_civs=task.inputs.all(),
-                    input_prefixes={},
-                    output_prefix=self._output_prefix_for_task(
-                        task_pk=str(task.pk)
-                    ),
-                )
-                for task in batch_job.tasks.prefetch_related(
-                    "inputs__interface", "inputs__image__files"
-                ).all()
-            ]
+    def build_inference_task_spec(
+        self, *, input_civs, input_prefixes=None, task_pk=None
+    ):
+        return InferenceTaskSpec(
+            pk=f"{self._job_id}-{task_pk}" if task_pk else self._job_id,
+            input_civs=input_civs,
+            input_prefixes=input_prefixes or {},
+            output_prefix=(
+                self._output_prefix_for_task(task_pk=task_pk)
+                if task_pk
+                else self._io_prefix
+            ),
         )
-        self._provision(tasks=tasks)
 
     @abstractmethod
     def execute(self): ...

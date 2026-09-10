@@ -149,7 +149,13 @@ def test_inputs_json(settings):
         2, interface__kind=InterfaceKindChoices.ANY
     )
 
-    executor.provision(input_civs=[civ1, civ2], input_prefixes={})
+    executor.provision(
+        task_specs=[
+            executor.build_inference_task_spec(
+                input_civs=[civ1, civ2],
+            )
+        ]
+    )
 
     with io.BytesIO() as fileobj:
         executor._s3_client.download_fileobj(
@@ -267,19 +273,23 @@ def test_invocation_json(settings):
     prefixed_value_civ = value_interface.create_instance(value="foo")
 
     executor.provision(
-        input_civs=[
-            image_civ,
-            file_civ,
-            value_civ,
-            prefixed_image_civ,
-            prefixed_file_civ,
-            prefixed_value_civ,
-        ],
-        input_prefixes={
-            str(prefixed_image_civ.pk): "prefix/1",
-            str(prefixed_file_civ.pk): "prefix/2",
-            str(prefixed_value_civ.pk): "prefix/3",
-        },
+        task_specs=[
+            executor.build_inference_task_spec(
+                input_civs=[
+                    image_civ,
+                    file_civ,
+                    value_civ,
+                    prefixed_image_civ,
+                    prefixed_file_civ,
+                    prefixed_value_civ,
+                ],
+                input_prefixes={
+                    str(prefixed_image_civ.pk): "prefix/1",
+                    str(prefixed_file_civ.pk): "prefix/2",
+                    str(prefixed_value_civ.pk): "prefix/3",
+                },
+            )
+        ]
     )
 
     response = executor._s3_client.list_objects_v2(
@@ -784,13 +794,11 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
             InferenceTaskSpec(
                 pk="test-test-1234",
                 input_civs=[first_civ],
-                input_prefixes={},
                 output_prefix=first_prefix,
             ),
             InferenceTaskSpec(
                 pk="test-test-5678",
                 input_civs=[second_civ],
-                input_prefixes={},
                 output_prefix=second_prefix,
             ),
         ]
@@ -852,7 +860,6 @@ def test_relative_paths_use_task_output_prefix():
             InferenceTaskSpec(
                 pk="test-test-1234",
                 input_civs=[civ],
-                input_prefixes={},
                 output_prefix=output_prefix,
             )
         ]
@@ -890,7 +897,17 @@ def test_provision_batch_job(settings):
 
     executor = IOCopyExecutor(**batch_job.executor_kwargs)
 
-    executor.provision_batch_job(batch_job=batch_job)
+    executor.provision(
+        task_specs=[
+            executor.build_inference_task_spec(
+                input_civs=task.inputs.all(),
+                task_pk=str(task.pk),
+            )
+            for task in batch_job.tasks.prefetch_related(
+                "inputs__interface", "inputs__image__files"
+            ).all()
+        ]
+    )
 
     first_prefix = executor._output_prefix_for_task(task_pk=str(first_task.pk))
     second_prefix = executor._output_prefix_for_task(
