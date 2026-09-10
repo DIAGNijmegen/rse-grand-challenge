@@ -20,7 +20,7 @@ from grandchallenge.components.backends.base import (
     ASYNC_CONCURRENCY,
     Executor,
     InferenceResult,
-    ProvisioningTask,
+    InferenceTaskSpec,
     RuntimeSetupResult,
     s3_stream_response,
 )
@@ -513,8 +513,8 @@ def test_dicom_get_provisioning_tasks():
     )
 
     tasks = executor._get_provisioning_tasks(
-        tasks=[
-            ProvisioningTask(
+        task_specs=[
+            InferenceTaskSpec(
                 pk=executor._job_id,
                 input_civs=[
                     panimage_civ,
@@ -737,8 +737,8 @@ def test_dodgy_sop_instance_uid():
 
     with pytest.raises(SuspiciousFileOperation) as exec_info:
         executor._get_provisioning_tasks(
-            tasks=[
-                ProvisioningTask(
+            task_specs=[
+                InferenceTaskSpec(
                     pk=executor._job_id,
                     input_civs=[dicom_civ],
                     input_prefixes={},
@@ -780,14 +780,14 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
     second_prefix = executor._output_prefix_for_task(task_pk="5678")
 
     tasks = executor._get_provisioning_tasks(
-        tasks=[
-            ProvisioningTask(
+        task_specs=[
+            InferenceTaskSpec(
                 pk="test-test-1234",
                 input_civs=[first_civ],
                 input_prefixes={},
                 output_prefix=first_prefix,
             ),
-            ProvisioningTask(
+            InferenceTaskSpec(
                 pk="test-test-5678",
                 input_civs=[second_civ],
                 input_prefixes={},
@@ -848,8 +848,8 @@ def test_relative_paths_use_task_output_prefix():
     output_prefix = executor._output_prefix_for_task(task_pk="1234")
 
     tasks = executor._get_provisioning_tasks(
-        tasks=[
-            ProvisioningTask(
+        task_specs=[
+            InferenceTaskSpec(
                 pk="test-test-1234",
                 input_civs=[civ],
                 input_prefixes={},

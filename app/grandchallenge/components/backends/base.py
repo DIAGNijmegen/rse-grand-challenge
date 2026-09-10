@@ -85,7 +85,7 @@ class CIVProvisioningTask(NamedTuple):
     task: functools.partial
 
 
-class ProvisioningTask(NamedTuple):
+class InferenceTaskSpec(NamedTuple):
     pk: str
     input_civs: Iterable[ComponentInterfaceValue]
     input_prefixes: dict[str, str]
@@ -385,31 +385,35 @@ class Executor(ABC):
         self.__s3_client = None
 
     def provision(self, *, input_civs, input_prefixes):
-        tasks = [
-            ProvisioningTask(
-                pk=self._job_id,
-                input_civs=input_civs,
-                input_prefixes=input_prefixes,
-                output_prefix=self._io_prefix,
-            )
-        ]
-        self._provision(tasks=self._get_provisioning_tasks(tasks=tasks))
+        tasks = self._get_provisioning_tasks(
+            task_specs=[
+                InferenceTaskSpec(
+                    pk=self._job_id,
+                    input_civs=input_civs,
+                    input_prefixes=input_prefixes,
+                    output_prefix=self._io_prefix,
+                )
+            ]
+        )
+        self._provision(tasks=tasks)
 
     def provision_batch_job(self, *, batch_job):
-        tasks = [
-            ProvisioningTask(
-                pk=f"{self._job_id}-{task.pk}",
-                input_civs=task.inputs.prefetch_related(
-                    "interface", "image__files"
-                ).all(),
-                input_prefixes={},
-                output_prefix=self._output_prefix_for_task(
-                    task_pk=str(task.pk)
-                ),
-            )
-            for task in batch_job.tasks.all()
-        ]
-        self._provision(tasks=self._get_provisioning_tasks(tasks=tasks))
+        tasks = self._get_provisioning_tasks(
+            task_specs=[
+                InferenceTaskSpec(
+                    pk=f"{self._job_id}-{task.pk}",
+                    input_civs=task.inputs.prefetch_related(
+                        "interface", "image__files"
+                    ).all(),
+                    input_prefixes={},
+                    output_prefix=self._output_prefix_for_task(
+                        task_pk=str(task.pk)
+                    ),
+                )
+                for task in batch_job.tasks.all()
+            ]
+        )
+        self._provision(tasks=tasks)
 
     @abstractmethod
     def execute(self): ...
@@ -610,18 +614,18 @@ class Executor(ABC):
                             )
                         )
 
-    def _get_provisioning_tasks(self, *, tasks):
+    def _get_provisioning_tasks(self, *, task_specs):
         provisioning_tasks = []
         inference_tasks = []
 
-        for task in tasks:
+        for task_spec in task_specs:
             invocation_inputs = []
 
-            for civ in self._with_inputs_json(input_civs=task.input_civs):
+            for civ in self._with_inputs_json(input_civs=task_spec.input_civs):
                 for civ_provisioning_task in self._get_civ_provisioning_tasks(
                     civ=civ,
-                    input_prefixes=task.input_prefixes,
-                    output_prefix=task.output_prefix,
+                    input_prefixes=task_spec.input_prefixes,
+                    output_prefix=task_spec.output_prefix,
                 ):
                     provisioning_tasks.append(civ_provisioning_task.task)
                     invocation_inputs.append(
@@ -629,7 +633,7 @@ class Executor(ABC):
                             relative_path=str(
                                 os.path.relpath(
                                     civ_provisioning_task.key,
-                                    task.output_prefix,
+                                    task_spec.output_prefix,
                                 )
                             ),
                             bucket_name=self._input_bucket_name,
@@ -640,10 +644,10 @@ class Executor(ABC):
 
             inference_tasks.append(
                 InferenceTask(
-                    pk=task.pk,
+                    pk=task_spec.pk,
                     inputs=invocation_inputs,
                     output_bucket_name=self._output_bucket_name,
-                    output_prefix=task.output_prefix,
+                    output_prefix=task_spec.output_prefix,
                     timeout=self._time_limit,
                 )
             )
