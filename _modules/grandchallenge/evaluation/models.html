@@ -1914,6 +1914,112 @@
     <span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchJob</span><span class="p">(</span><span class="n">ComponentJob</span><span class="p">):</span>
+    <span class="n">algorithm_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">AlgorithmImage</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
+    <span class="p">)</span>
+    <span class="n">algorithm_model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">AlgorithmModel</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">"Submission"</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">ComponentJob</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"created"</span><span class="p">,)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Batch Job </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="s2">"view_batchjob"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">executor_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">executor_kwargs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">executor_kwargs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">:</span>
+            <span class="n">executor_kwargs</span><span class="p">[</span><span class="s2">"algorithm_model"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="o">.</span><span class="n">model</span>
+        <span class="k">return</span> <span class="n">executor_kwargs</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO: add BatchJobUtilization model</span>
+        <span class="k">pass</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchJobUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">BatchJob</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchJobGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"view_batchjob"</span><span class="p">})</span>
+
+    <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">BatchJob</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchJobTask</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="n">batch_job</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">BatchJob</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">"tasks"</span>
+    <span class="p">)</span>
+    <span class="n">algorithm_interface</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">AlgorithmInterface</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
+    <span class="p">)</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterfaceValue</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">"</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">s_as_input"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterfaceValue</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">"</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">s_as_output"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">exec_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"The duration of the execution, if measured. "</span>
+            <span class="s2">"Excludes data validation, container pulling, model downloading, "</span>
+            <span class="s2">"data downloading and data uploading times. "</span>
+            <span class="s2">"Includes model loading time, input data loading time, "</span>
+            <span class="s2">"processing time, output data writing time and "</span>
+            <span class="s2">"any delays from shared hardware issues."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">invoke_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"The duration of the invocation, if measured. "</span>
+            <span class="s2">"Excludes data validation, container pulling, model downloading, "</span>
+            <span class="s2">"data downloading and data uploading times. "</span>
+            <span class="s2">"Potentially excludes model loading time, depending on the "</span>
+            <span class="s2">"users implementation. "</span>
+            <span class="s2">"Includes input data loading time, "</span>
+            <span class="s2">"processing time, output data writing time and "</span>
+            <span class="s2">"any delays from shared hardware issues."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"created"</span><span class="p">,)</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationManager</span><span class="p">(</span><span class="n">ComponentJobManager</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_evaluations_with_same_inputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
