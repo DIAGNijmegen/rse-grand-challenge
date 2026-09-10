@@ -402,15 +402,15 @@ class Executor(ABC):
             task_specs=[
                 InferenceTaskSpec(
                     pk=f"{self._job_id}-{task.pk}",
-                    input_civs=task.inputs.prefetch_related(
-                        "interface", "image__files"
-                    ).all(),
+                    input_civs=task.inputs.all(),
                     input_prefixes={},
                     output_prefix=self._output_prefix_for_task(
                         task_pk=str(task.pk)
                     ),
                 )
-                for task in batch_job.tasks.all()
+                for task in batch_job.tasks.prefetch_related(
+                    "inputs__interface", "inputs__image__files"
+                ).all()
             ]
         )
         self._provision(tasks=tasks)
@@ -766,10 +766,11 @@ class Executor(ABC):
             content = to_json(inference_tasks)
         else:
             if len(inference_tasks) != 1:
-                raise NotImplementedError(
+                raise ValueError(
                     "A single task is required when not using a task list."
                 )
-            content = to_json(inference_tasks[0])
+            else:
+                content = to_json(inference_tasks[0])
 
         return self._get_upload_input_content_task(
             content=content,
