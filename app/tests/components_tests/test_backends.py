@@ -794,11 +794,13 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
             InferenceTaskSpec(
                 pk="test-test-1234",
                 input_civs=[first_civ],
+                input_prefixes={},
                 output_prefix=first_prefix,
             ),
             InferenceTaskSpec(
                 pk="test-test-5678",
                 input_civs=[second_civ],
+                input_prefixes={},
                 output_prefix=second_prefix,
             ),
         ]
@@ -860,6 +862,7 @@ def test_relative_paths_use_task_output_prefix():
             InferenceTaskSpec(
                 pk="test-test-1234",
                 input_civs=[civ],
+                input_prefixes={},
                 output_prefix=output_prefix,
             )
         ]
