@@ -90,6 +90,7 @@ class InferenceTaskSpec(NamedTuple):
     input_civs: Iterable[ComponentInterfaceValue]
     input_prefixes: dict[str, str]
     output_prefix: str
+    timeout: timedelta
 
 
 def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
@@ -393,7 +394,12 @@ class Executor(ABC):
         self._provision(tasks=tasks)
 
     def build_inference_task_spec(
-        self, *, input_civs, input_prefixes=None, task_pk=None
+        self,
+        *,
+        input_civs,
+        input_prefixes=None,
+        task_pk=None,
+        task_timeout=None,
     ):
         return InferenceTaskSpec(
             pk=f"{self._job_id}-{task_pk}" if task_pk else self._job_id,
@@ -404,6 +410,7 @@ class Executor(ABC):
                 if task_pk
                 else self._io_prefix
             ),
+            timeout=task_timeout or self._time_limit,
         )
 
     @abstractmethod
@@ -639,7 +646,7 @@ class Executor(ABC):
                     inputs=invocation_inputs,
                     output_bucket_name=self._output_bucket_name,
                     output_prefix=task_spec.output_prefix,
-                    timeout=self._time_limit,
+                    timeout=task_spec.timeout,
                 )
             )
 

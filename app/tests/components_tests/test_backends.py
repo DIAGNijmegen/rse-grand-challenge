@@ -537,6 +537,7 @@ def test_dicom_get_provisioning_tasks():
                     str(prefixed_dicom_civ.pk): "prefix/2",
                 },
                 output_prefix=executor._io_prefix,
+                timeout=executor._time_limit,
             )
         ]
     )
@@ -753,6 +754,7 @@ def test_dodgy_sop_instance_uid():
                     input_civs=[dicom_civ],
                     input_prefixes={},
                     output_prefix=executor._io_prefix,
+                    timeout=executor._time_limit,
                 )
             ]
         )
@@ -796,12 +798,14 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
                 input_civs=[first_civ],
                 input_prefixes={},
                 output_prefix=first_prefix,
+                timeout=timedelta(minutes=10),
             ),
             InferenceTaskSpec(
                 pk="test-test-5678",
                 input_civs=[second_civ],
                 input_prefixes={},
                 output_prefix=second_prefix,
+                timeout=timedelta(minutes=5),
             ),
         ]
     )
@@ -824,6 +828,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
         "value.json",
         "inputs.json",
     }
+    assert inference_tasks[0]["timeout"] == "PT10M"
 
     assert inference_tasks[1]["pk"] == "test-test-5678"
     assert inference_tasks[1]["output_prefix"] == second_prefix
@@ -831,6 +836,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
         "value.json",
         "inputs.json",
     }
+    assert inference_tasks[1]["timeout"] == "PT5M"
 
 
 @pytest.mark.django_db
@@ -864,6 +870,7 @@ def test_relative_paths_use_task_output_prefix():
                 input_civs=[civ],
                 input_prefixes={},
                 output_prefix=output_prefix,
+                timeout=timedelta(minutes=10),
             )
         ]
     )
@@ -905,6 +912,7 @@ def test_provision_batch_job(settings):
             executor.build_inference_task_spec(
                 input_civs=task.inputs.all(),
                 task_pk=str(task.pk),
+                task_timeout=timedelta(minutes=10),
             )
             for task in batch_job.tasks.prefetch_related(
                 "inputs__interface", "inputs__image__files"
@@ -948,6 +956,7 @@ def test_provision_batch_job(settings):
             )["bucket_key"]
             == f"{prefix}/string.json"
         )
+        assert inference_task["timeout"] == "PT10M"
 
 
 def test_signing_key_env_set():
