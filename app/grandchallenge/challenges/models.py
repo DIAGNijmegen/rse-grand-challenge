@@ -1833,7 +1833,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 job_id="",
                 exec_image_repo_tag="",
                 memory_limit=self.algorithm_maximum_settable_memory_gb,
-                time_limit=0,
                 requires_gpu_type=gpu_type,
                 use_warm_pool=False,
                 signing_key=b"",
