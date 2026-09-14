@@ -2011,7 +2011,6 @@ class Invocation(CIVForObjectMixin, UUIDModel):
             "app_label": self._meta.app_label,
             "model_name": self._meta.model_name,
             "pk": self.pk,
-            "time_limit": self.time_limit,
         }
 
     @property
@@ -2023,6 +2022,7 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         kwargs["job_id"] = (
             f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}"
         )
+        kwargs["time_limit"] = self.time_limit
         return kwargs
 
     @property

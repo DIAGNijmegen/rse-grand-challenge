@@ -36,6 +36,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
         memory_limit,
         api_method,
         signing_key,
+        time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
         algorithm_model=None,
         runtime_setup_result_key=None,
     ):
@@ -53,6 +54,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
             use_task_list=False,
         )
         self._endpoint_name = endpoint_name
+        self._time_limit = timedelta(seconds=time_limit)
 
         self.__sagemaker_runtime_client = None
         self.__runtime_setup_result_key = runtime_setup_result_key
@@ -116,7 +118,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
     @property
     def invocation_time_limit(self):
         # Add buffer time to upload invocation result.
-        return self.total_task_time_limit + timedelta(seconds=10)
+        return self._time_limit + timedelta(seconds=10)
 
     @property
     def _auxiliary_data_provisioning_tasks(self):
