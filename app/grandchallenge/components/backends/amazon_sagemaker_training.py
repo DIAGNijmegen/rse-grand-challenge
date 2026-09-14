@@ -538,7 +538,9 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             },
             StoppingCondition={
                 # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_StoppingCondition.html
-                "MaxRuntimeInSeconds": int(self._time_limit.total_seconds()),
+                "MaxRuntimeInSeconds": int(
+                    self.job_time_limit.total_seconds()
+                ),
             },
             Environment={
                 **self.invocation_environment,

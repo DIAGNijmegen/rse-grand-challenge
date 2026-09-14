@@ -1819,7 +1819,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         return {
             "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}-{self.attempt:02}",
             "exec_image_repo_tag": self.container.shimmed_repo_tag,
-            "time_limit": self.time_limit,
             "requires_gpu_type": self.requires_gpu_type,
             "memory_limit": self.requires_memory_gb,
             "use_warm_pool": self.use_warm_pool,

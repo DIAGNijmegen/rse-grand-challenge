@@ -882,6 +882,7 @@ def provision_job(
                         "interface", "image__files"
                     ).all(),
                     input_prefixes=job.input_prefixes,
+                    timeout=job.time_limit,
                 )
             ]
         )
@@ -1996,6 +1997,7 @@ def provision_invocation_input_data(
             input_civs=invocation.inputs.prefetch_related(
                 "interface", "image__files"
             ).all(),
+            time_limit=invocation.time_limit,
         )
     except Exception:
         task_logger.error(

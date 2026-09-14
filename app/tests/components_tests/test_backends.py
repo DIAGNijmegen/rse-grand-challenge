@@ -138,7 +138,6 @@ def test_inputs_json(settings):
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -152,7 +151,7 @@ def test_inputs_json(settings):
     executor.provision(
         task_specs=[
             executor.build_inference_task_spec(
-                input_civs=[civ1, civ2],
+                input_civs=[civ1, civ2], timeout=timedelta(seconds=100)
             )
         ]
     )
@@ -288,6 +287,7 @@ def test_invocation_json(settings):
                     str(prefixed_file_civ.pk): "prefix/2",
                     str(prefixed_value_civ.pk): "prefix/3",
                 },
+                timeout=timedelta(seconds=100),
             )
         ]
     )
@@ -912,7 +912,7 @@ def test_provision_batch_job(settings):
             executor.build_inference_task_spec(
                 input_civs=task.inputs.all(),
                 task_pk=str(task.pk),
-                task_timeout=timedelta(minutes=10),
+                timeout=timedelta(minutes=10),
             )
             for task in batch_job.tasks.prefetch_related(
                 "inputs__interface", "inputs__image__files"

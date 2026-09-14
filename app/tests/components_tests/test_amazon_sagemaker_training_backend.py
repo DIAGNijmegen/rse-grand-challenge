@@ -236,7 +236,11 @@ def test_invocation_json(settings):
             },
         )
         executor.provision(
-            task_specs=[executor.build_inference_task_spec(input_civs=[])]
+            task_specs=[
+                executor.build_inference_task_spec(
+                    input_civs=[], timeout=timedelta(seconds=10)
+                )
+            ]
         )
         executor.execute()  # Required to validate expected_params in the stubber
 

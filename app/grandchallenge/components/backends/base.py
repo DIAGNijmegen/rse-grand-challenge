@@ -351,7 +351,6 @@ class Executor(ABC):
         job_id: str,
         exec_image_repo_tag: str,
         memory_limit: int,
-        time_limit: int,
         requires_gpu_type: GPUTypeChoices,
         use_warm_pool: bool,
         signing_key: bytes,
@@ -367,7 +366,6 @@ class Executor(ABC):
         self._job_id = job_id
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
-        self._time_limit = timedelta(seconds=time_limit)
         self._requires_gpu_type = requires_gpu_type
         self._use_warm_pool = (
             use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
@@ -379,6 +377,7 @@ class Executor(ABC):
         self._input_bucket_name = input_bucket_name
         self._output_bucket_name = output_bucket_name
         self._use_task_list = use_task_list
+        self._inference_task_specs = None
 
         self._exec_duration = None
         self._invoke_duration = None
@@ -390,6 +389,7 @@ class Executor(ABC):
         # So first we gather the async tasks that need to be run,
         # then execute them in the event loop for the current thread
         # using a method wrapped in @async_to_sync.
+        self._inference_task_specs = task_specs
         tasks = self._get_provisioning_tasks(task_specs=task_specs)
         self._provision(tasks=tasks)
 
@@ -397,9 +397,9 @@ class Executor(ABC):
         self,
         *,
         input_civs,
+        timeout,
         input_prefixes=None,
         task_pk=None,
-        task_timeout=None,
     ):
         return InferenceTaskSpec(
             pk=f"{self._job_id}-{task_pk}" if task_pk else self._job_id,
@@ -410,8 +410,17 @@ class Executor(ABC):
                 if task_pk
                 else self._io_prefix
             ),
-            timeout=task_timeout or self._time_limit,
+            timeout=timeout,
         )
+
+    @property
+    def total_task_time_limit(self):
+        return sum(task.timeout for task in self._inference_task_specs)
+
+    @property
+    def job_time_limit(self):
+        # TODO add time for container pulling, model loading, IO
+        return self.total_task_time_limit
 
     @abstractmethod
     def execute(self): ...
