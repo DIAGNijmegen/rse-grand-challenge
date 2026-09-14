@@ -7,6 +7,7 @@ import tarfile
 import zlib
 from base64 import b64decode, b64encode
 from binascii import hexlify
+from datetime import timedelta
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -882,7 +883,7 @@ def provision_job(
                         "interface", "image__files"
                     ).all(),
                     input_prefixes=job.input_prefixes,
-                    time_limit=job.time_limit,
+                    time_limit=timedelta(job.time_limit),
                 )
             ]
         )

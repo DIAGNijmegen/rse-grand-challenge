@@ -235,7 +235,7 @@ def test_invocation_json(settings):
         executor.provision(
             task_specs=[
                 executor.build_inference_task_spec(
-                    input_civs=[], time_limit=timedelta(seconds=10)
+                    input_civs=[], time_limit=timedelta(seconds=60)
                 )
             ]
         )
