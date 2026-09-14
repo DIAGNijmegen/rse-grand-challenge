@@ -1,6 +1,5 @@
 import logging
 import re
-from datetime import timedelta
 from typing import NamedTuple
 from uuid import UUID
 
@@ -36,7 +35,6 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
         memory_limit,
         api_method,
         signing_key,
-        time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
         algorithm_model=None,
         runtime_setup_result_key=None,
     ):
@@ -44,7 +42,6 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
             job_id=job_id,
             exec_image_repo_tag=exec_image_repo_tag,
             memory_limit=memory_limit,
-            time_limit=time_limit,
             requires_gpu_type=requires_gpu_type,
             use_warm_pool=False,
             signing_key=signing_key,
@@ -114,11 +111,6 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
             return self._instance_type.nvme_volume_size
         else:
             return 30
-
-    @property
-    def invocation_time_limit(self):
-        # Add buffer time to upload invocation result.
-        return self._time_limit + timedelta(seconds=10)
 
     @property
     def _auxiliary_data_provisioning_tasks(self):
@@ -269,19 +261,24 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
         else:
             raise ValueError("Invalid endpoint status")
 
-    def provision_invocation_input_data(self, *, input_civs):
+    def provision_invocation_input_data(self, *, input_civs, time_limit):
         super().provision(
-            task_specs=[self.build_inference_task_spec(input_civs=input_civs)]
+            task_specs=[
+                self.build_inference_task_spec(
+                    input_civs=input_civs,
+                    time_limit=time_limit,
+                )
+            ]
         )
 
-    def invoke_endpoint(self, *, inference_id):
+    def invoke_endpoint(self, *, inference_id, invocation_time_limit):
         self._sagemaker_runtime_client.invoke_endpoint_async(
             EndpointName=self._endpoint_name,
             ContentType="application/json",
             InputLocation=self._invocation_s3_uri,
             InferenceId=inference_id,
             InvocationTimeoutSeconds=int(
-                self.invocation_time_limit.total_seconds()
+                invocation_time_limit.total_seconds()
             ),
         )
 

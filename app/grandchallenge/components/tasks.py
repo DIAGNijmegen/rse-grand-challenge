@@ -7,6 +7,7 @@ import tarfile
 import zlib
 from base64 import b64decode, b64encode
 from binascii import hexlify
+from datetime import timedelta
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -882,6 +883,7 @@ def provision_job(
                         "interface", "image__files"
                     ).all(),
                     input_prefixes=job.input_prefixes,
+                    time_limit=timedelta(job.time_limit),
                 )
             ]
         )
@@ -1996,6 +1998,7 @@ def provision_invocation_input_data(
             input_civs=invocation.inputs.prefetch_related(
                 "interface", "image__files"
             ).all(),
+            time_limit=invocation.time_limit,
         )
     except Exception:
         task_logger.error(
@@ -2039,11 +2042,14 @@ def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
 
     if not invocation.endpoint.is_linked_to_reader_study:
         invocation.endpoint.keep_alive(
-            duration=orchestrator.invocation_time_limit
+            duration=invocation.invocation_time_limit
         )
 
     try:
-        orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
+        orchestrator.invoke_endpoint(
+            inference_id=invocation.inference_id,
+            invocation_time_limit=invocation.invocation_time_limit,
+        )
     except Exception:
         task_logger.error("Could not invoke endpoint", exc_info=True)
 

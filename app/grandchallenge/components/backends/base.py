@@ -90,6 +90,7 @@ class InferenceTaskSpec(NamedTuple):
     input_civs: Iterable[ComponentInterfaceValue]
     input_prefixes: dict[str, str]
     output_prefix: str
+    time_limit: timedelta
 
 
 def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
@@ -327,7 +328,7 @@ class InferenceTask(BaseModel):
     inputs: list[InferenceIO]
     output_bucket_name: str
     output_prefix: str
-    timeout: timedelta
+    time_limit: timedelta
 
 
 class InferenceResult(BaseModel):
@@ -350,7 +351,6 @@ class Executor(ABC):
         job_id: str,
         exec_image_repo_tag: str,
         memory_limit: int,
-        time_limit: int,
         requires_gpu_type: GPUTypeChoices,
         use_warm_pool: bool,
         signing_key: bytes,
@@ -366,7 +366,6 @@ class Executor(ABC):
         self._job_id = job_id
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
-        self._time_limit = timedelta(seconds=time_limit)
         self._requires_gpu_type = requires_gpu_type
         self._use_warm_pool = (
             use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
@@ -378,6 +377,7 @@ class Executor(ABC):
         self._input_bucket_name = input_bucket_name
         self._output_bucket_name = output_bucket_name
         self._use_task_list = use_task_list
+        self._inference_task_specs = None
 
         self._exec_duration = None
         self._invoke_duration = None
@@ -389,11 +389,17 @@ class Executor(ABC):
         # So first we gather the async tasks that need to be run,
         # then execute them in the event loop for the current thread
         # using a method wrapped in @async_to_sync.
+        self._inference_task_specs = task_specs
         tasks = self._get_provisioning_tasks(task_specs=task_specs)
         self._provision(tasks=tasks)
 
     def build_inference_task_spec(
-        self, *, input_civs, input_prefixes=None, task_pk=None
+        self,
+        *,
+        input_civs,
+        time_limit,
+        input_prefixes=None,
+        task_pk=None,
     ):
         return InferenceTaskSpec(
             pk=f"{self._job_id}-{task_pk}" if task_pk else self._job_id,
@@ -404,6 +410,14 @@ class Executor(ABC):
                 if task_pk
                 else self._io_prefix
             ),
+            time_limit=time_limit,
+        )
+
+    @property
+    def total_task_time_limit(self):
+        return sum(
+            (task.time_limit for task in self._inference_task_specs),
+            start=timedelta(),
         )
 
     @abstractmethod
@@ -639,7 +653,7 @@ class Executor(ABC):
                     inputs=invocation_inputs,
                     output_bucket_name=self._output_bucket_name,
                     output_prefix=task_spec.output_prefix,
-                    timeout=self._time_limit,
+                    time_limit=task_spec.time_limit,
                 )
             )
 

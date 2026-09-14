@@ -63,7 +63,6 @@ def test_instance_type(memory_limit, expected_type, requires_gpu_type):
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
         exec_image_repo_tag="",
         memory_limit=memory_limit,
-        time_limit=60,
         requires_gpu_type=requires_gpu_type,
         use_warm_pool=False,
         signing_key=b"",
@@ -85,7 +84,6 @@ def test_instance_type_incompatible(memory_limit, requires_gpu_type):
         job_id="algorithms-job-00000000-0000-0000-0000-000000000000",
         exec_image_repo_tag="",
         memory_limit=memory_limit,
-        time_limit=60,
         requires_gpu_type=requires_gpu_type,
         use_warm_pool=False,
         signing_key=b"",
@@ -125,7 +123,6 @@ def test_invocation_prefix():
         job_id="algorithms-job-0",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -236,7 +233,11 @@ def test_invocation_json(settings):
             },
         )
         executor.provision(
-            task_specs=[executor.build_inference_task_spec(input_civs=[])]
+            task_specs=[
+                executor.build_inference_task_spec(
+                    input_civs=[], time_limit=timedelta(seconds=60)
+                )
+            ]
         )
         executor.execute()  # Required to validate expected_params in the stubber
 
@@ -267,7 +268,7 @@ def test_invocation_json(settings):
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/algorithms/job/{job.pk}-00",
             "pk": f"algorithms-job-{job.pk}-00",
-            "timeout": "PT1M",
+            "time_limit": "PT1M",
         }
     ]
 
@@ -277,7 +278,6 @@ def test_set_utilization_duration():
         job_id="algorithms-job-0",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -607,7 +607,6 @@ def test_handle_completed_job(settings):
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"itsasecret",
@@ -675,7 +674,6 @@ def test_handle_completed_job_with_runtime_setup_failed(settings):
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"itsasecret",
@@ -713,7 +711,6 @@ def test_handle_completed_job_missing_runtime_setup_result():
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"itsasecret",
@@ -730,7 +727,6 @@ def test_handle_completed_job_missing_inference_result(settings):
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"itsasecret",
@@ -770,7 +766,6 @@ def test_handle_time_limit_exceeded(settings):
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -796,7 +791,6 @@ def test_handle_stopped_event(settings):
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -905,7 +899,6 @@ def test_deprovision(settings):
         job_id=f"algorithms-job-{pk}",
         exec_image_repo_tag="",
         memory_limit=4,
-        time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",

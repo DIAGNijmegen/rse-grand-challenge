@@ -138,7 +138,6 @@ def test_inputs_json(settings):
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -152,7 +151,7 @@ def test_inputs_json(settings):
     executor.provision(
         task_specs=[
             executor.build_inference_task_spec(
-                input_civs=[civ1, civ2],
+                input_civs=[civ1, civ2], time_limit=timedelta(seconds=100)
             )
         ]
     )
@@ -241,7 +240,6 @@ def test_invocation_json(settings):
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -288,6 +286,7 @@ def test_invocation_json(settings):
                     str(prefixed_file_civ.pk): "prefix/2",
                     str(prefixed_value_civ.pk): "prefix/3",
                 },
+                time_limit=timedelta(seconds=100),
             )
         ]
     )
@@ -365,7 +364,7 @@ def test_invocation_json(settings):
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/test/test/{job_pk}",
             "pk": f"test-test-{job_pk}",
-            "timeout": "PT1M40S",
+            "time_limit": "PT1M40S",
         },
     ]
 
@@ -493,7 +492,6 @@ def test_dicom_get_provisioning_tasks():
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -537,6 +535,7 @@ def test_dicom_get_provisioning_tasks():
                     str(prefixed_dicom_civ.pk): "prefix/2",
                 },
                 output_prefix=executor._io_prefix,
+                time_limit=timedelta(seconds=100),
             )
         ]
     )
@@ -703,7 +702,7 @@ def test_dicom_get_provisioning_tasks():
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/test/test/{job_pk}",
             "pk": f"test-test-{job_pk}",
-            "timeout": "PT1M40S",
+            "time_limit": "PT1M40S",
         },
     ]
 
@@ -716,7 +715,6 @@ def test_dodgy_sop_instance_uid():
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -753,6 +751,7 @@ def test_dodgy_sop_instance_uid():
                     input_civs=[dicom_civ],
                     input_prefixes={},
                     output_prefix=executor._io_prefix,
+                    time_limit=timedelta(seconds=100),
                 )
             ]
         )
@@ -771,7 +770,6 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -796,12 +794,14 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
                 input_civs=[first_civ],
                 input_prefixes={},
                 output_prefix=first_prefix,
+                time_limit=timedelta(minutes=10),
             ),
             InferenceTaskSpec(
                 pk="test-test-5678",
                 input_civs=[second_civ],
                 input_prefixes={},
                 output_prefix=second_prefix,
+                time_limit=timedelta(minutes=5),
             ),
         ]
     )
@@ -824,6 +824,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
         "value.json",
         "inputs.json",
     }
+    assert inference_tasks[0]["time_limit"] == "PT10M"
 
     assert inference_tasks[1]["pk"] == "test-test-5678"
     assert inference_tasks[1]["output_prefix"] == second_prefix
@@ -831,6 +832,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
         "value.json",
         "inputs.json",
     }
+    assert inference_tasks[1]["time_limit"] == "PT5M"
 
 
 @pytest.mark.django_db
@@ -841,7 +843,6 @@ def test_relative_paths_use_task_output_prefix():
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -864,6 +865,7 @@ def test_relative_paths_use_task_output_prefix():
                 input_civs=[civ],
                 input_prefixes={},
                 output_prefix=output_prefix,
+                time_limit=timedelta(minutes=10),
             )
         ]
     )
@@ -905,6 +907,7 @@ def test_provision_batch_job(settings):
             executor.build_inference_task_spec(
                 input_civs=task.inputs.all(),
                 task_pk=str(task.pk),
+                time_limit=timedelta(minutes=10),
             )
             for task in batch_job.tasks.prefetch_related(
                 "inputs__interface", "inputs__image__files"
@@ -948,6 +951,7 @@ def test_provision_batch_job(settings):
             )["bucket_key"]
             == f"{prefix}/string.json"
         )
+        assert inference_task["time_limit"] == "PT10M"
 
 
 def test_signing_key_env_set():
@@ -957,7 +961,6 @@ def test_signing_key_env_set():
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"1337",
@@ -979,7 +982,6 @@ def test_api_method_env_set():
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"1337",
@@ -999,7 +1001,6 @@ def test_runtime_setup_result_signature_unverified(settings):
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"correct-key",
@@ -1041,7 +1042,6 @@ def test_runtime_setup_result_signature_verified(settings):
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"correct-key",
@@ -1080,7 +1080,6 @@ def test_invocation_results_signature_unverified(settings):
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"correct-key",
@@ -1128,7 +1127,6 @@ def test_invocation_results_signature_verified(settings):
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"correct-key",

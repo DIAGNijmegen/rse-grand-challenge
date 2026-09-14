@@ -530,12 +530,14 @@ def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
         ],
         "output_bucket_name": "algorithm-endpoints-output",
         "output_prefix": f"/io/algorithms/invocation/{invocation.pk}",
-        "timeout": "PT42S",
+        "time_limit": "PT42S",
     }
 
     mock_provision = mocker.patch.object(orchestrator, "_provision")
 
-    orchestrator.provision_invocation_input_data(input_civs=[civ])
+    orchestrator.provision_invocation_input_data(
+        input_civs=[civ], time_limit=invocation.time_limit
+    )
 
     mock_provision.assert_called_once()
 
@@ -606,7 +608,10 @@ def test_invocation_invoke_endpoint(settings):
             },
         )
 
-        orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
+        orchestrator.invoke_endpoint(
+            inference_id=invocation.inference_id,
+            invocation_time_limit=invocation.invocation_time_limit,
+        )
 
         stubber.assert_no_pending_responses()
 
