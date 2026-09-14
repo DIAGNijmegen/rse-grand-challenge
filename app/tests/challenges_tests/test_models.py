@@ -290,7 +290,6 @@ def test_challenge_request_budget_calculation(settings):
     costs_for_phases = [
         {
             # "name": "Phase 1",
-            "compute_costs_euros_per_hour": 1.17,
             "compute_time_hours": 16667,
             "compute_costs_euros": 19500.39,
             "data_storage_size_gb": 986,
@@ -299,7 +298,6 @@ def test_challenge_request_budget_calculation(settings):
         },
         {
             # "name": "Phase 2",
-            "compute_costs_euros_per_hour": 1.17,
             "compute_time_hours": 8333,
             "compute_costs_euros": 9749.61,
             "data_storage_size_gb": 537,
@@ -308,6 +306,7 @@ def test_challenge_request_budget_calculation(settings):
         },
     ]
     assert challenge_request.storage_costs_euros_per_gb() == 0.67
+    assert challenge_request.compute_costs_euros_per_hour == 1.17
     for i_phase in range(2):
         assert (
             pytest.approx(
