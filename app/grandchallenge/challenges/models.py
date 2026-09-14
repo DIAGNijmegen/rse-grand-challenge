@@ -1824,40 +1824,29 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return self.total_data_and_docker_storage_gb * settings.GIGABYTE
 
     @cached_property
-    def compute_costs_euros_per_hour_for_tasks(self):
+    def compute_costs_euros_per_hour(self):
         Executor = import_string(  # noqa: N806
             settings.COMPONENTS_DEFAULT_BACKEND
         )
-        costs_for_tasks = []
-        for average_time in self.inference_time_average_minutes_for_tasks:
-            executors = [
-                Executor(
-                    job_id="",
-                    exec_image_repo_tag="",
-                    memory_limit=self.algorithm_maximum_settable_memory_gb,
-                    time_limit=average_time,
-                    requires_gpu_type=gpu_type,
-                    use_warm_pool=False,
-                    signing_key=b"",
-                    api_method=APIMethodChoices.EXEC,
-                )
-                for gpu_type in self.algorithm_selectable_gpu_type_choices
-            ]
-            usd_cents_per_hour = max(
-                executor.usd_cents_per_hour for executor in executors
+        executors = [
+            Executor(
+                job_id="",
+                exec_image_repo_tag="",
+                memory_limit=self.algorithm_maximum_settable_memory_gb,
+                time_limit=0,
+                requires_gpu_type=gpu_type,
+                use_warm_pool=False,
+                signing_key=b"",
+                api_method=APIMethodChoices.EXEC,
             )
-            euros_per_hour = round(
-                usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR / 100, 2
-            )
-            costs_for_tasks.append(euros_per_hour)
-        return costs_for_tasks
-
-    @cached_property
-    def compute_costs_euros_per_hour_for_phases(self):
-        return [
-            self.compute_costs_euros_per_hour_for_tasks[task_index]
-            for task_index in self.task_index_for_phases
+            for gpu_type in self.algorithm_selectable_gpu_type_choices
         ]
+        usd_cents_per_hour = max(
+            executor.usd_cents_per_hour for executor in executors
+        )
+        return round(
+            usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR / 100, 2
+        )
 
     @staticmethod
     def storage_costs_euros_per_gb():
@@ -1869,12 +1858,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @cached_property
     def compute_costs_euros_for_phases(self):
         return [
-            compute_costs_euros_per_hour * compute_time_hours
-            for compute_time_hours, compute_costs_euros_per_hour in zip(
-                self.compute_time_hours_for_phases,
-                self.compute_costs_euros_per_hour_for_phases,
-                strict=True,
-            )
+            self.compute_costs_euros_per_hour * compute_time_hours
+            for compute_time_hours in self.compute_time_hours_for_phases
         ]
 
     @cached_property
@@ -2026,9 +2011,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "inference_time_average_minutes": self.inference_time_average_minutes_for_tasks[
                     task_index
                 ],
-                "compute_costs_euros_per_hour": self.compute_costs_euros_per_hour_for_tasks[
-                    task_index
-                ],
+                "compute_costs_euros_per_hour": self.compute_costs_euros_per_hour,
                 "average_size_test_case_mb": self.average_size_test_case_mb_for_tasks[
                     task_index
                 ],
