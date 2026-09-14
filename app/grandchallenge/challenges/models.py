@@ -1825,10 +1825,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @cached_property
     def compute_costs_euros_per_hour(self):
-        # The hourly compute rate depends only on the selectable GPU type
-        # and the maximum settable memory, both of which are configured at
-        # the challenge request level. The runtime does not affect the
-        # hourly rate, so it is not factored in here.
         Executor = import_string(  # noqa: N806
             settings.COMPONENTS_DEFAULT_BACKEND
         )
