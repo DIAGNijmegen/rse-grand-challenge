@@ -2006,6 +2006,10 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         return f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{self.pk}"
 
     @property
+    def invocation_time_limit(self):
+        return timedelta(seconds=self.time_limit) + timedelta(seconds=10)
+
+    @property
     def task_kwargs(self):
         return {
             "app_label": self._meta.app_label,
@@ -2022,7 +2026,6 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         kwargs["job_id"] = (
             f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}"
         )
-        kwargs["time_limit"] = self.time_limit
         return kwargs
 
     @property

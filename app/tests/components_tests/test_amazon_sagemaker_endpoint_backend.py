@@ -608,7 +608,10 @@ def test_invocation_invoke_endpoint(settings):
             },
         )
 
-        orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
+        orchestrator.invoke_endpoint(
+            inference_id=invocation.inference_id,
+            invocation_time_limit=invocation.invocation_time_limit,
+        )
 
         stubber.assert_no_pending_responses()
 

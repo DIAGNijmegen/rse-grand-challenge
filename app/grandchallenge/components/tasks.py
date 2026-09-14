@@ -2041,11 +2041,14 @@ def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
 
     if not invocation.endpoint.is_linked_to_reader_study:
         invocation.endpoint.keep_alive(
-            duration=orchestrator.invocation_time_limit
+            duration=invocation.invocation_time_limit
         )
 
     try:
-        orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
+        orchestrator.invoke_endpoint(
+            inference_id=invocation.inference_id,
+            invocation_time_limit=invocation.invocation_time_limit,
+        )
     except Exception:
         task_logger.error("Could not invoke endpoint", exc_info=True)
 
