@@ -415,7 +415,10 @@ class Executor(ABC):
 
     @property
     def total_task_time_limit(self):
-        return sum(task.time_limit for task in self._inference_task_specs)
+        return sum(
+            (task.time_limit for task in self._inference_task_specs),
+            start=timedelta(),
+        )
 
     @abstractmethod
     def execute(self): ...
