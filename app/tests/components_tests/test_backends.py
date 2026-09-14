@@ -240,7 +240,6 @@ def test_invocation_json(settings):
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
