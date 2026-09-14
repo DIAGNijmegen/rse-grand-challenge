@@ -417,11 +417,6 @@ class Executor(ABC):
     def total_task_time_limit(self):
         return sum(task.timeout for task in self._inference_task_specs)
 
-    @property
-    def job_time_limit(self):
-        # TODO add time for container pulling, model loading, IO
-        return self.total_task_time_limit
-
     @abstractmethod
     def execute(self): ...
 

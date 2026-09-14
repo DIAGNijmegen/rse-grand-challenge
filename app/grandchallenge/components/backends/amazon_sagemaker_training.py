@@ -465,6 +465,11 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
         return job_name
 
+    @property
+    def job_time_limit(self):
+        # TODO add time for container pulling, model loading, IO
+        return self.total_task_time_limit
+
     @staticmethod
     def get_job_params(*, job_name):
         prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
