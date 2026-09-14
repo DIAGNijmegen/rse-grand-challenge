@@ -493,7 +493,6 @@ def test_dicom_get_provisioning_tasks():
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -537,7 +536,7 @@ def test_dicom_get_provisioning_tasks():
                     str(prefixed_dicom_civ.pk): "prefix/2",
                 },
                 output_prefix=executor._io_prefix,
-                timeout=executor._time_limit,
+                timeout=timedelta(seconds=100),
             )
         ]
     )
@@ -717,7 +716,6 @@ def test_dodgy_sop_instance_uid():
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
-        time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
@@ -754,7 +752,7 @@ def test_dodgy_sop_instance_uid():
                     input_civs=[dicom_civ],
                     input_prefixes={},
                     output_prefix=executor._io_prefix,
-                    timeout=executor._time_limit,
+                    timeout=timedelta(seconds=100),
                 )
             ]
         )
