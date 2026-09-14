@@ -235,7 +235,7 @@ def test_invocation_json(settings):
         executor.provision(
             task_specs=[
                 executor.build_inference_task_spec(
-                    input_civs=[], timeout=timedelta(seconds=10)
+                    input_civs=[], time_limit=timedelta(seconds=10)
                 )
             ]
         )
@@ -268,7 +268,7 @@ def test_invocation_json(settings):
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/algorithms/job/{job.pk}-00",
             "pk": f"algorithms-job-{job.pk}-00",
-            "timeout": "PT1M",
+            "time_limit": "PT1M",
         }
     ]
 

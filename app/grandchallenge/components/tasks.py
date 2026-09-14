@@ -882,7 +882,7 @@ def provision_job(
                         "interface", "image__files"
                     ).all(),
                     input_prefixes=job.input_prefixes,
-                    timeout=job.time_limit,
+                    time_limit=job.time_limit,
                 )
             ]
         )

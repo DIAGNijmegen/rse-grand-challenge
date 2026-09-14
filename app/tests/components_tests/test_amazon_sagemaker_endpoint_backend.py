@@ -530,7 +530,7 @@ def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
         ],
         "output_bucket_name": "algorithm-endpoints-output",
         "output_prefix": f"/io/algorithms/invocation/{invocation.pk}",
-        "timeout": "PT42S",
+        "time_limit": "PT42S",
     }
 
     mock_provision = mocker.patch.object(orchestrator, "_provision")

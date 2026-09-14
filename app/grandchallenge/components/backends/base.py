@@ -90,7 +90,7 @@ class InferenceTaskSpec(NamedTuple):
     input_civs: Iterable[ComponentInterfaceValue]
     input_prefixes: dict[str, str]
     output_prefix: str
-    timeout: timedelta
+    time_limit: timedelta
 
 
 def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
@@ -328,7 +328,7 @@ class InferenceTask(BaseModel):
     inputs: list[InferenceIO]
     output_bucket_name: str
     output_prefix: str
-    timeout: timedelta
+    time_limit: timedelta
 
 
 class InferenceResult(BaseModel):
@@ -397,7 +397,7 @@ class Executor(ABC):
         self,
         *,
         input_civs,
-        timeout,
+        time_limit,
         input_prefixes=None,
         task_pk=None,
     ):
@@ -410,12 +410,12 @@ class Executor(ABC):
                 if task_pk
                 else self._io_prefix
             ),
-            timeout=timeout,
+            time_limit=time_limit,
         )
 
     @property
     def total_task_time_limit(self):
-        return sum(task.timeout for task in self._inference_task_specs)
+        return sum(task.time_limit for task in self._inference_task_specs)
 
     @abstractmethod
     def execute(self): ...
@@ -650,7 +650,7 @@ class Executor(ABC):
                     inputs=invocation_inputs,
                     output_bucket_name=self._output_bucket_name,
                     output_prefix=task_spec.output_prefix,
-                    timeout=task_spec.timeout,
+                    time_limit=task_spec.time_limit,
                 )
             )
 

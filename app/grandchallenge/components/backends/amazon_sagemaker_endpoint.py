@@ -272,7 +272,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
             task_specs=[
                 self.build_inference_task_spec(
                     input_civs=input_civs,
-                    timeout=time_limit,
+                    time_limit=time_limit,
                 )
             ]
         )
