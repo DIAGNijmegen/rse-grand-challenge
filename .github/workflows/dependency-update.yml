@@ -51,16 +51,6 @@ jobs:
               run: |
                 rm package-lock.json
                 npm install --package-lock-only
-            - name: Build the test container and migrations
-              run: |
-                  make build_web_test
-                  make migrations
-            - name: Format the migrations
-              # pre-commit will exit with code 1 when the files change, this is OK
-              continue-on-error: true
-              run: |
-                  git add .
-                  pre-commit run --all-files
             - name: Create Pull Request
               uses: peter-evans/create-pull-request@v8
               with:
