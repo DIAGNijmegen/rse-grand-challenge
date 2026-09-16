@@ -268,7 +268,7 @@ def test_invocation_json(settings):
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/algorithms/job/{job.pk}-00",
             "pk": f"algorithms-job-{job.pk}-00",
-            "time_limit": "PT1M",
+            "timeout": "PT1M",
         }
     ]
 

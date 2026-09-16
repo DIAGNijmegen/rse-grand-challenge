@@ -328,7 +328,7 @@ class InferenceTask(BaseModel):
     inputs: list[InferenceIO]
     output_bucket_name: str
     output_prefix: str
-    time_limit: timedelta
+    timeout: timedelta
 
 
 class InferenceResult(BaseModel):
@@ -653,7 +653,7 @@ class Executor(ABC):
                     inputs=invocation_inputs,
                     output_bucket_name=self._output_bucket_name,
                     output_prefix=task_spec.output_prefix,
-                    time_limit=task_spec.time_limit,
+                    timeout=task_spec.time_limit,
                 )
             )
 

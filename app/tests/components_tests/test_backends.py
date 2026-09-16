@@ -364,7 +364,7 @@ def test_invocation_json(settings):
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/test/test/{job_pk}",
             "pk": f"test-test-{job_pk}",
-            "time_limit": "PT1M40S",
+            "timeout": "PT1M40S",
         },
     ]
 
@@ -702,7 +702,7 @@ def test_dicom_get_provisioning_tasks():
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/test/test/{job_pk}",
             "pk": f"test-test-{job_pk}",
-            "time_limit": "PT1M40S",
+            "timeout": "PT1M40S",
         },
     ]
 
@@ -824,7 +824,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
         "value.json",
         "inputs.json",
     }
-    assert inference_tasks[0]["time_limit"] == "PT10M"
+    assert inference_tasks[0]["timeout"] == "PT10M"
 
     assert inference_tasks[1]["pk"] == "test-test-5678"
     assert inference_tasks[1]["output_prefix"] == second_prefix
@@ -832,7 +832,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
         "value.json",
         "inputs.json",
     }
-    assert inference_tasks[1]["time_limit"] == "PT5M"
+    assert inference_tasks[1]["timeout"] == "PT5M"
 
 
 @pytest.mark.django_db
@@ -951,7 +951,7 @@ def test_provision_batch_job(settings):
             )["bucket_key"]
             == f"{prefix}/string.json"
         )
-        assert inference_task["time_limit"] == "PT10M"
+        assert inference_task["timeout"] == "PT10M"
 
 
 def test_signing_key_env_set():
