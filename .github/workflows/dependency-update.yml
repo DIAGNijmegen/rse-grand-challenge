@@ -51,10 +51,9 @@ jobs:
               run: |
                 rm package-lock.json
                 npm install --package-lock-only
-            - name: Build the test container, make the docs and migrations
+            - name: Build the test container and migrations
               run: |
                   make build_web_test
-                  make docs
                   make migrations
             - name: Format the migrations
               # pre-commit will exit with code 1 when the files change, this is OK
