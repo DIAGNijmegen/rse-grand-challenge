@@ -66,6 +66,8 @@ jobs:
               with:
                   token: ${{ steps.app-token.outputs.token }}
                   commit-message: "Update dependencies"
+                  committer: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+                  author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
                   branch-suffix: "short-commit-hash"
                   delete-branch: true
                   title: "Update dependencies"
