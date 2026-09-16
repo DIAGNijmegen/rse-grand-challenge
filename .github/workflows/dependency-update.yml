@@ -19,17 +19,17 @@ jobs:
         steps:
             - name: Generate a token
               id: app-token
-              uses: actions/create-github-app-token@v3
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
               with:
                   client-id: ${{ secrets.DEPENDENCY_UPDATE_APP_CLIENT_ID }}
                   private-key: ${{ secrets.DEPENDENCY_UPDATE_APP_PRIVATE_KEY }}
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   token: ${{ steps.app-token.outputs.token }}
                   ref: ${{ github.head_ref }}
             - name: Install uv and set the python version
-              uses: astral-sh/setup-uv@v6
+              uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
               with:
                 python-version: ${{ env.PYTHON_VERSION }}
             - name: Update Dependencies
@@ -40,7 +40,7 @@ jobs:
                   echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
                   echo "$LOCK_OUTPUT" >> $GITHUB_ENV
                   echo "EOF" >> $GITHUB_ENV
-            - uses: actions/setup-node@v6
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
               with:
                 node-version: 24
             - name: Update npm lockfile
@@ -48,7 +48,7 @@ jobs:
                 rm package-lock.json
                 npm install --package-lock-only
             - name: Create Pull Request
-              uses: peter-evans/create-pull-request@v8
+              uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
               with:
                   token: ${{ steps.app-token.outputs.token }}
                   commit-message: "Update dependencies"
