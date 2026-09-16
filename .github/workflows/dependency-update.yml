@@ -19,9 +19,9 @@ jobs:
         steps:
             - name: Generate a token
               id: app-token
-              uses: actions/create-github-app-token@v2
+              uses: actions/create-github-app-token@v3
               with:
-                  app-id: ${{ secrets.DEPENDENCY_UPDATE_APP_ID }}
+                  client-id: ${{ secrets.DEPENDENCY_UPDATE_APP_CLIENT_ID }}
                   private-key: ${{ secrets.DEPENDENCY_UPDATE_APP_PRIVATE_KEY }}
             - name: Checkout
               uses: actions/checkout@v4
