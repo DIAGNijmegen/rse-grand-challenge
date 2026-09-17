@@ -1826,11 +1826,17 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "use_warm_pool": self.use_warm_pool,
             "signing_key": self.signing_key,
             "api_method": self.container.api_method,
+            "task_definitions": self.inference_task_definitions,
         }
 
     def get_executor(self, *, backend):
         Executor = import_string(backend)  # noqa: N806
         return Executor(**self.executor_kwargs)
+
+    @cached_property
+    def inference_task_definitions(self):
+        """Build the inference task specs for this job."""
+        raise NotImplementedError
 
     @property
     def container(self) -> "ComponentImage":

@@ -535,9 +535,7 @@ def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
 
     mock_provision = mocker.patch.object(orchestrator, "_provision")
 
-    orchestrator.provision_invocation_input_data(
-        input_civs=[civ], time_limit=invocation.time_limit
-    )
+    orchestrator.provision()
 
     mock_provision.assert_called_once()
 

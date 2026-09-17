@@ -31,6 +31,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.tasks import execute_job
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.evaluation.models import Evaluation, Method
 from tests.algorithms_tests.factories import (
@@ -153,9 +154,14 @@ def test_invocation_prefix():
         (Evaluation, "method", Method, "E"),
     ),
 )
-def test_transform_job_name(model, container, container_model, key, settings):
+def test_transform_job_name(
+    model, container, container_model, key, settings, mocker
+):
     j = model(pk=uuid4(), time_limit=60)
     setattr(j, container, container_model(pk=uuid4()))
+    # This test only exercises job-name transformation, which does not depend
+    # on the task specs; the unsaved job has no inputs to build them from.
+    mocker.patch.object(j, "inference_task_definitions", return_value=[])
     executor = AmazonSageMakerTrainingExecutor(**j.executor_kwargs)
 
     assert (
@@ -176,6 +182,53 @@ def test_transform_job_name(model, container, container_model, key, settings):
 
 
 @pytest.mark.django_db
+def test_executor_task_specs_set_at_creation():
+    job = AlgorithmJobFactory(
+        time_limit=60,
+        signing_key=b"totallysecret",
+    )
+
+    executor = job.get_executor(
+        backend="grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor",
+    )
+
+    assert executor.total_task_time_limit == timedelta(seconds=60)
+
+
+@pytest.mark.django_db
+def test_execute_job_scheduled_job_with_time_limit(mocker):
+    job = AlgorithmJobFactory(
+        time_limit=60,
+        signing_key=b"totallysecret",
+        status=Job.PROVISIONED,
+    )
+
+    backend = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
+    mocker.patch(
+        "grandchallenge.components.models.ComponentImage.can_execute",
+        new_callable=mocker.PropertyMock,
+        return_value=True,
+    )
+    # Capture the time limit computed by the executor that execute_job builds
+    create_job_boto = mocker.patch.object(
+        AmazonSageMakerTrainingExecutor,
+        "_create_job_boto",
+        autospec=True,
+    )
+
+    execute_job(
+        job_pk=job.pk,
+        job_app_label=job._meta.app_label,
+        job_model_name=job._meta.model_name,
+        backend=backend,
+    )
+
+    create_job_boto.assert_called_once()
+    scheduling_executor = create_job_boto.call_args.args[0]
+    assert scheduling_executor.job_time_limit == timedelta(seconds=60)
+
+
+@pytest.mark.django_db
 def test_invocation_json(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
     settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN = (
@@ -187,9 +240,12 @@ def test_invocation_json(settings):
         signing_key=b"totallysecret",
     )
     job.algorithm_model = AlgorithmModelFactory()
+    # This test asserts the invocation JSON shape for a job with no inputs;
+    # clear the default input created by the factory.
+    job.inputs.clear()
 
     executor = job.get_executor(
-        backend="grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
+        backend="grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor",
     )
 
     with Stubber(executor._sagemaker_client) as s:
@@ -238,13 +294,7 @@ def test_invocation_json(settings):
                 "RemoteDebugConfig": {"EnableRemoteDebug": False},
             },
         )
-        executor.provision(
-            task_specs=[
-                executor.build_inference_task_spec(
-                    input_civs=[], time_limit=timedelta(seconds=60)
-                )
-            ]
-        )
+        executor.provision()
         executor.execute()  # Required to validate expected_params in the stubber
 
     with io.BytesIO() as fileobj:

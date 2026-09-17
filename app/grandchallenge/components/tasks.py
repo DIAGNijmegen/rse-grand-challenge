@@ -7,7 +7,6 @@ import tarfile
 import zlib
 from base64 import b64decode, b64encode
 from binascii import hexlify
-from datetime import timedelta
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -876,17 +875,7 @@ def provision_job(
             raise RuntimeError("Job is not ready for provisioning")
 
     try:
-        executor.provision(
-            task_specs=[
-                executor.build_inference_task_spec(
-                    input_civs=job.inputs.prefetch_related(
-                        "interface", "image__files"
-                    ).all(),
-                    input_prefixes=job.input_prefixes,
-                    time_limit=timedelta(job.time_limit),
-                )
-            ]
-        )
+        executor.provision()
     except ComponentException as error:
         job.update_status(
             status=job.FAILURE,
@@ -1996,12 +1985,7 @@ def provision_invocation_input_data(
     orchestrator = invocation.orchestrator
 
     try:
-        orchestrator.provision_invocation_input_data(
-            input_civs=invocation.inputs.prefetch_related(
-                "interface", "image__files"
-            ).all(),
-            time_limit=invocation.time_limit,
-        )
+        orchestrator.provision()
     except Exception:
         task_logger.error(
             "Could not provision endpoint for invocation", exc_info=True

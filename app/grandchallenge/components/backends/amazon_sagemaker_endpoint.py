@@ -37,6 +37,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
         signing_key,
         algorithm_model=None,
         runtime_setup_result_key=None,
+        task_definitions=None,
     ):
         super().__init__(
             job_id=job_id,
@@ -50,6 +51,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
             input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
             use_task_list=False,
+            task_definitions=task_definitions,
         )
         self._endpoint_name = endpoint_name
 
@@ -260,16 +262,6 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
             raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
         else:
             raise ValueError("Invalid endpoint status")
-
-    def provision_invocation_input_data(self, *, input_civs, time_limit):
-        super().provision(
-            task_specs=[
-                self.build_inference_task_spec(
-                    input_civs=input_civs,
-                    time_limit=time_limit,
-                )
-            ]
-        )
 
     def invoke_endpoint(self, *, inference_id, invocation_time_limit):
         self._sagemaker_runtime_client.invoke_endpoint_async(

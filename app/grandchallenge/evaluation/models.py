@@ -28,6 +28,7 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.components.backends.base import InferenceTaskDefinition
 from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentImage,
@@ -1923,6 +1924,19 @@ class BatchJob(ComponentJob):
             task.invoke_duration = inference_result.invoke_duration
             task.save(update_fields=["exec_duration", "invoke_duration"])
 
+    @cached_property
+    def inference_task_definitions(self):
+        return [
+            InferenceTaskDefinition(
+                input_civs=task.inputs.all(),
+                task_pk=str(task.pk),
+                time_limit=timedelta(seconds=self.time_limit),
+            )
+            for task in self.tasks.prefetch_related(
+                "inputs__interface", "inputs__image__files"
+            ).all()
+        ]
+
     def create_utilization(self):
         # TODO: add BatchJobUtilization model
         pass
@@ -2555,6 +2569,18 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         if self.ground_truth:
             executor_kwargs["ground_truth"] = self.ground_truth.ground_truth
         return executor_kwargs
+
+    @cached_property
+    def inference_task_definitions(self):
+        return [
+            InferenceTaskDefinition(
+                input_civs=self.inputs.prefetch_related(
+                    "interface", "image__files"
+                ).all(),
+                input_prefixes=self.input_prefixes,
+                time_limit=timedelta(seconds=self.time_limit),
+            )
+        ]
 
     @cached_property
     def metrics_json_file(self):
