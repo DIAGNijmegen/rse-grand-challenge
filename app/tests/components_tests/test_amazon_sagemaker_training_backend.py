@@ -155,7 +155,7 @@ def test_transform_job_name(
     setattr(j, container, container_model(pk=uuid4()))
     # This test only exercises job-name transformation, which does not depend
     # on the task specs; the unsaved job has no inputs to build them from.
-    mocker.patch.object(j, "get_inference_task_definitions", return_value=[])
+    mocker.patch.object(j, "inference_task_definitions", return_value=[])
     executor = AmazonSageMakerTrainingExecutor(**j.executor_kwargs)
 
     assert (

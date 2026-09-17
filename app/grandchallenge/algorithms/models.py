@@ -1473,7 +1473,8 @@ class Job(CIVForObjectMixin, ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
-    def get_inference_task_definitions(self):
+    @cached_property
+    def inference_task_definitions(self):
         return [
             InferenceTaskDefinition(
                 input_civs=self.inputs.prefetch_related(
@@ -2038,10 +2039,11 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         kwargs["job_id"] = (
             f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}"
         )
-        kwargs["task_definitions"] = self.get_inference_task_definitions()
+        kwargs["task_definitions"] = self.inference_task_definitions
         return kwargs
 
-    def get_inference_task_definitions(self):
+    @cached_property
+    def inference_task_definitions(self):
         return [
             InferenceTaskDefinition(
                 input_civs=self.inputs.prefetch_related(

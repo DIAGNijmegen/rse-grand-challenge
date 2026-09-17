@@ -389,8 +389,7 @@ class Executor(ABC):
         # So first we gather the async tasks that need to be run,
         # then execute them in the event loop for the current thread
         # using a method wrapped in @async_to_sync.
-        tasks = self._get_provisioning_tasks()
-        self._provision(tasks=tasks)
+        self._provision(tasks=self.provisioning_tasks)
 
     @property
     def total_task_time_limit(self):
@@ -598,7 +597,8 @@ class Executor(ABC):
                             )
                         )
 
-    def _get_provisioning_tasks(self):
+    @cached_property
+    def provisioning_tasks(self):
         provisioning_tasks = []
         inference_tasks = []
 

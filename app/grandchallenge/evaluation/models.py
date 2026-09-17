@@ -1906,7 +1906,8 @@ class BatchJob(ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
-    def get_inference_task_definitions(self):
+    @cached_property
+    def inference_task_definitions(self):
         return [
             InferenceTaskDefinition(
                 input_civs=task.inputs.all(),
@@ -2551,7 +2552,8 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             executor_kwargs["ground_truth"] = self.ground_truth.ground_truth
         return executor_kwargs
 
-    def get_inference_task_definitions(self):
+    @cached_property
+    def inference_task_definitions(self):
         return [
             InferenceTaskDefinition(
                 input_civs=self.inputs.prefetch_related(

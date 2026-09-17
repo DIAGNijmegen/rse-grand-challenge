@@ -532,7 +532,7 @@ def test_dicom_get_provisioning_tasks():
             )
         ],
     )
-    tasks = executor._get_provisioning_tasks()
+    tasks = executor.provisioning_tasks
 
     normalized_tasks = [normalize_partial(t) for t in tasks]
 
@@ -744,7 +744,7 @@ def test_dodgy_sop_instance_uid():
     )
 
     with pytest.raises(SuspiciousFileOperation) as exec_info:
-        executor._get_provisioning_tasks()
+        executor.provisioning_tasks
 
     assert (
         "images/fds.dcm) is located outside of the base path component"
@@ -789,7 +789,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
     first_prefix = executor._output_prefix_for_task(task_pk="1234")
     second_prefix = executor._output_prefix_for_task(task_pk="5678")
 
-    tasks = executor._get_provisioning_tasks()
+    tasks = executor.provisioning_tasks
 
     normalized_tasks = [normalize_partial(t) for t in tasks]
 
@@ -850,7 +850,7 @@ def test_relative_paths_use_task_output_prefix():
 
     output_prefix = executor._output_prefix_for_task(task_pk="1234")
 
-    tasks = executor._get_provisioning_tasks()
+    tasks = executor.provisioning_tasks
 
     normalized_tasks = [normalize_partial(t) for t in tasks]
 
