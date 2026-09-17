@@ -78,17 +78,24 @@ RUN mkdir -p /opt/sagemaker-shim \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && chmod -R a+rX /opt/sagemaker-shim
 
-# Create virtual environments
-RUN mkdir -p /opt/virtualenvs \
-    && python -m venv /opt/virtualenvs/biom \
-    && /opt/virtualenvs/biom/bin/python -m pip --no-cache-dir --no-color install biom-format biopython \
-    && python -m venv /opt/virtualenvs/panimg \
-    && /opt/virtualenvs/panimg/bin/python -m pip --no-cache-dir --no-color install panimg
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Create isolated virtual environments from locked dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/biom/pyproject.toml,target=/tmp/biom/pyproject.toml \
+    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/biom/uv.lock,target=/tmp/biom/uv.lock \
+    UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/biom \
+    uv sync --locked --no-install-project --project /tmp/biom
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/panimg/pyproject.toml,target=/tmp/panimg/pyproject.toml \
+    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/panimg/uv.lock,target=/tmp/panimg/uv.lock \
+    UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/panimg \
+    uv sync --locked --no-install-project --project /tmp/panimg
 
 WORKDIR /opt/grand-challenge
 
 # Install base python packages
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \

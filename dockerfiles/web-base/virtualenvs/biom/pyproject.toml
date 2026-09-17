@@ -1,0 +1,8 @@
+[project]
+name = "gc-venv-biom"
+version = "0"
+requires-python = "==3.13.*"
+dependencies = [
+    "biom-format",
+    "biopython",
+]

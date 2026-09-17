@@ -1,0 +1,7 @@
+[project]
+name = "gc-venv-panimg"
+version = "0"
+requires-python = "==3.13.*"
+dependencies = [
+    "panimg",
+]

@@ -36,7 +36,11 @@ jobs:
               id: dependency-update
               timeout-minutes: 5
               run: |
-                  LOCK_OUTPUT=$(uv lock --upgrade --no-progress 2>&1)
+                  LOCK_OUTPUT=$(
+                    uv lock --upgrade --no-progress 2>&1
+                    uv lock --upgrade --no-progress --project dockerfiles/web-base/virtualenvs/biom 2>&1
+                    uv lock --upgrade --no-progress --project dockerfiles/web-base/virtualenvs/panimg 2>&1
+                  )
                   echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
                   echo "$LOCK_OUTPUT" >> $GITHUB_ENV
                   echo "EOF" >> $GITHUB_ENV
