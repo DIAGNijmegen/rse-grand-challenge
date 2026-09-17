@@ -1774,8 +1774,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         error_message="",
         detailed_error_message=None,
         utilization_duration=None,
-        exec_duration=None,
-        invoke_duration=None,
         compute_cost_euro_millicents=None,
     ):
         self.status = status
@@ -1793,12 +1791,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.utilization.duration = utilization_duration
             self.utilization.save(update_fields=["duration"])
 
-        if exec_duration is not None:
-            self.exec_duration = exec_duration
-
-        if invoke_duration is not None:
-            self.invoke_duration = invoke_duration
-
         if compute_cost_euro_millicents is not None:
             self.utilization.compute_cost_euro_millicents = (
                 compute_cost_euro_millicents
@@ -1813,6 +1805,16 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.execute_task_on_success()
         elif self.status in [self.FAILURE, self.CANCELLED]:
             self.execute_task_on_failure()
+
+    def get_inference_result_specs(self, *, executor):
+        return [executor.build_inference_result_spec()]
+
+    def apply_inference_results(self, *, results):
+        if len(results) != 1:
+            raise ValueError("Only a single result is supported.")
+
+        self.exec_duration = results[0].exec_duration
+        self.invoke_duration = results[0].invoke_duration
 
     @property
     def executor_kwargs(self):

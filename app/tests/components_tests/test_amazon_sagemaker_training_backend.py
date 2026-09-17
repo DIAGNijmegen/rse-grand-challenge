@@ -655,17 +655,25 @@ def test_handle_completed_job(settings):
     executor._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-        Key=executor._inference_result_key,
+        Key=executor._inference_result_key(),
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },
     )
 
-    assert executor._handle_completed_job() is None
+    assert (
+        executor._handle_completed_job(
+            result_specs=[executor.build_inference_result_spec()]
+        )
+        is None
+    )
 
-    # The durations should be set from the result object
-    assert executor.exec_duration == timedelta(seconds=51432)
-    assert executor.invoke_duration == timedelta(seconds=1543)
+    assert executor.inference_results[0].exec_duration == timedelta(
+        seconds=51432
+    )
+    assert executor.inference_results[0].invoke_duration == timedelta(
+        seconds=1543
+    )
 
 
 def test_handle_completed_job_with_runtime_setup_failed(settings):
@@ -702,7 +710,9 @@ def test_handle_completed_job_with_runtime_setup_failed(settings):
     )
 
     with pytest.raises(ComponentException, match="setup failed"):
-        executor._handle_completed_job()
+        executor._handle_completed_job(
+            result_specs=[executor.build_inference_result_spec()]
+        )
 
 
 def test_handle_completed_job_missing_runtime_setup_result():
@@ -718,7 +728,9 @@ def test_handle_completed_job_missing_runtime_setup_result():
     )
 
     with pytest.raises(UncleanExit):
-        executor._handle_completed_job()
+        executor._handle_completed_job(
+            result_specs=[executor.build_inference_result_spec()]
+        )
 
 
 def test_handle_completed_job_missing_inference_result(settings):
@@ -755,7 +767,9 @@ def test_handle_completed_job_missing_inference_result(settings):
     )
 
     with pytest.raises(UncleanExit):
-        executor._handle_completed_job()
+        executor._handle_completed_job(
+            result_specs=[executor.build_inference_result_spec()]
+        )
 
 
 def test_handle_time_limit_exceeded(settings):

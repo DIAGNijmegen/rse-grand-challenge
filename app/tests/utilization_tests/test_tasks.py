@@ -34,7 +34,7 @@ class UtilizationExecutor(Executor):
     def execute(self):
         raise NotImplementedError
 
-    def handle_event(self, *, event):
+    def handle_event(self, *, event, result_specs=None):
         raise NotImplementedError
 
 

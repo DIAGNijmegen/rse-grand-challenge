@@ -93,6 +93,12 @@ class InferenceTaskSpec(NamedTuple):
     time_limit: timedelta
 
 
+class InferenceResultSpec(NamedTuple):
+    pk: str
+    object_key: str
+    output_prefix: str
+
+
 def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
     return ceil(
         (duration.total_seconds() / 3600)
@@ -379,8 +385,7 @@ class Executor(ABC):
         self._use_task_list = use_task_list
         self._inference_task_specs = None
 
-        self._exec_duration = None
-        self._invoke_duration = None
+        self._inference_results = []
 
         self.__s3_client = None
 
@@ -402,15 +407,18 @@ class Executor(ABC):
         task_pk=None,
     ):
         return InferenceTaskSpec(
-            pk=f"{self._job_id}-{task_pk}" if task_pk else self._job_id,
+            pk=self._inference_task_pk(task_pk=task_pk),
             input_civs=input_civs,
             input_prefixes=input_prefixes or {},
-            output_prefix=(
-                self._output_prefix_for_task(task_pk=task_pk)
-                if task_pk
-                else self._io_prefix
-            ),
+            output_prefix=self._output_prefix(task_pk=task_pk),
             time_limit=time_limit,
+        )
+
+    def build_inference_result_spec(self, *, task_pk=None):
+        return InferenceResultSpec(
+            pk=self._inference_task_pk(task_pk=task_pk),
+            object_key=self._inference_result_key(task_pk=task_pk),
+            output_prefix=self._output_prefix(task_pk=task_pk),
         )
 
     @property
@@ -424,7 +432,7 @@ class Executor(ABC):
     def execute(self): ...
 
     @abstractmethod
-    def handle_event(self, *, event): ...
+    def handle_event(self, *, event, result_specs=None): ...
 
     def create_value_for_output(self, *, interface):
         if interface.is_image_kind:
@@ -457,12 +465,8 @@ class Executor(ABC):
     def compute_cost_euro_millicents(self): ...
 
     @property
-    def exec_duration(self):
-        return self._exec_duration
-
-    @property
-    def invoke_duration(self):
-        return self._invoke_duration
+    def inference_results(self):
+        return self._inference_results
 
     @property
     @abstractmethod
@@ -521,6 +525,16 @@ class Executor(ABC):
     def _output_prefix_for_task(self, *, task_pk):
         return safe_join(self._io_prefix, task_pk)
 
+    def _output_prefix(self, *, task_pk=None):
+        return (
+            self._output_prefix_for_task(task_pk=task_pk)
+            if task_pk
+            else self._io_prefix
+        )
+
+    def _inference_task_pk(self, *, task_pk=None):
+        return f"{self._job_id}-{task_pk}" if task_pk else self._job_id
+
     @property
     def _invocation_prefix(self):
         return safe_join("/invocations", *self.job_path_parts)
@@ -535,10 +549,11 @@ class Executor(ABC):
             self._io_prefix, ".sagemaker_shim", "runtime_setup_result.json"
         )
 
-    @property
-    def _inference_result_key(self):
+    def _inference_result_key(self, *, task_pk=None):
         return safe_join(
-            self._io_prefix, ".sagemaker_shim", "inference_result.json"
+            self._output_prefix(task_pk=task_pk),
+            ".sagemaker_shim",
+            "inference_result.json",
         )
 
     @property
@@ -908,14 +923,14 @@ class Executor(ABC):
 
         return runtime_setup_result
 
-    def _get_inference_result(self):
+    def _get_inference_result(self, *, object_key, expected_pk):
         inference_result = self._get_and_validate_object(
             bucket_name=self._output_bucket_name,
-            object_key=self._inference_result_key,
+            object_key=object_key,
             model=InferenceResult,
         )
 
-        if inference_result.pk != self._job_id:
+        if inference_result.pk != expected_pk:
             raise RuntimeError("Wrong result key for this job")
 
         return inference_result
@@ -935,7 +950,20 @@ class Executor(ABC):
                 error_message = NO_ERRORS_IN_LOG_MESSAGE
         return error_message
 
-    def _handle_completed_job(self):
+    def _handle_completed_job(self, *, result_specs):
+        self._check_runtime_setup_result()
+
+        self._inference_results = [
+            self._get_inference_result(
+                object_key=result_spec.object_key,
+                expected_pk=result_spec.pk,
+            )
+            for result_spec in result_specs
+        ]
+
+        self._raise_for_failed_results()
+
+    def _check_runtime_setup_result(self):
         runtime_setup_result = self._get_runtime_setup_result()
 
         if runtime_setup_result.return_code != 0:
@@ -943,22 +971,21 @@ class Executor(ABC):
                 runtime_setup_result.user_safe_error_message
             )
 
-        inference_result = self._get_inference_result()
+    def _raise_for_failed_results(self):
+        for inference_result in self._inference_results:
+            users_process_exit_code = inference_result.return_code
 
-        self._exec_duration = inference_result.exec_duration
-        self._invoke_duration = inference_result.invoke_duration
-
-        users_process_exit_code = inference_result.return_code
-
-        if users_process_exit_code == 0:
-            # Job's a good un
-            return
-        elif users_process_exit_code == 137:
-            raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
-        else:
-            raise ComponentException(
-                self._get_error_message(inference_result=inference_result)
-            )
+            if users_process_exit_code == 0:
+                # Task's a good un
+                continue
+            elif users_process_exit_code == 137:
+                raise ComponentException(
+                    SystemErrorMessages.MEMORY_LIMIT_EXCEEDED
+                )
+            else:
+                raise ComponentException(
+                    self._get_error_message(inference_result=inference_result)
+                )
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)

@@ -1108,14 +1108,17 @@ def test_invocation_results_signature_unverified(settings):
     executor._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-        Key=executor._inference_result_key,
+        Key=executor._inference_result_key(),
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },
     )
 
     with pytest.raises(ComponentException) as error:
-        executor._get_inference_result()
+        executor._get_inference_result(
+            object_key=executor._inference_result_key(),
+            expected_pk=executor._job_id,
+        )
 
     assert str(error.value) == "A required output file has been tampered with"
 
@@ -1155,13 +1158,19 @@ def test_invocation_results_signature_verified(settings):
     executor._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-        Key=executor._inference_result_key,
+        Key=executor._inference_result_key(),
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },
     )
 
-    assert executor._get_inference_result() == inference_result
+    assert (
+        executor._get_inference_result(
+            object_key=executor._inference_result_key(),
+            expected_pk=executor._job_id,
+        )
+        == inference_result
+    )
 
 
 @pytest.mark.parametrize(

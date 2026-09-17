@@ -2055,7 +2055,6 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         status: InvocationStatusChoices,
         error_message="",
         detailed_error_message=None,
-        invoke_duration=None,
     ):
         self.status = status
 
@@ -2068,10 +2067,13 @@ class Invocation(CIVForObjectMixin, UUIDModel):
                 for key, value in detailed_error_message.items()
             }
 
-        if invoke_duration is not None:
-            self.invoke_duration = invoke_duration
-
         self.save()
+
+    def apply_inference_results(self, *, results):
+        if len(results) != 1:
+            raise ValueError("Only a single result is supported.")
+
+        self.invoke_duration = results[0].invoke_duration
 
     def add_civ(self, *, civ):
         super().add_civ(civ=civ)

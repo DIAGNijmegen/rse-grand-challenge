@@ -1905,6 +1905,24 @@ class BatchJob(ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
+    def get_inference_result_specs(self, *, executor):
+        return [
+            executor.build_inference_result_spec(task_pk=str(task.pk))
+            for task in self.tasks.all()
+        ]
+
+    def apply_inference_results(self, *, results):
+        job_id = self.executor_kwargs["job_id"]
+        tasks_by_result_pk = {
+            f"{job_id}-{task.pk}": task for task in self.tasks.all()
+        }
+
+        for inference_result in results:
+            task = tasks_by_result_pk[inference_result.pk]
+            task.exec_duration = inference_result.exec_duration
+            task.invoke_duration = inference_result.invoke_duration
+            task.save(update_fields=["exec_duration", "invoke_duration"])
+
     def create_utilization(self):
         # TODO: add BatchJobUtilization model
         pass

@@ -978,8 +978,6 @@ def get_update_status_kwargs(*, executor=None):
     if executor is not None:
         return {
             "utilization_duration": executor.utilization_duration,
-            "exec_duration": executor.exec_duration,
-            "invoke_duration": executor.invoke_duration,
             "compute_cost_euro_millicents": executor.compute_cost_euro_millicents,
         }
     else:
@@ -1032,7 +1030,10 @@ def handle_event(*, event: dict, backend: str):
     )
 
     try:
-        executor.handle_event(event=event)
+        executor.handle_event(
+            event=event,
+            result_specs=job.get_inference_result_specs(executor=executor),
+        )
     except TaskCancelled as error:
         job.update_status(
             status=job.CANCELLED, **get_update_status_kwargs(executor=executor)
@@ -1061,6 +1062,7 @@ def handle_event(*, event: dict, backend: str):
         task_logger.error(str(error), exc_info=True)
         return {"status": f"Unexpected error: {error}"}
     else:
+        job.apply_inference_results(results=executor.inference_results)
         job.update_status(
             status=job.PARSING,
             **get_update_status_kwargs(executor=executor),
@@ -2094,7 +2096,10 @@ def handle_endpoint_invocation_event(*, event: dict):
     orchestrator = invocation.orchestrator
 
     try:
-        orchestrator.handle_event(event=event)
+        orchestrator.handle_event(
+            event=event,
+            result_specs=[orchestrator.build_inference_result_spec()],
+        )
     except ComponentException as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
@@ -2108,9 +2113,11 @@ def handle_endpoint_invocation_event(*, event: dict):
         )
         task_logger.error(str(error), exc_info=True)
     else:
+        invocation.apply_inference_results(
+            results=orchestrator.inference_results
+        )
         invocation.update_status(
             status=invocation.StatusChoices.EXECUTED,
-            invoke_duration=orchestrator.invoke_duration,
         )
         parse_endpoint_invocation_outputs.execute_on_commit(
             **invocation.task_kwargs, event=event

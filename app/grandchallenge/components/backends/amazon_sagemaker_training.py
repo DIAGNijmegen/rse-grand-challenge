@@ -567,17 +567,17 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     def execute(self):
         self._create_sagemaker_job()
 
-    def handle_event(self, *, event):
+    def handle_event(self, *, event, result_specs=None):
         job_status = self._get_job_status(event=event)
 
         self._set_utilization_duration(event=event)
 
         if job_status == "Completed":
-            self._handle_completed_job()
+            self._handle_completed_job(result_specs=result_specs)
         elif job_status == "Stopped":
             self._handle_stopped_job(event=event)
         elif job_status == "Failed":
-            self._handle_failed_job(event=event)
+            self._handle_failed_job(event=event, result_specs=result_specs)
         else:
             raise ValueError("Invalid job status")
 
@@ -623,7 +623,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
         else:
             raise RuntimeError(f"Unknown status {secondary_status!r}")
 
-    def _handle_failed_job(self, *, event):
+    def _handle_failed_job(self, *, event, result_specs):
         failure_reason = event.get("FailureReason")
 
         if failure_reason == (
@@ -651,16 +651,21 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             "ClientError: Artifact upload failed:ClientError: "
             "Out of Memory. Please use a larger instance",
         ):
-            try:
-                users_process_exit_code = (
-                    self._get_inference_result().return_code
-                )
-            except UncleanExit:
-                users_process_exit_code = None
+            for result_spec in result_specs:
+                try:
+                    users_process_exit_code = self._get_inference_result(
+                        object_key=result_spec.object_key,
+                        expected_pk=result_spec.pk,
+                    ).return_code
+                except UncleanExit:
+                    users_process_exit_code = None
 
-            if users_process_exit_code not in (-9, 1, 137):
-                # Requires investigation
-                logger.error(f"SageMaker OOM {users_process_exit_code=}")
+                if users_process_exit_code not in (-9, 1, 137):
+                    # Requires investigation
+                    logger.error(
+                        f"SageMaker OOM {users_process_exit_code=} "
+                        f"for {result_spec.pk}"
+                    )
 
             raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
         else:
