@@ -66,6 +66,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.archives.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.challenges.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Challenge</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">InferenceTaskDefinition</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CIVForObjectMixin</span><span class="p">,</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
@@ -1955,6 +1956,19 @@
             <span class="n">executor_kwargs</span><span class="p">[</span><span class="s2">"algorithm_model"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="o">.</span><span class="n">model</span>
         <span class="k">return</span> <span class="n">executor_kwargs</span>
 
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inference_task_definitions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">InferenceTaskDefinition</span><span class="p">(</span>
+                <span class="n">input_civs</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+                <span class="n">task_pk</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                <span class="n">time_limit</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_limit</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+                <span class="s2">"inputs__interface"</span><span class="p">,</span> <span class="s2">"inputs__image__files"</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">]</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">create_utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># TODO: add BatchJobUtilization model</span>
         <span class="k">pass</span>
@@ -2587,6 +2601,18 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="p">:</span>
             <span class="n">executor_kwargs</span><span class="p">[</span><span class="s2">"ground_truth"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">ground_truth</span>
         <span class="k">return</span> <span class="n">executor_kwargs</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inference_task_definitions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">InferenceTaskDefinition</span><span class="p">(</span>
+                <span class="n">input_civs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+                    <span class="s2">"interface"</span><span class="p">,</span> <span class="s2">"image__files"</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+                <span class="n">input_prefixes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_prefixes</span><span class="p">,</span>
+                <span class="n">time_limit</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_limit</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">metrics_json_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

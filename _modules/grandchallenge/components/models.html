@@ -1915,11 +1915,17 @@
             <span class="s2">"use_warm_pool"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_warm_pool</span><span class="p">,</span>
             <span class="s2">"signing_key"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
             <span class="s2">"api_method"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">api_method</span><span class="p">,</span>
+            <span class="s2">"task_definitions"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_task_definitions</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_executor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
         <span class="n">Executor</span> <span class="o">=</span> <span class="n">import_string</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>  <span class="c1"># noqa: N806</span>
         <span class="k">return</span> <span class="n">Executor</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">executor_kwargs</span><span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inference_task_definitions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build the inference task specs for this job."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ComponentImage"</span><span class="p">:</span>
