@@ -379,6 +379,8 @@ class Executor(ABC):
         self._use_task_list = use_task_list
         self._task_definitions = task_definitions
 
+        self._inference_results = []
+
         self.__s3_client = None
 
     def provision(self):
@@ -896,8 +898,8 @@ class Executor(ABC):
         return runtime_setup_result
 
     def _get_inference_result(self, *, task_pk=None):
-        object_key = (self._inference_result_key(task_pk=task_pk),)
-        expected_pk = (self._inference_task_pk(task_pk=task_pk),)
+        object_key = self._inference_result_key(task_pk=task_pk)
+        expected_pk = self._inference_task_pk(task_pk=task_pk)
 
         inference_result = self._get_and_validate_object(
             bucket_name=self._output_bucket_name,
@@ -944,7 +946,7 @@ class Executor(ABC):
             )
 
     def _raise_for_failed_results(self):
-        for inference_result in self._inference_results:
+        for inference_result in self.inference_results:
             users_process_exit_code = inference_result.return_code
 
             if users_process_exit_code == 0:

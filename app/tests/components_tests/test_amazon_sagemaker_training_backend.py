@@ -22,6 +22,7 @@ from grandchallenge.components.backends.amazon_sagemaker_training import (
 )
 from grandchallenge.components.backends.base import (
     InferenceResult,
+    InferenceTaskDefinition,
     RuntimeSetupResult,
 )
 from grandchallenge.components.backends.exceptions import (
@@ -38,6 +39,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.factories import (
     BatchJobFactory,
     BatchJobTaskFactory,
@@ -667,6 +669,12 @@ def test_handle_completed_job(settings):
         use_warm_pool=False,
         signing_key=b"itsasecret",
         api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
+                input_civs=[ComponentInterfaceValueFactory.build()],
+                time_limit=timedelta(seconds=100),
+            )
+        ],
     )
 
     runtime_setup_result = RuntimeSetupResult(
@@ -737,6 +745,12 @@ def test_handle_completed_job_with_runtime_setup_failed(settings):
         use_warm_pool=False,
         signing_key=b"itsasecret",
         api_method=APIMethodChoices.INVOKE,
+        task_definitions=[
+            InferenceTaskDefinition(
+                input_civs=[ComponentInterfaceValueFactory.build()],
+                time_limit=timedelta(seconds=100),
+            )
+        ],
     )
     runtime_setup_result = RuntimeSetupResult(
         return_code=1,
@@ -774,6 +788,12 @@ def test_handle_completed_job_missing_runtime_setup_result():
         use_warm_pool=False,
         signing_key=b"itsasecret",
         api_method=APIMethodChoices.INVOKE,
+        task_definitions=[
+            InferenceTaskDefinition(
+                input_civs=[ComponentInterfaceValueFactory.build()],
+                time_limit=timedelta(seconds=100),
+            )
+        ],
     )
 
     with pytest.raises(UncleanExit):
@@ -790,6 +810,12 @@ def test_handle_completed_job_missing_inference_result(settings):
         use_warm_pool=False,
         signing_key=b"itsasecret",
         api_method=APIMethodChoices.INVOKE,
+        task_definitions=[
+            InferenceTaskDefinition(
+                input_civs=[ComponentInterfaceValueFactory.build()],
+                time_limit=timedelta(seconds=100),
+            )
+        ],
     )
     runtime_setup_result = RuntimeSetupResult(
         return_code=0,
@@ -854,6 +880,12 @@ def test_handle_stopped_event(settings):
         use_warm_pool=False,
         signing_key=b"",
         api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
+                input_civs=[ComponentInterfaceValueFactory.build()],
+                time_limit=timedelta(seconds=100),
+            )
+        ],
     )
 
     with (
