@@ -9,6 +9,8 @@ import botocore
 import pytest
 from botocore.stub import Stubber
 from dateutil.tz import tzlocal
+from django.conf import settings
+from django.utils._os import safe_join
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
@@ -34,6 +36,10 @@ from grandchallenge.evaluation.models import Evaluation, Method
 from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
+)
+from tests.evaluation_tests.factories import (
+    BatchJobFactory,
+    BatchJobTaskFactory,
 )
 
 
@@ -960,3 +966,168 @@ def test_deprovision(settings):
             )
 
         assert error.value.response["Error"]["Message"] == "Not Found"
+
+
+def _upload_signed(*, executor, key, content):
+    signature = hmac.new(
+        key=executor._signing_key,
+        msg=content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=key,
+        ExtraArgs={"Metadata": {"signature_hmac_sha256": signature}},
+    )
+
+
+def _write_runtime_setup_result(*, executor, return_code=0):
+    result = RuntimeSetupResult(
+        return_code=return_code,
+        user_safe_error_message="",
+        sagemaker_shim_version="0.8.0",
+    )
+    _upload_signed(
+        executor=executor,
+        key=executor.runtime_setup_result_key,
+        content=result.model_dump_json().encode("utf-8"),
+    )
+
+
+def _write_task_inference_result(
+    *,
+    executor,
+    output_prefix,
+    pk,
+    return_code=0,
+    exec_duration=None,
+    invoke_duration=None,
+):
+    result = InferenceResult(
+        pk=pk,
+        return_code=return_code,
+        user_safe_error_message="",
+        user_process_last_stderr_lines=[],
+        exec_duration=exec_duration,
+        invoke_duration=invoke_duration,
+        outputs=[],
+        sagemaker_shim_version="0.8.0",
+    )
+    _upload_signed(
+        executor=executor,
+        key=safe_join(
+            output_prefix, ".sagemaker_shim", "inference_result.json"
+        ),
+        content=result.model_dump_json().encode("utf-8"),
+    )
+
+
+@pytest.mark.django_db
+def test_handle_event_for_batchjob():
+    batch_job = BatchJobFactory()
+
+    first_task = BatchJobTaskFactory(batch_job=batch_job)
+    second_task = BatchJobTaskFactory(batch_job=batch_job)
+
+    executor = AmazonSageMakerTrainingExecutor(**batch_job.executor_kwargs)
+
+    _write_runtime_setup_result(executor=executor)
+
+    for task, exec_seconds, invoke_seconds in (
+        (first_task, 10, 20),
+        (second_task, 30, 40),
+    ):
+        _write_task_inference_result(
+            executor=executor,
+            output_prefix=executor._output_prefix_for_task(
+                task_pk=str(task.pk)
+            ),
+            pk=f"{executor._job_id}-{task.pk}",
+            return_code=0,
+            exec_duration=timedelta(seconds=exec_seconds),
+            invoke_duration=timedelta(seconds=invoke_seconds),
+        )
+
+    result_specs = [
+        executor.build_inference_result_spec(task_pk=str(task.pk))
+        for task in batch_job.tasks.all()
+    ]
+    executor.handle_event(
+        event={
+            "TrainingJobName": executor._sagemaker_job_name,
+            "TrainingJobStatus": "Completed",
+            "SecondaryStatus": "Completed",
+            "TrainingStartTime": 1654767467000,
+            "TrainingEndTime": 1654767481000,
+        },
+        result_specs=result_specs,
+    )
+
+    results_by_task_pk = {
+        result.pk: result for result in executor.inference_results
+    }
+    assert set(results_by_task_pk) == {
+        f"{executor._job_id}-{first_task.pk}",
+        f"{executor._job_id}-{second_task.pk}",
+    }
+
+    first_result = results_by_task_pk[f"{executor._job_id}-{first_task.pk}"]
+    assert first_result.return_code == 0
+    assert first_result.user_safe_error_message == ""
+    assert first_result.exec_duration == timedelta(seconds=10)
+    assert first_result.invoke_duration == timedelta(seconds=20)
+
+    second_result = results_by_task_pk[f"{executor._job_id}-{second_task.pk}"]
+    assert second_result.exec_duration == timedelta(seconds=30)
+
+
+@pytest.mark.django_db
+def test_handle_event_for_batchjob_task_failure():
+    batch_job = BatchJobFactory()
+
+    first_task = BatchJobTaskFactory(batch_job=batch_job)
+    second_task = BatchJobTaskFactory(batch_job=batch_job)
+
+    executor = AmazonSageMakerTrainingExecutor(**batch_job.executor_kwargs)
+
+    _write_runtime_setup_result(executor=executor)
+
+    _write_task_inference_result(
+        executor=executor,
+        output_prefix=executor._output_prefix_for_task(
+            task_pk=str(first_task.pk)
+        ),
+        pk=f"{executor._job_id}-{first_task.pk}",
+        return_code=0,
+    )
+    _write_task_inference_result(
+        executor=executor,
+        output_prefix=executor._output_prefix_for_task(
+            task_pk=str(second_task.pk)
+        ),
+        pk=f"{executor._job_id}-{second_task.pk}",
+        return_code=1,  # failed task
+    )
+
+    result_specs = [
+        executor.build_inference_result_spec(task_pk=str(task.pk))
+        for task in batch_job.tasks.all()
+    ]
+
+    with pytest.raises(ComponentException):
+        executor.handle_event(
+            event={
+                "TrainingJobName": executor._sagemaker_job_name,
+                "TrainingJobStatus": "Completed",
+                "SecondaryStatus": "Completed",
+                "TrainingStartTime": 1654767467000,
+                "TrainingEndTime": 1654767481000,
+            },
+            result_specs=result_specs,
+        )
+
+    return_codes = {
+        result.return_code for result in executor.inference_results
+    }
+    assert return_codes == {0, 1}
