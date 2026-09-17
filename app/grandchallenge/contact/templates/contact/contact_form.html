@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% load crispy_forms_tags %}
 
 {% block title %}
@@ -9,16 +10,22 @@
     <h1>Send us a message</h1>
 
     {% if honeypot_tripped %}
-        <p class="alert alert-warning">
-            We couldn't send your message automatically. Please email
+        <p class="alert alert-danger">
+            We couldn't send your message automatically. Please retry or email
             <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
             directly and we will get back to you.
         </p>
-    {% else %}
-        <p>
-            Have a question or simply want to get in touch?
-        </p>
-
-        {% crispy form %}
     {% endif %}
+    
+    <p>
+        Have a question or simply want to get in touch?
+    </p>
+
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="module"
+            src="{% static 'contact/js/contact_challenge.mjs' %}"></script>
 {% endblock %}
