@@ -803,7 +803,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
     inference_tasks = invocation_task["content"]
     assert len(inference_tasks) == 2
 
-    assert inference_tasks[0]["pk"] == "test-test-1234"
+    assert inference_tasks[0]["pk"] == f"test-test-{job_pk}-1234"
     assert inference_tasks[0]["output_prefix"] == first_prefix
     assert {i["relative_path"] for i in inference_tasks[0]["inputs"]} == {
         "value.json",
@@ -811,7 +811,7 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
     }
     assert inference_tasks[0]["timeout"] == "PT10M"
 
-    assert inference_tasks[1]["pk"] == "test-test-5678"
+    assert inference_tasks[1]["pk"] == f"test-test-{job_pk}-5678"
     assert inference_tasks[1]["output_prefix"] == second_prefix
     assert {i["relative_path"] for i in inference_tasks[1]["inputs"]} == {
         "value.json",
