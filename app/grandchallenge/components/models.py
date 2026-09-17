@@ -1826,9 +1826,18 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "api_method": self.container.api_method,
         }
 
-    def get_executor(self, *, backend):
+    def get_executor(self, *, backend, provision_task_specs=False):
         Executor = import_string(backend)  # noqa: N806
-        return Executor(**self.executor_kwargs)
+        executor = Executor(**self.executor_kwargs)
+        if provision_task_specs:
+            executor.provision_task_specs(
+                task_specs=self.get_inference_task_specs(executor=executor)
+            )
+        return executor
+
+    def get_inference_task_specs(self, *, executor):
+        """Build the inference task specs for this job."""
+        raise NotImplementedError
 
     @property
     def container(self) -> "ComponentImage":

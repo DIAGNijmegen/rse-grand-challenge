@@ -262,7 +262,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
             raise ValueError("Invalid endpoint status")
 
     def provision_invocation_input_data(self, *, input_civs, time_limit):
-        super().provision(
+        self.provision_task_specs(
             task_specs=[
                 self.build_inference_task_spec(
                     input_civs=input_civs,
@@ -270,6 +270,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
                 )
             ]
         )
+        super().provision()
 
     def invoke_endpoint(self, *, inference_id, invocation_time_limit):
         self._sagemaker_runtime_client.invoke_endpoint_async(

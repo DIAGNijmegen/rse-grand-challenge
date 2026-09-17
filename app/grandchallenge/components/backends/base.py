@@ -377,20 +377,24 @@ class Executor(ABC):
         self._input_bucket_name = input_bucket_name
         self._output_bucket_name = output_bucket_name
         self._use_task_list = use_task_list
-        self._inference_task_specs = None
+        self._inference_task_specs = []
 
         self._exec_duration = None
         self._invoke_duration = None
 
         self.__s3_client = None
 
-    def provision(self, *, task_specs):
+    def provision_task_specs(self, *, task_specs):
+        self._inference_task_specs = task_specs
+
+    def provision(self):
         # We cannot run everything async as it requires database access.
         # So first we gather the async tasks that need to be run,
         # then execute them in the event loop for the current thread
         # using a method wrapped in @async_to_sync.
-        self._inference_task_specs = task_specs
-        tasks = self._get_provisioning_tasks(task_specs=task_specs)
+        tasks = self._get_provisioning_tasks(
+            task_specs=self._inference_task_specs
+        )
         self._provision(tasks=tasks)
 
     def build_inference_task_spec(

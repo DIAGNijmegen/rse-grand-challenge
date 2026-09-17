@@ -7,7 +7,6 @@ import tarfile
 import zlib
 from base64 import b64decode, b64encode
 from binascii import hexlify
-from datetime import timedelta
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -864,7 +863,7 @@ def provision_job(
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
-    executor = job.get_executor(backend=backend)
+    executor = job.get_executor(backend=backend, provision_task_specs=True)
 
     if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
         if job.status == job.CANCELLED:
@@ -876,17 +875,7 @@ def provision_job(
             raise RuntimeError("Job is not ready for provisioning")
 
     try:
-        executor.provision(
-            task_specs=[
-                executor.build_inference_task_spec(
-                    input_civs=job.inputs.prefetch_related(
-                        "interface", "image__files"
-                    ).all(),
-                    input_prefixes=job.input_prefixes,
-                    time_limit=timedelta(job.time_limit),
-                )
-            ]
-        )
+        executor.provision()
     except ComponentException as error:
         job.update_status(
             status=job.FAILURE,
@@ -927,7 +916,7 @@ def execute_job(
     """
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
     job = model.objects.get(pk=job_pk)
-    executor = job.get_executor(backend=backend)
+    executor = job.get_executor(backend=backend, provision_task_specs=True)
 
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)

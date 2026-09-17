@@ -1472,6 +1472,17 @@ class Job(CIVForObjectMixin, ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
+    def get_inference_task_specs(self, *, executor):
+        return [
+            executor.build_inference_task_spec(
+                input_civs=self.inputs.prefetch_related(
+                    "interface", "image__files"
+                ).all(),
+                input_prefixes=self.input_prefixes,
+                time_limit=timedelta(seconds=self.time_limit),
+            )
+        ]
+
     @cached_property
     def slug_to_output(self):
         outputs = {}

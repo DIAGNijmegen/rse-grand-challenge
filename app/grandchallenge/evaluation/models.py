@@ -1905,6 +1905,18 @@ class BatchJob(ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
+    def get_inference_task_specs(self, *, executor):
+        return [
+            executor.build_inference_task_spec(
+                input_civs=task.inputs.all(),
+                task_pk=str(task.pk),
+                time_limit=timedelta(seconds=self.time_limit),
+            )
+            for task in self.tasks.prefetch_related(
+                "inputs__interface", "inputs__image__files"
+            ).all()
+        ]
+
     def create_utilization(self):
         # TODO: add BatchJobUtilization model
         pass
@@ -2537,6 +2549,17 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         if self.ground_truth:
             executor_kwargs["ground_truth"] = self.ground_truth.ground_truth
         return executor_kwargs
+
+    def get_inference_task_specs(self, *, executor):
+        return [
+            executor.build_inference_task_spec(
+                input_civs=self.inputs.prefetch_related(
+                    "interface", "image__files"
+                ).all(),
+                input_prefixes=self.input_prefixes,
+                time_limit=timedelta(seconds=self.time_limit),
+            )
+        ]
 
     @cached_property
     def metrics_json_file(self):

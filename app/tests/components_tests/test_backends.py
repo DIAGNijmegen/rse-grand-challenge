@@ -148,13 +148,14 @@ def test_inputs_json(settings):
         2, interface__kind=InterfaceKindChoices.ANY
     )
 
-    executor.provision(
+    executor.provision_task_specs(
         task_specs=[
             executor.build_inference_task_spec(
                 input_civs=[civ1, civ2], time_limit=timedelta(seconds=100)
             )
         ]
     )
+    executor.provision()
 
     with io.BytesIO() as fileobj:
         executor._s3_client.download_fileobj(
@@ -270,7 +271,7 @@ def test_invocation_json(settings):
     prefixed_file_civ = file_interface.create_instance(value=1337)
     prefixed_value_civ = value_interface.create_instance(value="foo")
 
-    executor.provision(
+    executor.provision_task_specs(
         task_specs=[
             executor.build_inference_task_spec(
                 input_civs=[
@@ -290,6 +291,7 @@ def test_invocation_json(settings):
             )
         ]
     )
+    executor.provision()
 
     response = executor._s3_client.list_objects_v2(
         Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
@@ -902,7 +904,7 @@ def test_provision_batch_job(settings):
 
     executor = IOCopyExecutor(**batch_job.executor_kwargs)
 
-    executor.provision(
+    executor.provision_task_specs(
         task_specs=[
             executor.build_inference_task_spec(
                 input_civs=task.inputs.all(),
@@ -914,6 +916,7 @@ def test_provision_batch_job(settings):
             ).all()
         ]
     )
+    executor.provision()
 
     first_prefix = executor._output_prefix_for_task(task_pk=str(first_task.pk))
     second_prefix = executor._output_prefix_for_task(
