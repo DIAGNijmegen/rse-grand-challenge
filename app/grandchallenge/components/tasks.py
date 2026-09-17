@@ -863,7 +863,7 @@ def provision_job(
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
-    executor = job.get_executor(backend=backend, provision_task_specs=True)
+    executor = job.get_executor(backend=backend)
 
     if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
         if job.status == job.CANCELLED:
@@ -916,7 +916,7 @@ def execute_job(
     """
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
     job = model.objects.get(pk=job_pk)
-    executor = job.get_executor(backend=backend, provision_task_specs=True)
+    executor = job.get_executor(backend=backend)
 
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)
@@ -1983,12 +1983,7 @@ def provision_invocation_input_data(
     orchestrator = invocation.orchestrator
 
     try:
-        orchestrator.provision_invocation_input_data(
-            input_civs=invocation.inputs.prefetch_related(
-                "interface", "image__files"
-            ).all(),
-            time_limit=invocation.time_limit,
-        )
+        orchestrator.provision()
     except Exception:
         task_logger.error(
             "Could not provision endpoint for invocation", exc_info=True

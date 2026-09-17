@@ -28,6 +28,7 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.components.backends.base import InferenceTaskDefinition
 from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentImage,
@@ -1905,9 +1906,9 @@ class BatchJob(ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
-    def get_inference_task_specs(self, *, executor):
+    def get_inference_task_definitions(self):
         return [
-            executor.build_inference_task_spec(
+            InferenceTaskDefinition(
                 input_civs=task.inputs.all(),
                 task_pk=str(task.pk),
                 time_limit=timedelta(seconds=self.time_limit),
@@ -2550,9 +2551,9 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             executor_kwargs["ground_truth"] = self.ground_truth.ground_truth
         return executor_kwargs
 
-    def get_inference_task_specs(self, *, executor):
+    def get_inference_task_definitions(self):
         return [
-            executor.build_inference_task_spec(
+            InferenceTaskDefinition(
                 input_civs=self.inputs.prefetch_related(
                     "interface", "image__files"
                 ).all(),

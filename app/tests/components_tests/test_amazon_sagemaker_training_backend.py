@@ -148,9 +148,14 @@ def test_invocation_prefix():
         (Evaluation, "method", Method, "E"),
     ),
 )
-def test_transform_job_name(model, container, container_model, key, settings):
+def test_transform_job_name(
+    model, container, container_model, key, settings, mocker
+):
     j = model(pk=uuid4(), time_limit=60)
     setattr(j, container, container_model(pk=uuid4()))
+    # This test only exercises job-name transformation, which does not depend
+    # on the task specs; the unsaved job has no inputs to build them from.
+    mocker.patch.object(j, "get_inference_task_definitions", return_value=[])
     executor = AmazonSageMakerTrainingExecutor(**j.executor_kwargs)
 
     assert (
@@ -179,7 +184,6 @@ def test_executor_task_specs_set_at_creation():
 
     executor = job.get_executor(
         backend="grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor",
-        provision_task_specs=True,
     )
 
     assert executor.total_task_time_limit == timedelta(seconds=60)
@@ -236,7 +240,6 @@ def test_invocation_json(settings):
 
     executor = job.get_executor(
         backend="grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor",
-        provision_task_specs=True,
     )
 
     with Stubber(executor._sagemaker_client) as s:

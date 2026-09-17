@@ -85,12 +85,11 @@ class CIVProvisioningTask(NamedTuple):
     task: functools.partial
 
 
-class InferenceTaskSpec(NamedTuple):
-    pk: str
+class InferenceTaskDefinition(NamedTuple):
     input_civs: Iterable[ComponentInterfaceValue]
-    input_prefixes: dict[str, str]
-    output_prefix: str
     time_limit: timedelta
+    input_prefixes: dict[str, str] | None = None
+    task_pk: str | None = None
 
 
 def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
@@ -360,6 +359,7 @@ class Executor(ABC):
         input_bucket_name=settings.COMPONENTS_INPUT_BUCKET_NAME,
         output_bucket_name=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
         use_task_list=True,
+        task_definitions=None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -377,50 +377,25 @@ class Executor(ABC):
         self._input_bucket_name = input_bucket_name
         self._output_bucket_name = output_bucket_name
         self._use_task_list = use_task_list
-        self._inference_task_specs = []
+        self._task_definitions = task_definitions
 
         self._exec_duration = None
         self._invoke_duration = None
 
         self.__s3_client = None
 
-    def provision_task_specs(self, *, task_specs):
-        self._inference_task_specs = task_specs
-
     def provision(self):
         # We cannot run everything async as it requires database access.
         # So first we gather the async tasks that need to be run,
         # then execute them in the event loop for the current thread
         # using a method wrapped in @async_to_sync.
-        tasks = self._get_provisioning_tasks(
-            task_specs=self._inference_task_specs
-        )
+        tasks = self._get_provisioning_tasks()
         self._provision(tasks=tasks)
-
-    def build_inference_task_spec(
-        self,
-        *,
-        input_civs,
-        time_limit,
-        input_prefixes=None,
-        task_pk=None,
-    ):
-        return InferenceTaskSpec(
-            pk=f"{self._job_id}-{task_pk}" if task_pk else self._job_id,
-            input_civs=input_civs,
-            input_prefixes=input_prefixes or {},
-            output_prefix=(
-                self._output_prefix_for_task(task_pk=task_pk)
-                if task_pk
-                else self._io_prefix
-            ),
-            time_limit=time_limit,
-        )
 
     @property
     def total_task_time_limit(self):
         return sum(
-            (task.time_limit for task in self._inference_task_specs),
+            (task.time_limit for task in self._task_definitions),
             start=timedelta(),
         )
 
@@ -623,18 +598,26 @@ class Executor(ABC):
                             )
                         )
 
-    def _get_provisioning_tasks(self, *, task_specs):
+    def _get_provisioning_tasks(self):
         provisioning_tasks = []
         inference_tasks = []
 
-        for task_spec in task_specs:
+        for task_definition in self._task_definitions:
+            task_pk = task_definition.task_pk
+            output_prefix = (
+                self._output_prefix_for_task(task_pk=task_pk)
+                if task_pk
+                else self._io_prefix
+            )
             invocation_inputs = []
 
-            for civ in self._with_inputs_json(input_civs=task_spec.input_civs):
+            for civ in self._with_inputs_json(
+                input_civs=task_definition.input_civs
+            ):
                 for civ_provisioning_task in self._get_civ_provisioning_tasks(
                     civ=civ,
-                    input_prefixes=task_spec.input_prefixes,
-                    output_prefix=task_spec.output_prefix,
+                    input_prefixes=task_definition.input_prefixes or {},
+                    output_prefix=output_prefix,
                 ):
                     provisioning_tasks.append(civ_provisioning_task.task)
                     invocation_inputs.append(
@@ -642,7 +625,7 @@ class Executor(ABC):
                             relative_path=str(
                                 os.path.relpath(
                                     civ_provisioning_task.key,
-                                    task_spec.output_prefix,
+                                    output_prefix,
                                 )
                             ),
                             bucket_name=self._input_bucket_name,
@@ -653,11 +636,15 @@ class Executor(ABC):
 
             inference_tasks.append(
                 InferenceTask(
-                    pk=task_spec.pk,
+                    pk=(
+                        f"{self._job_id}-{task_pk}"
+                        if task_pk
+                        else self._job_id
+                    ),
                     inputs=invocation_inputs,
                     output_bucket_name=self._output_bucket_name,
-                    output_prefix=task_spec.output_prefix,
-                    timeout=task_spec.time_limit,
+                    output_prefix=output_prefix,
+                    timeout=task_definition.time_limit,
                 )
             )
 

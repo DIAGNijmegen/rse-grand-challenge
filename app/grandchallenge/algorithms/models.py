@@ -32,6 +32,7 @@ from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     AmazonSageMakerEndpointOrchestrator,
 )
 from grandchallenge.components.backends.base import (
+    InferenceTaskDefinition,
     duration_to_euro_millicents,
     euro_millicents_to_duration,
 )
@@ -1472,9 +1473,9 @@ class Job(CIVForObjectMixin, ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
-    def get_inference_task_specs(self, *, executor):
+    def get_inference_task_definitions(self):
         return [
-            executor.build_inference_task_spec(
+            InferenceTaskDefinition(
                 input_civs=self.inputs.prefetch_related(
                     "interface", "image__files"
                 ).all(),
@@ -2037,7 +2038,18 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         kwargs["job_id"] = (
             f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}"
         )
+        kwargs["task_definitions"] = self.get_inference_task_definitions()
         return kwargs
+
+    def get_inference_task_definitions(self):
+        return [
+            InferenceTaskDefinition(
+                input_civs=self.inputs.prefetch_related(
+                    "interface", "image__files"
+                ).all(),
+                time_limit=timedelta(seconds=self.time_limit),
+            )
+        ]
 
     @property
     def orchestrator(self):

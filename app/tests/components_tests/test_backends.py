@@ -20,7 +20,7 @@ from grandchallenge.components.backends.base import (
     ASYNC_CONCURRENCY,
     Executor,
     InferenceResult,
-    InferenceTaskSpec,
+    InferenceTaskDefinition,
     RuntimeSetupResult,
     s3_stream_response,
 )
@@ -134,6 +134,10 @@ def test_filter_members_single_file_nested():
 def test_inputs_json(settings):
     job_pk = uuid4()
 
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(
+        2, interface__kind=InterfaceKindChoices.ANY
+    )
+
     executor = IOCopyExecutor(
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
@@ -142,19 +146,13 @@ def test_inputs_json(settings):
         use_warm_pool=False,
         signing_key=b"",
         api_method=APIMethodChoices.EXEC,
-    )
-
-    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(
-        2, interface__kind=InterfaceKindChoices.ANY
-    )
-
-    executor.provision_task_specs(
-        task_specs=[
-            executor.build_inference_task_spec(
+        task_definitions=[
+            InferenceTaskDefinition(
                 input_civs=[civ1, civ2], time_limit=timedelta(seconds=100)
             )
-        ]
+        ],
     )
+
     executor.provision()
 
     with io.BytesIO() as fileobj:
@@ -237,16 +235,6 @@ def test_inputs_json(settings):
 def test_invocation_json(settings):
     job_pk = uuid4()
 
-    executor = IOCopyExecutor(
-        job_id=f"test-test-{job_pk}",
-        exec_image_repo_tag="test",
-        memory_limit=4,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
-        signing_key=b"",
-        api_method=APIMethodChoices.EXEC,
-    )
-
     image_interface = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.PANIMG_IMAGE,
         relative_path="images/test",
@@ -271,9 +259,16 @@ def test_invocation_json(settings):
     prefixed_file_civ = file_interface.create_instance(value=1337)
     prefixed_value_civ = value_interface.create_instance(value="foo")
 
-    executor.provision_task_specs(
-        task_specs=[
-            executor.build_inference_task_spec(
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
                 input_civs=[
                     image_civ,
                     file_civ,
@@ -289,8 +284,9 @@ def test_invocation_json(settings):
                 },
                 time_limit=timedelta(seconds=100),
             )
-        ]
+        ],
     )
+
     executor.provision()
 
     response = executor._s3_client.list_objects_v2(
@@ -490,16 +486,6 @@ def normalize_partial(partial):
 def test_dicom_get_provisioning_tasks():
     job_pk = uuid4()
 
-    executor = IOCopyExecutor(
-        job_id=f"test-test-{job_pk}",
-        exec_image_repo_tag="test",
-        memory_limit=4,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
-        signing_key=b"",
-        api_method=APIMethodChoices.EXEC,
-    )
-
     panimage_interface = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.PANIMG_IMAGE,
         relative_path="images/test",
@@ -522,10 +508,16 @@ def test_dicom_get_provisioning_tasks():
         image=ImageFactory(dicom_image_set=DICOMImageSetFactory())
     )
 
-    tasks = executor._get_provisioning_tasks(
-        task_specs=[
-            InferenceTaskSpec(
-                pk=executor._job_id,
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
                 input_civs=[
                     panimage_civ,
                     dicom_civ,
@@ -536,11 +528,11 @@ def test_dicom_get_provisioning_tasks():
                     str(prefixed_panimage_civ.pk): "prefix/1",
                     str(prefixed_dicom_civ.pk): "prefix/2",
                 },
-                output_prefix=executor._io_prefix,
                 time_limit=timedelta(seconds=100),
             )
-        ]
+        ],
     )
+    tasks = executor._get_provisioning_tasks()
 
     normalized_tasks = [normalize_partial(t) for t in tasks]
 
@@ -713,16 +705,6 @@ def test_dicom_get_provisioning_tasks():
 def test_dodgy_sop_instance_uid():
     job_pk = uuid4()
 
-    executor = IOCopyExecutor(
-        job_id=f"test-test-{job_pk}",
-        exec_image_repo_tag="test",
-        memory_limit=4,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
-        signing_key=b"",
-        api_method=APIMethodChoices.EXEC,
-    )
-
     dicom_interface = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.DICOM_IMAGE_SET,
         relative_path="images/dicom",
@@ -745,18 +727,24 @@ def test_dodgy_sop_instance_uid():
         )
     )
 
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
+                input_civs=[dicom_civ],
+                time_limit=timedelta(seconds=100),
+            )
+        ],
+    )
+
     with pytest.raises(SuspiciousFileOperation) as exec_info:
-        executor._get_provisioning_tasks(
-            task_specs=[
-                InferenceTaskSpec(
-                    pk=executor._job_id,
-                    input_civs=[dicom_civ],
-                    input_prefixes={},
-                    output_prefix=executor._io_prefix,
-                    time_limit=timedelta(seconds=100),
-                )
-            ]
-        )
+        executor._get_provisioning_tasks()
 
     assert (
         "images/fds.dcm) is located outside of the base path component"
@@ -768,16 +756,6 @@ def test_dodgy_sop_instance_uid():
 def test_multiple_provisioning_tasks_build_one_inference_task_each():
     job_pk = uuid4()
 
-    executor = IOCopyExecutor(
-        job_id=f"test-test-{job_pk}",
-        exec_image_repo_tag="test",
-        memory_limit=4,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
-        signing_key=b"",
-        api_method=APIMethodChoices.EXEC,
-    )
-
     value_interface = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.ANY,
         relative_path="value.json",
@@ -786,27 +764,32 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
     first_civ = value_interface.create_instance(value="first")
     second_civ = value_interface.create_instance(value="second")
 
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
+                task_pk="1234",
+                input_civs=[first_civ],
+                time_limit=timedelta(minutes=10),
+            ),
+            InferenceTaskDefinition(
+                task_pk="5678",
+                input_civs=[second_civ],
+                time_limit=timedelta(minutes=5),
+            ),
+        ],
+    )
+
     first_prefix = executor._output_prefix_for_task(task_pk="1234")
     second_prefix = executor._output_prefix_for_task(task_pk="5678")
 
-    tasks = executor._get_provisioning_tasks(
-        task_specs=[
-            InferenceTaskSpec(
-                pk="test-test-1234",
-                input_civs=[first_civ],
-                input_prefixes={},
-                output_prefix=first_prefix,
-                time_limit=timedelta(minutes=10),
-            ),
-            InferenceTaskSpec(
-                pk="test-test-5678",
-                input_civs=[second_civ],
-                input_prefixes={},
-                output_prefix=second_prefix,
-                time_limit=timedelta(minutes=5),
-            ),
-        ]
-    )
+    tasks = executor._get_provisioning_tasks()
 
     normalized_tasks = [normalize_partial(t) for t in tasks]
 
@@ -841,6 +824,13 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
 def test_relative_paths_use_task_output_prefix():
     job_pk = uuid4()
 
+    value_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY,
+        relative_path="value.json",
+        store_in_database=True,
+    )
+    civ = value_interface.create_instance(value="foo")
+
     executor = IOCopyExecutor(
         job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
@@ -849,28 +839,18 @@ def test_relative_paths_use_task_output_prefix():
         use_warm_pool=False,
         signing_key=b"",
         api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
+                task_pk="1234",
+                input_civs=[civ],
+                time_limit=timedelta(minutes=10),
+            )
+        ],
     )
-
-    value_interface = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.ANY,
-        relative_path="value.json",
-        store_in_database=True,
-    )
-    civ = value_interface.create_instance(value="foo")
 
     output_prefix = executor._output_prefix_for_task(task_pk="1234")
 
-    tasks = executor._get_provisioning_tasks(
-        task_specs=[
-            InferenceTaskSpec(
-                pk="test-test-1234",
-                input_civs=[civ],
-                input_prefixes={},
-                output_prefix=output_prefix,
-                time_limit=timedelta(minutes=10),
-            )
-        ]
-    )
+    tasks = executor._get_provisioning_tasks()
 
     normalized_tasks = [normalize_partial(t) for t in tasks]
 
@@ -902,20 +882,22 @@ def test_provision_batch_job(settings):
     second_task = BatchJobTaskFactory(batch_job=batch_job)
     second_task.inputs.add(str_interface.create_instance(value="second"))
 
-    executor = IOCopyExecutor(**batch_job.executor_kwargs)
-
-    executor.provision_task_specs(
-        task_specs=[
-            executor.build_inference_task_spec(
-                input_civs=task.inputs.all(),
-                task_pk=str(task.pk),
-                time_limit=timedelta(minutes=10),
-            )
-            for task in batch_job.tasks.prefetch_related(
-                "inputs__interface", "inputs__image__files"
-            ).all()
-        ]
+    executor = IOCopyExecutor(
+        **{
+            **batch_job.executor_kwargs,
+            "task_definitions": [
+                InferenceTaskDefinition(
+                    input_civs=task.inputs.all(),
+                    task_pk=str(task.pk),
+                    time_limit=timedelta(minutes=10),
+                )
+                for task in batch_job.tasks.prefetch_related(
+                    "inputs__interface", "inputs__image__files"
+                ).all()
+            ],
+        }
     )
+
     executor.provision()
 
     first_prefix = executor._output_prefix_for_task(task_pk=str(first_task.pk))
