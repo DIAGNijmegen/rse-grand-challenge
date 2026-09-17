@@ -1100,10 +1100,7 @@ def test_invocation_results_signature_unverified(settings):
     )
 
     with pytest.raises(ComponentException) as error:
-        executor._get_inference_result(
-            object_key=executor._inference_result_key(),
-            expected_pk=executor._job_id,
-        )
+        executor._get_inference_result()
 
     assert str(error.value) == "A required output file has been tampered with"
 
@@ -1149,13 +1146,7 @@ def test_invocation_results_signature_verified(settings):
         },
     )
 
-    assert (
-        executor._get_inference_result(
-            object_key=executor._inference_result_key(),
-            expected_pk=executor._job_id,
-        )
-        == inference_result
-    )
+    assert executor._get_inference_result() == inference_result
 
 
 @pytest.mark.parametrize(

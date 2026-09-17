@@ -717,12 +717,7 @@ def test_handle_completed_job(settings):
         },
     )
 
-    assert (
-        executor._handle_completed_job(
-            result_specs=[executor.build_inference_result_spec()]
-        )
-        is None
-    )
+    assert executor._handle_completed_job() is None
 
     assert executor.inference_results[0].exec_duration == timedelta(
         seconds=51432
@@ -766,9 +761,7 @@ def test_handle_completed_job_with_runtime_setup_failed(settings):
     )
 
     with pytest.raises(ComponentException, match="setup failed"):
-        executor._handle_completed_job(
-            result_specs=[executor.build_inference_result_spec()]
-        )
+        executor._handle_completed_job()
 
 
 def test_handle_completed_job_missing_runtime_setup_result():
@@ -784,9 +777,7 @@ def test_handle_completed_job_missing_runtime_setup_result():
     )
 
     with pytest.raises(UncleanExit):
-        executor._handle_completed_job(
-            result_specs=[executor.build_inference_result_spec()]
-        )
+        executor._handle_completed_job()
 
 
 def test_handle_completed_job_missing_inference_result(settings):
@@ -823,9 +814,7 @@ def test_handle_completed_job_missing_inference_result(settings):
     )
 
     with pytest.raises(UncleanExit):
-        executor._handle_completed_job(
-            result_specs=[executor.build_inference_result_spec()]
-        )
+        executor._handle_completed_job()
 
 
 def test_handle_time_limit_exceeded(settings):
@@ -1099,10 +1088,6 @@ def test_handle_event_for_batchjob():
             invoke_duration=timedelta(seconds=invoke_seconds),
         )
 
-    result_specs = [
-        executor.build_inference_result_spec(task_pk=str(task.pk))
-        for task in batch_job.tasks.all()
-    ]
     executor.handle_event(
         event={
             "TrainingJobName": executor._sagemaker_job_name,
@@ -1111,7 +1096,6 @@ def test_handle_event_for_batchjob():
             "TrainingStartTime": 1654767467000,
             "TrainingEndTime": 1654767481000,
         },
-        result_specs=result_specs,
     )
 
     results_by_task_pk = {
@@ -1160,11 +1144,6 @@ def test_handle_event_for_batchjob_task_failure():
         return_code=1,  # failed task
     )
 
-    result_specs = [
-        executor.build_inference_result_spec(task_pk=str(task.pk))
-        for task in batch_job.tasks.all()
-    ]
-
     with pytest.raises(ComponentException):
         executor.handle_event(
             event={
@@ -1174,7 +1153,6 @@ def test_handle_event_for_batchjob_task_failure():
                 "TrainingStartTime": 1654767467000,
                 "TrainingEndTime": 1654767481000,
             },
-            result_specs=result_specs,
         )
 
     return_codes = {

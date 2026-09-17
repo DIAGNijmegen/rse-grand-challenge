@@ -654,12 +654,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             for task in self._task_definitions:
                 try:
                     users_process_exit_code = self._get_inference_result(
-                        object_key=self._inference_result_key(
-                            task_pk=task.task_pk
-                        ),
-                        expected_pk=self._inference_task_pk(
-                            task_pk=task.task_pk
-                        ),
+                        task_pk=task.task_pk
                     ).return_code
                 except UncleanExit:
                     users_process_exit_code = None

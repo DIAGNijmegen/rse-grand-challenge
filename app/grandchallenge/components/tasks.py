@@ -2079,7 +2079,6 @@ def handle_endpoint_invocation_event(*, event: dict):
     try:
         orchestrator.handle_event(
             event=event,
-            result_specs=[orchestrator.build_inference_result_spec()],
         )
     except ComponentException as error:
         invocation.update_status(
