@@ -22,9 +22,10 @@ class ContactView(FormView):
         return reverse("home")
 
     def form_valid(self, form):
-        if form.honeypot_tripped:
-            # Silently drop the submission without revealing the honeypot,
-            # but politely point genuine users (false positives) to support.
+        if form.honeypot_tripped or not form.challenge_passed:
+            # Silently drop the submission (bot honeypot or unsolved JS
+            # challenge) without revealing why, but politely point genuine
+            # users (false positives) to support.
             return self.render_to_response(
                 self.get_context_data(form=form, honeypot_tripped=True)
             )
