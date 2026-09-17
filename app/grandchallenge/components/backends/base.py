@@ -92,12 +92,6 @@ class InferenceTaskDefinition(NamedTuple):
     task_pk: str | None = None
 
 
-class InferenceResultSpec(NamedTuple):
-    pk: str
-    object_key: str
-    output_prefix: str
-
-
 def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
     return ceil(
         (duration.total_seconds() / 3600)
@@ -394,13 +388,6 @@ class Executor(ABC):
         # using a method wrapped in @async_to_sync.
         self._provision(tasks=self.provisioning_tasks)
 
-    def build_inference_result_spec(self, *, task_pk=None):
-        return InferenceResultSpec(
-            pk=self._inference_task_pk(task_pk=task_pk),
-            object_key=self._inference_result_key(task_pk=task_pk),
-            output_prefix=self._output_prefix(task_pk=task_pk),
-        )
-
     @property
     def total_task_time_limit(self):
         return sum(
@@ -412,7 +399,7 @@ class Executor(ABC):
     def execute(self): ...
 
     @abstractmethod
-    def handle_event(self, *, event, result_specs=None): ...
+    def handle_event(self, *, event): ...
 
     def create_value_for_output(self, *, interface):
         if interface.is_image_kind:
@@ -653,11 +640,7 @@ class Executor(ABC):
 
             inference_tasks.append(
                 InferenceTask(
-                    pk=(
-                        f"{self._job_id}-{task_pk}"
-                        if task_pk
-                        else self._job_id
-                    ),
+                    pk=self._inference_task_pk(task_pk=task_pk),
                     inputs=invocation_inputs,
                     output_bucket_name=self._output_bucket_name,
                     output_prefix=output_prefix,
@@ -943,15 +926,15 @@ class Executor(ABC):
                 error_message = NO_ERRORS_IN_LOG_MESSAGE
         return error_message
 
-    def _handle_completed_job(self, *, result_specs):
+    def _handle_completed_job(self):
         self._check_runtime_setup_result()
 
         self._inference_results = [
             self._get_inference_result(
-                object_key=result_spec.object_key,
-                expected_pk=result_spec.pk,
+                object_key=self._inference_result_key(task_pk=task.task_pk),
+                expected_pk=self._inference_task_pk(task_pk=task.task_pk),
             )
-            for result_spec in result_specs
+            for task in self._task_definitions
         ]
 
         self._raise_for_failed_results()

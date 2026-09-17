@@ -299,11 +299,11 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
                 pk=pk,
             )
 
-    def handle_event(self, *, event, result_specs=None):
+    def handle_event(self, *, event):
         invocation_status = self._get_invocation_status(event=event)
 
         if invocation_status == "Completed":
-            self._handle_completed_invocation(result_specs=result_specs)
+            self._handle_completed_invocation()
         elif invocation_status == "Expired":
             self._handle_expired_invocation(event=event)
         elif invocation_status == "Failed":
@@ -311,8 +311,8 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
         else:
             raise ValueError("Invalid invocation status")
 
-    def _handle_completed_invocation(self, *, result_specs):
-        super()._handle_completed_job(result_specs=result_specs)
+    def _handle_completed_invocation(self):
+        super()._handle_completed_job()
 
     def _handle_expired_invocation(self, *, event):
         # Requires investigation

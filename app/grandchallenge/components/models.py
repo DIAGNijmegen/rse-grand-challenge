@@ -1806,9 +1806,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         elif self.status in [self.FAILURE, self.CANCELLED]:
             self.execute_task_on_failure()
 
-    def get_inference_result_specs(self, *, executor):
-        return [executor.build_inference_result_spec()]
-
     def apply_inference_results(self, *, results):
         if len(results) != 1:
             raise ValueError("Only a single result is supported.")

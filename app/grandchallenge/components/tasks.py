@@ -1019,10 +1019,7 @@ def handle_event(*, event: dict, backend: str):
     )
 
     try:
-        executor.handle_event(
-            event=event,
-            result_specs=job.get_inference_result_specs(executor=executor),
-        )
+        executor.handle_event(event=event)
     except TaskCancelled as error:
         job.update_status(
             status=job.CANCELLED, **get_update_status_kwargs(executor=executor)

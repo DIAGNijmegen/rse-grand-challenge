@@ -144,9 +144,9 @@ class IOCopyExecutor(Executor):
             backend=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
         )
 
-    def handle_event(self, *, event, result_specs=None):
+    def handle_event(self, *, event):
         self.__start_time = parse(event["__start_time"])
-        self._handle_completed_job(result_specs=result_specs)
+        self._handle_completed_job()
 
     @staticmethod
     def get_job_name(*, event):

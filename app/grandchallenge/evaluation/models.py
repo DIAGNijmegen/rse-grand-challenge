@@ -1906,12 +1906,6 @@ class BatchJob(ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
-    def get_inference_result_specs(self, *, executor):
-        return [
-            executor.build_inference_result_spec(task_pk=str(task.pk))
-            for task in self.tasks.all()
-        ]
-
     def apply_inference_results(self, *, results):
         job_id = self.executor_kwargs["job_id"]
         tasks_by_result_pk = {
