@@ -1906,50 +1906,7 @@ class BatchJob(ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
-    def update_status(  # noqa:C901
-        self,
-        *,
-        status: ComponentJob.STATUS_CHOICES,
-        error_message="",
-        detailed_error_message=None,
-        utilization_duration=None,
-        compute_cost_euro_millicents=None,
-        results=None,
-    ):
-        self.status = status
-
-        if error_message:
-            self.error_message = error_message[:1024]
-
-        if detailed_error_message:
-            self.detailed_error_message = {
-                str(key): value
-                for key, value in detailed_error_message.items()
-            }
-
-        if utilization_duration is not None:
-            self.utilization.duration = utilization_duration
-            self.utilization.save(update_fields=["duration"])
-
-        if compute_cost_euro_millicents is not None:
-            self.utilization.compute_cost_euro_millicents = (
-                compute_cost_euro_millicents
-            )
-            self.utilization.save(
-                update_fields=["compute_cost_euro_millicents"]
-            )
-
-        if results:
-            self.update_batchjob_tasks(results=results)
-
-        self.save()
-
-        if self.status == self.SUCCESS:
-            self.execute_task_on_success()
-        elif self.status in [self.FAILURE, self.CANCELLED]:
-            self.execute_task_on_failure()
-
-    def update_batchjob_tasks(self, *, results):
+    def process_inference_results(self, *, results):
         job_id = self.executor_kwargs["job_id"]
         tasks_by_result_pk = {
             f"{job_id}-{task.pk}": task for task in self.tasks.all()
@@ -2618,6 +2575,13 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
                 time_limit=timedelta(seconds=self.time_limit),
             )
         ]
+
+    def process_inference_results(self, *, results):
+        if len(results) == 1:
+            self.exec_duration = results[0].exec_duration
+            self.invoke_duration = results[0].invoke_duration
+        else:
+            raise ValueError("There should be no more than 1 result.")
 
     @cached_property
     def metrics_json_file(self):

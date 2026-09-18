@@ -1485,6 +1485,13 @@ class Job(CIVForObjectMixin, ComponentJob):
             )
         ]
 
+    def process_inference_results(self, *, results):
+        if len(results) == 1:
+            self.exec_duration = results[0].exec_duration
+            self.invoke_duration = results[0].invoke_duration
+        else:
+            raise ValueError("There should be no more than 1 result.")
+
     @cached_property
     def slug_to_output(self):
         outputs = {}

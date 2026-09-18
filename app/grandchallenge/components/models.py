@@ -1800,11 +1800,8 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 update_fields=["compute_cost_euro_millicents"]
             )
 
-        if results and len(results) == 1:
-            self.exec_duration = results[0].exec_duration
-            self.invoke_duration = results[0].invoke_duration
-        elif results and len(results) > 1:
-            raise ValueError("There should be no more than 1 result.")
+        if results:
+            self.process_inference_results(results=results)
 
         self.save()
 
@@ -1812,6 +1809,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.execute_task_on_success()
         elif self.status in [self.FAILURE, self.CANCELLED]:
             self.execute_task_on_failure()
+
+    def process_inference_results(self, *, results):
+        raise NotImplementedError
 
     @property
     def executor_kwargs(self):
