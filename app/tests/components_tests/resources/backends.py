@@ -130,7 +130,7 @@ class IOCopyExecutor(Executor):
         self._s3_client.upload_fileobj(
             Fileobj=io.BytesIO(inference_result_content),
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Key=self._inference_result_key(),
+            Key=self._get_inference_result_key(),
             ExtraArgs={
                 "Metadata": {"signature_hmac_sha256": signature},
             },
