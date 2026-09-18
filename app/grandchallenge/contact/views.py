@@ -12,26 +12,18 @@ class ContactView(FormView):
 
     def get_initial(self):
         initial = super().get_initial()
-        for field in ["message", "referer"]:
-            value = self.request.GET.get(field)
-            if value is not None:
-                initial[field] = value
+        value = self.request.GET.get("message")
+        if value is not None:
+            initial["message"] = value
         return initial
 
     def get_success_url(self):
         return reverse("home")
 
     def form_valid(self, form):
-        if form.honeypot_tripped or not form.challenge_passed:
-            # Silently drop the submission (both honeypot or unsolved JS
-            # challenge) without revealing why, but politely point genuine
-            # users (false positives) to support.
-            return self.render_to_response(
-                self.get_context_data(form=form, honeypot_tripped=True)
-            )
-
         send_contact_email(
-            cleaned_data=form.cleaned_data, request=self.request
+            email=form.cleaned_data["email"],
+            message=form.cleaned_data["message"],
         )
         messages.success(
             self.request,
