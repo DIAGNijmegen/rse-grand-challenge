@@ -9,7 +9,7 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class ContactForm(SaveFormInitMixin, forms.Form):
-    save_button_text = "Send your message"
+    save_button_text = "Send message"
 
     name = forms.CharField(
         max_length=255,
@@ -21,7 +21,8 @@ class ContactForm(SaveFormInitMixin, forms.Form):
         widget=forms.TextInput(attrs={"placeholder": "Your email"}),
     )
     message = forms.CharField(
-        widget=forms.Textarea(attrs={"placeholder": "Your message"})
+        label="Your message",
+        widget=forms.Textarea(attrs={"placeholder": "Your message"}),
     )
     accept_privacy_policy = forms.BooleanField(
         required=True,
