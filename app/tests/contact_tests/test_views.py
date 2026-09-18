@@ -2,7 +2,6 @@ import html
 
 import pytest
 from django.core import mail
-from django.test import override_settings
 
 from grandchallenge.subdomains.utils import reverse
 from tests.utils import get_view_for_user
@@ -60,8 +59,9 @@ def test_contact_form_prefill_from_url(client):
 
 
 @pytest.mark.django_db
-@override_settings(SUPPORT_EMAIL=TEST_SUPPORT_EMAIL)
-def test_valid_submission_redirects_to_homepage(client):
+def test_valid_submission_redirects_to_homepage(client, settings):
+    settings.SUPPORT_EMAIL = TEST_SUPPORT_EMAIL
+
     response = get_view_for_user(
         client=client,
         viewname="contact:contact",
@@ -84,8 +84,9 @@ def test_valid_submission_redirects_to_homepage(client):
 
 
 @pytest.mark.django_db
-@override_settings(SUPPORT_EMAIL=TEST_SUPPORT_EMAIL)
-def test_honeypot_trip_shows_polite_notice_and_sends_no_email(client):
+def test_honeypot_trip_shows_polite_notice_and_sends_no_email(client, settings):
+    settings.SUPPORT_EMAIL = TEST_SUPPORT_EMAIL
+
     response = get_view_for_user(
         client=client,
         viewname="contact:contact",
@@ -128,8 +129,11 @@ def test_challenge_script_is_included(client):
 
 
 @pytest.mark.django_db
-@override_settings(SUPPORT_EMAIL=TEST_SUPPORT_EMAIL)
-def test_unsolved_challenge_shows_polite_notice_and_sends_no_email(client):
+def test_unsolved_challenge_shows_polite_notice_and_sends_no_email(
+    client, settings
+):
+    settings.SUPPORT_EMAIL = TEST_SUPPORT_EMAIL
+
     # A bot submits the raw form without running the JS, so c2 is empty.
     response = get_view_for_user(
         client=client,

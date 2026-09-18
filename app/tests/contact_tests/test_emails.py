@@ -1,16 +1,14 @@
 import pytest
 from django.core import mail
-from django.test import override_settings
 
 from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-@override_settings(
-    MANAGERS=[("Manager", "manager@example.org")],
-    EMAIL_SUBJECT_PREFIX="",
-)
-def test_valid_submission_sends_email(client):
+def test_valid_submission_sends_email(client, settings):
+    settings.MANAGERS = [("Manager", "manager@example.org")]
+    settings.EMAIL_SUBJECT_PREFIX = ""
+
     response = get_view_for_user(
         client=client,
         viewname="contact:contact",
@@ -50,11 +48,10 @@ def test_valid_submission_sends_email(client):
 
 
 @pytest.mark.django_db
-@override_settings(
-    MANAGERS=[("Manager", "manager@example.org")],
-    EMAIL_SUBJECT_PREFIX="",
-)
-def test_valid_submission_shows_success_message(client):
+def test_valid_submission_shows_success_message(client, settings):
+    settings.MANAGERS = [("Manager", "manager@example.org")]
+    settings.EMAIL_SUBJECT_PREFIX = ""
+
     response = get_view_for_user(
         client=client,
         viewname="contact:contact",
