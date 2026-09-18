@@ -84,7 +84,9 @@ def test_valid_submission_redirects_to_homepage(client, settings):
 
 
 @pytest.mark.django_db
-def test_honeypot_trip_shows_polite_notice_and_sends_no_email(client, settings):
+def test_honeypot_trip_shows_polite_notice_and_sends_no_email(
+    client, settings
+):
     settings.SUPPORT_EMAIL = TEST_SUPPORT_EMAIL
 
     response = get_view_for_user(
