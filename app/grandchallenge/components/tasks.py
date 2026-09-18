@@ -967,9 +967,8 @@ def get_update_status_kwargs(*, executor=None):
     if executor is not None:
         return {
             "utilization_duration": executor.utilization_duration,
-            "exec_duration": executor.exec_duration,
-            "invoke_duration": executor.invoke_duration,
             "compute_cost_euro_millicents": executor.compute_cost_euro_millicents,
+            "results": executor.inference_results,
         }
     else:
         return {}
@@ -2078,7 +2077,9 @@ def handle_endpoint_invocation_event(*, event: dict):
     orchestrator = invocation.orchestrator
 
     try:
-        orchestrator.handle_event(event=event)
+        orchestrator.handle_event(
+            event=event,
+        )
     except ComponentException as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
@@ -2089,12 +2090,13 @@ def handle_endpoint_invocation_event(*, event: dict):
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            results=orchestrator.inference_results,
         )
         task_logger.error(str(error), exc_info=True)
     else:
         invocation.update_status(
             status=invocation.StatusChoices.EXECUTED,
-            invoke_duration=orchestrator.invoke_duration,
+            results=orchestrator.inference_results,
         )
         parse_endpoint_invocation_outputs.execute_on_commit(
             **invocation.task_kwargs, event=event

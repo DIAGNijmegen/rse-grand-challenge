@@ -1093,7 +1093,7 @@ def test_invocation_results_signature_unverified(settings):
     executor._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-        Key=executor._inference_result_key,
+        Key=executor._get_inference_result_key(),
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },
@@ -1140,7 +1140,7 @@ def test_invocation_results_signature_verified(settings):
     executor._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-        Key=executor._inference_result_key,
+        Key=executor._get_inference_result_key(),
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },

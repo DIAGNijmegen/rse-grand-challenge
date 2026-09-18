@@ -651,16 +651,20 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             "ClientError: Artifact upload failed:ClientError: "
             "Out of Memory. Please use a larger instance",
         ):
-            try:
-                users_process_exit_code = (
-                    self._get_inference_result().return_code
-                )
-            except UncleanExit:
-                users_process_exit_code = None
+            for task in self._task_definitions:
+                try:
+                    users_process_exit_code = self._get_inference_result(
+                        task_pk=task.task_pk
+                    ).return_code
+                except UncleanExit:
+                    users_process_exit_code = None
 
-            if users_process_exit_code not in (-9, 1, 137):
-                # Requires investigation
-                logger.error(f"SageMaker OOM {users_process_exit_code=}")
+                if users_process_exit_code not in (-9, 1, 137):
+                    # Requires investigation
+                    logger.error(
+                        f"SageMaker OOM {users_process_exit_code=} "
+                        f"for {task.task_pk}"
+                    )
 
             raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
         else:

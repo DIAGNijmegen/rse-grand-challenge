@@ -130,32 +130,23 @@ class IOCopyExecutor(Executor):
         self._s3_client.upload_fileobj(
             Fileobj=io.BytesIO(inference_result_content),
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Key=self._inference_result_key,
+            Key=self._get_inference_result_key(),
             ExtraArgs={
                 "Metadata": {"signature_hmac_sha256": signature},
             },
         )
 
-        self._handle_completed_job()
-
         handle_event.execute_on_commit(
             event={
                 "_job_id": self._job_id,
-                "_exec_duration_seconds": self._exec_duration.total_seconds(),
-                "_invoke_duration_seconds": self._invoke_duration.total_seconds(),
                 "__start_time": self.__start_time.isoformat(),
             },
             backend=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
         )
 
     def handle_event(self, *, event):
-        self._exec_duration = timedelta(
-            seconds=event["_exec_duration_seconds"]
-        )
-        self._invoke_duration = timedelta(
-            seconds=event["_invoke_duration_seconds"]
-        )
         self.__start_time = parse(event["__start_time"])
+        self._handle_completed_job()
 
     @staticmethod
     def get_job_name(*, event):

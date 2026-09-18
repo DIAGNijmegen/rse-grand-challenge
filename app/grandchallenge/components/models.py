@@ -1774,9 +1774,8 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         error_message="",
         detailed_error_message=None,
         utilization_duration=None,
-        exec_duration=None,
-        invoke_duration=None,
         compute_cost_euro_millicents=None,
+        results=None,
     ):
         self.status = status
 
@@ -1793,12 +1792,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.utilization.duration = utilization_duration
             self.utilization.save(update_fields=["duration"])
 
-        if exec_duration is not None:
-            self.exec_duration = exec_duration
-
-        if invoke_duration is not None:
-            self.invoke_duration = invoke_duration
-
         if compute_cost_euro_millicents is not None:
             self.utilization.compute_cost_euro_millicents = (
                 compute_cost_euro_millicents
@@ -1807,12 +1800,18 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 update_fields=["compute_cost_euro_millicents"]
             )
 
+        if results:
+            self.process_inference_results(results=results)
+
         self.save()
 
         if self.status == self.SUCCESS:
             self.execute_task_on_success()
         elif self.status in [self.FAILURE, self.CANCELLED]:
             self.execute_task_on_failure()
+
+    def process_inference_results(self, *, results):
+        raise NotImplementedError
 
     @property
     def executor_kwargs(self):

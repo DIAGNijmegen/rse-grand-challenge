@@ -1906,6 +1906,18 @@ class BatchJob(ComponentJob):
             executor_kwargs["algorithm_model"] = self.algorithm_model.model
         return executor_kwargs
 
+    def process_inference_results(self, *, results):
+        job_id = self.executor_kwargs["job_id"]
+        tasks_by_result_pk = {
+            f"{job_id}-{task.pk}": task for task in self.tasks.all()
+        }
+
+        for inference_result in results:
+            task = tasks_by_result_pk[inference_result.pk]
+            task.exec_duration = inference_result.exec_duration
+            task.invoke_duration = inference_result.invoke_duration
+            task.save(update_fields=["exec_duration", "invoke_duration"])
+
     @cached_property
     def inference_task_definitions(self):
         return [
@@ -2563,6 +2575,13 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
                 time_limit=timedelta(seconds=self.time_limit),
             )
         ]
+
+    def process_inference_results(self, *, results):
+        if len(results) == 1:
+            self.exec_duration = results[0].exec_duration
+            self.invoke_duration = results[0].invoke_duration
+        else:
+            raise ValueError("There should be no more than 1 result.")
 
     @cached_property
     def metrics_json_file(self):

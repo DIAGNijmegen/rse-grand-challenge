@@ -676,14 +676,16 @@ def test_handle_completed_invocation(settings):
     orchestrator._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
-        Key=orchestrator._inference_result_key,
+        Key=orchestrator._get_inference_result_key(),
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },
     )
 
-    assert orchestrator.invoke_duration is None
+    assert len(orchestrator.inference_results) == 0
 
     orchestrator._handle_completed_invocation()
 
-    assert orchestrator.invoke_duration == timedelta(seconds=12)
+    assert orchestrator.inference_results[0].invoke_duration == timedelta(
+        seconds=12
+    )

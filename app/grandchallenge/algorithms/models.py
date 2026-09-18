@@ -1485,6 +1485,13 @@ class Job(CIVForObjectMixin, ComponentJob):
             )
         ]
 
+    def process_inference_results(self, *, results):
+        if len(results) == 1:
+            self.exec_duration = results[0].exec_duration
+            self.invoke_duration = results[0].invoke_duration
+        else:
+            raise ValueError("There should be no more than 1 result.")
+
     @cached_property
     def slug_to_output(self):
         outputs = {}
@@ -2080,7 +2087,7 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         status: InvocationStatusChoices,
         error_message="",
         detailed_error_message=None,
-        invoke_duration=None,
+        results=None,
     ):
         self.status = status
 
@@ -2093,8 +2100,10 @@ class Invocation(CIVForObjectMixin, UUIDModel):
                 for key, value in detailed_error_message.items()
             }
 
-        if invoke_duration is not None:
-            self.invoke_duration = invoke_duration
+        if results and len(results) == 1:
+            self.invoke_duration = results[0].invoke_duration
+        elif results and len(results) > 1:
+            raise ValueError("There should be no more than 1 result.")
 
         self.save()
 
