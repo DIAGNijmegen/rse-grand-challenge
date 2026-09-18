@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Contact Us - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <h1>Send us a message</h1>
+
+    <p>
+        Have a question or simply want to get in touch?
+    </p>
+
+    {% crispy form %}
+{% endblock %}

@@ -553,6 +553,7 @@ LOCAL_APPS = [
     "grandchallenge.utilization",
     "grandchallenge.discussion_forums",
     "grandchallenge.forge",
+    "grandchallenge.contact",
 ]
 
 LEGACY_APPS = [

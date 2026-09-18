@@ -31,10 +31,11 @@ class SaveFormHelper(FormHelper):
       (rather than snapshotting fields at construction time)
     """
 
-    def __init__(self, form=None):
+    def __init__(self, save_button_text, form=None):
         # Skip super().__init__(form) to avoid eagerly snapshotting fields
         super().__init__()
         self.form = form
+        self.save_button_text = save_button_text
         self.attrs["gc-disable-after-submit"] = True
         self._custom_layout = None
 
@@ -47,7 +48,7 @@ class SaveFormHelper(FormHelper):
             return Layout(
                 Fieldset(None, *self.form.fields.keys()),
                 StrictButton(
-                    "Save",
+                    self.save_button_text,
                     css_class="btn-primary",
                     type="submit",
                     css_id="submit-id-save",
@@ -62,9 +63,13 @@ class SaveFormHelper(FormHelper):
 
 
 class SaveFormInitMixin:
+    save_button_text = "Save"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = SaveFormHelper(self)
+        self.helper = SaveFormHelper(
+            form=self, save_button_text=self.save_button_text
+        )
 
 
 class WorkstationUserFilterMixin(UserMixin):

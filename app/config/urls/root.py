@@ -188,6 +188,10 @@ urlpatterns = [
             "grandchallenge.direct_messages.urls", namespace="direct-messages"
         ),
     ),
+    path(
+        "contact-us/",
+        include("grandchallenge.contact.urls", namespace="contact"),
+    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
