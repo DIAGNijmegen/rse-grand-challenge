@@ -68,4 +68,23 @@ describe("contact_challenge module", () => {
         // fill and leave c2 empty.
         expect(c2After.value).toBe("");
     });
+
+    test("running the challenge again after it is solved does not corrupt c2", () => {
+        // First run (scheduled in beforeEach) solves the challenge.
+        jest.setSystemTime(new Date(Date.now() + 5000));
+        jest.advanceTimersByTime(2000);
+        expect(c2.value).toBe("BBBAAA");
+
+        // All timers from the first run have fired.
+        expect(jest.getTimerCount()).toBe(0);
+
+        // Re-run challenge
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+        expect(jest.getTimerCount()).toBe(0);
+
+        // Advancing time therefore changes nothing; c2 keeps its value.
+        jest.setSystemTime(new Date(Date.now() + 5000));
+        jest.advanceTimersByTime(2000);
+        expect(c2.value).toBe("BBBAAA");
+    });
 });

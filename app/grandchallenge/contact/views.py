@@ -12,7 +12,7 @@ class ContactView(FormView):
 
     def get_initial(self):
         initial = super().get_initial()
-        for field in ["message", "ref"]:
+        for field in ["message", "referer"]:
             value = self.request.GET.get(field)
             if value is not None:
                 initial[field] = value
@@ -23,7 +23,7 @@ class ContactView(FormView):
 
     def form_valid(self, form):
         if form.honeypot_tripped or not form.challenge_passed:
-            # Silently drop the submission (bot honeypot or unsolved JS
+            # Silently drop the submission (both honeypot or unsolved JS
             # challenge) without revealing why, but politely point genuine
             # users (false positives) to support.
             return self.render_to_response(

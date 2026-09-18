@@ -8,20 +8,8 @@ from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.subdomains.utils import reverse
 
 
-def _privacy_policy_consent_label():
-    return format_html(
-        "I agree that the information I provide (including my name, "
-        "email address and message) may be stored and processed so that "
-        "we can respond to my enquiry, as described in the "
-        '<a href="{privacy_policy_url}">privacy policy</a>.',
-        privacy_policy_url=reverse(
-            "policies:detail", kwargs={"slug": "privacy-policy"}
-        ),
-    )
-
-
 class ContactForm(SaveFormInitMixin, forms.Form):
-    save_button_text = "Send message"
+    save_button_text = "Send your message"
 
     name = forms.CharField(
         max_length=255,
@@ -33,7 +21,7 @@ class ContactForm(SaveFormInitMixin, forms.Form):
         widget=forms.TextInput(attrs={"placeholder": "Your email"})
     )
     message = forms.CharField(
-        widget=forms.Textarea(attrs={"placeholder": "Your Message"})
+        widget=forms.Textarea(attrs={"placeholder": "Your message"})
     )
     accept_privacy_policy = forms.BooleanField(
         required=True,
@@ -59,7 +47,7 @@ class ContactForm(SaveFormInitMixin, forms.Form):
 
     # Hidden reference field, allows us to know where the user reached the
     # form from. Can be prefilled via a URL argument.
-    ref = forms.CharField(
+    referer = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
     )

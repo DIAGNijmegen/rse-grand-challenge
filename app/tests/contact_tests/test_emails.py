@@ -22,13 +22,13 @@ def test_valid_submission_sends_email(client):
             "message": "I have a question about your platform.",
             "accept_privacy_policy": True,
             "subject": "",
-            "ref": "homepage-footer",
+            "referer": "homepage-footer",
             "c0": "AAA",
             "c1": "BBB",
             "c2": "BBBAAA",
         },
         HTTP_USER_AGENT="Mozilla/5.0 (TestAgent)",
-        REMOTE_ADDR="203.0.113.7",
+        HTTP_X_FORWARDED_FOR="203.0.113.7",
     )
 
     # Post/Redirect/Get
@@ -66,7 +66,7 @@ def test_valid_submission_shows_success_message(client):
             "message": "I have a question about your platform.",
             "accept_privacy_policy": True,
             "subject": "",
-            "ref": "homepage-footer",
+            "referer": "homepage-footer",
             "c0": "AAA",
             "c1": "BBB",
             "c2": "BBBAAA",
