@@ -107,3 +107,4 @@ app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 
 # Editor files
 .vscode/
+.kiro
