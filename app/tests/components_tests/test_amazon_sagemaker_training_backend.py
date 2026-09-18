@@ -32,9 +32,14 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.components.tasks import execute_job
+from grandchallenge.components.tasks import execute_job, handle_event
 from grandchallenge.core.error_messages import SystemErrorMessages
-from grandchallenge.evaluation.models import Evaluation, Method
+from grandchallenge.evaluation.models import (
+    BatchJob,
+    BatchJobTask,
+    Evaluation,
+    Method,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
@@ -1074,11 +1079,12 @@ def _write_task_inference_result(
     return_code=0,
     exec_duration=None,
     invoke_duration=None,
+    user_safe_error_message="",
 ):
     result = InferenceResult(
         pk=pk,
         return_code=return_code,
-        user_safe_error_message="",
+        user_safe_error_message=user_safe_error_message,
         user_process_last_stderr_lines=[],
         exec_duration=exec_duration,
         invoke_duration=invoke_duration,
@@ -1174,6 +1180,7 @@ def test_handle_event_for_batchjob_task_failure():
         ),
         pk=f"{executor._job_id}-{second_task.pk}",
         return_code=1,  # failed task
+        user_safe_error_message="Something went wrong",
     )
 
     with pytest.raises(ComponentException):
@@ -1191,3 +1198,242 @@ def test_handle_event_for_batchjob_task_failure():
         result.return_code for result in executor.inference_results
     }
     assert return_codes == {0, 1}
+
+
+TRAINING_BACKEND = (
+    "grandchallenge.components.backends.amazon_sagemaker_training."
+    "AmazonSageMakerTrainingExecutor"
+)
+
+
+def _mock_batchjob_task_side_effects(*, mocker):
+    """Neutralise BatchJob features that ``handle_event`` touches but which
+    are not yet implemented for BatchJob (utilization) or not relevant here
+    (output interface parsing)."""
+    # TODO: remove mocker calls after implementing the missing bits and pieces
+    mocker.patch(
+        "grandchallenge.evaluation.models.BatchJob.utilization",
+        new_callable=mocker.PropertyMock,
+        return_value=mocker.MagicMock(invoice_id=None),
+    )
+    mocker.patch(
+        "grandchallenge.components.tasks.lock_for_utilization_update",
+    )
+    # avoid update_status trying to write to the missing utilization
+    mocker.patch.object(
+        AmazonSageMakerTrainingExecutor,
+        "_set_utilization_duration",
+    )
+    mocker.patch.object(
+        AmazonSageMakerTrainingExecutor,
+        "utilization_duration",
+        new_callable=mocker.PropertyMock,
+        return_value=None,
+    )
+    mocker.patch.object(
+        AmazonSageMakerTrainingExecutor,
+        "compute_cost_euro_millicents",
+        new_callable=mocker.PropertyMock,
+        return_value=None,
+    )
+    mocker.patch(
+        "grandchallenge.evaluation.models.BatchJob.output_interfaces",
+        new_callable=mocker.PropertyMock,
+        return_value=BatchJobTask.objects.none(),
+    )
+
+
+@pytest.mark.django_db
+def test_handle_event_task_for_batchjob(mocker):
+    batch_job = BatchJobFactory(status=BatchJob.EXECUTING)
+
+    first_task = BatchJobTaskFactory(batch_job=batch_job)
+    second_task = BatchJobTaskFactory(batch_job=batch_job)
+
+    executor = AmazonSageMakerTrainingExecutor(**batch_job.executor_kwargs)
+
+    _write_runtime_setup_result(executor=executor)
+
+    for task, exec_seconds, invoke_seconds in (
+        (first_task, 10, 20),
+        (second_task, 30, 40),
+    ):
+        _write_task_inference_result(
+            executor=executor,
+            output_prefix=executor._output_prefix_for_task(
+                task_pk=str(task.pk)
+            ),
+            pk=f"{executor._job_id}-{task.pk}",
+            return_code=0,
+            exec_duration=timedelta(seconds=exec_seconds),
+            invoke_duration=timedelta(seconds=invoke_seconds),
+        )
+
+    _mock_batchjob_task_side_effects(mocker=mocker)
+
+    handle_event(
+        event={
+            "TrainingJobName": executor._sagemaker_job_name,
+            "TrainingJobStatus": "Completed",
+            "SecondaryStatus": "Completed",
+            "TrainingStartTime": 1654767467000,
+            "TrainingEndTime": 1654767481000,
+        },
+        backend=TRAINING_BACKEND,
+    )
+
+    batch_job.refresh_from_db()
+    assert batch_job.status == BatchJob.PARSING
+
+    first_task.refresh_from_db()
+    assert first_task.exec_duration == timedelta(seconds=10)
+    assert first_task.invoke_duration == timedelta(seconds=20)
+
+    second_task.refresh_from_db()
+    assert second_task.exec_duration == timedelta(seconds=30)
+    assert second_task.invoke_duration == timedelta(seconds=40)
+
+
+@pytest.mark.django_db
+def test_handle_event_task_for_batchjob_task_failure(mocker):
+    batch_job = BatchJobFactory(status=BatchJob.EXECUTING)
+
+    first_task = BatchJobTaskFactory(batch_job=batch_job)
+    second_task = BatchJobTaskFactory(batch_job=batch_job)
+
+    executor = AmazonSageMakerTrainingExecutor(**batch_job.executor_kwargs)
+
+    _write_runtime_setup_result(executor=executor)
+
+    _write_task_inference_result(
+        executor=executor,
+        output_prefix=executor._output_prefix_for_task(
+            task_pk=str(first_task.pk)
+        ),
+        pk=f"{executor._job_id}-{first_task.pk}",
+        return_code=0,
+        exec_duration=timedelta(seconds=10),
+        invoke_duration=timedelta(seconds=20),
+    )
+    _write_task_inference_result(
+        executor=executor,
+        output_prefix=executor._output_prefix_for_task(
+            task_pk=str(second_task.pk)
+        ),
+        pk=f"{executor._job_id}-{second_task.pk}",
+        return_code=1,  # failed task
+        exec_duration=timedelta(seconds=30),
+        invoke_duration=timedelta(seconds=40),
+        user_safe_error_message="Something went wrong",
+    )
+
+    _mock_batchjob_task_side_effects(mocker=mocker)
+
+    handle_event(
+        event={
+            "TrainingJobName": executor._sagemaker_job_name,
+            "TrainingJobStatus": "Completed",
+            "SecondaryStatus": "Completed",
+            "TrainingStartTime": 1654767467000,
+            "TrainingEndTime": 1654767481000,
+        },
+        backend=TRAINING_BACKEND,
+    )
+
+    batch_job.refresh_from_db()
+    assert batch_job.status == BatchJob.FAILURE
+    assert batch_job.error_message == "Something went wrong"
+
+    # durations are logged for both the successful and failed tasks
+    first_task.refresh_from_db()
+    assert first_task.exec_duration == timedelta(seconds=10)
+    assert first_task.invoke_duration == timedelta(seconds=20)
+
+    second_task.refresh_from_db()
+    assert second_task.exec_duration == timedelta(seconds=30)
+    assert second_task.invoke_duration == timedelta(seconds=40)
+
+
+@pytest.mark.django_db
+def test_handle_event_task_for_job(django_capture_on_commit_callbacks):
+    job = AlgorithmJobFactory(
+        status=Job.EXECUTING,
+        signing_key=b"itsasecret",
+        time_limit=60,
+    )
+
+    executor = AmazonSageMakerTrainingExecutor(**job.executor_kwargs)
+
+    _write_runtime_setup_result(executor=executor)
+
+    _write_task_inference_result(
+        executor=executor,
+        output_prefix=executor._output_prefix(),
+        pk=executor._job_id,
+        return_code=0,
+        exec_duration=timedelta(seconds=10),
+        invoke_duration=timedelta(seconds=20),
+    )
+
+    with django_capture_on_commit_callbacks(execute=False):
+        handle_event(
+            event={
+                "TrainingJobName": executor._sagemaker_job_name,
+                "TrainingJobStatus": "Completed",
+                "SecondaryStatus": "Completed",
+                "TrainingStartTime": 1654767467000,
+                "TrainingEndTime": 1654767481000,
+            },
+            backend=TRAINING_BACKEND,
+        )
+
+    job.refresh_from_db()
+    assert job.status == Job.PARSING
+    assert job.exec_duration == timedelta(seconds=10)
+    assert job.invoke_duration == timedelta(seconds=20)
+    # 1654767481000 - 1654767467000 == 14 seconds
+    assert job.utilization.duration == timedelta(seconds=14)
+
+
+@pytest.mark.django_db
+def test_handle_event_task_for_job_failure(
+    django_capture_on_commit_callbacks, settings
+):
+    job = AlgorithmJobFactory(
+        status=Job.EXECUTING,
+        signing_key=b"itsasecret",
+        time_limit=60,
+    )
+
+    executor = AmazonSageMakerTrainingExecutor(**job.executor_kwargs)
+
+    _write_runtime_setup_result(executor=executor)
+
+    _write_task_inference_result(
+        executor=executor,
+        output_prefix=executor._output_prefix(),
+        pk=executor._job_id,
+        return_code=1,  # failed
+        exec_duration=timedelta(seconds=10),
+        invoke_duration=timedelta(seconds=20),
+        user_safe_error_message="Something went wrong",
+    )
+
+    with django_capture_on_commit_callbacks(execute=False):
+        handle_event(
+            event={
+                "TrainingJobName": executor._sagemaker_job_name,
+                "TrainingJobStatus": "Completed",
+                "SecondaryStatus": "Completed",
+                "TrainingStartTime": 1654767467000,
+                "TrainingEndTime": 1654767481000,
+            },
+            backend=TRAINING_BACKEND,
+        )
+
+    job.refresh_from_db()
+    assert job.status == Job.FAILURE
+    assert job.error_message == "Something went wrong"
+    assert job.exec_duration == timedelta(seconds=10)
+    assert job.invoke_duration == timedelta(seconds=20)
+    assert job.utilization.duration == timedelta(seconds=14)

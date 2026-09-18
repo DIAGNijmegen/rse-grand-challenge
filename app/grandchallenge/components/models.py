@@ -1775,6 +1775,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         detailed_error_message=None,
         utilization_duration=None,
         compute_cost_euro_millicents=None,
+        results=None,
     ):
         self.status = status
 
@@ -1799,19 +1800,18 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 update_fields=["compute_cost_euro_millicents"]
             )
 
+        if results and len(results) == 1:
+            self.exec_duration = results[0].exec_duration
+            self.invoke_duration = results[0].invoke_duration
+        elif results and len(results) > 1:
+            raise ValueError("There should be no more than 1 result.")
+
         self.save()
 
         if self.status == self.SUCCESS:
             self.execute_task_on_success()
         elif self.status in [self.FAILURE, self.CANCELLED]:
             self.execute_task_on_failure()
-
-    def apply_inference_results(self, *, results):
-        if len(results) != 1:
-            raise ValueError("Only a single result is supported.")
-
-        self.exec_duration = results[0].exec_duration
-        self.invoke_duration = results[0].invoke_duration
 
     @property
     def executor_kwargs(self):

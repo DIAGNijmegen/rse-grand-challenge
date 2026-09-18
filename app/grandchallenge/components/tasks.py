@@ -968,6 +968,7 @@ def get_update_status_kwargs(*, executor=None):
         return {
             "utilization_duration": executor.utilization_duration,
             "compute_cost_euro_millicents": executor.compute_cost_euro_millicents,
+            "results": executor.inference_results,
         }
     else:
         return {}
@@ -1048,7 +1049,6 @@ def handle_event(*, event: dict, backend: str):
         task_logger.error(str(error), exc_info=True)
         return {"status": f"Unexpected error: {error}"}
     else:
-        job.apply_inference_results(results=executor.inference_results)
         job.update_status(
             status=job.PARSING,
             **get_update_status_kwargs(executor=executor),
@@ -2090,14 +2090,13 @@ def handle_endpoint_invocation_event(*, event: dict):
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            results=orchestrator.inference_results,
         )
         task_logger.error(str(error), exc_info=True)
     else:
-        invocation.apply_inference_results(
-            results=orchestrator.inference_results
-        )
         invocation.update_status(
             status=invocation.StatusChoices.EXECUTED,
+            results=orchestrator.inference_results,
         )
         parse_endpoint_invocation_outputs.execute_on_commit(
             **invocation.task_kwargs, event=event
