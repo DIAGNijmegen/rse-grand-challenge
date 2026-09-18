@@ -174,15 +174,13 @@ class TestContactForm:
 
         if c0 is None:
             del data["c0"]
-        
+
         if c1 is None:
             del data["c1"]
 
         if c2 is None:
             del data["c2"]
 
-        form = ContactForm(
-            data=data
-        )
+        form = ContactForm(data=data)
         assert form.is_valid(), form.errors
         assert form.challenge_passed is False

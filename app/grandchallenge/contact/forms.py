@@ -18,7 +18,7 @@ class ContactForm(SaveFormInitMixin, forms.Form):
     )
     email = forms.EmailField(
         label="Your email",
-        widget=forms.TextInput(attrs={"placeholder": "Your email"})
+        widget=forms.TextInput(attrs={"placeholder": "Your email"}),
     )
     message = forms.CharField(
         widget=forms.Textarea(attrs={"placeholder": "Your message"})
@@ -28,12 +28,16 @@ class ContactForm(SaveFormInitMixin, forms.Form):
         # The label links to the privacy policy and is evaluated lazily so
         # that reversing the policy URL (which needs the current Site) only
         # happens at render time, not at form construction/import time.
-        label=lazy(lambda: format_html(
-            "I agree with the "
-            '<a href="{privacy_policy_url}">privacy policy</a>.',
-            privacy_policy_url=reverse(
-                "policies:detail", kwargs={"slug": "privacy"}
-            )), str)(),
+        label=lazy(
+            lambda: format_html(
+                "I agree with the "
+                '<a href="{privacy_policy_url}">privacy policy</a>.',
+                privacy_policy_url=reverse(
+                    "policies:detail", kwargs={"slug": "privacy"}
+                ),
+            ),
+            str,
+        )(),
     )
 
     # Honeypot field: hidden from real users, but likely to be filled in by

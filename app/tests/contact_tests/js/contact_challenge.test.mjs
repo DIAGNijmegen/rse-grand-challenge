@@ -2,7 +2,9 @@ import { jest } from "@jest/globals";
 
 // The module attaches its logic on DOMContentLoaded. We (re)import it once;
 // subsequent dispatches of DOMContentLoaded re-run the initialization.
-import("../../../grandchallenge/contact/static/contact/js/contact_challenge.mjs");
+import(
+    "../../../grandchallenge/contact/static/contact/js/contact_challenge.mjs"
+);
 
 const formHtml = `
 <form>

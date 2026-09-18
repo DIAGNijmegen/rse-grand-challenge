@@ -7,12 +7,12 @@ CONTACT_SUBJECT_PREFIX = "[CONTACT-US] "
 def send_contact_email(*, cleaned_data, request):
     """Send a contact form submission to the site managers.
 
-    The email contains all the form fields, the ``ref`` and some metadata
+    The email contains all the form fields, the ``referer`` and some metadata
     about the request (client IP, user agent and referer) to help triage.
     """
 
-    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "<none>")
-    user_agent = request.META.get("HTTP_USER_AGENT", "<none>")
+    forwarded_for = request.headers.get("x-forwarded-for", "<none>")
+    user_agent = request.headers.get("user-agent", "<none>")
     host = request.get_host()
 
     subject = f"{CONTACT_SUBJECT_PREFIX}{cleaned_data['name']}"

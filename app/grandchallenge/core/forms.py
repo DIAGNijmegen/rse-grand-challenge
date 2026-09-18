@@ -67,7 +67,9 @@ class SaveFormInitMixin:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = SaveFormHelper(form=self, save_button_text=self.save_button_text)
+        self.helper = SaveFormHelper(
+            form=self, save_button_text=self.save_button_text
+        )
 
 
 class WorkstationUserFilterMixin(UserMixin):
