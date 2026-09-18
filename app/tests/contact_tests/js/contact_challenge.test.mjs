@@ -56,13 +56,11 @@ describe("contact_challenge module", () => {
         };
         const originalSetTimeout = window.setTimeout;
         window.setTimeout = immediateSetTimeout;
-        global.setTimeout = immediateSetTimeout;
 
         try {
             document.dispatchEvent(new Event("DOMContentLoaded"));
         } finally {
             window.setTimeout = originalSetTimeout;
-            global.setTimeout = originalSetTimeout;
         }
 
         const c2After = document.querySelector("#id_c2");

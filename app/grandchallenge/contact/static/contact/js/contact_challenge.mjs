@@ -60,7 +60,7 @@ function initContactChallenge() {
     const scheduledAt = Date.now();
 
     // Second (later) action: append c0 to c2.
-    setTimeout(() => {
+    window.setTimeout(() => {
         if (!elapsedIsPlausible(scheduledAt, SECOND_DELAY_MS)) {
             // Timers were tampered with; abort silently.
             return;
@@ -72,7 +72,7 @@ function initContactChallenge() {
     }, SECOND_DELAY_MS);
 
     // First (earlier) action: set c2 to c1.
-    setTimeout(() => {
+    window.setTimeout(() => {
         if (!elapsedIsPlausible(scheduledAt, FIRST_DELAY_MS)) {
             // Timers were tampered with; abort silently.
             return;
