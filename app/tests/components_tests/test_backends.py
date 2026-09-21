@@ -786,8 +786,8 @@ def test_multiple_provisioning_tasks_build_one_inference_task_each():
         ],
     )
 
-    first_prefix = executor._output_prefix_for_task(task_pk="1234")
-    second_prefix = executor._output_prefix_for_task(task_pk="5678")
+    first_prefix = executor._get_output_prefix_for_task(task_pk="1234")
+    second_prefix = executor._get_output_prefix_for_task(task_pk="5678")
 
     tasks = executor.provisioning_tasks
 
@@ -848,7 +848,7 @@ def test_relative_paths_use_task_output_prefix():
         ],
     )
 
-    output_prefix = executor._output_prefix_for_task(task_pk="1234")
+    output_prefix = executor._get_output_prefix_for_task(task_pk="1234")
 
     tasks = executor.provisioning_tasks
 
@@ -900,8 +900,10 @@ def test_provision_batch_job(settings):
 
     executor.provision()
 
-    first_prefix = executor._output_prefix_for_task(task_pk=str(first_task.pk))
-    second_prefix = executor._output_prefix_for_task(
+    first_prefix = executor._get_output_prefix_for_task(
+        task_pk=str(first_task.pk)
+    )
+    second_prefix = executor._get_output_prefix_for_task(
         task_pk=str(second_task.pk)
     )
 

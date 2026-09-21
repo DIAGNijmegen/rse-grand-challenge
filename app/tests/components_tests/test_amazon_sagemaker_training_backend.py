@@ -1117,7 +1117,7 @@ def test_handle_event_for_batchjob():
     ):
         _write_task_inference_result(
             executor=executor,
-            output_prefix=executor._output_prefix_for_task(
+            output_prefix=executor._get_output_prefix_for_task(
                 task_pk=str(task.pk)
             ),
             pk=f"{executor._job_id}-{task.pk}",
@@ -1167,7 +1167,7 @@ def test_handle_event_for_batchjob_task_failure():
 
     _write_task_inference_result(
         executor=executor,
-        output_prefix=executor._output_prefix_for_task(
+        output_prefix=executor._get_output_prefix_for_task(
             task_pk=str(first_task.pk)
         ),
         pk=f"{executor._job_id}-{first_task.pk}",
@@ -1175,7 +1175,7 @@ def test_handle_event_for_batchjob_task_failure():
     )
     _write_task_inference_result(
         executor=executor,
-        output_prefix=executor._output_prefix_for_task(
+        output_prefix=executor._get_output_prefix_for_task(
             task_pk=str(second_task.pk)
         ),
         pk=f"{executor._job_id}-{second_task.pk}",
@@ -1260,7 +1260,7 @@ def test_handle_event_task_for_batchjob(mocker):
     ):
         _write_task_inference_result(
             executor=executor,
-            output_prefix=executor._output_prefix_for_task(
+            output_prefix=executor._get_output_prefix_for_task(
                 task_pk=str(task.pk)
             ),
             pk=f"{executor._job_id}-{task.pk}",
@@ -1307,7 +1307,7 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
 
     _write_task_inference_result(
         executor=executor,
-        output_prefix=executor._output_prefix_for_task(
+        output_prefix=executor._get_output_prefix_for_task(
             task_pk=str(first_task.pk)
         ),
         pk=f"{executor._job_id}-{first_task.pk}",
@@ -1317,7 +1317,7 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
     )
     _write_task_inference_result(
         executor=executor,
-        output_prefix=executor._output_prefix_for_task(
+        output_prefix=executor._get_output_prefix_for_task(
             task_pk=str(second_task.pk)
         ),
         pk=f"{executor._job_id}-{second_task.pk}",

@@ -491,17 +491,17 @@ class Executor(ABC):
     def _io_prefix(self):
         return safe_join("/io", *self.job_path_parts)
 
-    def _output_prefix_for_task(self, *, task_pk):
+    def _get_output_prefix_for_task(self, *, task_pk):
         return safe_join(self._io_prefix, task_pk)
 
     def _output_prefix(self, *, task_pk=None):
         return (
-            self._output_prefix_for_task(task_pk=task_pk)
+            self._get_output_prefix_for_task(task_pk=task_pk)
             if task_pk
             else self._io_prefix
         )
 
-    def _inference_task_pk(self, *, task_pk=None):
+    def _get_inference_task_pk(self, *, task_pk=None):
         return f"{self._job_id}-{task_pk}" if task_pk else self._job_id
 
     @property
@@ -638,7 +638,7 @@ class Executor(ABC):
 
             inference_tasks.append(
                 InferenceTask(
-                    pk=self._inference_task_pk(task_pk=task_pk),
+                    pk=self._get_inference_task_pk(task_pk=task_pk),
                     inputs=invocation_inputs,
                     output_bucket_name=self._output_bucket_name,
                     output_prefix=output_prefix,
@@ -899,7 +899,7 @@ class Executor(ABC):
 
     def _get_inference_result(self, *, task_pk=None):
         object_key = self._get_inference_result_key(task_pk=task_pk)
-        expected_pk = self._inference_task_pk(task_pk=task_pk)
+        expected_pk = self._get_inference_task_pk(task_pk=task_pk)
 
         inference_result = self._get_and_validate_object(
             bucket_name=self._output_bucket_name,
