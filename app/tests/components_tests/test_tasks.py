@@ -2151,7 +2151,7 @@ class RaisedExceptionExecutor:
 
 
 class RaisedComponentExceptionExecutor:
-    def create_value_for_output(self, *, interface, output_prefix):
+    def create_value_for_output(self, *, interface, task_pk=None):
         raise ComponentException(
             "Test exception that should be passed to user"
         )
