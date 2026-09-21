@@ -1956,6 +1956,18 @@
             <span class="n">executor_kwargs</span><span class="p">[</span><span class="s2">"algorithm_model"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="o">.</span><span class="n">model</span>
         <span class="k">return</span> <span class="n">executor_kwargs</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_inference_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">executor_kwargs</span><span class="p">[</span><span class="s2">"job_id"</span><span class="p">]</span>
+        <span class="n">tasks_by_result_pk</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">task</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">inference_result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="n">tasks_by_result_pk</span><span class="p">[</span><span class="n">inference_result</span><span class="o">.</span><span class="n">pk</span><span class="p">]</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">exec_duration</span> <span class="o">=</span> <span class="n">inference_result</span><span class="o">.</span><span class="n">exec_duration</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">invoke_duration</span> <span class="o">=</span> <span class="n">inference_result</span><span class="o">.</span><span class="n">invoke_duration</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"exec_duration"</span><span class="p">,</span> <span class="s2">"invoke_duration"</span><span class="p">])</span>
+
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inference_task_definitions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span>
@@ -2613,6 +2625,13 @@
                 <span class="n">time_limit</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_limit</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_inference_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exec_duration</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">exec_duration</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">invoke_duration</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">invoke_duration</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"There should be no more than 1 result."</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">metrics_json_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
