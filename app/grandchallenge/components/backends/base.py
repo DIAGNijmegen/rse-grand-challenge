@@ -379,8 +379,6 @@ class Executor(ABC):
         self._use_task_list = use_task_list
         self._task_definitions = task_definitions
 
-        self._inference_results = []
-
         self.__s3_client = None
 
     def provision(self):
@@ -433,9 +431,12 @@ class Executor(ABC):
     @abstractmethod
     def compute_cost_euro_millicents(self): ...
 
-    @property
+    @cached_property
     def inference_results(self):
-        return self._inference_results
+        return [
+            self._get_inference_result(task_pk=task.task_pk)
+            for task in self._task_definitions
+        ]
 
     @property
     @abstractmethod
@@ -929,12 +930,6 @@ class Executor(ABC):
 
     def _handle_completed_job(self):
         self._check_runtime_setup_result()
-
-        self._inference_results = [
-            self._get_inference_result(task_pk=task.task_pk)
-            for task in self._task_definitions
-        ]
-
         self._raise_for_failed_results()
 
     def _check_runtime_setup_result(self):

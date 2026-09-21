@@ -682,8 +682,6 @@ def test_handle_completed_invocation(settings):
         },
     )
 
-    assert len(orchestrator.inference_results) == 0
-
     orchestrator._handle_completed_invocation()
 
     assert orchestrator.inference_results[0].invoke_duration == timedelta(
