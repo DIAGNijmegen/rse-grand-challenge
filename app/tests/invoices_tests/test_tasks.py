@@ -747,12 +747,16 @@ def test_invoice_budget_alert_email(
     ]
     assert (
         challenge_admin_email[0].subject
-        == "[testserver] [test] over 70% Compute Budget Consumed Alert"
+        == "[testserver] [test] Invoice 154040051 over 70% Compute Budget Consumed Alert"
     )
-    assert (
-        "We would like to inform you that more than 70% of the compute budget "
-        "for Prepaid invoice 154040051 of the test challenge has been used"
-        in challenge_admin_email[0].body
+    assert challenge_admin_email[0].body.endswith(
+        "We would like to inform you that more than 70%\n"
+        "of the compute budget for Prepaid invoice 154040051 \nof the test challenge has been used.\n\n\n"
+        "Your challenge still has 20% of its total budget available and **has not been closed**.\n"
+        "Your challenge's remaining compute budget is €&nbsp;2.00.\n\n\n"
+        "For more information please see the [challenge's invoice page](https://test.testserver/invoices/all/) "
+        "or reply to this email.\n\nRegards,\nThe Testserver Team\n\n\n"
+        "This is an automated service email from testserver.\n\n"
     )
 
     mail.outbox.clear()
@@ -785,7 +789,7 @@ def test_invoice_budget_alert_email(
     assert len(mail.outbox) != 0
     assert (
         mail.outbox[0].subject
-        == "[testserver] [test] over 90% Compute Budget Consumed Alert"
+        == "[testserver] [test] Invoice 154040051 over 90% Compute Budget Consumed Alert"
     )
 
 
@@ -813,6 +817,7 @@ def test_invoice_budget_alert_two_thresholds_one_email(
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
+        internal_invoice_number="292522545",
     )
     phase = PhaseFactory(challenge=challenge)
     evaluation = EvaluationFactory(
@@ -836,7 +841,7 @@ def test_invoice_budget_alert_two_thresholds_one_email(
     }
     assert (
         mail.outbox[0].subject
-        == "[testserver] [test] over 90% Compute Budget Consumed Alert"
+        == "[testserver] [test] Invoice 292522545 over 90% Compute Budget Consumed Alert"
     )
 
 
