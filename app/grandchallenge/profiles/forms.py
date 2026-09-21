@@ -150,7 +150,6 @@ class SignupForm(UserProfileForm):
                 "only_account",
                 "password1",
                 "password2",
-                "phone_number",
             } or field.startswith("accept_policy_"):
                 continue
 
