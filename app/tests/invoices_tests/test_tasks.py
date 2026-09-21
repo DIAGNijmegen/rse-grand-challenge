@@ -751,11 +751,11 @@ def test_invoice_budget_alert_email(
     )
     assert challenge_admin_email[0].body.endswith(
         "We would like to inform you that more than 70%\n"
-        "of the compute budget for Prepaid invoice 154040051 \nof the test challenge has been used.\n\n\n"
+        "of the compute budget for Prepaid invoice 154040051\nof the test challenge has been used.\n\n\n"
         "Your challenge still has 20% of its total budget available and **has not been closed**.\n"
         "Your challenge's remaining compute budget is €&nbsp;2.00.\n\n\n"
         "For more information please see the [challenge's invoice page](https://test.testserver/invoices/all/) "
-        "or reply to this email.\n\nRegards,\nThe Testserver Team\n\n\n"
+        "or reply to this email.\n\n\nRegards,\nThe Testserver Team\n\n\n"
         "This is an automated service email from testserver.\n\n"
     )
 
