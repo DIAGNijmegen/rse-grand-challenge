@@ -1935,6 +1935,41 @@ class BatchJob(ComponentJob):
         # TODO: add BatchJobUtilization model
         pass
 
+    def schedule_output_parsing(self):
+        # Local import to avoid a circular dependency
+        from grandchallenge.components.tasks import parse_job_output
+
+        for task in self.tasks.all():
+            for interface in task.output_interfaces.all():
+                parse_job_output.execute_on_commit(
+                    **self.task_kwargs,
+                    interface_slug=interface.slug,
+                    task_pk=str(task.pk),
+                )
+
+    def output_value_exists(self, *, interface, task_pk=None):
+        if not task_pk:
+            raise ValueError("Task_pk required for checking output.")
+        task = self.tasks.get(pk=task_pk)
+        return task.outputs.filter(interface=interface).exists()
+
+    def add_output_value(self, *, value, task_pk=None):
+        if not task_pk:
+            raise ValueError("Task_pk required for adding output.")
+        task = self.tasks.get(pk=task_pk)
+        task.outputs.add(value)
+
+    @property
+    def output_parsing_complete(self):
+        for task in self.tasks.all():
+            expected_interfaces = {*task.output_interfaces}
+            parsed_interfaces = {
+                output.interface for output in task.outputs.all()
+            }
+            if expected_interfaces - parsed_interfaces:
+                return False
+        return True
+
 
 class BatchJobUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()
@@ -1994,6 +2029,10 @@ class BatchJobTask(UUIDModel):
 
     class Meta(UUIDModel.Meta):
         ordering = ("created",)
+
+    @property
+    def output_interfaces(self):
+        return self.algorithm_interface.outputs.all()
 
 
 class EvaluationManager(ComponentJobManager):
@@ -2442,6 +2481,32 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.evaluation_outputs
+
+    def schedule_output_parsing(self):
+        # Local import to avoid a circular dependency
+        from grandchallenge.components.tasks import parse_job_output
+
+        for interface in self.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **self.task_kwargs,
+                interface_slug=interface.slug,
+            )
+
+    def output_value_exists(self, *, interface, task_pk=None):
+        if task_pk:
+            raise ValueError("This job does not have subtasks.")
+        return self.outputs.filter(interface=interface).exists()
+
+    def add_output_value(self, *, value, task_pk=None):
+        if task_pk:
+            raise ValueError("This job does not have subtasks.")
+        self.outputs.add(value)
+
+    @property
+    def output_parsing_complete(self):
+        expected_interfaces = {*self.output_interfaces.all()}
+        parsed_interfaces = {output.interface for output in self.outputs.all()}
+        return not (expected_interfaces - parsed_interfaces)
 
     @property
     def additional_outputs(self):

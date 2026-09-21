@@ -1274,6 +1274,32 @@ class Job(CIVForObjectMixin, ComponentJob):
     def output_interfaces(self):
         return self.algorithm_interface.outputs.all()
 
+    def schedule_output_parsing(self):
+        # Local import to avoid a circular dependency
+        from grandchallenge.components.tasks import parse_job_output
+
+        for interface in self.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **self.task_kwargs,
+                interface_slug=interface.slug,
+            )
+
+    def output_value_exists(self, *, interface, task_pk=None):
+        if task_pk:
+            raise ValueError("This job does not have subtasks.")
+        return self.outputs.filter(interface=interface).exists()
+
+    def add_output_value(self, *, value, task_pk=None):
+        if task_pk:
+            raise ValueError("This job does not have subtasks.")
+        self.outputs.add(value)
+
+    @property
+    def output_parsing_complete(self):
+        expected_interfaces = {*self.output_interfaces.all()}
+        parsed_interfaces = {output.interface for output in self.outputs.all()}
+        return not (expected_interfaces - parsed_interfaces)
+
     @cached_property
     def inputs_complete(self):
         # check if all inputs are present and if they all have a value

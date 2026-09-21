@@ -1202,3 +1202,80 @@ def test_get_error_message_from_inference_result(
     )
 
     assert error_message == expected_error_message
+
+
+@pytest.mark.django_db
+def test_create_value_for_output_default_prefix(settings):
+    job_pk = uuid4()
+
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.INTEGER,
+        relative_path="output.json",
+        store_in_database=True,
+    )
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
+                input_civs=[], time_limit=timedelta(seconds=100)
+            )
+        ],
+    )
+
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(b"42"),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=f"io/test/test/{job_pk}/output.json",
+    )
+
+    civ = executor.create_value_for_output(interface=interface)
+
+    assert civ.value == 42
+
+
+@pytest.mark.django_db
+def test_create_value_for_output_with_task_output_prefix(settings):
+    job_pk = uuid4()
+    task_pk = uuid4()
+
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.INTEGER,
+        relative_path="output.json",
+        store_in_database=True,
+    )
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
+        task_definitions=[
+            InferenceTaskDefinition(
+                input_civs=[],
+                time_limit=timedelta(seconds=100),
+                task_pk=str(task_pk),
+            )
+        ],
+    )
+
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(b"1337"),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=f"io/test/test/{job_pk}/{task_pk}/output.json",
+    )
+
+    civ = executor.create_value_for_output(
+        interface=interface, task_pk=str(task_pk)
+    )
+
+    assert civ.value == 1337

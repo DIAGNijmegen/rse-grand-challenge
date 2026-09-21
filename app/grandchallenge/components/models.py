@@ -1862,6 +1862,19 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "backend": settings.COMPONENTS_DEFAULT_BACKEND,
         }
 
+    def schedule_output_parsing(self):
+        raise NotImplementedError
+
+    def output_value_exists(self, *, interface, task_pk=None):
+        raise NotImplementedError
+
+    def add_output_value(self, *, value, task_pk=None):
+        raise NotImplementedError
+
+    @property
+    def output_parsing_complete(self):
+        raise NotImplementedError
+
     def execute(self):
         provision_job.execute_on_commit(**self.task_kwargs)
 

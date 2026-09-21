@@ -70,6 +70,7 @@ from grandchallenge.components.tasks import (
     validate_container_image,
 )
 from grandchallenge.core.error_messages import SystemErrorMessages
+from grandchallenge.evaluation.models import BatchJob
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmLambdaChoices,
@@ -97,6 +98,8 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import (
+    BatchJobFactory,
+    BatchJobTaskFactory,
     EvaluationFactory,
     EvaluationGroundTruthFactory,
     MethodFactory,
@@ -2138,17 +2141,17 @@ def test_invoke_endpoint_skips_keep_alive_for_reader_study_endpoint(mocker):
 
 
 class FixedOutputExecutor:
-    def create_value_for_output(self, *, interface):
+    def create_value_for_output(self, *, interface, task_pk=None):
         return ComponentInterfaceValueFactory(interface=interface, value=42)
 
 
 class RaisedExceptionExecutor:
-    def create_value_for_output(self, *, interface):
+    def create_value_for_output(self, *, interface, task_pk=None):
         raise Exception("Test exception that should not be passed to user")
 
 
 class RaisedComponentExceptionExecutor:
-    def create_value_for_output(self, *, interface):
+    def create_value_for_output(self, *, interface, output_prefix):
         raise ComponentException(
             "Test exception that should be passed to user"
         )
@@ -2199,6 +2202,47 @@ def test_parse_job_output(
     assert job.error_message == ""
     assert job.status == Job.SUCCESS
     assert job.outputs.count() == 3
+
+
+@pytest.mark.django_db
+def test_parse_job_output_for_batch_job(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    int_socket_0, int_socket_1, int_socket_2 = (
+        ComponentInterfaceFactory.create_batch(
+            3, kind=InterfaceKindChoices.INTEGER
+        )
+    )
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[int_socket_0],
+        outputs=[int_socket_1, int_socket_2],
+    )
+
+    batch_job = BatchJobFactory(status=BatchJob.PARSING)
+    first_task = BatchJobTaskFactory(
+        batch_job=batch_job, algorithm_interface=interface
+    )
+    second_task = BatchJobTaskFactory(
+        batch_job=batch_job, algorithm_interface=interface
+    )
+
+    mocker.patch(
+        "grandchallenge.evaluation.models.BatchJob.get_executor",
+        return_value=FixedOutputExecutor(),
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        batch_job.schedule_output_parsing()
+
+    batch_job.refresh_from_db()
+    assert batch_job.status == BatchJob.SUCCESS
+
+    # Each task has its own outputs, one per output interface
+    assert first_task.outputs.count() == 2
+    assert second_task.outputs.count() == 2
 
 
 @pytest.mark.django_db

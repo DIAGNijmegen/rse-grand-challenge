@@ -1068,11 +1068,7 @@ def handle_event(*, event: dict, backend: str):
             results=executor.inference_results,
             **get_update_status_kwargs(executor=executor),
         )
-        for interface in job.output_interfaces.all():
-            parse_job_output.execute_on_commit(
-                **job.task_kwargs,
-                interface_slug=interface.slug,
-            )
+        job.schedule_output_parsing()
         return {"status": "Successful job handled"}
 
 
@@ -1086,6 +1082,7 @@ def parse_job_output(
     job_model_name: str,
     backend: str,
     interface_slug: str,
+    task_pk: str | None = None,
 ):
     from grandchallenge.components.models import ComponentInterface
 
@@ -1124,15 +1121,17 @@ def parse_job_output(
             "status": f"Unexpected error: Multiple interfaces with slug {interface_slug} exist"
         }
 
-    if job.outputs.filter(interface=interface).exists():
+    if job.output_value_exists(interface=interface, task_pk=task_pk):
         task_logger.error("Interface already exists for job")
         return {"status": f"{interface_slug} already exists for job"}
 
     executor = job.get_executor(backend=backend)
 
     try:
-        val = executor.create_value_for_output(interface=interface)
-        job.outputs.add(val)
+        val = executor.create_value_for_output(
+            interface=interface, task_pk=task_pk
+        )
+        job.add_output_value(value=val, task_pk=task_pk)
     except ComponentException as error:
         mark_job_as_failed.execute_on_commit(
             **job.task_kwargs,
@@ -1204,16 +1203,11 @@ def check_job_parsing_complete(
             "status": f"Skipping due to job status {job.get_status_display()}"
         }
 
-    expected_interfaces = {*job.output_interfaces.all()}
-    parsed_interfaces = {output.interface for output in job.outputs.all()}
-
-    remaining_interfaces = expected_interfaces - parsed_interfaces
-
-    if remaining_interfaces:
-        return {"status": f"{len(remaining_interfaces)} remaining interfaces"}
-    else:
+    if job.output_parsing_complete:
         job.update_status(status=job.SUCCESS)
         return {"status": "Parsing complete"}
+    else:
+        return {"status": "Parsing incomplete"}
 
 
 @lambda_task(retry_on=(RetryStep,))

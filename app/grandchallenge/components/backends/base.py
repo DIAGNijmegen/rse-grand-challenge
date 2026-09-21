@@ -401,13 +401,20 @@ class Executor(ABC):
     @abstractmethod
     def handle_event(self, *, event): ...
 
-    def create_value_for_output(self, *, interface):
+    def create_value_for_output(self, *, interface, task_pk=None):
+        output_prefix = self._get_output_prefix(task_pk=task_pk)
         if interface.is_image_kind:
-            return self._create_images_result(interface=interface)
+            return self._create_images_result(
+                interface=interface, output_prefix=output_prefix
+            )
         elif interface.is_json_kind:
-            return self._create_json_result(interface=interface)
+            return self._create_json_result(
+                interface=interface, output_prefix=output_prefix
+            )
         else:
-            return self._create_file_result(interface=interface)
+            return self._create_file_result(
+                interface=interface, output_prefix=output_prefix
+            )
 
     def deprovision(self):
         self._delete_objects(
@@ -495,7 +502,7 @@ class Executor(ABC):
     def _get_output_prefix_for_task(self, *, task_pk):
         return safe_join(self._io_prefix, task_pk)
 
-    def _output_prefix(self, *, task_pk=None):
+    def _get_output_prefix(self, *, task_pk=None):
         return (
             self._get_output_prefix_for_task(task_pk=task_pk)
             if task_pk
@@ -521,7 +528,7 @@ class Executor(ABC):
 
     def _get_inference_result_key(self, *, task_pk=None):
         return safe_join(
-            self._output_prefix(task_pk=task_pk),
+            self._get_output_prefix(task_pk=task_pk),
             ".sagemaker_shim",
             "inference_result.json",
         )
@@ -611,7 +618,7 @@ class Executor(ABC):
 
         for task_definition in self._task_definitions:
             task_pk = task_definition.task_pk
-            output_prefix = self._output_prefix(task_pk=task_pk)
+            output_prefix = self._get_output_prefix(task_pk=task_pk)
             invocation_inputs = []
 
             for civ in self._with_inputs_json(
@@ -956,8 +963,8 @@ class Executor(ABC):
                     self._get_error_message(inference_result=inference_result)
                 )
 
-    def _create_images_result(self, *, interface):
-        prefix = safe_join(self._io_prefix, interface.relative_path)
+    def _create_images_result(self, *, interface, output_prefix):
+        prefix = safe_join(output_prefix, interface.relative_path)
 
         response = self._s3_client.list_objects_v2(
             Bucket=self._output_bucket_name,
@@ -1055,8 +1062,8 @@ class Executor(ABC):
                 Key=file["Key"],
             )
 
-    def _create_json_result(self, *, interface):
-        key = safe_join(self._io_prefix, interface.relative_path)
+    def _create_json_result(self, *, interface, output_prefix):
+        key = safe_join(output_prefix, interface.relative_path)
 
         try:
             with io.BytesIO() as fileobj:
@@ -1093,8 +1100,8 @@ class Executor(ABC):
 
         return civ
 
-    def _create_file_result(self, *, interface):
-        key = safe_join(self._io_prefix, interface.relative_path)
+    def _create_file_result(self, *, interface, output_prefix):
+        key = safe_join(output_prefix, interface.relative_path)
 
         try:
             with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as fileobj:

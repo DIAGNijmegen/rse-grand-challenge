@@ -34,12 +34,7 @@ from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import execute_job, handle_event
 from grandchallenge.core.error_messages import SystemErrorMessages
-from grandchallenge.evaluation.models import (
-    BatchJob,
-    BatchJobTask,
-    Evaluation,
-    Method,
-)
+from grandchallenge.evaluation.models import BatchJob, Evaluation, Method
 from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
@@ -1236,10 +1231,10 @@ def _mock_batchjob_task_side_effects(*, mocker):
         new_callable=mocker.PropertyMock,
         return_value=None,
     )
-    mocker.patch(
-        "grandchallenge.evaluation.models.BatchJob.output_interfaces",
-        new_callable=mocker.PropertyMock,
-        return_value=BatchJobTask.objects.none(),
+    # schedule_output_parsing imports parse_job_output locally,
+    # so patch it on the tasks module.
+    return mocker.patch(
+        "grandchallenge.components.tasks.parse_job_output.execute_on_commit",
     )
 
 
@@ -1269,7 +1264,7 @@ def test_handle_event_task_for_batchjob(mocker):
             invoke_duration=timedelta(seconds=invoke_seconds),
         )
 
-    _mock_batchjob_task_side_effects(mocker=mocker)
+    schedule_parse_output = _mock_batchjob_task_side_effects(mocker=mocker)
 
     handle_event(
         event={
@@ -1292,6 +1287,12 @@ def test_handle_event_task_for_batchjob(mocker):
     second_task.refresh_from_db()
     assert second_task.exec_duration == timedelta(seconds=30)
     assert second_task.invoke_duration == timedelta(seconds=40)
+
+    assert schedule_parse_output.call_count == 2
+    scheduled_task_pks = {
+        call.kwargs["task_pk"] for call in schedule_parse_output.call_args_list
+    }
+    assert scheduled_task_pks == {str(first_task.pk), str(second_task.pk)}
 
 
 @pytest.mark.django_db
@@ -1327,7 +1328,7 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
         user_safe_error_message="Something went wrong",
     )
 
-    _mock_batchjob_task_side_effects(mocker=mocker)
+    schedule_parse_output = _mock_batchjob_task_side_effects(mocker=mocker)
 
     handle_event(
         event={
@@ -1353,6 +1354,9 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
     assert second_task.exec_duration == timedelta(seconds=30)
     assert second_task.invoke_duration == timedelta(seconds=40)
 
+    # no output parsing is scheduled.
+    schedule_parse_output.assert_not_called()
+
 
 @pytest.mark.django_db
 def test_handle_event_task_for_job(django_capture_on_commit_callbacks):
@@ -1368,14 +1372,14 @@ def test_handle_event_task_for_job(django_capture_on_commit_callbacks):
 
     _write_task_inference_result(
         executor=executor,
-        output_prefix=executor._output_prefix(),
+        output_prefix=executor._get_output_prefix(),
         pk=executor._job_id,
         return_code=0,
         exec_duration=timedelta(seconds=10),
         invoke_duration=timedelta(seconds=20),
     )
 
-    with django_capture_on_commit_callbacks(execute=False):
+    with django_capture_on_commit_callbacks(execute=False) as callbacks:
         handle_event(
             event={
                 "TrainingJobName": executor._sagemaker_job_name,
@@ -1393,6 +1397,8 @@ def test_handle_event_task_for_job(django_capture_on_commit_callbacks):
     assert job.invoke_duration == timedelta(seconds=20)
     # 1654767481000 - 1654767467000 == 14 seconds
     assert job.utilization.duration == timedelta(seconds=14)
+    # Output parsing is scheduled once per output interface.
+    assert len(callbacks) == job.output_interfaces.count()
 
 
 @pytest.mark.django_db
@@ -1411,7 +1417,7 @@ def test_handle_event_task_for_job_failure(
 
     _write_task_inference_result(
         executor=executor,
-        output_prefix=executor._output_prefix(),
+        output_prefix=executor._get_output_prefix(),
         pk=executor._job_id,
         return_code=1,  # failed
         exec_duration=timedelta(seconds=10),
