@@ -5,8 +5,8 @@ class ComponentBaseException(Exception):
 class ComponentException(ComponentBaseException):
     """These exceptions will be sent to the user"""
 
-    def __init__(self, message, message_details=None):
-        super().__init__(message, message_details)
+    def __init__(self, message, message_details=None):  # noqa: B042
+        super().__init__(message)
         self.message = message
         self.message_details = message_details
 
