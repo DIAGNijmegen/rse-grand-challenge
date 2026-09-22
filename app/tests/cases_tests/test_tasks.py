@@ -47,7 +47,6 @@ LOCAL_LINKED_TASK_CALLED = {}
 
 @lambda_task
 def local_linked_task(*, upload_session_pk: str | UUID):
-    global LOCAL_LINKED_TASK_CALLED
     LOCAL_LINKED_TASK_CALLED.update(upload_session_pk=upload_session_pk)
 
 
@@ -68,7 +67,6 @@ def test_linked_task_called_with_session_pk(
             )
         )
 
-    global LOCAL_LINKED_TASK_CALLED
     assert LOCAL_LINKED_TASK_CALLED == {"upload_session_pk": str(session.pk)}
 
 

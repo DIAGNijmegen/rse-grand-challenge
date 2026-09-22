@@ -24,6 +24,7 @@ $.extend($.fn.dataTable.defaults, {
                     "Activate to sort. Hold Shift to sort by multiple columns.",
                 );
             }
+            return true;
         });
     },
 });

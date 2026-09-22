@@ -307,8 +307,6 @@ unique_slugs_suffix = Counter()
 
 def make_slugs_unique(d):
     """Ensure all slugs in the structure to make them unique"""
-    global unique_slugs_suffix
-
     if isinstance(d, dict):
         if "slug" in d:
             original_slug = d["slug"]

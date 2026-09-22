@@ -5,7 +5,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Index
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
-from guardian.models import GroupObjectPermission
+from guardian.models import (
+    GroupObjectPermission,
+)
 from guardian.models import (  # noqa: I251
     GroupObjectPermissionBase as GroupObjectPermissionBaseOrig,
 )

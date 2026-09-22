@@ -676,14 +676,12 @@ class AlgorithmDescriptionForm(ModelForm):
         self.helper.layout = Layout(
             Fieldset(
                 "",
-                HTML(
-                    """
+                HTML("""
                     <p class="mt-2">To make your algorithm accessible to other users, we ask you to provide some background information on how your algorithm works.
                     Please refer to our <a href="https://grand-challenge.org/documentation/documenting-your-algorithm-for-users/">documentation</a> for examples for each of the sections below.
                     Once filled in, the background information will appear in the 'Information' section on your algorithm page.
                     It will be shown exactly as you style it here in the markdown editor, so make sure to check the preview before saving your changes.</p>
-                """
-                ),
+                """),
                 ModelFactsTextField("summary"),
                 ModelFactsTextField("mechanism"),
                 ModelFactsTextField("validation_and_performance"),

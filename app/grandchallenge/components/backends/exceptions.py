@@ -6,7 +6,7 @@ class ComponentException(ComponentBaseException):
     """These exceptions will be sent to the user"""
 
     def __init__(self, message, message_details=None):
-        super().__init__(message)
+        super().__init__(message, message_details)
         self.message = message
         self.message_details = message_details
 

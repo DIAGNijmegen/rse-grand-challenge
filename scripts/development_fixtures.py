@@ -373,7 +373,7 @@ def _create_task_types_regions_modalities(users):
 
 def _create_algorithm_demo(users):
 
-    (input_civ, _) = ComponentInterfaceValue.objects.get_or_create(
+    input_civ, _ = ComponentInterfaceValue.objects.get_or_create(
         interface=ComponentInterface.objects.get(slug="generic-medical-image"),
         image=_create_image(
             name="test_image.mha",

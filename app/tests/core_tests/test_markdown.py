@@ -9,8 +9,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
     "markdown_with_html, expected_output",
     (
         (
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 ![](test.png)
 
                 > Quote Me
@@ -23,10 +22,8 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 ```python
                 def test_function():
                     pass
-                ```"""
-            ),
-            textwrap.dedent(
-                """\
+                ```"""),
+            textwrap.dedent("""\
                 <p><img src="test.png" class="img-fluid"></p>
                 <blockquote class="blockquote">
                 <p>Quote Me</p>
@@ -54,12 +51,10 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 </table>
                 <div class="codehilite"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_function</span><span class="p">():</span>
                     <span class="k">pass</span>
-                </pre></div>"""
-            ),
+                </pre></div>"""),
         ),
         (
-            textwrap.dedent(
-                r"""
+            textwrap.dedent(r"""
                 ![](test.png)
 
                 <img src="test-no-class.png"/>
@@ -116,10 +111,8 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
 
                 - Just paste links directly in the document like this: https://google.com.
                 - Or even an email address: fake.email@email.com.
-                """
-            ),
-            textwrap.dedent(
-                """\
+                """),
+            textwrap.dedent("""\
                 <p><img src="test.png" class="img-fluid"></p>
                 <p><img src="test-no-class.png" class="img-fluid"></p>
                 <p><img class="img-fluid" src="test-empty-class.png"></p>
@@ -188,8 +181,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 <ul>
                 <li>Just paste links directly in the document like this: <a href="https://google.com">https://google.com</a>.</li>
                 <li>Or even an email address: <a href="mailto:fake.email@email.com">fake.email@email.com</a>.</li>
-                </ul>"""
-            ),
+                </ul>"""),
         ),
         (
             "&lt;script&gt;alert(&quot;foo&quot;)&lt;/script&gt;",

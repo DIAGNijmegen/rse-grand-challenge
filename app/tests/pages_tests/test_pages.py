@@ -564,7 +564,6 @@ def test_challenge_subdomain_patterns():
                 check_url_pattern(url=url, pattern=p)
 
     def check_url_pattern(url, pattern):
-        nonlocal invalid_patterns
         if (
             url.count("/") == 1
             and url.endswith("/")

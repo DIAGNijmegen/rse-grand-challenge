@@ -49,7 +49,7 @@ class AuthTestCase(TestCase):
         rf = APIRequestFactory()
         request = rf.get("/")
         request.META = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
-        (self.user, auth_token) = TokenAuthentication().authenticate(request)
+        self.user, auth_token = TokenAuthentication().authenticate(request)
         self.assertEqual(
             token[: CONSTANTS.TOKEN_KEY_LENGTH],
             auth_token.token_key,
@@ -66,9 +66,7 @@ class AuthTestCase(TestCase):
         request = rf.get("/")
         request.META = {"HTTP_AUTHORIZATION": "Bearer"}
         with self.assertRaises(AuthenticationFailed) as err:
-            (self.user, auth_token) = TokenAuthentication().authenticate(
-                request
-            )
+            self.user, auth_token = TokenAuthentication().authenticate(request)
         self.assertIn(
             "Invalid token header. No credentials provided.",
             str(err.exception),
@@ -79,9 +77,7 @@ class AuthTestCase(TestCase):
         request = rf.get("/")
         request.META = {"HTTP_AUTHORIZATION": "Bearer wordone wordtwo"}
         with self.assertRaises(AuthenticationFailed) as err:
-            (self.user, auth_token) = TokenAuthentication().authenticate(
-                request
-            )
+            self.user, auth_token = TokenAuthentication().authenticate(request)
         self.assertIn(
             "Invalid token header. Token string should not contain spaces.",
             str(err.exception),

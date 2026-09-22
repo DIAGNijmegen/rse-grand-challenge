@@ -34,7 +34,8 @@ def send_unread_notification_instant_emails(*, user_profile_ids: list[int]):
     site = Site.objects.get_current()
 
     with check_lock_acquired():
-        len(
+        # Force evaluation of the query to acquire the row locks
+        _ = len(
             UserProfile.objects.select_for_update(nowait=True)
             .filter(pk__in=user_profile_ids)
             .values_list("pk", flat=True)
