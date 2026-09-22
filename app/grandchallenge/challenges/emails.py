@@ -148,22 +148,10 @@ def send_email_percent_budget_consumed_alert(*, invoice, percent_threshold):
         subscription_type=EmailSubscriptionTypes.SYSTEM,
     )
 
-    managers_message = format_html(
-        "More than {percent_threshold}% of the "
-        "compute budget for {invoice_type} invoice {invoice_name} of the {challenge_name} challenge has been used. "
-        "See {statistics_url}.",
-        challenge_name=challenge.short_name,
-        percent_threshold=percent_threshold,
-        invoice_name=invoice_name,
-        invoice_type=invoice.get_payment_type_display(),
-        statistics_url=reverse(
-            "pages:statistics",
-            kwargs={"challenge_short_name": challenge.short_name},
-        ),
-    )
     mail_managers(
         subject=subject,
-        message=managers_message,
+        message="This markdown has been formatted and sent to this challenge's admins:\n\n"
+        + challenge_admins_message,
     )
 
 
