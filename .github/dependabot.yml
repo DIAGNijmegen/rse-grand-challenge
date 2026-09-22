@@ -8,3 +8,42 @@ updates:
       actions:
         patterns:
           - "*"
+
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: lockfile-only
+    groups:
+      python:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "uv"
+    directory: "/dockerfiles/web-base/virtualenvs/biom"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: lockfile-only
+    groups:
+      python:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "uv"
+    directory: "/dockerfiles/web-base/virtualenvs/panimg"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: lockfile-only
+    groups:
+      python:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      npm:
+        patterns:
+          - "*"
