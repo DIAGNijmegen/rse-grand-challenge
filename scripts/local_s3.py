@@ -39,6 +39,8 @@ def _create_buckets(*, client):
         settings.UPLOADS_S3_BUCKET_NAME,
         settings.COMPONENTS_INPUT_BUCKET_NAME,
         settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+        settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
     ]
 
     for bucket_name in bucket_names:
