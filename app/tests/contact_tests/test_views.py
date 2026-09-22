@@ -3,8 +3,6 @@ import pytest
 from grandchallenge.subdomains.utils import reverse
 from tests.utils import get_view_for_user
 
-TEST_SUPPORT_EMAIL = "test-support@example.test"
-
 
 @pytest.mark.django_db
 def test_contact_page_renders(client):
@@ -47,9 +45,7 @@ def test_contact_form_prefill_from_url(client):
 
 
 @pytest.mark.django_db
-def test_valid_submission_redirects_to_homepage(client, settings):
-    settings.SUPPORT_EMAIL = TEST_SUPPORT_EMAIL
-
+def test_valid_submission_redirects_to_homepage(client):
     response = get_view_for_user(
         client=client,
         viewname="contact:contact",
