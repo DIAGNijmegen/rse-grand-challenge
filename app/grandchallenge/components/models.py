@@ -6,6 +6,7 @@ from enum import Enum, StrEnum
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import NamedTuple
 from urllib.parse import quote
 
 from django import forms
@@ -105,6 +106,14 @@ RESERVED_SOCKET_SLUGS = {
     "metrics-json-file",
     "results-json-file",
 }
+
+
+class OutputSubtask(NamedTuple):
+    """A single unit of work that produces outputs for a component job."""
+
+    task_pk: str | None
+    outputs: models.Manager
+    output_interfaces: QuerySet
 
 
 class SourceChoices(StrEnum):
@@ -1862,18 +1871,51 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "backend": settings.COMPONENTS_DEFAULT_BACKEND,
         }
 
-    def schedule_output_parsing(self):
+    @property
+    def output_subtasks(self):
+        """The subtasks that produce outputs for this job."""
         raise NotImplementedError
+
+    def get_output_subtask(self, *, task_pk=None):
+        for subtask in self.output_subtasks:
+            if subtask.task_pk == task_pk:
+                return subtask
+        raise ValueError(f"No subtask found for task_pk {task_pk}")
+
+    def schedule_output_parsing(self):
+        # Local import to avoid a circular dependency
+        from grandchallenge.components.tasks import parse_job_output
+
+        for subtask in self.output_subtasks:
+            task_kwargs = {}
+            if subtask.task_pk is not None:
+                task_kwargs["task_pk"] = subtask.task_pk
+
+            for interface in subtask.output_interfaces.all():
+                parse_job_output.execute_on_commit(
+                    **self.task_kwargs,
+                    interface_slug=interface.slug,
+                    **task_kwargs,
+                )
 
     def output_value_exists(self, *, interface, task_pk=None):
-        raise NotImplementedError
+        subtask = self.get_output_subtask(task_pk=task_pk)
+        return subtask.outputs.filter(interface=interface).exists()
 
     def add_output_value(self, *, value, task_pk=None):
-        raise NotImplementedError
+        subtask = self.get_output_subtask(task_pk=task_pk)
+        subtask.outputs.add(value)
 
     @property
     def output_parsing_complete(self):
-        raise NotImplementedError
+        for subtask in self.output_subtasks:
+            expected_interfaces = {*subtask.output_interfaces.all()}
+            parsed_interfaces = {
+                output.interface for output in subtask.outputs.all()
+            }
+            if expected_interfaces - parsed_interfaces:
+                return False
+        return True
 
     def execute(self):
         provision_job.execute_on_commit(**self.task_kwargs)
