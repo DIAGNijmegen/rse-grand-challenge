@@ -75,6 +75,7 @@
     <span class="n">ComponentJob</span><span class="p">,</span>
     <span class="n">ComponentJobManager</span><span class="p">,</span>
     <span class="n">ImportStatusChoices</span><span class="p">,</span>
+    <span class="n">OutputSubtask</span><span class="p">,</span>
     <span class="n">Tarball</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -2013,6 +2014,17 @@
         <span class="c1"># TODO: add BatchJobUtilization model</span>
         <span class="k">pass</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_subtasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">OutputSubtask</span><span class="p">(</span>
+                <span class="n">task_pk</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                <span class="n">outputs</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span>
+                <span class="n">output_interfaces</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">output_interfaces</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">]</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchJobUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
@@ -2072,6 +2084,10 @@
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"created"</span><span class="p">,)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interface</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationManager</span><span class="p">(</span><span class="n">ComponentJobManager</span><span class="p">):</span>
@@ -2520,6 +2536,16 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_outputs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_subtasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">OutputSubtask</span><span class="p">(</span>
+                <span class="n">task_pk</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span>
+                <span class="n">output_interfaces</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_interfaces</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">additional_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

@@ -44,6 +44,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONDecodeError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">quote</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">django</span><span class="w"> </span><span class="kn">import</span> <span class="n">forms</span>
@@ -143,6 +144,17 @@
     <span class="s2">"metrics-json-file"</span><span class="p">,</span>
     <span class="s2">"results-json-file"</span><span class="p">,</span>
 <span class="p">}</span>
+
+
+<div class="viewcode-block" id="OutputSubtask">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.OutputSubtask">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OutputSubtask</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A single unit of work that produces outputs for a component job."""</span>
+
+    <span class="n">task_pk</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">Manager</span>
+    <span class="n">output_interfaces</span><span class="p">:</span> <span class="n">QuerySet</span></div>
+
 
 
 <div class="viewcode-block" id="SourceChoices">
@@ -1952,6 +1964,52 @@
             <span class="s2">"job_model_name"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
             <span class="s2">"backend"</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_DEFAULT_BACKEND</span><span class="p">,</span>
         <span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_subtasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The subtasks that produce outputs for this job."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_output_subtask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">task_pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">subtask</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_subtasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">subtask</span><span class="o">.</span><span class="n">task_pk</span> <span class="o">==</span> <span class="n">task_pk</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">subtask</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No subtask found for task_pk </span><span class="si">{</span><span class="n">task_pk</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">schedule_output_parsing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Local import to avoid a circular dependency</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_job_output</span>
+
+        <span class="k">for</span> <span class="n">subtask</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_subtasks</span><span class="p">:</span>
+            <span class="n">task_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">subtask</span><span class="o">.</span><span class="n">task_pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">task_kwargs</span><span class="p">[</span><span class="s2">"task_pk"</span><span class="p">]</span> <span class="o">=</span> <span class="n">subtask</span><span class="o">.</span><span class="n">task_pk</span>
+
+            <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">subtask</span><span class="o">.</span><span class="n">output_interfaces</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="n">parse_job_output</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span>
+                    <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">task_kwargs</span><span class="p">,</span>
+                    <span class="n">interface_slug</span><span class="o">=</span><span class="n">interface</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">task_kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_value_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface</span><span class="p">,</span> <span class="n">task_pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">subtask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_subtask</span><span class="p">(</span><span class="n">task_pk</span><span class="o">=</span><span class="n">task_pk</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">subtask</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_output_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">task_pk</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">subtask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_subtask</span><span class="p">(</span><span class="n">task_pk</span><span class="o">=</span><span class="n">task_pk</span><span class="p">)</span>
+        <span class="n">subtask</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">output_parsing_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">subtask</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_subtasks</span><span class="p">:</span>
+            <span class="n">expected_interfaces</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">subtask</span><span class="o">.</span><span class="n">output_interfaces</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
+            <span class="n">parsed_interfaces</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">output</span><span class="o">.</span><span class="n">interface</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">subtask</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">expected_interfaces</span> <span class="o">-</span> <span class="n">parsed_interfaces</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">provision_job</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">task_kwargs</span><span class="p">)</span>
