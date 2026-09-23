@@ -639,6 +639,14 @@
             <span class="s2">"other users. "</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">use_batch_mode</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"If set to True, algorithm inference for this phase will run in "</span>
+            <span class="s2">"batch mode, where a single job processes multiple archive items. "</span>
+            <span class="s2">"This can only be enabled for closed log phases."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">evaluation_time_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">"Time limit for evaluation jobs in seconds"</span><span class="p">,</span>
@@ -767,6 +775,16 @@
             <span class="p">(</span><span class="s2">"create_phase_submission"</span><span class="p">,</span> <span class="s2">"Create Phase Submission"</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"configure_algorithm_phase"</span><span class="p">,</span> <span class="s2">"Configure Algorithm Phase"</span><span class="p">),</span>
         <span class="p">)</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">CheckConstraint</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">_batch_mode_only_for_closed_logs"</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Q</span><span class="p">(</span><span class="n">use_batch_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="o">|</span> <span class="n">models</span><span class="o">.</span><span class="n">Q</span><span class="p">(</span><span class="n">give_algorithm_editors_job_view_permissions</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                <span class="n">violation_error_message</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">"Batch mode can only be enabled for closed log phases."</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> Evaluation for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="si">}</span><span class="s2">"</span>
@@ -816,8 +834,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_submission_limits</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_parent_phase</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_external_evaluation</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_evaluation_requirements</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_evaluation_requirements</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_batch_mode</span><span class="p">()</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_batch_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">use_batch_mode</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">give_algorithm_editors_job_view_permissions</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">"Batch mode can only be enabled for closed log phases."</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_submission_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">"submission_kind"</span><span class="p">):</span>
