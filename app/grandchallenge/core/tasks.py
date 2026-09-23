@@ -186,8 +186,8 @@ def schedule_process_picture(
     storage: list | tuple,
     file_name: str,
     sender: list | tuple | None,
-    new: list | tuple | None = None,
-    old: list | tuple | None = None,
+    new: list | tuple | None,
+    old: list | tuple | None,
 ):
     process_picture.execute_on_commit(
         storage=storage, file_name=file_name, sender=sender, new=new, old=old
@@ -200,8 +200,8 @@ def process_picture(
     storage: list | tuple,
     file_name: str,
     sender: list | tuple | None,
-    new: list | tuple | None = None,
-    old: list | tuple | None = None,
+    new: list | tuple | None,
+    old: list | tuple | None,
 ):
     _process_picture(
         storage=storage, file_name=file_name, sender=sender, new=new, old=old
