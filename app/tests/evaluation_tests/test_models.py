@@ -2650,3 +2650,18 @@ def test_batch_job_view_permission_assigned_to_challenge_admins():
     admins_group = batch_job.submission.phase.challenge.admins_group
 
     assert "view_batchjob" in get_group_perms(admins_group, batch_job)
+
+
+@pytest.mark.django_db
+def test_batch_job_utilization_created():
+    batch_job = BatchJobFactory()
+
+    utilization = batch_job.utilization
+
+    assert utilization.batch_job == batch_job
+    assert utilization.creator == batch_job.submission.creator
+    assert utilization.phase == batch_job.submission.phase
+    assert utilization.challenge == batch_job.submission.phase.challenge
+    assert utilization.archive == batch_job.submission.phase.archive
+    assert utilization.algorithm_image == batch_job.algorithm_image
+    assert utilization.algorithm == batch_job.algorithm_image.algorithm

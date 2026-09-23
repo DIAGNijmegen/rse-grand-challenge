@@ -1201,43 +1201,6 @@ TRAINING_BACKEND = (
 )
 
 
-def _mock_batchjob_task_side_effects(*, mocker):
-    """Neutralise BatchJob features that ``handle_event`` touches but which
-    are not yet implemented for BatchJob (utilization) or not relevant here
-    (output interface parsing)."""
-    # TODO: remove mocker calls after implementing the missing bits and pieces
-    mocker.patch(
-        "grandchallenge.evaluation.models.BatchJob.utilization",
-        new_callable=mocker.PropertyMock,
-        return_value=mocker.MagicMock(invoice_id=None),
-    )
-    mocker.patch(
-        "grandchallenge.components.tasks.lock_for_utilization_update",
-    )
-    # avoid update_status trying to write to the missing utilization
-    mocker.patch.object(
-        AmazonSageMakerTrainingExecutor,
-        "_set_utilization_duration",
-    )
-    mocker.patch.object(
-        AmazonSageMakerTrainingExecutor,
-        "utilization_duration",
-        new_callable=mocker.PropertyMock,
-        return_value=None,
-    )
-    mocker.patch.object(
-        AmazonSageMakerTrainingExecutor,
-        "compute_cost_euro_millicents",
-        new_callable=mocker.PropertyMock,
-        return_value=None,
-    )
-    # schedule_output_parsing imports parse_job_output locally,
-    # so patch it on the tasks module.
-    return mocker.patch(
-        "grandchallenge.components.tasks.parse_job_output.execute_on_commit",
-    )
-
-
 @pytest.mark.django_db
 def test_handle_event_task_for_batchjob(mocker):
     batch_job = BatchJobFactory(status=BatchJob.EXECUTING)
@@ -1264,7 +1227,9 @@ def test_handle_event_task_for_batchjob(mocker):
             invoke_duration=timedelta(seconds=invoke_seconds),
         )
 
-    schedule_parse_output = _mock_batchjob_task_side_effects(mocker=mocker)
+    schedule_parse_output = mocker.patch(
+        "grandchallenge.components.tasks.parse_job_output.execute_on_commit",
+    )
 
     handle_event(
         event={
@@ -1328,7 +1293,9 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
         user_safe_error_message="Something went wrong",
     )
 
-    schedule_parse_output = _mock_batchjob_task_side_effects(mocker=mocker)
+    schedule_parse_output = mocker.patch(
+        "grandchallenge.components.tasks.parse_job_output.execute_on_commit",
+    )
 
     handle_event(
         event={

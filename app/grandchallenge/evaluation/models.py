@@ -89,7 +89,10 @@ from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.utilization.models import EvaluationUtilization
+from grandchallenge.utilization.models import (
+    BatchJobUtilization,
+    EvaluationUtilization,
+)
 from grandchallenge.verifications.models import VerificationUserSet
 
 logger = logging.getLogger(__name__)
@@ -1961,8 +1964,11 @@ class BatchJob(ComponentJob):
         ]
 
     def create_utilization(self):
-        # TODO: add BatchJobUtilization model
-        pass
+        BatchJobUtilization.objects.create(batch_job=self)
+
+    @property
+    def utilization(self):
+        return self.batch_job_utilization
 
     @property
     def output_subtasks(self):

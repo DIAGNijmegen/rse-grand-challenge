@@ -291,3 +291,30 @@ class EvaluationUtilization(ComponentJobUtilization):
                 )
 
         super().save(*args, **kwargs)
+
+
+class BatchJobUtilization(ComponentJobUtilization):
+    batch_job = models.OneToOneField(
+        "evaluation.BatchJob",
+        related_name="batch_job_utilization",
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+
+    class Meta(ComponentJobUtilization.Meta):
+        default_related_name = "batch_job_utilizations"
+        indexes = [
+            models.Index(fields=["-created"]),
+            models.Index(fields=["phase", "duration"]),
+        ]
+
+    def save(self, *args, **kwargs) -> None:
+        if self._state.adding:
+            self.creator = self.batch_job.submission.creator
+            self.phase = self.batch_job.submission.phase
+            self.archive = self.batch_job.submission.phase.archive
+            self.challenge = self.batch_job.submission.phase.challenge
+            self.algorithm_image = self.batch_job.algorithm_image
+            self.algorithm = self.batch_job.algorithm_image.algorithm
+
+        super().save(*args, **kwargs)

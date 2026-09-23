@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.utilization.models import (
+    BatchJobUtilization,
     EndpointUtilization,
     EvaluationUtilization,
     JobUtilization,
@@ -214,4 +215,50 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
         "duration",
         "compute_cost_euro_millicents",
         "evaluation",
+    )
+
+
+@admin.register(BatchJobUtilization)
+class BatchJobUtilizationAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "batch_job",
+        "creator",
+        "duration",
+        "compute_cost_euro_millicents",
+        "invoice",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    list_select_related = (
+        "batch_job",
+        "creator",
+        "invoice",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    search_fields = (
+        "creator__username",
+        "pk",
+        "batch_job__pk",
+        "phase__slug",
+        "challenge__short_name",
+    )
+    readonly_fields = (
+        "creator",
+        "invoice",
+        "phase",
+        "challenge",
+        "archive",
+        "algorithm_image",
+        "algorithm",
+        "duration",
+        "compute_cost_euro_millicents",
+        "batch_job",
     )

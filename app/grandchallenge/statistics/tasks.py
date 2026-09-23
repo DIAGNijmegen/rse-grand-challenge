@@ -22,6 +22,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.utilization.models import (
+    BatchJobUtilization,
     EvaluationUtilization,
     JobUtilization,
     JobWarmPoolUtilization,
@@ -161,6 +162,9 @@ def update_site_statistics_cache():
             "evaluations": EvaluationUtilization.objects.filter(
                 created__month=now().month, created__year=now().year
             ).aggregate(Sum("compute_cost_euro_millicents")),
+            "batch_jobs": BatchJobUtilization.objects.filter(
+                created__month=now().month, created__year=now().year
+            ),
         },
     }
 
