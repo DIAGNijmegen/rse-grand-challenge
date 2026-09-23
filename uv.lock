@@ -805,15 +805,15 @@ wheels = [
 
 [[package]]
 name = "django-pictures"
-version = "1.7.5"
+version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1a/53/3e1d67ee9e5e8f960583affd96a87308b33f0685177cd54260daefec3346/django_pictures-1.7.5.tar.gz", hash = "sha256:0a71ddf4e40ffdec0afdadce0bd1b16c23dc1659911efb409d5f5e9174e3d828", size = 23631, upload-time = "2026-05-13T13:14:11.82Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ab/92/4a04680a10e2092e22286b6a3b2f481d762769ca74b27b0b9c184654f5ac/django_pictures-1.8.0.tar.gz", hash = "sha256:08c7417d72ae795e88b099bf78101ff2df9e385115d6a4a64f9c41bcb00e5d88", size = 24645, upload-time = "2026-09-22T19:03:50.507Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/8e/e09f47248fd5b59854aac308b5d887ea23888d525198adbfb5f14d5d51bd/django_pictures-1.7.5-py3-none-any.whl", hash = "sha256:e191904e9dd315a9a3c862fd984f671401bb25c9fe60b6bbebda06d0e7df2c1e", size = 23141, upload-time = "2026-05-13T13:14:10.343Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/61/42ed0f06dabd90ed647979d08349777243ebd20a7f90e94a66715c621064/django_pictures-1.8.0-py3-none-any.whl", hash = "sha256:795e889b591373ab99eee8455a2dd839561c72745a9e461d646ec70112c1d5be", size = 24023, upload-time = "2026-09-22T19:03:48.994Z" },
 ]
 
 [[package]]

@@ -182,13 +182,15 @@ def _get_metrics_sagemaker():
 
 
 def schedule_process_picture(
+    *,
     storage: list | tuple,
     file_name: str,
+    sender: list | tuple | None,
     new: list | tuple | None = None,
     old: list | tuple | None = None,
 ):
     process_picture.execute_on_commit(
-        storage=storage, file_name=file_name, new=new, old=old
+        storage=storage, file_name=file_name, sender=sender, new=new, old=old
     )
 
 
@@ -197,7 +199,10 @@ def process_picture(
     *,
     storage: list | tuple,
     file_name: str,
+    sender: list | tuple | None,
     new: list | tuple | None = None,
     old: list | tuple | None = None,
 ):
-    _process_picture(storage=storage, file_name=file_name, new=new, old=old)
+    _process_picture(
+        storage=storage, file_name=file_name, sender=sender, new=new, old=old
+    )
