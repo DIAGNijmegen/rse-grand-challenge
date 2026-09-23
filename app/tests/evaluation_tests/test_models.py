@@ -754,6 +754,43 @@ def test_give_algorithm_editors_job_view_permissions_only_for_algorithm_phase():
 
 
 @pytest.mark.django_db
+def test_use_batch_mode_only_for_closed_log_phases():
+    phase = PhaseFactory(
+        submission_kind=Phase.SubmissionKindChoices.ALGORITHM,
+        give_algorithm_editors_job_view_permissions=True,
+    )
+
+    assert not phase.use_batch_mode
+
+    phase.use_batch_mode = True
+
+    with pytest.raises(ValidationError) as err:
+        phase.full_clean()
+
+    assert err.value.message_dict["__all__"] == [
+        "Batch mode can only be enabled for closed log phases."
+    ]
+
+    phase.give_algorithm_editors_job_view_permissions = False
+    phase.full_clean()
+
+
+@pytest.mark.django_db
+def test_use_batch_mode_check_constraint():
+    from django.db.utils import IntegrityError
+
+    phase = PhaseFactory(
+        submission_kind=Phase.SubmissionKindChoices.ALGORITHM,
+        give_algorithm_editors_job_view_permissions=True,
+    )
+
+    assert not phase.use_batch_mode
+
+    with pytest.raises(IntegrityError):
+        Phase.objects.filter(pk=phase.pk).update(use_batch_mode=True)
+
+
+@pytest.mark.django_db
 def test_parent_phase_choices():
     p1, p2, p3, p4, p5 = PhaseFactory.create_batch(
         5, challenge=ChallengeFactory()

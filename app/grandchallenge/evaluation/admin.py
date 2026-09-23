@@ -94,6 +94,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "submissions_close_at",
         "submissions_limit_per_user_per_period",
         "give_algorithm_editors_job_view_permissions",
+        "use_batch_mode",
         "external_evaluation",
     )
     search_fields = ("pk", "title", "slug", "challenge__short_name")
@@ -101,6 +102,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "submission_kind",
         "evaluation_requires_gpu_type",
         "give_algorithm_editors_job_view_permissions",
+        "use_batch_mode",
         "external_evaluation",
         "challenge__short_name",
     )

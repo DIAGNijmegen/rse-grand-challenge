@@ -599,6 +599,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "other users. "
         ),
     )
+    use_batch_mode = models.BooleanField(
+        default=False,
+        help_text=(
+            "If set to True, algorithm inference for this phase will run in "
+            "batch mode, where a single job processes multiple archive items. "
+            "This can only be enabled for closed log phases."
+        ),
+    )
     evaluation_time_limit = models.PositiveIntegerField(
         default=60 * 60,
         help_text="Time limit for evaluation jobs in seconds",
@@ -727,6 +735,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ("create_phase_submission", "Create Phase Submission"),
             ("configure_algorithm_phase", "Configure Algorithm Phase"),
         )
+        constraints = [
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_batch_mode_only_for_closed_logs",
+                condition=models.Q(use_batch_mode=False)
+                | models.Q(give_algorithm_editors_job_view_permissions=False),
+                violation_error_message=(
+                    "Batch mode can only be enabled for closed log phases."
+                ),
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
@@ -772,6 +790,16 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         self._clean_parent_phase()
         self._clean_external_evaluation()
         self._clean_evaluation_requirements()
+        self._clean_batch_mode()
+
+    def _clean_batch_mode(self):
+        if (
+            self.use_batch_mode
+            and self.give_algorithm_editors_job_view_permissions
+        ):
+            raise ValidationError(
+                "Batch mode can only be enabled for closed log phases."
+            )
 
     def _clean_submission_kind(self):
         if self.has_changed("submission_kind"):
