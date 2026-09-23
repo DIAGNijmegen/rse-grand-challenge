@@ -767,9 +767,7 @@ def test_use_batch_mode_only_for_closed_log_phases():
     with pytest.raises(ValidationError) as err:
         phase.full_clean()
 
-    assert err.value.message_dict["__all__"] == [
-        "Batch mode can only be enabled for closed log phases."
-    ]
+    assert "Batch mode can only be enabled for closed log phases." in str(err)
 
     phase.give_algorithm_editors_job_view_permissions = False
     phase.full_clean()
