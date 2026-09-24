@@ -3,7 +3,6 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db.models import Case, IntegerField, Value, When
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
@@ -15,7 +14,6 @@ from config.lambda_tasks import (
 )
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import AlgorithmModel, Job
-from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -222,7 +220,10 @@ def create_algorithm_jobs_for_evaluation(
     first_run
         Whether this is the first run of create_algorithm_jobs_for_evaluation
     """
-    from grandchallenge.evaluation.models import Evaluation
+    from grandchallenge.evaluation.models import (
+        Evaluation,
+        active_inference_jobs_count,
+    )
 
     with check_lock_acquired():
         evaluation = (
@@ -247,28 +248,15 @@ def create_algorithm_jobs_for_evaluation(
     )
 
     slots_available = min(
-        settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),
+        settings.ALGORITHMS_MAX_ACTIVE_JOBS - active_inference_jobs_count(),
         settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM,
     )
-    slots_available -= (
-        Job.objects.active()
-        .filter(algorithm_image=evaluation.submission.algorithm_image)
-        .count()
+    slots_available -= active_inference_jobs_count(
+        algorithm_image=evaluation.submission.algorithm_image
     )
 
     if slots_available <= 0:
         raise TooManyJobsScheduled
-
-    # Only the challenge admins should be able to view these jobs, never
-    # the algorithm editors as these are participants - they must never
-    # be able to see the test data...
-    viewer_groups = [evaluation.submission.phase.challenge.admins_group]
-
-    # ...unless the challenge admins have opted in to this
-    if evaluation.submission.phase.give_algorithm_editors_job_view_permissions:
-        viewer_groups.append(
-            evaluation.submission.algorithm_image.algorithm.editors_group
-        )
 
     if first_run:
         # Only go ahead if this is the users only active evaluation to
@@ -310,30 +298,10 @@ def create_algorithm_jobs_for_evaluation(
     task_on_failure = handle_failed_jobs.serialize(evaluation_pk=evaluation.pk)
 
     try:
-        jobs = create_algorithm_jobs(
-            algorithm_image=evaluation.submission.algorithm_image,
-            algorithm_model=evaluation.submission.algorithm_model,
-            archive_items=evaluation.submission.phase.archive.items.prefetch_related(
-                "values__interface"
-            )
-            .annotate(
-                has_title=Case(
-                    When(title="", then=Value(1)),
-                    default=Value(0),
-                    output_field=IntegerField(),
-                )
-            )
-            .order_by("has_title", "title", "created"),
-            extra_viewer_groups=viewer_groups,
-            extra_logs_viewer_groups=viewer_groups,
+        jobs = evaluation.submission.create_inference_jobs(
+            max_jobs=max_jobs,
             task_on_success=task_on_success,
             task_on_failure=task_on_failure,
-            max_jobs=max_jobs,
-            time_limit=evaluation.submission.phase.algorithm_time_limit,
-            requires_gpu_type=evaluation.submission.algorithm_requires_gpu_type,
-            requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
-            job_utilization_phase=evaluation.submission.phase,
-            job_utilization_challenge=evaluation.submission.phase.challenge,
             job_utilization_invoice=evaluation.utilization.invoice,
         )
     except TooManyJobsScheduled:

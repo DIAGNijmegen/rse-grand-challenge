@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.timezone import now
 from guardian.shortcuts import get_group_perms
 
+from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import (
@@ -28,6 +29,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     PhaseAdditionalEvaluationInput,
     get_archive_items_for_interfaces,
+    get_tasks_per_batch,
     get_valid_jobs_for_interfaces_and_archive_items,
 )
 from grandchallenge.evaluation.tasks import (
@@ -225,6 +227,223 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
 
     assert job.requires_gpu_type == GPUTypeChoices.V100
     assert job.requires_memory_gb == 456
+
+
+def _algorithm_submission_for_interface(*, interface, use_batch_mode=False):
+    """Build an algorithm submission whose phase uses the given interface."""
+    algorithm_image = AlgorithmImageFactory()
+    algorithm_image.algorithm.interfaces.set([interface])
+
+    archive = ArchiveFactory()
+    phase = PhaseFactory(
+        archive=archive,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        use_batch_mode=use_batch_mode,
+    )
+    phase.algorithm_interfaces.set([interface])
+
+    return SubmissionFactory(
+        phase=phase,
+        algorithm_image=algorithm_image,
+        algorithm_requires_gpu_type=GPUTypeChoices.NO_GPU,
+        algorithm_requires_memory_gb=4,
+    )
+
+
+@pytest.mark.django_db
+class TestSubmissionCreateInferenceJobs:
+    """
+    Non-batch scheduling behaviour of Submission.create_inference_jobs.
+
+    These cases previously exercised the standalone create_algorithm_jobs
+    task, which has been folded into Submission.create_inference_jobs.
+    """
+
+    def test_no_items_does_nothing(self):
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)]
+        )
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        jobs = submission.create_inference_jobs(
+            max_jobs=16, task_on_success=None, task_on_failure=None
+        )
+
+        assert jobs == []
+        assert Job.objects.count() == 0
+
+    def test_creates_job_correctly(self):
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        image = ImageFactory()
+        civ = ComponentInterfaceValueFactory(image=image, interface=ci)
+        item = ArchiveItemFactory(archive=submission.phase.archive)
+        item.values.add(civ)
+
+        assert Job.objects.count() == 0
+        jobs = submission.create_inference_jobs(
+            max_jobs=16, task_on_success=None, task_on_failure=None
+        )
+
+        assert Job.objects.count() == 1
+        job = Job.objects.get()
+        assert job.algorithm_image == submission.algorithm_image
+        assert job.creator is None
+        assert job.algorithm_interface == interface
+        assert (
+            job.inputs.get(interface__slug="generic-medical-image").image
+            == image
+        )
+        assert job.time_limit == submission.phase.algorithm_time_limit
+        assert job.pk == jobs[0].pk
+
+    def test_creates_job_for_multiple_interfaces_correctly(self):
+        ci1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+        ci2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+        ci3 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+
+        interface1 = AlgorithmInterfaceFactory(inputs=[ci1])
+        interface2 = AlgorithmInterfaceFactory(inputs=[ci2])
+        interface3 = AlgorithmInterfaceFactory(inputs=[ci3])
+        interface4 = AlgorithmInterfaceFactory(inputs=[ci1, ci3])
+        interface5 = AlgorithmInterfaceFactory(inputs=[ci1, ci2, ci3])
+
+        algorithm_image = AlgorithmImageFactory()
+        algorithm_image.algorithm.interfaces.set(
+            [interface1, interface2, interface3, interface4, interface5]
+        )
+        archive = ArchiveFactory()
+        phase = PhaseFactory(
+            archive=archive,
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+        )
+        phase.algorithm_interfaces.set(
+            [interface1, interface2, interface3, interface4, interface5]
+        )
+        submission = SubmissionFactory(
+            phase=phase,
+            algorithm_image=algorithm_image,
+            algorithm_requires_gpu_type=GPUTypeChoices.NO_GPU,
+            algorithm_requires_memory_gb=4,
+        )
+
+        image = ImageFactory()
+        civ1 = ComponentInterfaceValueFactory(value=False, interface=ci1)
+        civ2 = ComponentInterfaceValueFactory(image=image, interface=ci2)
+        civ3 = ComponentInterfaceValueFactory(value="foo", interface=ci3)
+        civ4 = ComponentInterfaceValueFactory()
+
+        item1, item2, item3, item4, item5, item6 = (
+            ArchiveItemFactory.create_batch(6, archive=archive)
+        )
+        item1.values.add(civ1)  # item for interface 1 only
+        item2.values.add(civ2)  # item for interface 2 only
+        item3.values.add(civ3)  # item for interface 3 only
+        item4.values.set([civ1, civ3])  # item for interface 4 only
+        item5.values.set([civ4])  # not a match for any interface
+        item6.values.set([civ2, civ3])  # not a match for any interface
+
+        assert Job.objects.count() == 0
+        submission.create_inference_jobs(
+            max_jobs=16, task_on_success=None, task_on_failure=None
+        )
+        assert Job.objects.count() == 4
+
+        for job in Job.objects.all():
+            assert job.algorithm_image == algorithm_image
+            assert job.creator is None
+
+        assert not (
+            Job.objects.get(algorithm_interface=interface1).inputs.get().value
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface2).inputs.get().image
+            == image
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface3).inputs.get().value
+            == "foo"
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface4).inputs.count() == 2
+        )
+
+    def test_is_idempotent(self):
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        civ = ComponentInterfaceValueFactory(
+            image=ImageFactory(), interface=ci
+        )
+        item = ArchiveItemFactory(archive=submission.phase.archive)
+        item.values.add(civ)
+
+        submission.create_inference_jobs(
+            max_jobs=16, task_on_success=None, task_on_failure=None
+        )
+        assert Job.objects.count() == 1
+
+        # A second run must not create a duplicate job for the same item
+        jobs = submission.create_inference_jobs(
+            max_jobs=16, task_on_success=None, task_on_failure=None
+        )
+        assert Job.objects.count() == 1
+        assert jobs == []
+
+    def test_max_jobs_is_respected(self):
+        ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        for _ in range(3):
+            item = ArchiveItemFactory(archive=submission.phase.archive)
+            item.values.add(ComponentInterfaceValueFactory(interface=ci))
+
+        with pytest.raises(TooManyJobsScheduled):
+            submission.create_inference_jobs(
+                max_jobs=2, task_on_success=None, task_on_failure=None
+            )
+
+        # The cap is enforced after creating max_jobs jobs
+        assert Job.objects.count() == 2
+
+    def test_viewer_groups_default_to_challenge_admins(self):
+        ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        item = ArchiveItemFactory(archive=submission.phase.archive)
+        item.values.add(ComponentInterfaceValueFactory(interface=ci))
+
+        jobs = submission.create_inference_jobs(
+            max_jobs=16, task_on_success=None, task_on_failure=None
+        )
+
+        admins_group = submission.phase.challenge.admins_group
+        assert jobs[0].viewer_groups.filter(pk=admins_group.pk).exists()
+        # Editors are only added when the phase opts in, which is off here
+        editors_group = submission.algorithm_image.algorithm.editors_group
+        assert not jobs[0].viewer_groups.filter(pk=editors_group.pk).exists()
+
+    def test_viewer_groups_include_editors_when_opted_in(self):
+        ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        submission = _algorithm_submission_for_interface(interface=interface)
+        submission.phase.give_algorithm_editors_job_view_permissions = True
+        submission.phase.save()
+
+        item = ArchiveItemFactory(archive=submission.phase.archive)
+        item.values.add(ComponentInterfaceValueFactory(interface=ci))
+
+        jobs = submission.create_inference_jobs(
+            max_jobs=16, task_on_success=None, task_on_failure=None
+        )
+
+        editors_group = submission.algorithm_image.algorithm.editors_group
+        assert jobs[0].viewer_groups.filter(pk=editors_group.pk).exists()
 
 
 @pytest.mark.django_db
@@ -771,6 +990,32 @@ def test_use_batch_mode_only_for_closed_log_phases():
 
     phase.give_algorithm_editors_job_view_permissions = False
     phase.full_clean()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "maximum_batch_job_duration,algorithm_time_limit,expected_tasks_per_batch",
+    (
+        # Time limit larger than the maximum -> floors to the minimum of 1
+        (600, 1200, 1),
+        # Exact division
+        (1200, 600, 2),
+        # Remainder floors down
+        (1300, 600, 2),
+        # Equal
+        (600, 600, 1),
+    ),
+)
+def test_get_tasks_per_batch(
+    settings,
+    maximum_batch_job_duration,
+    algorithm_time_limit,
+    expected_tasks_per_batch,
+):
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = maximum_batch_job_duration
+    phase = PhaseFactory(algorithm_time_limit=algorithm_time_limit)
+
+    assert get_tasks_per_batch(phase=phase) == expected_tasks_per_batch
 
 
 @pytest.mark.django_db
