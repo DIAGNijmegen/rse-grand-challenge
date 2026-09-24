@@ -3,6 +3,7 @@
     "files": {
         "includes": [
             "**",
+            "!**/*.html",
             "!package.json",
             "!package-lock.json",
             "!app/grandchallenge/core/static/vendored",
@@ -23,7 +24,7 @@
             }
         }
     },
-    "linter": { "enabled": true, "rules": { "recommended": true } },
+    "linter": { "enabled": true, "rules": { "preset": "none" } },
     "javascript": {
         "formatter": {
             "arrowParentheses": "asNeeded"

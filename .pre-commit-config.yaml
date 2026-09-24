@@ -46,4 +46,3 @@ repos:
       hooks:
           - id: biome-check
             language_version: lts
-            additional_dependencies: ["@biomejs/biome@^2.5.14"]
