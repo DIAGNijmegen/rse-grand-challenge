@@ -398,6 +398,64 @@ def test_display_set_update_permissions(client):
 
 
 @pytest.mark.django_db
+def test_display_set_update_forbidden_when_not_editable(client):
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(editor)
+
+    # An answer exists for this display set, so it is no longer editable.
+    question = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    AnswerFactory(
+        creator=editor, question=question, answer=True, display_set=ds
+    )
+    assert ds.is_editable is False
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-update",
+        client=client,
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+        user=editor,
+    )
+    # The editor has change permission, but the display set is not editable,
+    # so the update page must not be reachable.
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_display_set_delete_forbidden_when_not_editable(client):
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(editor)
+
+    # An answer exists for this display set, so it is no longer editable.
+    question = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    AnswerFactory(
+        creator=editor, question=question, answer=True, display_set=ds
+    )
+    assert ds.is_editable is False
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-delete",
+        client=client,
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+        user=editor,
+    )
+    # The editor has delete permission, but the display set is not editable,
+    # so the delete page must not be reachable.
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
 def test_display_set_detail_permissions(client):
     rs = ReaderStudyFactory()
 

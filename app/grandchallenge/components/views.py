@@ -3,6 +3,7 @@ import uuid
 from dal import autocomplete
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
@@ -163,6 +164,11 @@ class MultipleCIVProcessingBaseView(
     def base_object(self):
         raise NotImplementedError
 
+    def check_permissions(self, *arg, **kwargs):
+        if not self.object.is_editable:
+            raise PermissionDenied
+        return super().check_permissions(*arg, **kwargs)
+
     def form_valid(self, form):
         form.process_object_data()
         response = super().form_valid(form)
@@ -306,6 +312,11 @@ class CIVSetDelete(
     raise_exception = True
     login_url = reverse_lazy("account_login")
     template_name = "components/civset_confirm_delete.html"
+
+    def check_permissions(self, *arg, **kwargs):
+        if not self.get_object().is_editable:
+            raise PermissionDenied
+        return super().check_permissions(*arg, **kwargs)
 
     def get_success_url(self):
         return self.object.base_object.civ_sets_list_url
