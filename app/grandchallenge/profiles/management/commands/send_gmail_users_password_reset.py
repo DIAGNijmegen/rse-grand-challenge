@@ -1,21 +1,26 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.management import BaseCommand
 from django.db import transaction
 from django.utils.html import format_html
+from django.utils.timezone import now
 
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.subdomains.utils import reverse
 
 GMAIL_PROVIDER_ID = "gmail"
+LAST_LOGIN_CUTOFF_DAYS = 365
 
 
 class Command(BaseCommand):
     help = (
         "Emails users who signed up with Google social login, have no "
-        "usable password, and are still active, prompting them to reset "
-        "their password now that Google login has been removed."
+        "usable password, are still active, and have logged in within the "
+        "past year, prompting them to reset their password now that Google "
+        "login has been removed."
     )
 
     @transaction.atomic
@@ -26,6 +31,7 @@ class Command(BaseCommand):
             .objects.filter(
                 is_active=True,
                 socialaccount__provider=GMAIL_PROVIDER_ID,
+                last_login__gte=now() - timedelta(days=LAST_LOGIN_CUTOFF_DAYS),
             )
             .distinct()
             if not user.has_usable_password()
