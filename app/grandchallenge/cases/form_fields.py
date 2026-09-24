@@ -140,10 +140,11 @@ class ImageSearchMultiField(MultiValueField):
         )
 
     def clean(self, value):
-        try:
-            value = value[1]
-        except IndexError:
-            value = None
+        if value is not None:
+            try:
+                value = value[1]
+            except IndexError:
+                value = None
 
         self.fields[1].required = self.required
 
