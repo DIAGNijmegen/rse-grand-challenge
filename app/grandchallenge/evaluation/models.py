@@ -28,7 +28,10 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.components.backends.base import InferenceTaskDefinition
+from grandchallenge.components.backends.base import (
+    InferenceTaskDefinition,
+    total_inference_task_time_limit,
+)
 from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentImage,
@@ -1997,9 +2000,6 @@ class Submission(FieldChangeMixin, UUIDModel):
                 submission=self,
                 algorithm_interface=interface,
                 archive_items=archive_items,
-                # TODO: this duplicates the time limit calculation on the executor
-                time_limit=len(archive_items)
-                * self.phase.algorithm_time_limit,
                 **common_kwargs,
             )
         else:
@@ -2142,13 +2142,38 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
 
 class BatchJobManager(ComponentJobManager):
     def create(
-        self, *, archive_items=None, algorithm_interface=None, **kwargs
+        self,
+        *,
+        submission,
+        archive_items=None,
+        algorithm_interface=None,
+        **kwargs,
     ):
-        batch_job = super().create(**kwargs)
+        if archive_items is not None:
+            per_task_time_limit = timedelta(
+                seconds=submission.phase.algorithm_time_limit
+            )
+            kwargs["time_limit"] = int(
+                total_inference_task_time_limit(
+                    task_definitions=[
+                        InferenceTaskDefinition(
+                            input_civs=archive_item.values.all(),
+                            time_limit=per_task_time_limit,
+                        )
+                        for archive_item in archive_items
+                    ]
+                ).total_seconds()
+            )
+        elif "time_limit" not in kwargs:
+            # Without archive items there are no tasks to derive the limit
+            # from, so the caller must supply it.
+            raise TypeError(
+                "time_limit is required when archive_items is not provided."
+            )
+
+        batch_job = super().create(submission=submission, **kwargs)
 
         if archive_items is not None:
-            # One task per archive item, each carrying that item's values as
-            # inputs, all for the same algorithm interface.
             for archive_item in archive_items:
                 batch_job_task = BatchJobTask.objects.create(
                     batch_job=batch_job,
