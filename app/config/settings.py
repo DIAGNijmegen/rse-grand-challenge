@@ -498,7 +498,6 @@ THIRD_PARTY_APPS = [
     "allauth.account",
     "allauth.mfa",
     "allauth.socialaccount",
-    "grandchallenge.profiles.providers.gmail",
     # Notifications with overrides
     "actstream",
     "grandchallenge.notifications",
@@ -610,24 +609,7 @@ ACCOUNT_USERNAME_VALIDATORS = (
 SOCIALACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.SocialAccountAdapter"
 SOCIALACCOUNT_AUTO_SIGNUP = False
 SOCIALACCOUNT_STORE_TOKENS = False
-SOCIALACCOUNT_PROVIDERS = {
-    "gmail": {
-        "APP": {
-            "client_id": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""),
-            "secret": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""),
-        },
-        # Require confirmation of email due to problems with spam users
-        "VERIFIED_EMAIL": False,
-        "SCOPE": [
-            "profile",
-            "email",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-        "OAUTH_PKCE_ENABLED": True,
-    }
-}
+SOCIALACCOUNT_PROVIDERS = {}
 
 MFA_TOTP_TOLERANCE = 5
 
