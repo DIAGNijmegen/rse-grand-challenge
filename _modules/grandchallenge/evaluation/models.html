@@ -127,7 +127,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.profiles.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">deactivate_user</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.subdomains.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.uploads.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserUpload</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.utilization.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationUtilization</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.utilization.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BatchJobUtilization</span><span class="p">,</span>
+    <span class="n">EvaluationUtilization</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.verifications.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VerificationUserSet</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -2011,8 +2014,11 @@
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># TODO: add BatchJobUtilization model</span>
-        <span class="k">pass</span>
+        <span class="n">BatchJobUtilization</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">batch_job</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_job_utilization</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">output_subtasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
