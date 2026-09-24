@@ -65,10 +65,6 @@ def filter_archive_items_for_algorithm(
     """
     Archive items that still need a job, grouped by interface.
 
-    Both arguments are grouped by interface. From the valid archive items
-    (those that have values for all of an interface's inputs), this excludes
-    any whose value set has already been scheduled.
-
     Parameters
     ----------
     valid_archive_items_per_interface

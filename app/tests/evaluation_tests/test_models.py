@@ -29,7 +29,6 @@ from grandchallenge.evaluation.models import (
     Phase,
     PhaseAdditionalEvaluationInput,
     get_archive_items_for_interfaces,
-    get_tasks_per_batch,
     get_valid_jobs_for_interfaces_and_archive_items,
 )
 from grandchallenge.evaluation.tasks import (
@@ -230,7 +229,6 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
 
 
 def _algorithm_submission_for_interface(*, interface, use_batch_mode=False):
-    """Build an algorithm submission whose phase uses the given interface."""
     algorithm_image = AlgorithmImageFactory()
     algorithm_image.algorithm.interfaces.set([interface])
 
@@ -252,13 +250,6 @@ def _algorithm_submission_for_interface(*, interface, use_batch_mode=False):
 
 @pytest.mark.django_db
 class TestSubmissionCreateInferenceJobs:
-    """
-    Non-batch scheduling behaviour of Submission.create_inference_jobs.
-
-    These cases previously exercised the standalone create_algorithm_jobs
-    task, which has been folded into Submission.create_inference_jobs.
-    """
-
     def test_no_items_does_nothing(self):
         interface = AlgorithmInterfaceFactory(
             inputs=[ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)]
@@ -993,29 +984,44 @@ def test_use_batch_mode_only_for_closed_log_phases():
 
 
 @pytest.mark.django_db
+def test_archive_items_per_job_without_batch_mode():
+    # Without batch mode a job always processes a single archive item,
+    # regardless of the time limits.
+    phase = PhaseFactory(use_batch_mode=False, algorithm_time_limit=600)
+
+    assert phase.archive_items_per_job == 1
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
-    "maximum_batch_job_duration,algorithm_time_limit,expected_tasks_per_batch",
+    "maximum_batch_job_duration,setup_duration,algorithm_time_limit,expected_archive_items_per_job",
     (
-        # Time limit larger than the maximum -> floors to the minimum of 1
-        (600, 1200, 1),
-        # Exact division
-        (1200, 600, 2),
-        # Remainder floors down
-        (1300, 600, 2),
-        # Equal
-        (600, 600, 1),
+        # Compute budget (max - setup) smaller than the time limit -> min of 1
+        (900, 300, 1200, 1),
+        # Exact division of the compute budget (1200 - 200 = 1000 -> 2 x 500)
+        (1200, 200, 500, 2),
+        # Remainder floors down (1300 - 100 = 1200 -> 2 x 500 with remainder)
+        (1300, 100, 500, 2),
+        # Setup consumes enough that only one slot fits (900 - 300 = 600)
+        (900, 300, 600, 1),
+        # No setup reserved -> full budget is divided
+        (1200, 0, 600, 2),
     ),
 )
-def test_get_tasks_per_batch(
+def test_archive_items_per_job_in_batch_mode(
     settings,
     maximum_batch_job_duration,
+    setup_duration,
     algorithm_time_limit,
-    expected_tasks_per_batch,
+    expected_archive_items_per_job,
 ):
     settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = maximum_batch_job_duration
-    phase = PhaseFactory(algorithm_time_limit=algorithm_time_limit)
+    settings.COMPONENTS_JOB_SETUP_DURATION = setup_duration
+    phase = PhaseFactory(
+        use_batch_mode=True, algorithm_time_limit=algorithm_time_limit
+    )
 
-    assert get_tasks_per_batch(phase=phase) == expected_tasks_per_batch
+    assert phase.archive_items_per_job == expected_archive_items_per_job
 
 
 @pytest.mark.django_db

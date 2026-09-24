@@ -251,21 +251,7 @@ def get_scheduled_job_input_sets_per_interface(
     }
 
 
-def get_tasks_per_batch(*, phase: "Phase") -> int:
-    """
-    Returns the maximum number of BatchJobTasks to place in a single BatchJob.
-    """
-    return max(
-        settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
-        // phase.algorithm_time_limit,
-        1,
-    )
-
-
-def active_inference_jobs_count(*, algorithm_image=None) -> int:
-    """
-    The number of active algorithm inference jobs, optionally for a single image.
-    """
+def active_inference_jobs_count(*, algorithm_image=None):
     active_jobs = Job.objects.active()
     active_batch_jobs = BatchJob.objects.active()
 
@@ -1287,6 +1273,17 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     def jobs_to_schedule_per_submission(self):
         return sum(self.valid_archive_item_count_per_interface.values())
 
+    @property
+    def archive_items_per_job(self):
+        if not self.use_batch_mode:
+            return 1
+        else:
+            max_inference_duration = (
+                settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
+                - settings.COMPONENTS_JOB_SETUP_DURATION
+            )
+            return max(max_inference_duration // self.algorithm_time_limit, 1)
+
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
         message = format_html(
             (
@@ -1864,9 +1861,7 @@ class Submission(FieldChangeMixin, UUIDModel):
         """
         Candidate archive items for scheduling, grouped by the submitted
         image's interfaces and ordered so that archive items with titles
-        are scheduled first. Distinct from
-        ``Phase.valid_archive_items_per_interface``, which groups by the phase's
-        configured interfaces and is unordered.
+        are scheduled first.
         """
         archive_items = (
             self.phase.archive.items.prefetch_related("values__interface")
@@ -1886,13 +1881,6 @@ class Submission(FieldChangeMixin, UUIDModel):
 
     @property
     def scheduled_input_sets_per_interface(self):
-        """
-        The input value sets already scheduled for this submission.
-
-        Not cached: this reflects the jobs/tasks that exist right now, which
-        change as scheduling creates them, so it must be re-queried on each
-        access (e.g. the two-phase scheduling calls this more than once).
-        """
         if self.phase.use_batch_mode:
             return {
                 interface: {
@@ -1941,11 +1929,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             len(archive_items) for archive_items in valid_job_inputs.values()
         )
 
-        chunk_size = (
-            get_tasks_per_batch(phase=self.phase)
-            if self.phase.use_batch_mode
-            else 1
-        )
+        chunk_size = self.phase.archive_items_per_job
 
         jobs = []
         for interface, archive_items in valid_job_inputs.items():
@@ -2165,8 +2149,6 @@ class BatchJobManager(ComponentJobManager):
                 ).total_seconds()
             )
         elif "time_limit" not in kwargs:
-            # Without archive items there are no tasks to derive the limit
-            # from, so the caller must supply it.
             raise TypeError(
                 "time_limit is required when archive_items is not provided."
             )

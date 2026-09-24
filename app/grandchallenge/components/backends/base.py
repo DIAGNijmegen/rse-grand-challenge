@@ -93,7 +93,6 @@ class InferenceTaskDefinition(NamedTuple):
 
 
 def total_inference_task_time_limit(*, task_definitions):
-    """The whole-job time limit: the sum of the per-task time limits."""
     return sum(
         (task_definition.time_limit for task_definition in task_definitions),
         start=timedelta(),

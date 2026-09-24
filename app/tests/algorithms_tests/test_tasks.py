@@ -339,40 +339,6 @@ def test_execute_algorithm_job_sets_on_failed_jobs(
     )  # Full task is tested somewhere else
 
 
-def filter_archive_items_excluding_existing_jobs(
-    *, archive_items, algorithm_image, algorithm_model=None
-):
-    """
-    Compose the Job-dedup and the archive-item filter the way scheduling does.
-
-    filter_archive_items_for_algorithm is now purely "exclude already-scheduled
-    input sets"; the existing-Job dedup lives in
-    get_scheduled_job_input_sets_per_interface. These tests exercise the two
-    together.
-    """
-    algorithm_interfaces = (
-        algorithm_image.algorithm.interfaces.prefetch_related("inputs").all()
-    )
-    valid_archive_items_per_interface = get_archive_items_for_interfaces(
-        algorithm_interfaces=algorithm_interfaces,
-        archive_items=archive_items,
-    )
-    scheduled_input_sets_per_interface = (
-        get_scheduled_job_input_sets_per_interface(
-            algorithm_image=algorithm_image,
-            algorithm_model=algorithm_model,
-            algorithm_interfaces=algorithm_interfaces,
-            valid_archive_items_per_interface=(
-                valid_archive_items_per_interface
-            ),
-        )
-    )
-    return filter_archive_items_for_algorithm(
-        valid_archive_items_per_interface=valid_archive_items_per_interface,
-        scheduled_input_sets_per_interface=scheduled_input_sets_per_interface,
-    )
-
-
 @pytest.mark.django_db
 class TestJobCreation:
     def test_interface_matching(self):
@@ -416,45 +382,42 @@ class TestJobCreation:
             ]
         )  # valid for no interface, because of additional / mismatching interface
 
-        # filtered archive items depend on defined interfaces and archive item values
-        filtered_archive_items = filter_archive_items_excluding_existing_jobs(
+        # Archive items are grouped per interface only when they hold values
+        # for exactly that interface's inputs.
+        valid_archive_items = get_archive_items_for_interfaces(
+            algorithm_interfaces=ai1.algorithm.interfaces.all(),
             archive_items=ArchiveItem.objects.all(),
-            algorithm_image=ai1,
-            algorithm_model=None,
         )
-        assert filtered_archive_items.keys() == {interface1}
-        assert filtered_archive_items[interface1] == [i1]
+        assert valid_archive_items.keys() == {interface1}
+        assert list(valid_archive_items[interface1]) == [i1]
 
-        filtered_archive_items = filter_archive_items_excluding_existing_jobs(
+        valid_archive_items = get_archive_items_for_interfaces(
+            algorithm_interfaces=ai2.algorithm.interfaces.all(),
             archive_items=ArchiveItem.objects.all(),
-            algorithm_image=ai2,
-            algorithm_model=None,
         )
-        assert filtered_archive_items.keys() == {interface1, interface2}
-        assert filtered_archive_items[interface1] == [i1]
-        assert filtered_archive_items[interface2] == [i2]
+        assert valid_archive_items.keys() == {interface1, interface2}
+        assert list(valid_archive_items[interface1]) == [i1]
+        assert list(valid_archive_items[interface2]) == [i2]
 
-        filtered_archive_items = filter_archive_items_excluding_existing_jobs(
+        valid_archive_items = get_archive_items_for_interfaces(
+            algorithm_interfaces=ai3.algorithm.interfaces.all(),
             archive_items=ArchiveItem.objects.all(),
-            algorithm_image=ai3,
-            algorithm_model=None,
         )
-        assert filtered_archive_items.keys() == {
+        assert valid_archive_items.keys() == {
             interface1,
             interface3,
             interface4,
         }
-        assert filtered_archive_items[interface1] == [i1]
-        assert filtered_archive_items[interface3] == []
-        assert filtered_archive_items[interface4] == []
+        assert list(valid_archive_items[interface1]) == [i1]
+        assert list(valid_archive_items[interface3]) == []
+        assert list(valid_archive_items[interface4]) == []
 
-        filtered_archive_items = filter_archive_items_excluding_existing_jobs(
+        valid_archive_items = get_archive_items_for_interfaces(
+            algorithm_interfaces=ai4.algorithm.interfaces.all(),
             archive_items=ArchiveItem.objects.all(),
-            algorithm_image=ai4,
-            algorithm_model=None,
         )
-        assert filtered_archive_items.keys() == {interface4}
-        assert filtered_archive_items[interface4] == []
+        assert valid_archive_items.keys() == {interface4}
+        assert list(valid_archive_items[interface4]) == []
 
     def test_jobs_with_creator_ignored(self):
         alg = AlgorithmFactory()
@@ -484,36 +447,44 @@ class TestJobCreation:
 
         archive = ArchiveFactory()
         item1, item2 = ArchiveItemFactory.create_batch(2, archive=archive)
-        item1.values.set(civs1)  # non-system job already exists
-        item2.values.set(civs2)  # non-system job should be ignored
+        item1.values.set(civs1)  # system job already exists
+        item2.values.set(civs2)  # only a non-system job exists
 
-        filtered_civ_sets = filter_archive_items_excluding_existing_jobs(
-            archive_items=ArchiveItem.objects.all(),
+        algorithm_interfaces = ai.algorithm.interfaces.all()
+        scheduled_input_sets = get_scheduled_job_input_sets_per_interface(
             algorithm_image=ai,
+            algorithm_interfaces=algorithm_interfaces,
+            valid_archive_items_per_interface=get_archive_items_for_interfaces(
+                algorithm_interfaces=algorithm_interfaces,
+                archive_items=ArchiveItem.objects.all(),
+            ),
         )
 
-        assert filtered_civ_sets.keys() == {interface}
-        assert filtered_civ_sets[interface] == [item2]
+        # Only the system job counts as scheduled; the job with a creator does
+        # not.
+        assert scheduled_input_sets == {interface: {frozenset(civs1)}}
 
     def test_existing_jobs(self, archive_items_and_jobs_for_interfaces):
-        # image used for all jobs
-        image = archive_items_and_jobs_for_interfaces.jobs_for_interface1[
-            0
-        ].algorithm_image
+        fixture = archive_items_and_jobs_for_interfaces
+        image = fixture.jobs_for_interface1[0].algorithm_image
 
-        filtered_civ_sets = filter_archive_items_excluding_existing_jobs(
-            archive_items=ArchiveItem.objects.all(),
+        algorithm_interfaces = image.algorithm.interfaces.all()
+        scheduled_input_sets = get_scheduled_job_input_sets_per_interface(
             algorithm_image=image,
+            algorithm_interfaces=algorithm_interfaces,
+            valid_archive_items_per_interface=get_archive_items_for_interfaces(
+                algorithm_interfaces=algorithm_interfaces,
+                archive_items=ArchiveItem.objects.all(),
+            ),
         )
-        # this should return 1 archive item per interface
-        # for which there is no job yet
-        assert filtered_civ_sets == {
-            archive_items_and_jobs_for_interfaces.interface1: [
-                archive_items_and_jobs_for_interfaces.items_for_interface1[1]
-            ],
-            archive_items_and_jobs_for_interfaces.interface2: [
-                archive_items_and_jobs_for_interfaces.items_for_interface2[1]
-            ],
+
+        # Only the first item of each interface already has a matching system
+        # job, so only its value set counts as scheduled.
+        item1 = fixture.items_for_interface1[0]
+        item2 = fixture.items_for_interface2[0]
+        assert scheduled_input_sets == {
+            fixture.interface1: {frozenset(item1.values.all())},
+            fixture.interface2: {frozenset(item2.values.all())},
         }
 
     def test_model_filter_for_jobs_works(self):
@@ -545,17 +516,44 @@ class TestJobCreation:
 
         archive = ArchiveFactory()
         item1, item2 = ArchiveItemFactory.create_batch(2, archive=archive)
-        item1.values.set(civs1)  # Job already exists with image and model
-        item2.values.set(civs2)  # Job exists but only with image
+        item1.values.set(civs1)  # job exists with this image and model
+        item2.values.set(civs2)  # job exists with this image but no model
 
-        filtered_civ_sets = filter_archive_items_excluding_existing_jobs(
-            archive_items=ArchiveItem.objects.all(),
+        algorithm_interfaces = ai.algorithm.interfaces.all()
+        scheduled_input_sets = get_scheduled_job_input_sets_per_interface(
             algorithm_image=ai,
             algorithm_model=am,
+            algorithm_interfaces=algorithm_interfaces,
+            valid_archive_items_per_interface=get_archive_items_for_interfaces(
+                algorithm_interfaces=algorithm_interfaces,
+                archive_items=ArchiveItem.objects.all(),
+            ),
         )
 
-        assert filtered_civ_sets.keys() == {interface}
-        assert filtered_civ_sets[interface] == [item2]
+        # Only the job matching both the image and the model counts as
+        # scheduled; the image-only job does not.
+        assert scheduled_input_sets == {interface: {frozenset(civs1)}}
+
+    def test_filter_archive_items_for_algorithm_excludes_scheduled(self):
+        interface = AlgorithmInterfaceFactory()
+        archive = ArchiveFactory()
+        scheduled_item, unscheduled_item = ArchiveItemFactory.create_batch(
+            2, archive=archive
+        )
+        scheduled_civ = ComponentInterfaceValueFactory()
+        scheduled_item.values.set([scheduled_civ])
+        unscheduled_item.values.set([ComponentInterfaceValueFactory()])
+
+        result = filter_archive_items_for_algorithm(
+            valid_archive_items_per_interface={
+                interface: [scheduled_item, unscheduled_item]
+            },
+            scheduled_input_sets_per_interface={
+                interface: {frozenset({scheduled_civ})}
+            },
+        )
+
+        assert result == {interface: [unscheduled_item]}
 
 
 @pytest.mark.django_db
