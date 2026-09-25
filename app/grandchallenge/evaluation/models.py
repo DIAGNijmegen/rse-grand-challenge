@@ -1856,11 +1856,26 @@ class Submission(FieldChangeMixin, UUIDModel):
             archive_items=archive_items,
         )
 
-    @property
-    def scheduled_input_sets_per_interface(self):
+    @cached_property
+    def candidate_input_civ_sets_per_interface(self):
         """
-        ComponentInterfaceValues that have already been scheduled
-        as inputs for a Job or BatchJob, grouped by interface.
+        Candidate input CIV sets for scheduling, one per candidate archive
+        item, grouped by the submitted image's interfaces.
+        """
+        return {
+            interface: [
+                frozenset(archive_item.values.all()) for archive_item in items
+            ]
+            for interface, items in (
+                self.candidate_archive_items_per_interface.items()
+            )
+        }
+
+    @property
+    def scheduled_input_civ_sets_per_interface(self):
+        """
+        Input CIV sets that have already been scheduled as inputs for a Job or
+        BatchJob, grouped by interface.
         """
         if self.phase.use_batch_mode:
             return {
@@ -1890,19 +1905,21 @@ class Submission(FieldChangeMixin, UUIDModel):
             }
 
     @cached_property
-    def unscheduled_archive_items_per_interface(self):
+    def unscheduled_input_civ_sets_per_interface(self):
         """
-        ArchiveItems that have NOT been scheduled
-        as inputs for a Job or BatchJob yet, grouped by interface.
+        Input CIV sets that have NOT been scheduled as inputs for a Job or
+        BatchJob yet, grouped by interface.
         """
         return {
             interface: [
-                archive_item
-                for archive_item in items
-                if frozenset(archive_item.values.all())
-                not in self.scheduled_input_sets_per_interface[interface]
+                input_civs
+                for input_civs in input_civ_sets
+                if input_civs
+                not in self.scheduled_input_civ_sets_per_interface[interface]
             ]
-            for interface, items in self.candidate_archive_items_per_interface.items()
+            for interface, input_civ_sets in (
+                self.candidate_input_civ_sets_per_interface.items()
+            )
         }
 
     def create_inference_jobs(
@@ -1916,10 +1933,10 @@ class Submission(FieldChangeMixin, UUIDModel):
         # Local import to avoid a circular dependency
         from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 
-        items_remaining = sum(
-            len(archive_items)
-            for archive_items in (
-                self.unscheduled_archive_items_per_interface.values()
+        sets_remaining = sum(
+            len(input_civ_sets)
+            for input_civ_sets in (
+                self.unscheduled_input_civ_sets_per_interface.values()
             )
         )
 
@@ -1928,24 +1945,24 @@ class Submission(FieldChangeMixin, UUIDModel):
         jobs = []
         for (
             interface,
-            archive_items,
-        ) in self.unscheduled_archive_items_per_interface.items():
-            archive_items = list(archive_items)
-            for start in range(0, len(archive_items), chunk_size):
+            input_civ_sets,
+        ) in self.unscheduled_input_civ_sets_per_interface.items():
+            input_civ_sets = list(input_civ_sets)
+            for start in range(0, len(input_civ_sets), chunk_size):
                 if len(jobs) >= max_jobs:
                     raise TooManyJobsScheduled
 
-                chunk = archive_items[start : start + chunk_size]
+                chunk = input_civ_sets[start : start + chunk_size]
 
                 use_warm_pool = (
-                    items_remaining
+                    sets_remaining
                     - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
                     - len(jobs)
                 ) > 0
 
                 job = self._schedule_inference_job(
                     interface=interface,
-                    archive_items=chunk,
+                    input_civ_sets=chunk,
                     task_on_success=task_on_success,
                     task_on_failure=task_on_failure,
                     use_warm_pool=use_warm_pool,
@@ -1960,7 +1977,7 @@ class Submission(FieldChangeMixin, UUIDModel):
         self,
         *,
         interface,
-        archive_items,
+        input_civ_sets,
         task_on_success,
         task_on_failure,
         use_warm_pool,
@@ -1980,13 +1997,13 @@ class Submission(FieldChangeMixin, UUIDModel):
             job = BatchJob.objects.create(
                 submission=self,
                 algorithm_interface=interface,
-                archive_items=archive_items,
+                input_civ_sets=input_civ_sets,
                 **common_kwargs,
             )
         else:
-            if len(archive_items) != 1:
+            if len(input_civ_sets) != 1:
                 raise ValueError(
-                    "A Job can only process a single archive item."
+                    "A Job can only process a single input CIV set."
                 )
 
             # Only the challenge admins should be able to view these jobs,
@@ -2003,7 +2020,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             job = Job.objects.create(
                 creator=None,  # System jobs, so no creator
                 algorithm_interface=interface,
-                input_civ_set=archive_items[0].values.all(),
+                input_civ_set=input_civ_sets[0],
                 time_limit=self.phase.algorithm_time_limit,
                 extra_viewer_groups=viewer_groups,
                 extra_logs_viewer_groups=viewer_groups,
@@ -2126,35 +2143,33 @@ class BatchJobManager(ComponentJobManager):
         self,
         *,
         submission,
-        archive_items=None,
-        algorithm_interface=None,
+        input_civ_sets,
+        algorithm_interface,
         **kwargs,
     ):
-        if archive_items is not None:
-            per_task_time_limit = timedelta(
-                seconds=submission.phase.algorithm_time_limit
-            )
-            kwargs["time_limit"] = int(
-                total_inference_task_time_limit(
-                    task_definitions=[
-                        InferenceTaskDefinition(
-                            input_civs=archive_item.values.all(),
-                            time_limit=per_task_time_limit,
-                        )
-                        for archive_item in archive_items
-                    ]
-                ).total_seconds()
-            )
+        per_task_time_limit = timedelta(
+            seconds=submission.phase.algorithm_time_limit
+        )
+        kwargs["time_limit"] = int(
+            total_inference_task_time_limit(
+                task_definitions=[
+                    InferenceTaskDefinition(
+                        input_civs=input_civs,
+                        time_limit=per_task_time_limit,
+                    )
+                    for input_civs in input_civ_sets
+                ]
+            ).total_seconds()
+        )
 
         batch_job = super().create(submission=submission, **kwargs)
 
-        if archive_items is not None:
-            for archive_item in archive_items:
-                batch_job_task = BatchJobTask.objects.create(
-                    batch_job=batch_job,
-                    algorithm_interface=algorithm_interface,
-                )
-                batch_job_task.inputs.set(archive_item.values.all())
+        for input_civs in input_civ_sets:
+            batch_job_task = BatchJobTask.objects.create(
+                batch_job=batch_job,
+                algorithm_interface=algorithm_interface,
+            )
+            batch_job_task.inputs.set(input_civs)
 
         return batch_job
 

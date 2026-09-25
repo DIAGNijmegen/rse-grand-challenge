@@ -49,7 +49,6 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import (
     BatchJobFactory,
-    BatchJobTaskFactory,
     EvaluationFactory,
     EvaluationGroundTruthFactory,
     MethodFactory,
@@ -467,7 +466,7 @@ class TestSubmissionCreateInferenceJobs:
         )
         user_job.inputs.set(user_civs)
 
-        assert submission.scheduled_input_sets_per_interface == {
+        assert submission.scheduled_input_civ_sets_per_interface == {
             interface: {frozenset(system_civs)}
         }
 
@@ -519,11 +518,11 @@ class TestSubmissionCreateInferenceJobs:
         )
         job_without_model.inputs.set(without_model_civs)
 
-        assert submission.scheduled_input_sets_per_interface == {
+        assert submission.scheduled_input_civ_sets_per_interface == {
             interface: {frozenset(with_model_civs)}
         }
 
-    def test_unscheduled_archive_items_excludes_scheduled_items(self):
+    def test_unscheduled_input_civ_sets_excludes_scheduled_sets(self):
         ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
         interface = AlgorithmInterfaceFactory(inputs=[ci])
         submission = _algorithm_submission_for_interface(interface=interface)
@@ -533,9 +532,8 @@ class TestSubmissionCreateInferenceJobs:
         scheduled_item.values.set([scheduled_civ])
 
         unscheduled_item = ArchiveItemFactory(archive=submission.phase.archive)
-        unscheduled_item.values.set(
-            [ComponentInterfaceValueFactory(interface=ci)]
-        )
+        unscheduled_civ = ComponentInterfaceValueFactory(interface=ci)
+        unscheduled_item.values.set([unscheduled_civ])
 
         system_job = AlgorithmJobFactory(
             creator=None,
@@ -545,9 +543,9 @@ class TestSubmissionCreateInferenceJobs:
         )
         system_job.inputs.set([scheduled_civ])
 
-        # The item that already has a job is excluded; the other still needs one
-        assert submission.unscheduled_archive_items_per_interface == {
-            interface: [unscheduled_item]
+        # The set that already has a job is excluded; the other still needs one
+        assert submission.unscheduled_input_civ_sets_per_interface == {
+            interface: [frozenset({unscheduled_civ})]
         }
 
 
@@ -3121,35 +3119,27 @@ def test_batch_job_inputs_complete():
         inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
     )
 
-    batch_job = BatchJobFactory()
-
-    # A batch job without any tasks is not complete
-    assert not batch_job.inputs_complete
-
-    complete_task = BatchJobTaskFactory(
-        batch_job=batch_job, algorithm_interface=interface
+    # A task whose inputs cover all of its interface's inputs is complete
+    complete_batch_job = BatchJobFactory(
+        algorithm_interface=interface,
+        input_civ_sets=[
+            {
+                ComponentInterfaceValueFactory(interface=ci1, value="foo"),
+                ComponentInterfaceValueFactory(interface=ci2, value="bar"),
+            }
+        ],
     )
-    complete_task.inputs.set(
-        [
-            ComponentInterfaceValueFactory(interface=ci1, value="foo"),
-            ComponentInterfaceValueFactory(interface=ci2, value="bar"),
-        ]
-    )
-
-    del batch_job.inputs_complete
-    assert batch_job.inputs_complete
+    assert complete_batch_job.inputs_complete
 
     # A task that is missing a value for one of its inputs makes the whole
     # batch job incomplete
-    incomplete_task = BatchJobTaskFactory(
-        batch_job=batch_job, algorithm_interface=interface
+    incomplete_batch_job = BatchJobFactory(
+        algorithm_interface=interface,
+        input_civ_sets=[
+            {
+                ComponentInterfaceValueFactory(interface=ci1, value="foo"),
+                ComponentInterfaceValueFactory(interface=ci2, value=None),
+            }
+        ],
     )
-    incomplete_task.inputs.set(
-        [
-            ComponentInterfaceValueFactory(interface=ci1, value="foo"),
-            ComponentInterfaceValueFactory(interface=ci2, value=None),
-        ]
-    )
-
-    del batch_job.inputs_complete
-    assert not batch_job.inputs_complete
+    assert not incomplete_batch_job.inputs_complete

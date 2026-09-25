@@ -99,7 +99,6 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import (
     BatchJobFactory,
-    BatchJobTaskFactory,
     EvaluationFactory,
     EvaluationGroundTruthFactory,
     MethodFactory,
@@ -2221,13 +2220,15 @@ def test_parse_job_output_for_batch_job(
         outputs=[int_socket_1, int_socket_2],
     )
 
-    batch_job = BatchJobFactory(status=BatchJob.PARSING)
-    first_task = BatchJobTaskFactory(
-        batch_job=batch_job, algorithm_interface=interface
+    batch_job = BatchJobFactory(
+        status=BatchJob.PARSING,
+        algorithm_interface=interface,
+        input_civ_sets=[
+            {ComponentInterfaceValueFactory(interface=int_socket_0)},
+            {ComponentInterfaceValueFactory(interface=int_socket_0)},
+        ],
     )
-    second_task = BatchJobTaskFactory(
-        batch_job=batch_job, algorithm_interface=interface
-    )
+    first_task, second_task = batch_job.tasks.all()
 
     mocker.patch(
         "grandchallenge.evaluation.models.BatchJob.get_executor",

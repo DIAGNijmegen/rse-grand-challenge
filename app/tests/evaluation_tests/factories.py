@@ -3,7 +3,6 @@ import factory
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import (
     BatchJob,
-    BatchJobTask,
     Evaluation,
     EvaluationGroundTruth,
     Method,
@@ -14,6 +13,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
 )
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ChallengeFactory, UserFactory, hash_sha256
 
 
@@ -74,12 +74,33 @@ class BatchJobFactory(factory.django.DjangoModelFactory):
     algorithm_image = factory.SubFactory(AlgorithmImageFactory)
     requires_memory_gb = 4
     requires_gpu_type = GPUTypeChoices.NO_GPU
-    time_limit = 60
 
+    @classmethod
+    def _create(
+        cls,
+        model_class,
+        *,
+        input_civ_sets=None,
+        algorithm_interface=None,
+        **kwargs,
+    ):
+        # BatchJobManager.create requires input CIV sets and an interface, and
+        # derives the tasks and time limit from them. Default to a single task
+        # whose inputs match the interface so a bare BatchJobFactory() produces
+        # a valid, inputs-complete job.
+        if algorithm_interface is None:
+            algorithm_interface = AlgorithmInterfaceFactory()
 
-class BatchJobTaskFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = BatchJobTask
+        if input_civ_sets is None:
+            input_civ_sets = [
+                {
+                    ComponentInterfaceValueFactory(interface=interface_input)
+                    for interface_input in algorithm_interface.inputs.all()
+                }
+            ]
 
-    batch_job = factory.SubFactory(BatchJobFactory)
-    algorithm_interface = factory.SubFactory(AlgorithmInterfaceFactory)
+        return model_class.objects.create(
+            input_civ_sets=input_civ_sets,
+            algorithm_interface=algorithm_interface,
+            **kwargs,
+        )
