@@ -1904,7 +1904,7 @@ class Submission(FieldChangeMixin, UUIDModel):
                 for interface, jobs in scheduled_jobs_per_interface.items()
             }
 
-    @cached_property
+    @property
     def unscheduled_input_civ_sets_per_interface(self):
         """
         Input CIV sets that have NOT been scheduled as inputs for a Job or
@@ -1933,10 +1933,15 @@ class Submission(FieldChangeMixin, UUIDModel):
         # Local import to avoid a circular dependency
         from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 
+        # Evaluate once
+        unscheduled_input_civ_sets_per_interface = (
+            self.unscheduled_input_civ_sets_per_interface
+        )
+
         sets_remaining = sum(
             len(input_civ_sets)
             for input_civ_sets in (
-                self.unscheduled_input_civ_sets_per_interface.values()
+                unscheduled_input_civ_sets_per_interface.values()
             )
         )
 
@@ -1946,7 +1951,7 @@ class Submission(FieldChangeMixin, UUIDModel):
         for (
             interface,
             input_civ_sets,
-        ) in self.unscheduled_input_civ_sets_per_interface.items():
+        ) in unscheduled_input_civ_sets_per_interface.items():
             input_civ_sets = list(input_civ_sets)
             for start in range(0, len(input_civ_sets), chunk_size):
                 if len(jobs) >= max_jobs:
