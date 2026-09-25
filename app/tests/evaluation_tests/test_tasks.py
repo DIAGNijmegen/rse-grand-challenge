@@ -1080,8 +1080,6 @@ def test_evaluation_order_without_title():
 
 @pytest.mark.django_db
 def test_create_algorithm_jobs_for_evaluation_batch_mode(settings):
-    # With a maximum batch duration of 2x the per-inference limit, at most
-    # two tasks go into each batch job.
     ai = AlgorithmImageFactory()
     archive = ArchiveFactory()
     evaluation = EvaluationFactory(
@@ -1092,7 +1090,9 @@ def test_create_algorithm_jobs_for_evaluation_batch_mode(settings):
         time_limit=ai.algorithm.time_limit,
         status=Evaluation.PENDING,
     )
-    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 1200  # 2 tasks per batch
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = (
+        1500  # 2 tasks per batch + set-up time
+    )
 
     input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     interface = AlgorithmInterfaceFactory(inputs=[input_ci])
