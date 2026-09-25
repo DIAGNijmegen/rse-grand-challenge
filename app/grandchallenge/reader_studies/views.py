@@ -1513,7 +1513,17 @@ class DisplaySetUpdateView(
     def get_permission_object(self):
         return self.object
 
-    @property
+    def check_permissions(self, request, *arg, **kwargs):
+        instance = self.object
+        if not instance.is_editable:
+            messages.error(
+                request=request,
+                message=instance.not_editable_error_message,
+            )
+            raise PermissionDenied
+        return super().check_permissions(request, *arg, **kwargs)
+
+    @cached_property
     def object(self):
         return DisplaySet.objects.get(pk=self.kwargs["pk"])
 
