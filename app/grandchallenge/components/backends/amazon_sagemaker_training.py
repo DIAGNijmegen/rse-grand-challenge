@@ -467,7 +467,8 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
     @property
     def job_time_limit(self):
-        # TODO add time for container pulling, model loading, IO
+        # TODO add settings.COMPONENTS_JOB_SETUP_DURATION here to reserve time
+        # for container pulling, model loading and IO.
         return self.total_task_time_limit
 
     @staticmethod

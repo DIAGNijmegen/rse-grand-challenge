@@ -855,6 +855,16 @@ COMPONENTS_OUTPUT_BUCKET_NAME = os.environ.get(
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10 * GIGABYTE
 COMPONENTS_MINIMUM_JOB_DURATION = 5 * 60  # 5 minutes
 COMPONENTS_MAXIMUM_JOB_DURATION = 24 * 60 * 60  # 24 hours
+# Time reserved, on top of the compute time limit, for general per-job set-up
+# such as container pulling, model loading and IO.
+COMPONENTS_JOB_SETUP_DURATION = int(
+    os.environ.get("COMPONENTS_JOB_SETUP_DURATION", str(5 * 60))  # 5 minutes
+)
+EVALUATION_MAXIMUM_BATCH_JOB_DURATION = int(
+    os.environ.get(
+        "EVALUATION_MAXIMUM_BATCH_JOB_DURATION", str(24 * 60 * 60)
+    )  # 24 hours
+)
 COMPONENTS_EBS_VOLUME_SIZE_LIMIT_GB = int(
     os.environ.get("COMPONENTS_EBS_VOLUME_SIZE_LIMIT_GB", "1024")
 )

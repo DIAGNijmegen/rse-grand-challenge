@@ -22,7 +22,13 @@ from grandchallenge.components.tasks import (
     validate_container_image,
 )
 from grandchallenge.core.error_messages import EvaluationErrorMessages
-from grandchallenge.evaluation.models import Evaluation, Method, Submission
+from grandchallenge.evaluation.models import (
+    BatchJob,
+    BatchJobTask,
+    Evaluation,
+    Method,
+    Submission,
+)
 from grandchallenge.evaluation.tasks import (
     cancel_external_evaluations_past_timeout,
     create_algorithm_jobs_for_evaluation,
@@ -1070,6 +1076,110 @@ def test_evaluation_order_without_title():
     expected_civ = civs[0]
 
     assert {*job.inputs.all()} == {expected_civ}
+
+
+@pytest.mark.django_db
+def test_create_algorithm_jobs_for_evaluation_batch_mode(settings):
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__phase__algorithm_time_limit=600,
+        submission__algorithm_image=ai,
+        time_limit=ai.algorithm.time_limit,
+        status=Evaluation.PENDING,
+    )
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = (
+        1500  # 2 tasks per batch + set-up time
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    # Five archive items -> ceil(5 / 2) = 3 batch jobs (2, 2, 1)
+    civs = ComponentInterfaceValueFactory.create_batch(5, interface=input_ci)
+    for civ in civs:
+        archive_item = ArchiveItemFactory(archive=archive)
+        archive_item.values.add(civ)
+
+    # first_run schedules a single batch job (matching the per-item throttle)
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=True
+    )
+
+    assert BatchJob.objects.count() == 1
+    first_batch_job = BatchJob.objects.get()
+    assert first_batch_job.tasks.count() == 2
+    assert not Job.objects.exists()
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.EXECUTING_PREREQUISITES
+
+    # Subsequent runs schedule the remaining batch jobs
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=False
+    )
+
+    batch_jobs = list(BatchJob.objects.all())
+    assert len(batch_jobs) == 3
+
+    task_counts = sorted(bj.tasks.count() for bj in batch_jobs)
+    assert task_counts == [1, 2, 2]
+
+    # Every task is created against the phase interface with the archive
+    # item's inputs, and the whole-job time limit is the sum of the per-task
+    # limits.
+    for batch_job in batch_jobs:
+        assert batch_job.submission == evaluation.submission
+        assert batch_job.algorithm_image == ai
+        assert (
+            batch_job.time_limit
+            == batch_job.tasks.count()
+            * evaluation.submission.phase.algorithm_time_limit
+        )
+        for task in batch_job.tasks.all():
+            assert task.algorithm_interface == interface
+            assert task.inputs.count() == 1
+
+    # All archive item inputs are covered exactly once across all tasks
+    scheduled_inputs = {
+        civ
+        for batch_job in batch_jobs
+        for task in batch_job.tasks.all()
+        for civ in task.inputs.all()
+    }
+    assert scheduled_inputs == {*civs}
+
+
+@pytest.mark.django_db
+def test_create_algorithm_jobs_for_evaluation_batch_mode_no_items():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__algorithm_image=ai,
+        time_limit=ai.algorithm.time_limit,
+        status=Evaluation.PENDING,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=True
+    )
+
+    assert not BatchJob.objects.exists()
+    assert not BatchJobTask.objects.exists()
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.EXECUTING_PREREQUISITES
 
 
 @pytest.mark.django_db

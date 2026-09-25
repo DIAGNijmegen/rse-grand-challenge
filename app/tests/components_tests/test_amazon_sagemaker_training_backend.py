@@ -40,10 +40,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmModelFactory,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.evaluation_tests.factories import (
-    BatchJobFactory,
-    BatchJobTaskFactory,
-)
+from tests.evaluation_tests.factories import BatchJobFactory
 
 
 @pytest.mark.parametrize(
@@ -1097,10 +1094,13 @@ def _write_task_inference_result(
 
 @pytest.mark.django_db
 def test_handle_event_for_batchjob():
-    batch_job = BatchJobFactory()
-
-    first_task = BatchJobTaskFactory(batch_job=batch_job)
-    second_task = BatchJobTaskFactory(batch_job=batch_job)
+    batch_job = BatchJobFactory(
+        input_civ_sets=[
+            {ComponentInterfaceValueFactory()},
+            {ComponentInterfaceValueFactory()},
+        ]
+    )
+    first_task, second_task = batch_job.tasks.all()
 
     executor = AmazonSageMakerTrainingExecutor(**batch_job.executor_kwargs)
 
@@ -1151,10 +1151,13 @@ def test_handle_event_for_batchjob():
 
 @pytest.mark.django_db
 def test_handle_event_for_batchjob_task_failure():
-    batch_job = BatchJobFactory()
-
-    first_task = BatchJobTaskFactory(batch_job=batch_job)
-    second_task = BatchJobTaskFactory(batch_job=batch_job)
+    batch_job = BatchJobFactory(
+        input_civ_sets=[
+            {ComponentInterfaceValueFactory()},
+            {ComponentInterfaceValueFactory()},
+        ]
+    )
+    first_task, second_task = batch_job.tasks.all()
 
     executor = AmazonSageMakerTrainingExecutor(**batch_job.executor_kwargs)
 
@@ -1203,10 +1206,14 @@ TRAINING_BACKEND = (
 
 @pytest.mark.django_db
 def test_handle_event_task_for_batchjob(mocker):
-    batch_job = BatchJobFactory(status=BatchJob.EXECUTING)
-
-    first_task = BatchJobTaskFactory(batch_job=batch_job)
-    second_task = BatchJobTaskFactory(batch_job=batch_job)
+    batch_job = BatchJobFactory(
+        status=BatchJob.EXECUTING,
+        input_civ_sets=[
+            {ComponentInterfaceValueFactory()},
+            {ComponentInterfaceValueFactory()},
+        ],
+    )
+    first_task, second_task = batch_job.tasks.all()
 
     executor = AmazonSageMakerTrainingExecutor(**batch_job.executor_kwargs)
 
@@ -1262,10 +1269,14 @@ def test_handle_event_task_for_batchjob(mocker):
 
 @pytest.mark.django_db
 def test_handle_event_task_for_batchjob_task_failure(mocker):
-    batch_job = BatchJobFactory(status=BatchJob.EXECUTING)
-
-    first_task = BatchJobTaskFactory(batch_job=batch_job)
-    second_task = BatchJobTaskFactory(batch_job=batch_job)
+    batch_job = BatchJobFactory(
+        status=BatchJob.EXECUTING,
+        input_civ_sets=[
+            {ComponentInterfaceValueFactory()},
+            {ComponentInterfaceValueFactory()},
+        ],
+    )
+    first_task, second_task = batch_job.tasks.all()
 
     executor = AmazonSageMakerTrainingExecutor(**batch_job.executor_kwargs)
 

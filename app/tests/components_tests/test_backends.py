@@ -41,10 +41,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.components_tests.resources.backends import IOCopyExecutor
-from tests.evaluation_tests.factories import (
-    BatchJobFactory,
-    BatchJobTaskFactory,
-)
+from tests.evaluation_tests.factories import BatchJobFactory
 from tests.factories import ImageFactory, ImageFileFactory
 
 
@@ -869,18 +866,19 @@ def test_relative_paths_use_task_output_prefix():
 
 @pytest.mark.django_db
 def test_provision_batch_job(settings):
-    batch_job = BatchJobFactory()
-
     str_interface = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.STRING,
         relative_path="string.json",
         store_in_database=True,
     )
 
-    first_task = BatchJobTaskFactory(batch_job=batch_job)
-    first_task.inputs.add(str_interface.create_instance(value="first"))
-    second_task = BatchJobTaskFactory(batch_job=batch_job)
-    second_task.inputs.add(str_interface.create_instance(value="second"))
+    batch_job = BatchJobFactory(
+        input_civ_sets=[
+            {str_interface.create_instance(value="first")},
+            {str_interface.create_instance(value="second")},
+        ]
+    )
+    first_task, second_task = batch_job.tasks.all()
 
     executor = IOCopyExecutor(
         **{

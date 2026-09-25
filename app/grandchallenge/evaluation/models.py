@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import mail_managers
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -28,7 +28,10 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.components.backends.base import InferenceTaskDefinition
+from grandchallenge.components.backends.base import (
+    InferenceTaskDefinition,
+    total_inference_task_time_limit,
+)
 from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentImage,
@@ -224,6 +227,19 @@ def get_valid_jobs_for_interfaces_and_archive_items(
                 jobs_per_interface[interface].append(job)
 
     return jobs_per_interface
+
+
+def active_inference_jobs_count(*, algorithm_image=None):
+    active_jobs = Job.objects.active()
+    active_batch_jobs = BatchJob.objects.active()
+
+    if algorithm_image is not None:
+        active_jobs = active_jobs.filter(algorithm_image=algorithm_image)
+        active_batch_jobs = active_batch_jobs.filter(
+            algorithm_image=algorithm_image
+        )
+
+    return active_jobs.count() + active_batch_jobs.count()
 
 
 class PhaseManager(models.Manager):
@@ -1235,6 +1251,17 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     def jobs_to_schedule_per_submission(self):
         return sum(self.valid_archive_item_count_per_interface.values())
 
+    @property
+    def archive_items_per_job(self):
+        if not self.use_batch_mode:
+            return 1
+        else:
+            max_inference_duration = (
+                settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
+                - settings.COMPONENTS_JOB_SETUP_DURATION
+            )
+            return max(max_inference_duration // self.algorithm_time_limit, 1)
+
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
         message = format_html(
             (
@@ -1796,6 +1823,225 @@ class Submission(FieldChangeMixin, UUIDModel):
         phase_algorithm_interfaces = set(self.phase.algorithm_interfaces.all())
         return phase_algorithm_interfaces <= algorithm_interfaces
 
+    @property
+    def inference_job_model(self):
+        return BatchJob if self.phase.use_batch_mode else Job
+
+    @cached_property
+    def algorithm_interfaces(self):
+        return self.algorithm_image.algorithm.interfaces.prefetch_related(
+            "inputs"
+        ).all()
+
+    @cached_property
+    def candidate_archive_items_per_interface(self):
+        """
+        Candidate archive items for scheduling, grouped by the submitted
+        image's interfaces and ordered so that archive items with titles
+        are scheduled first.
+        """
+        archive_items = (
+            self.phase.archive.items.prefetch_related("values__interface")
+            .annotate(
+                has_title=Case(
+                    When(title="", then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("has_title", "title", "created")
+        )
+        return get_archive_items_for_interfaces(
+            algorithm_interfaces=self.algorithm_interfaces,
+            archive_items=archive_items,
+        )
+
+    @cached_property
+    def candidate_input_civ_sets_per_interface(self):
+        """
+        Candidate input CIV sets for scheduling, one per candidate archive
+        item, grouped by the submitted image's interfaces.
+        """
+        return {
+            interface: [
+                frozenset(archive_item.values.all()) for archive_item in items
+            ]
+            for interface, items in (
+                self.candidate_archive_items_per_interface.items()
+            )
+        }
+
+    @property
+    def scheduled_input_civ_sets_per_interface(self):
+        """
+        Input CIV sets that have already been scheduled as inputs for a Job or
+        BatchJob, grouped by interface.
+        """
+        if self.phase.use_batch_mode:
+            return {
+                interface: {
+                    frozenset(task.inputs.all())
+                    for task in BatchJobTask.objects.filter(
+                        batch_job__submission=self,
+                        algorithm_interface=interface,
+                    ).prefetch_related("inputs")
+                }
+                for interface in self.algorithm_interfaces
+            }
+        else:
+            scheduled_jobs_per_interface = (
+                get_valid_jobs_for_interfaces_and_archive_items(
+                    algorithm_image=self.algorithm_image,
+                    algorithm_model=self.algorithm_model,
+                    algorithm_interfaces=self.algorithm_interfaces,
+                    valid_archive_items_per_interface=(
+                        self.candidate_archive_items_per_interface
+                    ),
+                )
+            )
+            return {
+                interface: {frozenset(job.inputs.all()) for job in jobs}
+                for interface, jobs in scheduled_jobs_per_interface.items()
+            }
+
+    @property
+    def unscheduled_input_civ_sets_per_interface(self):
+        """
+        Input CIV sets that have NOT been scheduled as inputs for a Job or
+        BatchJob yet, grouped by interface.
+        """
+        return {
+            interface: [
+                input_civs
+                for input_civs in input_civ_sets
+                if input_civs
+                not in self.scheduled_input_civ_sets_per_interface[interface]
+            ]
+            for interface, input_civ_sets in (
+                self.candidate_input_civ_sets_per_interface.items()
+            )
+        }
+
+    def create_inference_jobs(
+        self,
+        *,
+        max_jobs: int,
+        task_on_success: dict,
+        task_on_failure: dict,
+        job_utilization_invoice=None,
+    ):
+        # Local import to avoid a circular dependency
+        from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
+
+        # Evaluate once
+        unscheduled_input_civ_sets_per_interface = (
+            self.unscheduled_input_civ_sets_per_interface
+        )
+
+        sets_remaining = sum(
+            len(input_civ_sets)
+            for input_civ_sets in (
+                unscheduled_input_civ_sets_per_interface.values()
+            )
+        )
+
+        chunk_size = self.phase.archive_items_per_job
+
+        jobs = []
+        for (
+            interface,
+            input_civ_sets,
+        ) in unscheduled_input_civ_sets_per_interface.items():
+            input_civ_sets = list(input_civ_sets)
+            for start in range(0, len(input_civ_sets), chunk_size):
+                if len(jobs) >= max_jobs:
+                    raise TooManyJobsScheduled
+
+                chunk = input_civ_sets[start : start + chunk_size]
+
+                use_warm_pool = (
+                    sets_remaining
+                    - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
+                    - len(jobs)
+                ) > 0
+
+                job = self._schedule_inference_job(
+                    interface=interface,
+                    input_civ_sets=chunk,
+                    task_on_success=task_on_success,
+                    task_on_failure=task_on_failure,
+                    use_warm_pool=use_warm_pool,
+                    invoice=job_utilization_invoice,
+                )
+
+                jobs.append(job)
+
+        return jobs
+
+    def _schedule_inference_job(
+        self,
+        *,
+        interface,
+        input_civ_sets,
+        task_on_success,
+        task_on_failure,
+        use_warm_pool,
+        invoice,
+    ):
+        common_kwargs = {
+            "algorithm_image": self.algorithm_image,
+            "algorithm_model": self.algorithm_model,
+            "requires_gpu_type": self.algorithm_requires_gpu_type,
+            "requires_memory_gb": self.algorithm_requires_memory_gb,
+            "task_on_success": task_on_success,
+            "task_on_failure": task_on_failure,
+            "use_warm_pool": use_warm_pool,
+        }
+
+        if self.phase.use_batch_mode:
+            job = BatchJob.objects.create(
+                submission=self,
+                algorithm_interface=interface,
+                input_civ_sets=input_civ_sets,
+                **common_kwargs,
+            )
+        else:
+            if len(input_civ_sets) != 1:
+                raise ValueError(
+                    "A Job can only process a single input CIV set."
+                )
+
+            # Only the challenge admins should be able to view these jobs,
+            # never the algorithm editors as these are participants - they must
+            # never be able to see the test data...
+            viewer_groups = [self.phase.challenge.admins_group]
+
+            # ...unless the challenge admins have opted in to this
+            if self.phase.give_algorithm_editors_job_view_permissions:
+                viewer_groups.append(
+                    self.algorithm_image.algorithm.editors_group
+                )
+
+            job = Job.objects.create(
+                creator=None,  # System jobs, so no creator
+                algorithm_interface=interface,
+                input_civ_set=input_civ_sets[0],
+                time_limit=self.phase.algorithm_time_limit,
+                extra_viewer_groups=viewer_groups,
+                extra_logs_viewer_groups=viewer_groups,
+                **common_kwargs,
+            )
+
+        job.utilization.archive = self.phase.archive
+        job.utilization.phase = self.phase
+        job.utilization.challenge = self.phase.challenge
+        job.utilization.invoice = invoice
+        job.utilization.save()
+
+        job.execute()
+
+        return job
+
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset({"view_submission"})
@@ -1897,6 +2143,42 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
+class BatchJobManager(ComponentJobManager):
+    def create(
+        self,
+        *,
+        submission,
+        input_civ_sets,
+        algorithm_interface,
+        **kwargs,
+    ):
+        per_task_time_limit = timedelta(
+            seconds=submission.phase.algorithm_time_limit
+        )
+        kwargs["time_limit"] = int(
+            total_inference_task_time_limit(
+                task_definitions=[
+                    InferenceTaskDefinition(
+                        input_civs=input_civs,
+                        time_limit=per_task_time_limit,
+                    )
+                    for input_civs in input_civ_sets
+                ]
+            ).total_seconds()
+        )
+
+        batch_job = super().create(submission=submission, **kwargs)
+
+        for input_civs in input_civ_sets:
+            batch_job_task = BatchJobTask.objects.create(
+                batch_job=batch_job,
+                algorithm_interface=algorithm_interface,
+            )
+            batch_job_task.inputs.set(input_civs)
+
+        return batch_job
+
+
 class BatchJob(ComponentJob):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.PROTECT
@@ -1905,6 +2187,8 @@ class BatchJob(ComponentJob):
         AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
     )
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
+
+    objects = BatchJobManager.as_manager()
 
     class Meta(ComponentJob.Meta):
         ordering = ("created",)
@@ -1956,12 +2240,33 @@ class BatchJob(ComponentJob):
             InferenceTaskDefinition(
                 input_civs=task.inputs.all(),
                 task_pk=str(task.pk),
-                time_limit=timedelta(seconds=self.time_limit),
+                time_limit=timedelta(
+                    seconds=self.submission.phase.algorithm_time_limit
+                ),
             )
             for task in self.tasks.prefetch_related(
                 "inputs__interface", "inputs__image__files"
             ).all()
         ]
+
+    @cached_property
+    def inputs_complete(self):
+        tasks = self.tasks.prefetch_related(
+            "inputs__interface", "algorithm_interface__inputs"
+        ).all()
+
+        if not tasks:
+            return False
+
+        return all(
+            {
+                civ.interface
+                for civ in task.inputs.all()
+                if civ.has_value or not civ.interface.value_required
+            }
+            == {*task.algorithm_interface.inputs.all()}
+            for task in tasks
+        )
 
     def create_utilization(self):
         BatchJobUtilization.objects.create(batch_job=self)
