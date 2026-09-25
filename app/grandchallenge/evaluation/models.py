@@ -1828,8 +1828,7 @@ class Submission(FieldChangeMixin, UUIDModel):
         return BatchJob if self.phase.use_batch_mode else Job
 
     @cached_property
-    def algorithm_image_interfaces(self):
-        """The interfaces of the submitted algorithm image."""
+    def algorithm_interfaces(self):
         return self.algorithm_image.algorithm.interfaces.prefetch_related(
             "inputs"
         ).all()
@@ -1853,12 +1852,16 @@ class Submission(FieldChangeMixin, UUIDModel):
             .order_by("has_title", "title", "created")
         )
         return get_archive_items_for_interfaces(
-            algorithm_interfaces=self.algorithm_image_interfaces,
+            algorithm_interfaces=self.algorithm_interfaces,
             archive_items=archive_items,
         )
 
     @property
     def scheduled_input_sets_per_interface(self):
+        """
+        ComponentInterfaceValues that have already been scheduled
+        as inputs for a Job or BatchJob, grouped by interface.
+        """
         if self.phase.use_batch_mode:
             return {
                 interface: {
@@ -1868,14 +1871,14 @@ class Submission(FieldChangeMixin, UUIDModel):
                         algorithm_interface=interface,
                     ).prefetch_related("inputs")
                 }
-                for interface in self.algorithm_image_interfaces
+                for interface in self.algorithm_interfaces
             }
         else:
             scheduled_jobs_per_interface = (
                 get_valid_jobs_for_interfaces_and_archive_items(
                     algorithm_image=self.algorithm_image,
                     algorithm_model=self.algorithm_model,
-                    algorithm_interfaces=self.algorithm_image_interfaces,
+                    algorithm_interfaces=self.algorithm_interfaces,
                     valid_archive_items_per_interface=(
                         self.candidate_archive_items_per_interface
                     ),
@@ -1888,6 +1891,10 @@ class Submission(FieldChangeMixin, UUIDModel):
 
     @cached_property
     def unscheduled_archive_items_per_interface(self):
+        """
+        ArchiveItems that have NOT been scheduled
+        as inputs for a Job or BatchJob yet, grouped by interface.
+        """
         return {
             interface: [
                 archive_item
