@@ -436,6 +436,92 @@ class TestSubmissionCreateInferenceJobs:
         editors_group = submission.algorithm_image.algorithm.editors_group
         assert jobs[0].viewer_groups.filter(pk=editors_group.pk).exists()
 
+    def test_scheduled_input_sets_ignores_jobs_with_a_creator(self):
+        cis = ComponentInterfaceFactory.create_batch(2)
+        interface = AlgorithmInterfaceFactory(inputs=cis)
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        system_civs = [
+            ComponentInterfaceValueFactory(interface=ci) for ci in cis
+        ]
+        user_civs = [
+            ComponentInterfaceValueFactory(interface=ci) for ci in cis
+        ]
+        for values in (system_civs, user_civs):
+            item = ArchiveItemFactory(archive=submission.phase.archive)
+            item.values.set(values)
+
+        system_job = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=submission.algorithm_image,
+            algorithm_interface=interface,
+            time_limit=submission.phase.algorithm_time_limit,
+        )
+        system_job.inputs.set(system_civs)
+        user_job = AlgorithmJobFactory(
+            creator=UserFactory(),
+            algorithm_image=submission.algorithm_image,
+            algorithm_interface=interface,
+            time_limit=submission.phase.algorithm_time_limit,
+        )
+        user_job.inputs.set(user_civs)
+
+        assert submission.scheduled_input_sets_per_interface == {
+            interface: {frozenset(system_civs)}
+        }
+
+    def test_scheduled_input_sets_respects_algorithm_model(self):
+        algorithm_image = AlgorithmImageFactory()
+        algorithm_model = AlgorithmModelFactory(
+            algorithm=algorithm_image.algorithm
+        )
+        cis = ComponentInterfaceFactory.create_batch(2)
+        interface = AlgorithmInterfaceFactory(inputs=cis)
+        algorithm_image.algorithm.interfaces.set([interface])
+
+        archive = ArchiveFactory()
+        phase = PhaseFactory(
+            archive=archive, submission_kind=SubmissionKindChoices.ALGORITHM
+        )
+        phase.algorithm_interfaces.set([interface])
+        submission = SubmissionFactory(
+            phase=phase,
+            algorithm_image=algorithm_image,
+            algorithm_model=algorithm_model,
+            algorithm_requires_gpu_type=GPUTypeChoices.NO_GPU,
+            algorithm_requires_memory_gb=4,
+        )
+
+        with_model_civs = [
+            ComponentInterfaceValueFactory(interface=ci) for ci in cis
+        ]
+        without_model_civs = [
+            ComponentInterfaceValueFactory(interface=ci) for ci in cis
+        ]
+        for values in (with_model_civs, without_model_civs):
+            item = ArchiveItemFactory(archive=archive)
+            item.values.set(values)
+
+        job_with_model = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=algorithm_image,
+            algorithm_model=algorithm_model,
+            algorithm_interface=interface,
+            time_limit=algorithm_image.algorithm.time_limit,
+        )
+        job_with_model.inputs.set(with_model_civs)
+        job_without_model = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=algorithm_image,
+            algorithm_interface=interface,
+            time_limit=algorithm_image.algorithm.time_limit,
+        )
+        job_without_model.inputs.set(without_model_civs)
+
+        assert submission.scheduled_input_sets_per_interface == {
+            interface: {frozenset(with_model_civs)}
+        }
+
 
 @pytest.mark.django_db
 def test_create_evaluation_uniqueness_checks(
@@ -2031,6 +2117,86 @@ def test_archive_item_matching_to_interfaces():
         interface3: 0,
     }
     assert phase.jobs_to_schedule_per_submission == 2
+
+
+@pytest.mark.django_db
+def test_get_archive_items_for_interfaces_matches_on_exact_inputs():
+    ai1, ai2, ai3, ai4 = AlgorithmImageFactory.create_batch(4)
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    interface1 = AlgorithmInterfaceFactory(inputs=[ci1])
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci2])
+    interface3 = AlgorithmInterfaceFactory(inputs=[ci2, ci3, ci4])
+    interface4 = AlgorithmInterfaceFactory(inputs=[ci2])
+
+    ai1.algorithm.interfaces.set([interface1])
+    ai2.algorithm.interfaces.set([interface1, interface2])
+    ai3.algorithm.interfaces.set([interface1, interface3, interface4])
+    ai4.algorithm.interfaces.set([interface4])
+
+    archive = ArchiveFactory()
+    i1, i2, i3, i4 = ArchiveItemFactory.create_batch(4, archive=archive)
+    i1.values.add(
+        ComponentInterfaceValueFactory(interface=ci1)
+    )  # Valid for interface 1
+    i2.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1),
+            ComponentInterfaceValueFactory(interface=ci2),
+        ]
+    )  # valid for interface 2
+    i3.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1),
+            ComponentInterfaceValueFactory(
+                interface=ComponentInterfaceFactory()
+            ),
+        ]
+    )  # valid for no interface, because of additional / mismatching interface
+    i4.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci2),
+            ComponentInterfaceValueFactory(
+                interface=ComponentInterfaceFactory()
+            ),
+        ]
+    )  # valid for no interface, because of additional / mismatching interface
+
+    # Archive items are grouped per interface only when they hold values for
+    # exactly that interface's inputs.
+    valid_archive_items = get_archive_items_for_interfaces(
+        algorithm_interfaces=ai1.algorithm.interfaces.all(),
+        archive_items=ArchiveItem.objects.all(),
+    )
+    assert valid_archive_items.keys() == {interface1}
+    assert list(valid_archive_items[interface1]) == [i1]
+
+    valid_archive_items = get_archive_items_for_interfaces(
+        algorithm_interfaces=ai2.algorithm.interfaces.all(),
+        archive_items=ArchiveItem.objects.all(),
+    )
+    assert valid_archive_items.keys() == {interface1, interface2}
+    assert list(valid_archive_items[interface1]) == [i1]
+    assert list(valid_archive_items[interface2]) == [i2]
+
+    valid_archive_items = get_archive_items_for_interfaces(
+        algorithm_interfaces=ai3.algorithm.interfaces.all(),
+        archive_items=ArchiveItem.objects.all(),
+    )
+    assert valid_archive_items.keys() == {
+        interface1,
+        interface3,
+        interface4,
+    }
+    assert list(valid_archive_items[interface1]) == [i1]
+    assert list(valid_archive_items[interface3]) == []
+    assert list(valid_archive_items[interface4]) == []
+
+    valid_archive_items = get_archive_items_for_interfaces(
+        algorithm_interfaces=ai4.algorithm.interfaces.all(),
+        archive_items=ArchiveItem.objects.all(),
+    )
+    assert valid_archive_items.keys() == {interface4}
+    assert list(valid_archive_items[interface4]) == []
 
 
 @pytest.mark.django_db

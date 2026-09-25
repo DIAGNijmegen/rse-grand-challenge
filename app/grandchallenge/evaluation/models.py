@@ -229,28 +229,6 @@ def get_valid_jobs_for_interfaces_and_archive_items(
     return jobs_per_interface
 
 
-def get_scheduled_job_input_sets_per_interface(
-    *,
-    algorithm_image,
-    algorithm_interfaces,
-    valid_archive_items_per_interface,
-    algorithm_model=None,
-):
-    existing_jobs_for_interfaces = get_valid_jobs_for_interfaces_and_archive_items(
-        algorithm_image=algorithm_image,
-        algorithm_model=algorithm_model,
-        algorithm_interfaces=algorithm_interfaces,
-        valid_archive_items_per_interface=valid_archive_items_per_interface,
-    )
-    return {
-        interface: {
-            frozenset(job.inputs.all())
-            for job in existing_jobs_for_interfaces[interface]
-        }
-        for interface in algorithm_interfaces
-    }
-
-
 def active_inference_jobs_count(*, algorithm_image=None):
     active_jobs = Job.objects.active()
     active_batch_jobs = BatchJob.objects.active()
@@ -1893,14 +1871,20 @@ class Submission(FieldChangeMixin, UUIDModel):
                 for interface in self.algorithm_image_interfaces
             }
         else:
-            return get_scheduled_job_input_sets_per_interface(
-                algorithm_image=self.algorithm_image,
-                algorithm_model=self.algorithm_model,
-                algorithm_interfaces=self.algorithm_image_interfaces,
-                valid_archive_items_per_interface=(
-                    self.archive_items_to_schedule_per_interface
-                ),
+            scheduled_jobs_per_interface = (
+                get_valid_jobs_for_interfaces_and_archive_items(
+                    algorithm_image=self.algorithm_image,
+                    algorithm_model=self.algorithm_model,
+                    algorithm_interfaces=self.algorithm_image_interfaces,
+                    valid_archive_items_per_interface=(
+                        self.archive_items_to_schedule_per_interface
+                    ),
+                )
             )
+            return {
+                interface: {frozenset(job.inputs.all()) for job in jobs}
+                for interface, jobs in scheduled_jobs_per_interface.items()
+            }
 
     def create_inference_jobs(
         self,
