@@ -12,7 +12,6 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.algorithms.tasks import (
     deactivate_old_algorithm_images,
     execute_algorithm_job_for_inputs,
-    filter_archive_items_for_algorithm,
     send_failed_job_notification,
 )
 from grandchallenge.components.models import (
@@ -34,7 +33,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     ReaderStudyAlgorithmImplementationFactory,
 )
-from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -331,29 +329,6 @@ def test_execute_algorithm_job_sets_on_failed_jobs(
         job.task_on_failure["message"]["task_name"]
         == "grandchallenge.algorithms.tasks.send_failed_job_notification"
     )  # Full task is tested somewhere else
-
-
-@pytest.mark.django_db
-def test_filter_archive_items_for_algorithm_excludes_scheduled():
-    interface = AlgorithmInterfaceFactory()
-    archive = ArchiveFactory()
-    scheduled_item, unscheduled_item = ArchiveItemFactory.create_batch(
-        2, archive=archive
-    )
-    scheduled_civ = ComponentInterfaceValueFactory()
-    scheduled_item.values.set([scheduled_civ])
-    unscheduled_item.values.set([ComponentInterfaceValueFactory()])
-
-    result = filter_archive_items_for_algorithm(
-        valid_archive_items_per_interface={
-            interface: [scheduled_item, unscheduled_item]
-        },
-        scheduled_input_sets_per_interface={
-            interface: {frozenset({scheduled_civ})}
-        },
-    )
-
-    assert result == {interface: [unscheduled_item]}
 
 
 @pytest.mark.django_db

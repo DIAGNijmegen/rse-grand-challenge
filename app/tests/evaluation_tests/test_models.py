@@ -523,6 +523,33 @@ class TestSubmissionCreateInferenceJobs:
             interface: {frozenset(with_model_civs)}
         }
 
+    def test_unscheduled_archive_items_excludes_scheduled_items(self):
+        ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        scheduled_item = ArchiveItemFactory(archive=submission.phase.archive)
+        scheduled_civ = ComponentInterfaceValueFactory(interface=ci)
+        scheduled_item.values.set([scheduled_civ])
+
+        unscheduled_item = ArchiveItemFactory(archive=submission.phase.archive)
+        unscheduled_item.values.set(
+            [ComponentInterfaceValueFactory(interface=ci)]
+        )
+
+        system_job = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=submission.algorithm_image,
+            algorithm_interface=interface,
+            time_limit=submission.phase.algorithm_time_limit,
+        )
+        system_job.inputs.set([scheduled_civ])
+
+        # The item that already has a job is excluded; the other still needs one
+        assert submission.unscheduled_archive_items_per_interface == {
+            interface: [unscheduled_item]
+        }
+
 
 @pytest.mark.django_db
 def test_create_evaluation_uniqueness_checks(

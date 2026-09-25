@@ -57,39 +57,6 @@ def execute_algorithm_job_for_inputs(*, job_pk: str | UUID):
     job.execute()
 
 
-def filter_archive_items_for_algorithm(
-    *,
-    valid_archive_items_per_interface,
-    scheduled_input_sets_per_interface,
-):
-    """
-    Archive items that still need a job, grouped by interface.
-
-    Parameters
-    ----------
-    valid_archive_items_per_interface
-        Candidate archive items grouped by interface (see
-        ``get_archive_items_for_interfaces``).
-    scheduled_input_sets_per_interface
-        The input value sets that have already been scheduled, grouped by
-        interface (each a set of frozensets of ComponentInterfaceValues).
-        Archive items matching one of these are excluded.
-
-    Returns
-    -------
-    Dictionary of ArchiveItems that still need a job, grouped by interface.
-    """
-    return {
-        interface: [
-            archive_item
-            for archive_item in items
-            if frozenset(archive_item.values.all())
-            not in scheduled_input_sets_per_interface[interface]
-        ]
-        for interface, items in valid_archive_items_per_interface.items()
-    }
-
-
 @lambda_task
 def send_failed_job_notification(*, job_pk: str | UUID):
     from grandchallenge.algorithms.models import Job

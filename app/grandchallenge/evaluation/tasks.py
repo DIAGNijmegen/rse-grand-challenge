@@ -35,7 +35,6 @@ def check_prerequisites_for_evaluation_execution(
 ):
     from grandchallenge.evaluation.models import (
         Evaluation,
-        get_archive_items_for_interfaces,
         get_valid_jobs_for_interfaces_and_archive_items,
     )
 
@@ -65,14 +64,8 @@ def check_prerequisites_for_evaluation_execution(
         evaluation.submission.phase.submission_kind
         == SubmissionKindChoices.ALGORITHM
     ):
-        algorithm_interfaces = (
-            evaluation.submission.phase.algorithm_interfaces.all()
-        )
-
-        items = get_archive_items_for_interfaces(
-            algorithm_interfaces=algorithm_interfaces,
-            archive_items=evaluation.submission.phase.archive.items.all(),
-        )
+        phase = evaluation.submission.phase
+        items = phase.valid_archive_items_per_interface
         non_success_statuses = [
             status[0]
             for status in Job.STATUS_CHOICES
@@ -82,7 +75,7 @@ def check_prerequisites_for_evaluation_execution(
         jobs = get_valid_jobs_for_interfaces_and_archive_items(
             algorithm_image=evaluation.submission.algorithm_image,
             algorithm_model=evaluation.submission.algorithm_model,
-            algorithm_interfaces=algorithm_interfaces,
+            algorithm_interfaces=phase.algorithm_interfaces.all(),
             valid_archive_items_per_interface=items,
             subset_by_status=non_success_statuses,
         )

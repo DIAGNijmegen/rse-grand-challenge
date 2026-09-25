@@ -1835,7 +1835,7 @@ class Submission(FieldChangeMixin, UUIDModel):
         ).all()
 
     @cached_property
-    def archive_items_to_schedule_per_interface(self):
+    def candidate_archive_items_per_interface(self):
         """
         Candidate archive items for scheduling, grouped by the submitted
         image's interfaces and ordered so that archive items with titles
@@ -1877,7 +1877,7 @@ class Submission(FieldChangeMixin, UUIDModel):
                     algorithm_model=self.algorithm_model,
                     algorithm_interfaces=self.algorithm_image_interfaces,
                     valid_archive_items_per_interface=(
-                        self.archive_items_to_schedule_per_interface
+                        self.candidate_archive_items_per_interface
                     ),
                 )
             )
@@ -1885,6 +1885,18 @@ class Submission(FieldChangeMixin, UUIDModel):
                 interface: {frozenset(job.inputs.all()) for job in jobs}
                 for interface, jobs in scheduled_jobs_per_interface.items()
             }
+
+    @cached_property
+    def unscheduled_archive_items_per_interface(self):
+        return {
+            interface: [
+                archive_item
+                for archive_item in items
+                if frozenset(archive_item.values.all())
+                not in self.scheduled_input_sets_per_interface[interface]
+            ]
+            for interface, items in self.candidate_archive_items_per_interface.items()
+        }
 
     def create_inference_jobs(
         self,
@@ -1896,27 +1908,21 @@ class Submission(FieldChangeMixin, UUIDModel):
     ):
         # Local import to avoid a circular dependency
         from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-        from grandchallenge.algorithms.tasks import (
-            filter_archive_items_for_algorithm,
-        )
-
-        valid_job_inputs = filter_archive_items_for_algorithm(
-            valid_archive_items_per_interface=(
-                self.archive_items_to_schedule_per_interface
-            ),
-            scheduled_input_sets_per_interface=(
-                self.scheduled_input_sets_per_interface
-            ),
-        )
 
         items_remaining = sum(
-            len(archive_items) for archive_items in valid_job_inputs.values()
+            len(archive_items)
+            for archive_items in (
+                self.unscheduled_archive_items_per_interface.values()
+            )
         )
 
         chunk_size = self.phase.archive_items_per_job
 
         jobs = []
-        for interface, archive_items in valid_job_inputs.items():
+        for (
+            interface,
+            archive_items,
+        ) in self.unscheduled_archive_items_per_interface.items():
             archive_items = list(archive_items)
             for start in range(0, len(archive_items), chunk_size):
                 if len(jobs) >= max_jobs:
