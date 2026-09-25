@@ -311,14 +311,12 @@ class CIVSetDelete(
 
     def check_permissions(self, request, *arg, **kwargs):
         instance = self.get_object()
-
         if not instance.is_editable:
             messages.error(
                 request=request,
                 message=instance.not_editable_error_message,
             )
             raise PermissionDenied
-
         return super().check_permissions(request, *arg, **kwargs)
 
     def get_success_url(self):
