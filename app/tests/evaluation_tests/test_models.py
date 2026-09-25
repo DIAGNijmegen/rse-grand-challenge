@@ -49,6 +49,7 @@ from tests.components_tests.factories import (
 )
 from tests.evaluation_tests.factories import (
     BatchJobFactory,
+    BatchJobTaskFactory,
     EvaluationFactory,
     EvaluationGroundTruthFactory,
     MethodFactory,
@@ -3082,3 +3083,46 @@ def test_batch_job_utilization_created():
     assert utilization.archive == batch_job.submission.phase.archive
     assert utilization.algorithm_image == batch_job.algorithm_image
     assert utilization.algorithm == batch_job.algorithm_image.algorithm
+
+
+@pytest.mark.django_db
+def test_batch_job_inputs_complete():
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(
+        2, kind=ComponentInterface.Kind.STRING
+    )
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
+    )
+
+    batch_job = BatchJobFactory()
+
+    # A batch job without any tasks is not complete
+    assert not batch_job.inputs_complete
+
+    complete_task = BatchJobTaskFactory(
+        batch_job=batch_job, algorithm_interface=interface
+    )
+    complete_task.inputs.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1, value="foo"),
+            ComponentInterfaceValueFactory(interface=ci2, value="bar"),
+        ]
+    )
+
+    del batch_job.inputs_complete
+    assert batch_job.inputs_complete
+
+    # A task that is missing a value for one of its inputs makes the whole
+    # batch job incomplete
+    incomplete_task = BatchJobTaskFactory(
+        batch_job=batch_job, algorithm_interface=interface
+    )
+    incomplete_task.inputs.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci1, value="foo"),
+            ComponentInterfaceValueFactory(interface=ci2, value=None),
+        ]
+    )
+
+    del batch_job.inputs_complete
+    assert not batch_job.inputs_complete
