@@ -2132,10 +2132,6 @@ class BatchJobManager(ComponentJobManager):
                     ]
                 ).total_seconds()
             )
-        elif "time_limit" not in kwargs:
-            raise TypeError(
-                "time_limit is required when archive_items is not provided."
-            )
 
         batch_job = super().create(submission=submission, **kwargs)
 
