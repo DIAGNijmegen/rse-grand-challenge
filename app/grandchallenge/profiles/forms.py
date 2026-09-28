@@ -44,7 +44,7 @@ class UserProfileForm(forms.ModelForm):
             self.fields["last_name"].initial = self.instance.user.last_name
 
         self.fields["country"].label = "Location"
-        self.fields["receive_newsletter"].initial = True
+        self.fields["receive_newsletter"].initial = False
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
