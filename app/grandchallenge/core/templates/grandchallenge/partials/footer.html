@@ -19,7 +19,7 @@
                                         {# @formatter:off #}
                                    href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
                                         {# @formatter:on #}
-                                    {{ page.title }}
+                                    {{ page.title| title }}
                                 </a>
                             </li>
                         {% endfor %}
@@ -43,7 +43,7 @@
                     <ul class="list-unstyled">
                         {% for policy in policy_pages %}
                             <li class="my-1"><a class="text-muted"
-                                                href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
+                                                href="{{ policy.get_absolute_url }}">{{ policy.title|title }}</a>
                             </li>
                         {% endfor %}
                     </ul>
@@ -75,29 +75,39 @@
                     </ul>
                 </div>
                 <div class="col-sm-6 col-md-3 p-3">
-                    <h6>Sponsors</h6>
-                    <ul class="list-unstyled">
-                        <li class="my-1 text-center">
-                            <a href='https://aws.amazon.com/'>
-                                <img class="w-25 py-2"
-                                     loading="lazy"
-                                     src="{% static 'images/Powered-By_logo-stack_RGB.png' %}"
-                                     alt="Logo of Amazon Web Services"
-                                     title="Grand Challenge is sponsored by Amazon Web Services"
-                                >
+                    <h6>Follow Us</h6>
+                    <ul class="d-flex list-unstyled">
+                        <li class="my-1">
+                            <a class="p-1 text-muted"
+                                style="font-size: 1.5rem;"
+                                href="https://www.linkedin.com/company/grand-challenge/"
+                                title="Folow us on LinkedIn">
+                                <i class="fab fa-linkedin fa-lg"></i>
+                            </a>
+                        </li>
+                        <li class="my-1">
+                            <a class="p-1 text-muted"
+                                style="font-size: 1.5rem;"
+                                href="https://github.com/DIAGNijmegen/rse-grand-challenge/"
+                                title="Join us on Github">
+                                <i class="fab fa-github fa-lg"></i>
                             </a>
                         </li>
                     </ul>
                 </div>
             </div>
-            <div class="row">
-                <div class="col text-center p-3">
+            <div class="row justify-content-center">
+                <div class="col-sm-6 text-center p-3">
                     <ul class="list-unstyled">
                         <li>
-                            <a class="p-1 text-muted"
-                               href="https://github.com/DIAGNijmegen/rse-grand-challenge/"
-                               title="Join us on Github">
-                                <i class="fab fa-github fa-lg"></i></a>
+                         <a href='https://aws.amazon.com/'>
+                               <img style="height: 1.6em;"
+                                     loading="lazy"
+                                     src="{% static 'images/Powered-By_logo-horiz_RGB.png' %}"
+                                     alt="Logo of Amazon Web Services"
+                                     title="Grand Challenge is sponsored by Amazon Web Services"
+                                >
+                            </a>
                         </li>
                     </ul>
                     <p class="text-muted small">&copy; 2012-{% now "Y" %}</p>
