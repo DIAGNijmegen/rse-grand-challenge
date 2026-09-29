@@ -94,7 +94,7 @@ class SignupForm(UserProfileForm):
             self.fields[f"accept_policy_{idx}"] = forms.BooleanField(
                 required=True,
                 label=format_html(
-                    "I have read and agree to the <a href={absolute_url}>{title}</a> policy",
+                    "I have read and agree to the <a href={absolute_url}>{title}</a>",
                     absolute_url=policy.get_absolute_url(),
                     title=policy.title,
                 ),
