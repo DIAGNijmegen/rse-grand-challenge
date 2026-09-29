@@ -3,7 +3,7 @@
 {% load cache %}
 {% load static %}
 
-{% cache 600 grandchallenge-partials-footer %}
+{% cache 0 grandchallenge-partials-footers %}
     {% get_flatpages as flatpages %}
     <footer class="footer">
         <div class="container">
@@ -19,7 +19,7 @@
                                         {# @formatter:off #}
                                    href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
                                         {# @formatter:on #}
-                                    {{ page.title| title }}
+                                    {{ page.title }}
                                 </a>
                             </li>
                         {% endfor %}
@@ -43,7 +43,7 @@
                     <ul class="list-unstyled">
                         {% for policy in policy_pages %}
                             <li class="my-1"><a class="text-muted"
-                                                href="{{ policy.get_absolute_url }}">{{ policy.title|title }}</a>
+                                                href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
                             </li>
                         {% endfor %}
                     </ul>
@@ -110,7 +110,7 @@
                             </a>
                         </li>
                     </ul>
-                    <p class="text-muted small">&copy; 2012-{% now "Y" %}</p>
+                    <p class="text-muted small">&copy; 2012&ndash;{% now "Y" %} Grand Challenge</p>
                 </div>
             </div>
         </div>
