@@ -518,11 +518,11 @@ wheels = [
 
 [[package]]
 name = "disposable-email-domains"
-version = "0.0.264"
+version = "0.0.269"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/54/f3/fc6789868e25d73d1aa37836f1455158a5d6fea7e6314e9aa8a3a41d6300/disposable_email_domains-0.0.264.tar.gz", hash = "sha256:c1d6019c03e43aef20f1c50bbe6f2d885ff739b5835f19f47b692fbe85c4c5b7", size = 108887, upload-time = "2026-09-21T13:32:41.126Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/36/63/ff84934a9cbe373b06691584f6815d6b3e45f0cb332383b13987d1719a00/disposable_email_domains-0.0.269.tar.gz", hash = "sha256:89a701fa9b7d923e6dff77e11f8af944dc2e5136a78f84cea5241c13b0e66c01", size = 109599, upload-time = "2026-09-27T13:02:44.899Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/36/ea/60b82833e6e54f9c33e8280f1f5ea0397cf2909f4edeb95d798c1f496278/disposable_email_domains-0.0.264-py3-none-any.whl", hash = "sha256:b29ebeaf6673de7ef0e67fe74ba27f645bb2f0d3158e5a4d7642ce56404df3c2", size = 55885, upload-time = "2026-09-21T13:32:39.718Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/90/22471410f08f847a02c1cd7e8cd9373551562b7e866f07c62c3d236200c5/disposable_email_domains-0.0.269-py3-none-any.whl", hash = "sha256:250c1eafdf023a8bc204509d0f7e29ffd901c5927089dda2253d73d967ed17b1", size = 56274, upload-time = "2026-09-27T13:02:43.312Z" },
 ]
 
 [[package]]
@@ -1381,11 +1381,11 @@ wheels = [
 
 [[package]]
 name = "justhtml"
-version = "3.11.2"
+version = "3.12.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c0/fc/fa19f7406a02a5fac3c4e59b366bb49b04687edf7da247e3da740125402b/justhtml-3.11.2.tar.gz", hash = "sha256:83329a7436620a79ebd0b7310b5e4d653fa0688cd315e7a92d2188febd0d6ab0", size = 956210, upload-time = "2026-08-27T16:25:52.69Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0c/de/c5bece9c799f0573768378a1cc99c75c666263ee59c967e962ea586badba/justhtml-3.12.0.tar.gz", hash = "sha256:91d211267764d5aae5d0e68c059c6a31ba6cf25f039186ea2402cf4b3c1c091c", size = 957011, upload-time = "2026-09-27T19:41:17.793Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/8c/8266010c7d05cd55e1c34f0f524bf611621871cc709d619a2cee2ad262a9/justhtml-3.11.2-py3-none-any.whl", hash = "sha256:366986de83fab5f7ab643f79ffb3ad44dbaeb63f34b6361b955930575417cdd2", size = 171841, upload-time = "2026-08-27T16:25:51.308Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/cd/6b6aff5e71665a2a03ae97ce21604c0d0f4cddaeccd5cd7cc0d6a22daab4/justhtml-3.12.0-py3-none-any.whl", hash = "sha256:7300a3c489615d186e8c48213a0db225216e663bf2d539c9282f2cc4efcfd296", size = 171980, upload-time = "2026-09-27T19:41:16.199Z" },
 ]
 
 [[package]]
@@ -1855,11 +1855,11 @@ wheels = [
 
 [[package]]
 name = "pyjwt"
-version = "2.14.0"
+version = "2.15.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/af/c3/8a3b59c25070cc61dc517fbdfa5dc0904670c96f605cc69759dc09166b99/pyjwt-2.14.0.tar.gz", hash = "sha256:77283c83fb56ecf566a886c757a714bc83668e38156de2cce8263302f42e0b86", size = 113177, upload-time = "2026-09-11T13:11:54.638Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/a5/5197bfd06417837ac079921c66fa6393f1dea3557272a263cebfef69e432/pyjwt-2.15.0.tar.gz", hash = "sha256:b11c5f9791d7bf51c2b39a81ed669f6b2dbbd669df2942f6c60167e9e3d1abe4", size = 120513, upload-time = "2026-09-23T16:56:00.689Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/97/672cb32ce0dfea44b740cb7b4f97038463b9cf7c0ead1aacf595572851d6/pyjwt-2.14.0-py3-none-any.whl", hash = "sha256:ad0cef71c756a56e74863c2919cf0985f72decbcfcb550ee2f422e7c62b5eedc", size = 32896, upload-time = "2026-09-11T13:11:53.409Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/55/40e45bf052ee8ee12a4dfd785519660f8effa7b065442b91646ec6828619/pyjwt-2.15.0-py3-none-any.whl", hash = "sha256:7a3742debf6b879e912dbb9819ceec1594be812452b78c5f2e2dfc56564954f8", size = 33680, upload-time = "2026-09-23T16:55:59.241Z" },
 ]
 
 [package.optional-dependencies]
@@ -1869,24 +1869,24 @@ crypto = [
 
 [[package]]
 name = "pymdown-extensions"
-version = "12.0.1"
+version = "12.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/7e/53144b512818c75d459523e3a91d9bf7b65cd6a1dfb964fe690adc8b3670/pymdown_extensions-12.0.1.tar.gz", hash = "sha256:88fe2c97fb9153b9f2cc1da59f1d7c7cb74971110daf33cccb2a5514e0f7e970", size = 866904, upload-time = "2026-09-15T23:20:33.187Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/94/858e0163cb4d83d6d8234018a01792c749a56daee41794cac7d6c46661e8/pymdown_extensions-12.1.tar.gz", hash = "sha256:fdb8f47f5d7fd069d10ef2a7d8908e613d7865ff0419d544a0ffd3984e884f11", size = 868245, upload-time = "2026-09-23T00:08:42Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/30/c866b3ca8ad5cca79a3ee1a55c12d61d3e72381e5eadbfdaceb6006ebc84/pymdown_extensions-12.0.1-py3-none-any.whl", hash = "sha256:15d629e8035892b93d788a8424ccea754d4aa3cec247a64cbfe7b15089c9ad7f", size = 276957, upload-time = "2026-09-15T23:20:31.551Z" },
+    { url = "https://files.pythonhosted.org/packages/36/d1/98313da89960a604402266a115311b510254900ff1295ea426403f9423cc/pymdown_extensions-12.1-py3-none-any.whl", hash = "sha256:4a254b771acfcddc6c110a7f4590d818f1f849e2d5aacf69b4b07c8dd2a9700d", size = 277069, upload-time = "2026-09-23T00:08:40.069Z" },
 ]
 
 [[package]]
 name = "pyswot"
-version = "0.5.3"
+version = "0.5.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fc/8e/91d1f7ec296643dd7c02227562efeca655de70f069a131274d867e09025f/pyswot-0.5.3.tar.gz", hash = "sha256:d1550813cb63819c05a22007d6b45c32fd44e996e4abd15269aff7954e2ee3b4", size = 578575, upload-time = "2026-09-16T13:46:33.733Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/ad/675dcb256108067a3bf613e753982398d772ebbe668997f1b67ddc046ad2/pyswot-0.5.4.tar.gz", hash = "sha256:a5cbbf88c08a16700ca2355b3e4a128496c772742eb02036a294f66e00948a32", size = 578789, upload-time = "2026-09-22T07:27:39.533Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/09/9731af86dca76c617e9b745775a1cf799cc6e9f00fbae628fd7435e25501/pyswot-0.5.3-py3-none-any.whl", hash = "sha256:0ed7ba553d8e77d50f319e40ff8ea1695b6d46b60c1bcea5d9990d846ed63ebe", size = 582141, upload-time = "2026-09-16T13:46:32.052Z" },
+    { url = "https://files.pythonhosted.org/packages/06/1c/8d3297336834d139ddefd4eb419d7adf85a0a90c7158ab1794f41804dfc7/pyswot-0.5.4-py3-none-any.whl", hash = "sha256:5a25042d1f8796f31bdddcfb7b54451e9717122762860a6171e0189f11bb3abe", size = 582359, upload-time = "2026-09-22T07:27:37.988Z" },
 ]
 
 [[package]]
@@ -1945,14 +1945,14 @@ wheels = [
 
 [[package]]
 name = "pytest-mock"
-version = "3.15.1"
+version = "3.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7a/7f/6ed29931d5c8cd396e7c0a55412e6cc88020373365c8685985dea53d26d7/pytest_mock-3.16.0.tar.gz", hash = "sha256:5a8395528b8f498205f3718f575228d0edaed7425fff638f87d1a6c3e0383636", size = 35362, upload-time = "2026-09-27T14:57:55.46Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
+    { url = "https://files.pythonhosted.org/packages/db/5b/b83a9bf1a3b4ec222f9fa083147ff6816245223da0ab92370e7e056f113f/pytest_mock-3.16.0-py3-none-any.whl", hash = "sha256:007cfeb257801d88d9c0b2a7b5a15a15e73b71968dfd72e7bf8c4a2f8393aec8", size = 10016, upload-time = "2026-09-27T14:57:54.283Z" },
 ]
 
 [[package]]
@@ -2202,15 +2202,15 @@ wheels = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.69.2"
+version = "2.70.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cc/08/1211e4652384195ef754f8ed570566088dc848f8eda7d005abf13f05f17f/sentry_sdk-2.69.2.tar.gz", hash = "sha256:b4d8915a526e626b0b14a2925907554b722d3b8e3e3781570fc35791712af323", size = 1043564, upload-time = "2026-09-15T15:25:09.018Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/0a/e37553f3106d0f7f0d4b8ad2c7b92410d131929786ffd116833d3b8164df/sentry_sdk-2.70.0.tar.gz", hash = "sha256:27e4b512f47be93136645dbe8f02d430473ee73a389ce430b2b7104baa66cf75", size = 1047234, upload-time = "2026-09-22T09:40:11.721Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/78/5d8b79fd60330234317aa827a1f5e445980a6f4e0ea6ed4e1187acb70a0f/sentry_sdk-2.69.2-py3-none-any.whl", hash = "sha256:25bc0a6c55bba0b83398212a7247f4f9f3190f189a1909b68e4807ef4b785895", size = 528765, upload-time = "2026-09-15T15:25:07.362Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/ff/b1e56f009bfb9b8023910b533d5ebf4ec5650da49891f2b8c7f3d4815401/sentry_sdk-2.70.0-py3-none-any.whl", hash = "sha256:89600e8bb5fc5239cad5c4434217f453204f2207ad29399ea58947460b37a62e", size = 531752, upload-time = "2026-09-22T09:40:10.063Z" },
 ]
 
 [[package]]
@@ -2606,14 +2606,14 @@ wheels = [
 
 [[package]]
 name = "werkzeug"
-version = "3.1.8"
+version = "3.1.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markupsafe" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/b2/381be8cfdee792dd117872481b6e378f85c957dd7c5bca38897b08f765fd/werkzeug-3.1.8.tar.gz", hash = "sha256:9bad61a4268dac112f1c5cd4630a56ede601b6ed420300677a869083d70a4c44", size = 875852, upload-time = "2026-04-02T18:49:14.268Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/34/4dd12fc8bb7d61c91467ec3efe415ffa7d5456f799954b40c5bbaeae470e/werkzeug-3.1.9.tar.gz", hash = "sha256:55ca7c70a75689be937aa27f8ff4b018f06ff4838fc73045560bf0f5a1291060", size = 940188, upload-time = "2026-09-27T18:33:41.637Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/8c/2e650f2afeb7ee576912636c23ddb621c91ac6a98e66dc8d29c3c69446e1/werkzeug-3.1.8-py3-none-any.whl", hash = "sha256:63a77fb8892bf28ebc3178683445222aa500e48ebad5ec77b0ad80f8726b1f50", size = 226459, upload-time = "2026-04-02T18:49:12.72Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/38/df03f564f43cec2684823f3cccae1a652ee7face1cbaa76fb223096e64d7/werkzeug-3.1.9-py3-none-any.whl", hash = "sha256:6392e50c78460ba618e5b21f08a71f59c99ce99cdc6cf6e3dd7e6ccca8754fab", size = 228700, upload-time = "2026-09-27T18:33:39.685Z" },
 ]
 
 [[package]]
