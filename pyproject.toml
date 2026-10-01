@@ -99,7 +99,7 @@ dev = [
 ]
 
 [tool.uv]
-  exclude-newer = "7 days"
+exclude-newer = "7 days"
 
 [tool.isort]
 profile = "black"
