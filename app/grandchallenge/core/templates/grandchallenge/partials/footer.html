@@ -49,32 +49,6 @@
                     </ul>
                 </div>
                 <div class="col-sm-6 col-md-3 p-3">
-                    <h6>Developers</h6>
-                    <ul class="list-unstyled">
-                        <li class="my-1">
-                            <a class="text-muted"
-                               href="{% url 'api:swagger-ui' %}"
-                               title="The interactive documentation for the API.">
-                                API Documentation
-                            </a>
-                        </li>
-                        <li class="my-1">
-                            <a class="text-muted"
-                               href="{% url 'api:schema' %}"
-                               title="The OpenAPI schema for the API.">
-                                API Schema
-                            </a>
-                        </li>
-                        <li class="my-1">
-                            <a class="text-muted"
-                               href="https://diagnijmegen.github.io/rse-grand-challenge/"
-                               title="Read the developer documentation">
-                                Developer Documentation
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-sm-6 col-md-3 p-3">
                     <h6>Follow Us</h6>
                     <ul class="d-flex list-unstyled">
                         <li class="my-1">
@@ -98,21 +72,24 @@
                         Release notes, challenge results and event announcements.
                     </p>
                 </div>
-            </div>
-            <div class="row justify-content-center">
-                <div class="col-sm-6 text-center p-3">
-                    <ul class="list-unstyled">
-                        <li>
-                         <a href='https://aws.amazon.com/'>
-                               <img style="height: 1.6em;"
+                 <div class="col-sm-6 col-md-3 p-3">
+                    <h6>Sponsor</h6>
+                    <ul class="d-flex list-unstyled">
+                        <li class="my-1">
+                           <a href='https://aws.amazon.com/'>
+                                 <img class="w-25 py-2"
                                      loading="lazy"
-                                     src="{% static 'images/Powered-By_logo-horiz_RGB.png' %}"
+                                     src="{% static 'images/Powered-By_logo-stack_RGB.png' %}"
                                      alt="Logo of Amazon Web Services"
                                      title="Grand Challenge is sponsored by Amazon Web Services"
                                 >
                             </a>
                         </li>
                     </ul>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-sm-6 text-center p-3">
                     <p class="text-muted small">&copy; 2012&ndash;{% now "Y" %} Radboud university medical center</p>
                 </div>
             </div>
