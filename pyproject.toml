@@ -98,6 +98,9 @@ dev = [
     "pytest-timeout",
 ]
 
+[tool.uv]
+exclude-newer = "7 days"
+
 [tool.isort]
 profile = "black"
 known_first_party = ["config", "grandchallenge", "tests"]

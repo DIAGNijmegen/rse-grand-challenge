@@ -5,3 +5,6 @@ requires-python = "==3.13.*"
 dependencies = [
     "panimg",
 ]
+
+[tool.uv]
+exclude-newer = "7 days"
