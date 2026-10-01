@@ -7,6 +7,9 @@ resolution-markers = [
     "sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
+[options]
+exclude-newer = "2026-09-24T13:01:10Z"
+
 [[package]]
 name = "biom-format"
 version = "2.1.17"
