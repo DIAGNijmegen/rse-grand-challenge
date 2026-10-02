@@ -6,3 +6,6 @@ dependencies = [
     "biom-format",
     "biopython",
 ]
+
+[tool.uv]
+exclude-newer = "7 days"

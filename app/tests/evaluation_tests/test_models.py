@@ -1137,6 +1137,32 @@ def test_archive_items_per_job_in_batch_mode(
 
 
 @pytest.mark.django_db
+def test_use_batch_mode_requires_short_enough_time_limit(settings):
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 60 * 60
+    settings.COMPONENTS_JOB_SETUP_DURATION = 5 * 60
+
+    maximum_algorithm_time_limit = (
+        settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
+        - settings.COMPONENTS_JOB_SETUP_DURATION
+    )
+
+    phase = PhaseFactory(
+        submission_kind=Phase.SubmissionKindChoices.ALGORITHM,
+        algorithm_time_limit=maximum_algorithm_time_limit + 1,
+    )
+
+    phase.use_batch_mode = True
+
+    with pytest.raises(ValidationError) as err:
+        phase.full_clean()
+
+    assert "the algorithm job time limit is at most" in str(err)
+
+    phase.algorithm_time_limit = maximum_algorithm_time_limit
+    phase.full_clean()
+
+
+@pytest.mark.django_db
 def test_use_batch_mode_check_constraint():
     from django.db.utils import IntegrityError
 

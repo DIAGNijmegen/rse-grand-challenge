@@ -6,7 +6,7 @@
 {% load discussion_forum_extras %}
 
 
-{% block sub_title %}{% if topic %}{{ topic }}{% endif %}My posts- {% endblock %}
+{% block sub_title %}{% if topic %}{{ topic }}{% else %}My posts{% endif %} - {% endblock %}
 
 {% block extra_breadcrumbs %}
     <li class="breadcrumb-item">

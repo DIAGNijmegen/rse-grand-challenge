@@ -821,6 +821,19 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 "Batch mode can only be enabled for closed log phases."
             )
 
+        maximum_algorithm_time_limit = (
+            settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
+            - settings.COMPONENTS_JOB_SETUP_DURATION
+        )
+        if (
+            self.use_batch_mode
+            and self.algorithm_time_limit > maximum_algorithm_time_limit
+        ):
+            raise ValidationError(
+                "Batch mode can only be enabled when the algorithm job time "
+                f"limit is at most {maximum_algorithm_time_limit} seconds."
+            )
+
     def _clean_submission_kind(self):
         if self.has_changed("submission_kind"):
             if self.submission_set.exists():

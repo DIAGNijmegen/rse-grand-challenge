@@ -85,13 +85,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=dockerfiles/web-base/virtualenvs/biom/pyproject.toml,target=/tmp/biom/pyproject.toml \
     --mount=type=bind,source=dockerfiles/web-base/virtualenvs/biom/uv.lock,target=/tmp/biom/uv.lock \
     UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/biom \
-    uv sync --locked --no-install-project --project /tmp/biom
+    uv sync --frozen --no-install-project --project /tmp/biom
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=dockerfiles/web-base/virtualenvs/panimg/pyproject.toml,target=/tmp/panimg/pyproject.toml \
     --mount=type=bind,source=dockerfiles/web-base/virtualenvs/panimg/uv.lock,target=/tmp/panimg/uv.lock \
     UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/panimg \
-    uv sync --locked --no-install-project --project /tmp/panimg
+    uv sync --frozen --no-install-project --project /tmp/panimg
 
 WORKDIR /opt/grand-challenge
 
@@ -99,7 +99,7 @@ WORKDIR /opt/grand-challenge
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project --no-dev
+    uv sync --frozen --no-install-project --no-dev
 
 ##################
 # TEST CONTAINER #
@@ -128,5 +128,5 @@ USER django:django
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project
+    uv sync --frozen --no-install-project
 RUN playwright install

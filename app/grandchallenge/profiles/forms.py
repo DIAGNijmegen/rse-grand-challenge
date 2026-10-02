@@ -12,10 +12,20 @@ from grandchallenge.profiles.models import UserProfile
 
 class UserProfileForm(forms.ModelForm):
     first_name = forms.CharField(
-        label=_("First Name"), max_length=30, required=True
+        label=_("First Name"),
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(
+            attrs={"placeholder": "First Name"},
+        ),
     )
     last_name = forms.CharField(
-        label=_("Last Name"), max_length=30, required=True
+        label=_("Last Name"),
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(
+            attrs={"placeholder": "Last Name"},
+        ),
     )
 
     class Meta:
@@ -32,6 +42,17 @@ class UserProfileForm(forms.ModelForm):
             "notification_email_choice",
             "receive_newsletter",
         )
+        widgets = {
+            "institution": forms.TextInput(
+                attrs={"placeholder": "Institution"}
+            ),
+            "department": forms.TextInput(
+                attrs={"placeholder": "Department"},
+            ),
+            "website": forms.TextInput(
+                attrs={"placeholder": "Website"},
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,7 +65,7 @@ class UserProfileForm(forms.ModelForm):
             self.fields["last_name"].initial = self.instance.user.last_name
 
         self.fields["country"].label = "Location"
-        self.fields["receive_newsletter"].initial = True
+        self.fields["receive_newsletter"].initial = False
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
@@ -94,7 +115,7 @@ class SignupForm(UserProfileForm):
             self.fields[f"accept_policy_{idx}"] = forms.BooleanField(
                 required=True,
                 label=format_html(
-                    "I have read and agree to the <a href={absolute_url}>{title}</a> policy",
+                    "I have read and agree to the <a href={absolute_url}>{title}</a>",
                     absolute_url=policy.get_absolute_url(),
                     title=policy.title,
                 ),

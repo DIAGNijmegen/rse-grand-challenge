@@ -1,8 +1,10 @@
 import uuid
 
 from dal import autocomplete
+from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
@@ -306,6 +308,16 @@ class CIVSetDelete(
     raise_exception = True
     login_url = reverse_lazy("account_login")
     template_name = "components/civset_confirm_delete.html"
+
+    def check_permissions(self, request, *arg, **kwargs):
+        instance = self.get_object()
+        if not instance.is_editable:
+            messages.error(
+                request=request,
+                message=instance.not_editable_error_message,
+            )
+            raise PermissionDenied
+        return super().check_permissions(request, *arg, **kwargs)
 
     def get_success_url(self):
         return self.object.base_object.civ_sets_list_url

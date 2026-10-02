@@ -1,6 +1,7 @@
 import io
 
 import pytest
+from django.contrib.messages.api import get_messages
 from django.core.exceptions import ObjectDoesNotExist
 from guardian.shortcuts import assign_perm
 from pytest_django.asserts import assertContains, assertNotContains
@@ -398,6 +399,40 @@ def test_display_set_update_permissions(client):
 
 
 @pytest.mark.django_db
+def test_display_set_delete_forbidden_when_not_editable(client):
+    editor = UserFactory()
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(reader_study=rs)
+    rs.add_editor(editor)
+
+    # An answer exists for this display set, so it is no longer editable.
+    question = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    AnswerFactory(
+        creator=editor, question=question, answer=True, display_set=ds
+    )
+    assert ds.is_editable is False
+
+    response = get_view_for_user(
+        viewname="reader-studies:display-set-delete",
+        client=client,
+        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+        user=editor,
+    )
+    # The editor has delete permission, but the display set is not editable,
+    # so the delete page must not be reachable.
+    assert response.status_code == 403
+    messages = list(get_messages(response.wsgi_request))
+    assert messages
+    assert [
+        "This display set cannot be changed, as answers for it already exist."
+    ] == [m.message for m in messages]
+
+
+@pytest.mark.django_db
 def test_display_set_detail_permissions(client):
     rs = ReaderStudyFactory()
 
@@ -765,7 +800,7 @@ def test_add_display_set_to_reader_study_with_empty_value(
 
 
 @pytest.mark.django_db
-def test_display_set_update_when_disabled(client):
+def test_display_set_update_forbidden_when_disabled(client):
     editor = UserFactory()
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
@@ -774,6 +809,9 @@ def test_display_set_update_when_disabled(client):
 
     # add an answer for the ds
     AnswerFactory(question__reader_study=rs, display_set=ds, answer="true")
+
+    ds.refresh_from_db()
+    assert not ds.is_editable
 
     response = get_view_for_user(
         viewname="reader-studies:display-set-update",
@@ -788,10 +826,13 @@ def test_display_set_update_when_disabled(client):
         method=client.post,
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 403
+
+    messages = list(get_messages(response.wsgi_request))
+    assert messages
     assert [
         "This display set cannot be changed, as answers for it already exist."
-    ] == response.context["form"].errors["__all__"]
+    ] == [m.message for m in messages]
 
 
 @pytest.mark.django_db
