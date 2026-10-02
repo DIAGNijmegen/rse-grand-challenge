@@ -3,19 +3,18 @@
 {% load cache %}
 {% load static %}
 
-{% cache 0 foo-grandchallenge-partials-footer %}
+{% cache 0 bar-grandchallenge-partials-footer %}
     {% get_flatpages as flatpages %}
     <footer class="footer">
         <div class="container">
-            <hr class="m-0">
-            <div class="row small">
-                <div class="col-sm-6 col-md-3 p-3">
-                    <h6>Grand Challenge</h6>
-                    <ul class="list-unstyled">
+            <div class="row small border-top">
+                <div class="col-sm-6 col-md-3 pt-3">
+                    <h6 class="text-uppercase text-primary mb-2">Grand Challenge</h6>
+                    <ul class="list-unstyled ml-1">
                         {% for page in flatpages %}
-                            <li class="my-1">
+                            <li>
                                 {# Manual construction of url is used here due to flatpage redirect errors #}
-                                <a class="text-muted"
+                                <a class="text-secondary"
                                         {# @formatter:off #}
                                    href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
                                         {# @formatter:on #}
@@ -23,14 +22,14 @@
                                 </a>
                             </li>
                         {% endfor %}
-                        <li class="my-1">
-                            <a class="text-muted"
+                        <li>
+                            <a class="text-secondary"
                                href="{% url 'statistics:detail' %}">
                                 Statistics
                             </a>
                         </li>
-                        <li class="my-1">
-                            <a class="text-muted"
+                        <li>
+                            <a class="text-secondary"
                                href="https://diagnijmegen.github.io/rse-grand-challenge-status/"
                                target="_blank">
                                 Status
@@ -38,46 +37,49 @@
                         </li>
                     </ul>
                 </div>
-                <div class="col-sm-6 col-md-3 p-3">
-                    <h6>Policies</h6>
-                    <ul class="list-unstyled">
+                <div class="col-sm-6 col-md-3 pt-3">
+                    <h6 class="text-uppercase text-primary mb-2">Policies</h6>
+                    <ul class="list-unstyled ml-1">
                         {% for policy in policy_pages %}
-                            <li class="my-1"><a class="text-muted"
-                                                href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
+                            <li>
+                                <a class="text-secondary"
+                                    href="{{ policy.get_absolute_url }}">
+                                        {{ policy.title }}
+                                </a>
                             </li>
                         {% endfor %}
                     </ul>
                 </div>
-                <div class="col-sm-6 col-md-3 p-3">
-                    <h6>Follow Us</h6>
-                    <ul class="d-flex list-unstyled">
-                        <li class="my-1">
-                            <a class="p-1 text-muted"
+                <div class="col-sm-6 col-md-3 pt-3">
+                    <h6 class="text-uppercase text-primary mb-1">Follow Us</h6>
+                    <ul class="d-flex list-unstyled ml-1 mb-2">
+                        <li class="mt-2">
+                            <a class="text-secondary"
                                 style="font-size: 1.5rem;"
                                 href="https://www.linkedin.com/company/grand-challenge/"
-                                title="Folow us on LinkedIn">
+                                title="Follow us on LinkedIn">
                                 <i class="fab fa-linkedin fa-lg"></i>
                             </a>
                         </li>
-                        <li class="my-1">
-                            <a class="p-1 text-muted"
+                        <li class="mt-2">
+                            <a class="mx-2 text-secondary"
                                 style="font-size: 1.5rem;"
                                 href="https://github.com/DIAGNijmegen/rse-grand-challenge/"
-                                title="Join us on Github">
+                                title="Join us on GitHub">
                                 <i class="fab fa-github fa-lg"></i>
                             </a>
                         </li>
                     </ul>
-                    <p class="small text-secondary mt-3 mb-0">
-                        Release notes, challenge results and event announcements.
+                     <p class="small text-secondary ml-1 mb-0">
+                        Release notes and announcements.
                     </p>
                 </div>
-                 <div class="col-sm-6 col-md-3 p-3">
-                    <h6>Sponsor</h6>
-                    <ul class="d-flex list-unstyled">
-                        <li class="my-1">
-                           <a href='https://aws.amazon.com/'>
-                                 <img class="w-25 py-2"
+                <div class="col-sm-6 col-md-3 pt-3">
+                    <h6 class="text-uppercase text-primary mb-1">Sponsors</h6>
+                    <ul class="d-flex list-unstyled ml-2">
+                        <li class="text-center">
+                           <a href="https://aws.amazon.com/">
+                                 <img class="w-25 mx-2"
                                      loading="lazy"
                                      src="{% static 'images/Powered-By_logo-stack_RGB.png' %}"
                                      alt="Logo of Amazon Web Services"
@@ -88,8 +90,9 @@
                     </ul>
                 </div>
             </div>
+
             <div class="row justify-content-center">
-                <div class="col-sm-6 text-center p-3">
+                <div class="col text-center pt-2">
                     <p class="text-muted small">&copy; 2012&ndash;{% now "Y" %} Radboud university medical center</p>
                 </div>
             </div>
