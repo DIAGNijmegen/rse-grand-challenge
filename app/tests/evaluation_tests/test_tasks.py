@@ -1135,10 +1135,7 @@ def test_create_algorithm_jobs_for_evaluation_batch_mode(settings):
     for batch_job in batch_jobs:
         assert batch_job.submission == evaluation.submission
         assert batch_job.algorithm_image == ai
-        assert (
-            batch_job.time_limit
-            == 600
-        )
+        assert batch_job.time_limit == 600
         for task in batch_job.tasks.all():
             assert task.algorithm_interface == interface
             assert task.inputs.count() == 1
