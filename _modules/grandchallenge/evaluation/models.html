@@ -851,6 +851,19 @@
                 <span class="s2">"Batch mode can only be enabled for closed log phases."</span>
             <span class="p">)</span>
 
+        <span class="n">maximum_algorithm_time_limit</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">EVALUATION_MAXIMUM_BATCH_JOB_DURATION</span>
+            <span class="o">-</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_JOB_SETUP_DURATION</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">use_batch_mode</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_time_limit</span> <span class="o">&gt;</span> <span class="n">maximum_algorithm_time_limit</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">"Batch mode can only be enabled when the algorithm job time "</span>
+                <span class="sa">f</span><span class="s2">"limit is at most </span><span class="si">{</span><span class="n">maximum_algorithm_time_limit</span><span class="si">}</span><span class="s2"> seconds."</span>
+            <span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_submission_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">"submission_kind"</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
