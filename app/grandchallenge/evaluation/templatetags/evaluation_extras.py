@@ -23,7 +23,7 @@ def get_jsonpath(obj: dict, jsonpath):
 
         return val
 
-    except (KeyError, TypeError):
+    except KeyError, TypeError:
         return ""
 
 
@@ -31,7 +31,7 @@ def get_jsonpath(obj: dict, jsonpath):
 def get_key(obj: dict, key):
     try:
         return obj[key]
-    except (KeyError, TypeError):
+    except KeyError, TypeError:
         return ""
 
 

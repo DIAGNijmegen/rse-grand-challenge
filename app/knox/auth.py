@@ -16,7 +16,7 @@ class TokenAuthentication(BaseTokenAuthentication):
     def authenticate_credentials(self, key):
         try:
             hashed_key = hash_token(key)
-        except (TypeError, binascii.Error):
+        except TypeError, binascii.Error:
             raise exceptions.AuthenticationFailed(_("Invalid token."))
 
         user, token = super().authenticate_credentials(key=hashed_key)

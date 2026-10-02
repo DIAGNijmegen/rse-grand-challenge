@@ -104,7 +104,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
 
     try:
         user, _ = TokenAuthentication().authenticate(request)
-    except (AuthenticationFailed, TypeError):
+    except AuthenticationFailed, TypeError:
         user = request.user
 
     if user.has_perm("view_image", image):
@@ -161,14 +161,14 @@ def serve_component_interface_value(
 ):
     try:
         user, _ = TokenAuthentication().authenticate(request)
-    except (AuthenticationFailed, TypeError):
+    except AuthenticationFailed, TypeError:
         user = request.user
 
     try:
         civ = ComponentInterfaceValue.objects.get(
             pk=component_interface_value_pk
         )
-    except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
+    except MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist:
         raise Http404
 
     if get_component_interface_values_for_user(
@@ -225,7 +225,7 @@ def serve_algorithm_images(request, *, algorithmimage_pk, **_):
 
     try:
         user, _ = TokenAuthentication().authenticate(request)
-    except (AuthenticationFailed, TypeError):
+    except AuthenticationFailed, TypeError:
         user = request.user
 
     if user.has_perm("download_algorithmimage", image):
@@ -246,7 +246,7 @@ def serve_algorithm_models(request, *, algorithmmodel_pk, **_):
 
     try:
         user, _ = TokenAuthentication().authenticate(request)
-    except (AuthenticationFailed, TypeError):
+    except AuthenticationFailed, TypeError:
         user = request.user
 
     if user.has_perm("download_algorithmmodel", model):

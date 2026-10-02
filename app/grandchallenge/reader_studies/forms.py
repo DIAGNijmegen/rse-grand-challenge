@@ -893,7 +893,7 @@ class GroundTruthCSVForm(SaveFormInitMixin, UserMixin, Form):
 
                 try:
                     explanation = json.loads(gt.get(key + "__explanation", ""))
-                except (json.JSONDecodeError, TypeError):
+                except json.JSONDecodeError, TypeError:
                     explanation = ""
 
                 common_answer_kwargs = {

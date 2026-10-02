@@ -27,7 +27,7 @@ class BrokenLinkDashboard(
     def get_days(self):
         try:
             days = int(self.request.GET.get("days", 0))
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             days = 0
 
         return days if days in self.DAYS_CHOICES else 0
