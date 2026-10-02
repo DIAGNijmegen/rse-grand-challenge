@@ -1724,7 +1724,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         help_text="Serialized task that is run on job failure",
     )
     time_limit = models.PositiveIntegerField(
-        help_text="Time limit for the job in seconds",
+        help_text="Time limit in seconds for a single inference task (one invocation)",
         validators=[
             MinValueValidator(
                 limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION

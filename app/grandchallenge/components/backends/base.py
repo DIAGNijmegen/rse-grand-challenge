@@ -391,7 +391,10 @@ class Executor(ABC):
     @property
     def total_task_time_limit(self):
         return sum(
-            (task.time_limit for task in self._task_definitions),
+            (
+                task_definition.time_limit
+                for task_definition in self._task_definitions
+            ),
             start=timedelta(),
         )
 
