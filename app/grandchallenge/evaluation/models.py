@@ -2236,9 +2236,7 @@ class BatchJob(ComponentJob):
             InferenceTaskDefinition(
                 input_civs=task.inputs.all(),
                 task_pk=str(task.pk),
-                time_limit=timedelta(
-                    seconds=self.submission.phase.algorithm_time_limit
-                ),
+                time_limit=timedelta(seconds=self.time_limit),
             )
             for task in self.tasks.prefetch_related(
                 "inputs__interface", "inputs__image__files"
