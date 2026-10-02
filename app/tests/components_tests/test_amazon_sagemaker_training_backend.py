@@ -1098,7 +1098,8 @@ def test_handle_event_for_batchjob():
         input_civ_sets=[
             {ComponentInterfaceValueFactory()},
             {ComponentInterfaceValueFactory()},
-        ]
+        ],
+        time_limit=10,
     )
     first_task, second_task = batch_job.tasks.all()
 
@@ -1155,7 +1156,8 @@ def test_handle_event_for_batchjob_task_failure():
         input_civ_sets=[
             {ComponentInterfaceValueFactory()},
             {ComponentInterfaceValueFactory()},
-        ]
+        ],
+        time_limit=10,
     )
     first_task, second_task = batch_job.tasks.all()
 
@@ -1212,6 +1214,7 @@ def test_handle_event_task_for_batchjob(mocker):
             {ComponentInterfaceValueFactory()},
             {ComponentInterfaceValueFactory()},
         ],
+        time_limit=10,
     )
     first_task, second_task = batch_job.tasks.all()
 
@@ -1275,6 +1278,7 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
             {ComponentInterfaceValueFactory()},
             {ComponentInterfaceValueFactory()},
         ],
+        time_limit=10,
     )
     first_task, second_task = batch_job.tasks.all()
 

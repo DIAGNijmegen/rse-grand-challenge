@@ -3098,7 +3098,7 @@ def test_visibility_icon(
 @pytest.mark.django_db
 def test_batch_job_container():
     algorithm_image = AlgorithmImageFactory()
-    batch_job = BatchJobFactory(algorithm_image=algorithm_image)
+    batch_job = BatchJobFactory(algorithm_image=algorithm_image, time_limit=10)
 
     assert batch_job.container == algorithm_image
 
@@ -3106,7 +3106,7 @@ def test_batch_job_container():
 @pytest.mark.django_db
 def test_batch_job_executor_kwargs():
     algorithm_model = AlgorithmModelFactory()
-    batch_job = BatchJobFactory(algorithm_model=algorithm_model)
+    batch_job = BatchJobFactory(algorithm_model=algorithm_model, time_limit=10)
 
     assert (
         batch_job.executor_kwargs["algorithm_model"] == algorithm_model.model
@@ -3115,7 +3115,7 @@ def test_batch_job_executor_kwargs():
 
 @pytest.mark.django_db
 def test_batch_job_view_permission_assigned_to_challenge_admins():
-    batch_job = BatchJobFactory()
+    batch_job = BatchJobFactory(time_limit=10)
     admins_group = batch_job.submission.phase.challenge.admins_group
 
     assert "view_batchjob" in get_group_perms(admins_group, batch_job)
@@ -3123,7 +3123,7 @@ def test_batch_job_view_permission_assigned_to_challenge_admins():
 
 @pytest.mark.django_db
 def test_batch_job_utilization_created():
-    batch_job = BatchJobFactory()
+    batch_job = BatchJobFactory(time_limit=10)
 
     utilization = batch_job.utilization
 
@@ -3154,6 +3154,7 @@ def test_batch_job_inputs_complete():
                 ComponentInterfaceValueFactory(interface=ci2, value="bar"),
             }
         ],
+        time_limit=10,
     )
     assert complete_batch_job.inputs_complete
 
@@ -3167,5 +3168,6 @@ def test_batch_job_inputs_complete():
                 ComponentInterfaceValueFactory(interface=ci2, value=None),
             }
         ],
+        time_limit=10,
     )
     assert not incomplete_batch_job.inputs_complete

@@ -876,7 +876,8 @@ def test_provision_batch_job(settings):
         input_civ_sets=[
             {str_interface.create_instance(value="first")},
             {str_interface.create_instance(value="second")},
-        ]
+        ],
+        time_limit=10,
     )
     first_task, second_task = batch_job.tasks.all()
 

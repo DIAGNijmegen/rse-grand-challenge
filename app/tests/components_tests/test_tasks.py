@@ -2227,6 +2227,7 @@ def test_parse_job_output_for_batch_job(
             {ComponentInterfaceValueFactory(interface=int_socket_0)},
             {ComponentInterfaceValueFactory(interface=int_socket_0)},
         ],
+        time_limit=10,
     )
     first_task, second_task = batch_job.tasks.all()
 

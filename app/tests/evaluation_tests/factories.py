@@ -84,10 +84,9 @@ class BatchJobFactory(factory.django.DjangoModelFactory):
         algorithm_interface=None,
         **kwargs,
     ):
-        # BatchJobManager.create requires input CIV sets and an interface, and
-        # derives the tasks and time limit from them. Default to a single task
-        # whose inputs match the interface so a bare BatchJobFactory() produces
-        # a valid, inputs-complete job.
+        # BatchJobManager.create requires input CIV sets and an interface.
+        # Default to a single task whose inputs match the interface so a
+        # bare BatchJobFactory() produces a valid, inputs-complete job.
         if algorithm_interface is None:
             algorithm_interface = AlgorithmInterfaceFactory()
 
