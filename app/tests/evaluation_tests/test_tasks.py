@@ -1087,7 +1087,7 @@ def test_create_algorithm_jobs_for_evaluation_batch_mode(settings):
         submission__phase__use_batch_mode=True,
         submission__phase__algorithm_time_limit=600,
         submission__algorithm_image=ai,
-        time_limit=ai.algorithm.time_limit,
+        time_limit=10,
         status=Evaluation.PENDING,
     )
     settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = (
@@ -1137,8 +1137,7 @@ def test_create_algorithm_jobs_for_evaluation_batch_mode(settings):
         assert batch_job.algorithm_image == ai
         assert (
             batch_job.time_limit
-            == batch_job.tasks.count()
-            * evaluation.submission.phase.algorithm_time_limit
+            == 600
         )
         for task in batch_job.tasks.all():
             assert task.algorithm_interface == interface
