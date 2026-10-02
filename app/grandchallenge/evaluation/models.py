@@ -1266,14 +1266,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @property
     def archive_items_per_job(self):
-        if not self.use_batch_mode:
-            return 1
-        else:
+        if self.use_batch_mode:
             max_inference_duration = (
                 settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
                 - settings.COMPONENTS_JOB_SETUP_DURATION
             )
             return max(max_inference_duration // self.algorithm_time_limit, 1)
+        else:
+            return 1
 
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
         message = format_html(
