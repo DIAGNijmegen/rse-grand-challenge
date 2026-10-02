@@ -48,7 +48,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.mail</span><span class="w"> </span><span class="kn">import</span> <span class="n">mail_managers</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Case</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">IntegerField</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Value</span><span class="p">,</span> <span class="n">When</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coalesce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
@@ -66,7 +66,9 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.archives.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.challenges.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Challenge</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">InferenceTaskDefinition</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InferenceTaskDefinition</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CIVForObjectMixin</span><span class="p">,</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
@@ -262,6 +264,19 @@
                 <span class="n">jobs_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">jobs_per_interface</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">active_inference_jobs_count</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">algorithm_image</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">active_jobs</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">active</span><span class="p">()</span>
+    <span class="n">active_batch_jobs</span> <span class="o">=</span> <span class="n">BatchJob</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">active</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">algorithm_image</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">active_jobs</span> <span class="o">=</span> <span class="n">active_jobs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">algorithm_image</span><span class="o">=</span><span class="n">algorithm_image</span><span class="p">)</span>
+        <span class="n">active_batch_jobs</span> <span class="o">=</span> <span class="n">active_batch_jobs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">algorithm_image</span><span class="o">=</span><span class="n">algorithm_image</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">active_jobs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">+</span> <span class="n">active_batch_jobs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PhaseManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
@@ -1297,6 +1312,17 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">jobs_to_schedule_per_submission</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_item_count_per_interface</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">archive_items_per_job</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_batch_mode</span><span class="p">:</span>
+            <span class="n">max_inference_duration</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">settings</span><span class="o">.</span><span class="n">EVALUATION_MAXIMUM_BATCH_JOB_DURATION</span>
+                <span class="o">-</span> <span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_JOB_SETUP_DURATION</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_inference_duration</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_time_limit</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">send_give_algorithm_editors_job_view_permissions_changed_email</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">format_html</span><span class="p">(</span>
             <span class="p">(</span>
@@ -1859,6 +1885,224 @@
         <span class="n">phase_algorithm_interfaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">phase_algorithm_interfaces</span> <span class="o">&lt;=</span> <span class="n">algorithm_interfaces</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inference_job_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BatchJob</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span> <span class="k">else</span> <span class="n">Job</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+            <span class="s2">"inputs"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">candidate_archive_items_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Candidate archive items for scheduling, grouped by the submitted</span>
+<span class="sd">        image's interfaces and ordered so that archive items with titles</span>
+<span class="sd">        are scheduled first.</span>
+<span class="sd">        """</span>
+        <span class="n">archive_items</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">"values__interface"</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">has_title</span><span class="o">=</span><span class="n">Case</span><span class="p">(</span>
+                    <span class="n">When</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">then</span><span class="o">=</span><span class="n">Value</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+                    <span class="n">default</span><span class="o">=</span><span class="n">Value</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                    <span class="n">output_field</span><span class="o">=</span><span class="n">IntegerField</span><span class="p">(),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"has_title"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">,</span> <span class="s2">"created"</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">get_archive_items_for_interfaces</span><span class="p">(</span>
+            <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="p">,</span>
+            <span class="n">archive_items</span><span class="o">=</span><span class="n">archive_items</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">candidate_input_civ_sets_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Candidate input CIV sets for scheduling, one per candidate archive</span>
+<span class="sd">        item, grouped by the submitted image's interfaces.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">interface</span><span class="p">:</span> <span class="p">[</span>
+                <span class="nb">frozenset</span><span class="p">(</span><span class="n">archive_item</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">all</span><span class="p">())</span> <span class="k">for</span> <span class="n">archive_item</span> <span class="ow">in</span> <span class="n">items</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">candidate_archive_items_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scheduled_input_civ_sets_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Input CIV sets that have already been scheduled as inputs for a Job or</span>
+<span class="sd">        BatchJob, grouped by interface.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="n">interface</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nb">frozenset</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+                    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">BatchJobTask</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">batch_job__submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                        <span class="n">algorithm_interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">)</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scheduled_jobs_per_interface</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">get_valid_jobs_for_interfaces_and_archive_items</span><span class="p">(</span>
+                    <span class="n">algorithm_image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">,</span>
+                    <span class="n">algorithm_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">,</span>
+                    <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="p">,</span>
+                    <span class="n">valid_archive_items_per_interface</span><span class="o">=</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">candidate_archive_items_per_interface</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="n">interface</span><span class="p">:</span> <span class="p">{</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">())</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">}</span>
+                <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">jobs</span> <span class="ow">in</span> <span class="n">scheduled_jobs_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unscheduled_input_civ_sets_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Input CIV sets that have NOT been scheduled as inputs for a Job or</span>
+<span class="sd">        BatchJob yet, grouped by interface.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">interface</span><span class="p">:</span> <span class="p">[</span>
+                <span class="n">input_civs</span>
+                <span class="k">for</span> <span class="n">input_civs</span> <span class="ow">in</span> <span class="n">input_civ_sets</span>
+                <span class="k">if</span> <span class="n">input_civs</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduled_input_civ_sets_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">input_civ_sets</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">candidate_input_civ_sets_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_inference_jobs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">max_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">task_on_success</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">task_on_failure</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">job_utilization_invoice</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># Local import to avoid a circular dependency</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TooManyJobsScheduled</span>
+
+        <span class="c1"># Evaluate once</span>
+        <span class="n">unscheduled_input_civ_sets_per_interface</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unscheduled_input_civ_sets_per_interface</span>
+        <span class="p">)</span>
+
+        <span class="n">sets_remaining</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">input_civ_sets</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">input_civ_sets</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="n">unscheduled_input_civ_sets_per_interface</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">archive_items_per_job</span>
+
+        <span class="n">jobs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span>
+            <span class="n">interface</span><span class="p">,</span>
+            <span class="n">input_civ_sets</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">in</span> <span class="n">unscheduled_input_civ_sets_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">input_civ_sets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_civ_sets</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_civ_sets</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">jobs</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">max_jobs</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">TooManyJobsScheduled</span>
+
+                <span class="n">chunk</span> <span class="o">=</span> <span class="n">input_civ_sets</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>
+
+                <span class="n">use_warm_pool</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">sets_remaining</span>
+                    <span class="o">-</span> <span class="n">settings</span><span class="o">.</span><span class="n">ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM</span>
+                    <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">jobs</span><span class="p">)</span>
+                <span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+                <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schedule_inference_job</span><span class="p">(</span>
+                    <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+                    <span class="n">input_civ_sets</span><span class="o">=</span><span class="n">chunk</span><span class="p">,</span>
+                    <span class="n">task_on_success</span><span class="o">=</span><span class="n">task_on_success</span><span class="p">,</span>
+                    <span class="n">task_on_failure</span><span class="o">=</span><span class="n">task_on_failure</span><span class="p">,</span>
+                    <span class="n">use_warm_pool</span><span class="o">=</span><span class="n">use_warm_pool</span><span class="p">,</span>
+                    <span class="n">invoice</span><span class="o">=</span><span class="n">job_utilization_invoice</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="n">jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">jobs</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_schedule_inference_job</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">interface</span><span class="p">,</span>
+        <span class="n">input_civ_sets</span><span class="p">,</span>
+        <span class="n">task_on_success</span><span class="p">,</span>
+        <span class="n">task_on_failure</span><span class="p">,</span>
+        <span class="n">use_warm_pool</span><span class="p">,</span>
+        <span class="n">invoice</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">common_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"algorithm_image"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">,</span>
+            <span class="s2">"algorithm_model"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">,</span>
+            <span class="s2">"requires_gpu_type"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_requires_gpu_type</span><span class="p">,</span>
+            <span class="s2">"requires_memory_gb"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_requires_memory_gb</span><span class="p">,</span>
+            <span class="s2">"task_on_success"</span><span class="p">:</span> <span class="n">task_on_success</span><span class="p">,</span>
+            <span class="s2">"task_on_failure"</span><span class="p">:</span> <span class="n">task_on_failure</span><span class="p">,</span>
+            <span class="s2">"use_warm_pool"</span><span class="p">:</span> <span class="n">use_warm_pool</span><span class="p">,</span>
+            <span class="s2">"algorithm_interface"</span><span class="p">:</span> <span class="n">interface</span><span class="p">,</span>
+            <span class="s2">"time_limit"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_time_limit</span><span class="p">,</span>  <span class="c1"># per-task-time-limit</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span><span class="p">:</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="n">BatchJob</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">input_civ_sets</span><span class="o">=</span><span class="n">input_civ_sets</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">common_kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_civ_sets</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"A Job can only process a single input CIV set."</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Only the challenge admins should be able to view these jobs,</span>
+            <span class="c1"># never the algorithm editors as these are participants - they must</span>
+            <span class="c1"># never be able to see the test data...</span>
+            <span class="n">viewer_groups</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">]</span>
+
+            <span class="c1"># ...unless the challenge admins have opted in to this</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">give_algorithm_editors_job_view_permissions</span><span class="p">:</span>
+                <span class="n">viewer_groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">editors_group</span>
+                <span class="p">)</span>
+
+            <span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">creator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># System jobs, so no creator</span>
+                <span class="n">input_civ_set</span><span class="o">=</span><span class="n">input_civ_sets</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">extra_viewer_groups</span><span class="o">=</span><span class="n">viewer_groups</span><span class="p">,</span>
+                <span class="n">extra_logs_viewer_groups</span><span class="o">=</span><span class="n">viewer_groups</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">common_kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">archive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">archive</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">challenge</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">invoice</span> <span class="o">=</span> <span class="n">invoice</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">job</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmissionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
     <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"view_submission"</span><span class="p">})</span>
@@ -1960,6 +2204,27 @@
     <span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchJobManager</span><span class="p">(</span><span class="n">ComponentJobManager</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">submission</span><span class="p">,</span>
+        <span class="n">input_civ_sets</span><span class="p">,</span>
+        <span class="n">algorithm_interface</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">batch_job</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">submission</span><span class="o">=</span><span class="n">submission</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">input_civs</span> <span class="ow">in</span> <span class="n">input_civ_sets</span><span class="p">:</span>
+            <span class="n">batch_job_task</span> <span class="o">=</span> <span class="n">BatchJobTask</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">batch_job</span><span class="o">=</span><span class="n">batch_job</span><span class="p">,</span>
+                <span class="n">algorithm_interface</span><span class="o">=</span><span class="n">algorithm_interface</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">batch_job_task</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">input_civs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">batch_job</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchJob</span><span class="p">(</span><span class="n">ComponentJob</span><span class="p">):</span>
     <span class="n">algorithm_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">AlgorithmImage</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
@@ -1968,6 +2233,8 @@
         <span class="n">AlgorithmModel</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
     <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">"Submission"</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">BatchJobManager</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">ComponentJob</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"created"</span><span class="p">,)</span>
@@ -2025,6 +2292,25 @@
                 <span class="s2">"inputs__interface"</span><span class="p">,</span> <span class="s2">"inputs__image__files"</span>
             <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
         <span class="p">]</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+            <span class="s2">"inputs__interface"</span><span class="p">,</span> <span class="s2">"algorithm_interface__inputs"</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">civ</span><span class="o">.</span><span class="n">interface</span>
+                <span class="k">for</span> <span class="n">civ</span> <span class="ow">in</span> <span class="n">task</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">civ</span><span class="o">.</span><span class="n">has_value</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">civ</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">value_required</span>
+            <span class="p">}</span>
+            <span class="o">==</span> <span class="p">{</span><span class="o">*</span><span class="n">task</span><span class="o">.</span><span class="n">algorithm_interface</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">BatchJobUtilization</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">batch_job</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>

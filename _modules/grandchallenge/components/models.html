@@ -1815,7 +1815,7 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">"Serialized task that is run on job failure"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">time_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">"Time limit for the job in seconds"</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">"Time limit in seconds for a single inference task (one invocation)"</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
             <span class="n">MinValueValidator</span><span class="p">(</span>
                 <span class="n">limit_value</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_MINIMUM_JOB_DURATION</span>
