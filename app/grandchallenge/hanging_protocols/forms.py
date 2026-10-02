@@ -62,7 +62,7 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
             viewport_names = [
                 viewport["viewport_name"] for viewport in hanging_protocol_json
             ]
-        except (KeyError, TypeError):
+        except KeyError, TypeError:
             raise ValidationError(
                 "Hanging protocol definition is invalid. Have a look at the example in the helptext."
             )

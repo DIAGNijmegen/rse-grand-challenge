@@ -1046,7 +1046,7 @@ class Executor(ABC):
                 dest = safe_join(
                     target_directory, Path(root_key).relative_to(prefix)
                 )
-            except (SuspiciousFileOperation, ValueError):
+            except SuspiciousFileOperation, ValueError:
                 logger.warning(f"Skipping {file=}")
                 continue
 

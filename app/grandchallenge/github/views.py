@@ -147,7 +147,7 @@ class GitHubInstallationRequiredMixin:
         if self.github_user_token.access_token_is_expired:
             try:
                 self.github_user_token.refresh_access_token()
-            except (HTTPError, GitHubBadRefreshTokenException):
+            except HTTPError, GitHubBadRefreshTokenException:
                 self.github_user_token.delete()
                 return redirect(self.github_auth_url)
 

@@ -1578,7 +1578,7 @@ def add_image_to_object(  # noqa: C901
             obj = model.objects.select_for_update(nowait=True).get(
                 pk=object_pk
             )
-    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+    except ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist:
         task_logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 
@@ -1609,7 +1609,7 @@ def add_image_to_object(  # noqa: C901
 
     try:
         image = Image.objects.get(**image_lookup_kwargs)
-    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
+    except Image.DoesNotExist, Image.MultipleObjectsReturned:
         error_handler.handle_error(
             interface=interface,
             error_message="Image imports should result in a single image",
@@ -1699,7 +1699,7 @@ def add_file_to_object(
             obj = model.objects.select_for_update(nowait=True).get(
                 pk=object_pk
             )
-    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+    except ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist:
         task_logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 

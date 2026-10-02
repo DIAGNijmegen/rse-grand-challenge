@@ -91,7 +91,7 @@ def check_compressed_and_extract(*, src_path: Path, checked_paths: set[Path]):
 
     try:
         safe_extract(src=src_path, dest=extracted_dir)
-    except (zipfile.BadZipFile, OSError):
+    except zipfile.BadZipFile, OSError:
         rmtree(extracted_dir)
     else:
         src_path.unlink()

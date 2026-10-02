@@ -65,7 +65,7 @@ class DocPage(models.Model):
                     )["order__max"]
                     + 1
                 )
-            except (ObjectDoesNotExist, TypeError):
+            except ObjectDoesNotExist, TypeError:
                 # Use the default
                 pass
         elif not self.id and self.parent:
