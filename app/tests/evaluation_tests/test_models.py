@@ -23,6 +23,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import (
     SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
+    BatchJob,
     Evaluation,
     EvaluationActionMessageBuilder,
     Method,
@@ -2044,6 +2045,209 @@ class TestInputsComplete:
         del eval_alg.total_successful_jobs
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
+
+    def test_inputs_complete_for_batch_submission(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        fixture = archive_items_and_jobs_for_interfaces
+        submission = SubmissionFactory(algorithm_image=fixture.algorithm_image)
+        submission.phase.use_batch_mode = True
+        submission.phase.archive = fixture.archive
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [fixture.interface1, fixture.interface2]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
+        assert not eval_alg.inputs_complete
+
+        # jobs_to_schedule_per_submission is 4 (2 valid archive items per
+        # interface). A SUCCESS batch job with matching tasks completes it.
+        BatchJobFactory(
+            submission=submission,
+            algorithm_image=fixture.algorithm_image,
+            algorithm_interface=fixture.interface1,
+            input_civ_sets=[
+                {fixture.civs_for_interface1[0]},
+                {fixture.civs_for_interface1[1]},
+            ],
+            status=BatchJob.SUCCESS,
+        )
+        BatchJobFactory(
+            submission=submission,
+            algorithm_image=fixture.algorithm_image,
+            algorithm_interface=fixture.interface2,
+            input_civ_sets=[
+                set(fixture.civs_for_interface2[0]),
+                set(fixture.civs_for_interface2[1]),
+            ],
+            status=BatchJob.SUCCESS,
+        )
+
+        del eval_alg.successful_jobs_per_interface
+        del eval_alg.successful_job_count_per_interface
+        del eval_alg.total_successful_jobs
+        del eval_alg.inputs_complete
+        assert eval_alg.inputs_complete
+
+    def test_unsuccessful_batch_job_does_not_count(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        fixture = archive_items_and_jobs_for_interfaces
+        submission = SubmissionFactory(algorithm_image=fixture.algorithm_image)
+        submission.phase.use_batch_mode = True
+        submission.phase.archive = fixture.archive
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [fixture.interface1, fixture.interface2]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
+
+        # An EXECUTING batch job does not count towards completeness, even
+        # with matching tasks.
+        BatchJobFactory(
+            submission=submission,
+            algorithm_image=fixture.algorithm_image,
+            algorithm_interface=fixture.interface1,
+            input_civ_sets=[
+                {fixture.civs_for_interface1[0]},
+                {fixture.civs_for_interface1[1]},
+            ],
+            status=BatchJob.EXECUTING,
+        )
+
+        assert not eval_alg.inputs_complete
+
+    def test_batch_tasks_not_matching_archive_items_are_ignored(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        fixture = archive_items_and_jobs_for_interfaces
+        submission = SubmissionFactory(algorithm_image=fixture.algorithm_image)
+        submission.phase.use_batch_mode = True
+        submission.phase.archive = fixture.archive
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [fixture.interface1, fixture.interface2]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
+
+        # interface2 tasks whose inputs match the sockets but use fresh
+        # values that do not correspond to any archive item.
+        interface2_sockets = [
+            civ.interface for civ in fixture.civs_for_interface2[0]
+        ]
+        unmatched_input_civ_sets = [
+            {
+                ComponentInterfaceValueFactory(interface=socket)
+                for socket in interface2_sockets
+            }
+            for _ in range(2)
+        ]
+
+        BatchJobFactory(
+            submission=submission,
+            algorithm_image=fixture.algorithm_image,
+            algorithm_interface=fixture.interface1,
+            input_civ_sets=[
+                {fixture.civs_for_interface1[0]},
+                {fixture.civs_for_interface1[1]},
+            ],
+            status=BatchJob.SUCCESS,
+        )
+        BatchJobFactory(
+            submission=submission,
+            algorithm_image=fixture.algorithm_image,
+            algorithm_interface=fixture.interface2,
+            input_civ_sets=unmatched_input_civ_sets,
+            status=BatchJob.SUCCESS,
+        )
+
+        # Only the two matching interface1 tasks count.
+        assert eval_alg.total_successful_jobs == 2
+        assert not eval_alg.inputs_complete
+
+    def test_batch_tasks_with_recombined_item_values_are_ignored(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        # This pins the exact value-set match at collection time. The task's
+        # inputs are all attached to valid archive items (so the DB join on
+        # inputs__archive_items passes), but the combination does not equal
+        # any single archive item's value set. Only the frozenset exact match
+        # excludes it. If a future change drops that match, this test fails.
+        fixture = archive_items_and_jobs_for_interfaces
+        submission = SubmissionFactory(algorithm_image=fixture.algorithm_image)
+        submission.phase.use_batch_mode = True
+        submission.phase.archive = fixture.archive
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [fixture.interface1, fixture.interface2]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
+
+        # interface2 (inputs ci1, ci2). Build an input set from values that
+        # each belong to a valid archive item, but whose combination is not
+        # the value set of any interface2 archive item (ai3 and ai4 each pair
+        # a different ci1 value with a different ci2 value).
+        ci1_socket = fixture.interface1.inputs.get()
+        ci1_value_from_item = fixture.items_for_interface1[0].values.get()
+        ci2_value_from_item = next(
+            value
+            for value in fixture.items_for_interface2[0].values.all()
+            if value.interface != ci1_socket
+        )
+
+        BatchJobFactory(
+            submission=submission,
+            algorithm_image=fixture.algorithm_image,
+            algorithm_interface=fixture.interface2,
+            input_civ_sets=[{ci1_value_from_item, ci2_value_from_item}],
+            status=BatchJob.SUCCESS,
+        )
+
+        assert eval_alg.total_successful_jobs == 0
+
+    def test_jobs_with_recombined_item_values_are_ignored(
+        self, archive_items_and_jobs_for_interfaces
+    ):
+        # Job-mode counterpart of the batch test above. The job's inputs are
+        # all attached to valid archive items (so the DB join passes), but the
+        # combination matches no single archive item's value set, so only the
+        # exact value-set match excludes it.
+        fixture = archive_items_and_jobs_for_interfaces
+        submission = SubmissionFactory(algorithm_image=fixture.algorithm_image)
+        submission.phase.archive = fixture.archive
+        submission.phase.save()
+        submission.phase.algorithm_interfaces.set(
+            [fixture.interface1, fixture.interface2]
+        )
+
+        eval_alg = EvaluationFactory(submission=submission, time_limit=10)
+
+        ci1_socket = fixture.interface1.inputs.get()
+        ci1_value_from_item = fixture.items_for_interface1[0].values.get()
+        ci2_value_from_item = next(
+            value
+            for value in fixture.items_for_interface2[0].values.all()
+            if value.interface != ci1_socket
+        )
+
+        job = AlgorithmJobFactory(
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_image=fixture.algorithm_image,
+            algorithm_interface=fixture.interface2,
+            time_limit=fixture.algorithm_image.algorithm.time_limit,
+        )
+        job.inputs.set([ci1_value_from_item, ci2_value_from_item])
+
+        del eval_alg.successful_jobs_per_interface
+        del eval_alg.successful_job_count_per_interface
+        del eval_alg.total_successful_jobs
+        del eval_alg.inputs_complete
+        assert eval_alg.total_successful_jobs == 0
 
 
 @pytest.mark.django_db

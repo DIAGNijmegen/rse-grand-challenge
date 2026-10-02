@@ -61,6 +61,7 @@ from grandchallenge.core.storage import (
     protected_s3_storage,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONValidator,
@@ -196,36 +197,71 @@ def get_valid_jobs_for_interfaces_and_archive_items(
         **extra_filter,
     )
 
-    jobs_per_interface = {}
+    return filter_inference_units_by_valid_archive_items(
+        inference_units=jobs.prefetch_related("inputs").select_related(
+            "algorithm_image__algorithm"
+        ),
+        algorithm_interfaces=algorithm_interfaces,
+        valid_archive_items_per_interface=valid_archive_items_per_interface,
+    )
+
+
+def get_valid_batch_job_tasks_for_interfaces_and_archive_items(
+    *,
+    submission,
+    algorithm_interfaces,
+    valid_archive_items_per_interface,
+):
+    tasks = BatchJobTask.objects.filter(
+        batch_job__submission=submission,
+        batch_job__algorithm_image=submission.algorithm_image,
+        batch_job__algorithm_model=submission.algorithm_model,
+        batch_job__status=BatchJob.SUCCESS,
+    )
+
+    return filter_inference_units_by_valid_archive_items(
+        inference_units=tasks.prefetch_related(
+            "inputs__interface", "outputs__interface"
+        ).select_related("batch_job__algorithm_image__algorithm"),
+        algorithm_interfaces=algorithm_interfaces,
+        valid_archive_items_per_interface=valid_archive_items_per_interface,
+    )
+
+
+def filter_inference_units_by_valid_archive_items(
+    *,
+    inference_units,
+    algorithm_interfaces,
+    valid_archive_items_per_interface,
+):
+    """
+    Groups inference units (Jobs or BatchJobTasks) by interface, keeping only
+    those whose input set exactly matches one of the valid archive items'
+    value sets for that interface.
+    """
+    units_per_interface = {}
     for interface in algorithm_interfaces:
-        jobs_per_interface[interface] = []
-        jobs_for_interface = (
-            jobs.filter(
-                algorithm_interface=interface,
-                inputs__archive_items__in=valid_archive_items_per_interface[
-                    interface
-                ],
-            )
-            .distinct()
-            .prefetch_related("inputs")
-            .select_related("algorithm_image__algorithm")
-        )
+        units_per_interface[interface] = []
+        units_for_interface = inference_units.filter(
+            algorithm_interface=interface,
+            inputs__archive_items__in=valid_archive_items_per_interface[
+                interface
+            ],
+        ).distinct()
 
         archive_item_value_sets = {
             frozenset(value.pk for value in item.values.all())
             for item in valid_archive_items_per_interface[interface]
         }
 
-        for job in jobs_for_interface:
-            # subset to jobs whose input set exactly matches
-            # one of the valid archive items' value sets
+        for unit in units_for_interface:
             if (
-                frozenset(inpt.pk for inpt in job.inputs.all())
+                frozenset(inpt.pk for inpt in unit.inputs.all())
                 in archive_item_value_sets
             ):
-                jobs_per_interface[interface].append(job)
+                units_per_interface[interface].append(unit)
 
-    return jobs_per_interface
+    return units_per_interface
 
 
 def active_inference_jobs_count(*, algorithm_image=None):
@@ -1839,6 +1875,22 @@ class Submission(FieldChangeMixin, UUIDModel):
     def inference_job_model(self):
         return BatchJob if self.phase.use_batch_mode else Job
 
+    @property
+    def inference_jobs(self):
+        if self.phase.use_batch_mode:
+            return self.inference_job_model.objects.filter(submission=self)
+        else:
+            if self.algorithm_model:
+                extra_filter = {"algorithm_model": self.algorithm_model}
+            else:
+                extra_filter = {"algorithm_model__isnull": True}
+
+            return self.inference_job_model.objects.filter(
+                creator=None,
+                algorithm_image=self.algorithm_image,
+                **extra_filter,
+            )
+
     @cached_property
     def algorithm_interfaces(self):
         return self.algorithm_image.algorithm.interfaces.prefetch_related(
@@ -2813,16 +2865,24 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
                 "inputs"
             )
         )
-
-        successful_jobs_per_interface = get_valid_jobs_for_interfaces_and_archive_items(
-            subset_by_status=[Job.SUCCESS],
-            algorithm_image=self.submission.algorithm_image,
-            algorithm_model=self.submission.algorithm_model,
-            algorithm_interfaces=algorithm_interfaces,
-            valid_archive_items_per_interface=self.submission.phase.valid_archive_items_per_interface,
+        valid_archive_items_per_interface = (
+            self.submission.phase.valid_archive_items_per_interface
         )
 
-        return successful_jobs_per_interface
+        if self.submission.phase.use_batch_mode:
+            return get_valid_batch_job_tasks_for_interfaces_and_archive_items(
+                submission=self.submission,
+                algorithm_interfaces=algorithm_interfaces,
+                valid_archive_items_per_interface=valid_archive_items_per_interface,
+            )
+        else:
+            return get_valid_jobs_for_interfaces_and_archive_items(
+                subset_by_status=[Job.SUCCESS],
+                algorithm_image=self.submission.algorithm_image,
+                algorithm_model=self.submission.algorithm_model,
+                algorithm_interfaces=algorithm_interfaces,
+                valid_archive_items_per_interface=valid_archive_items_per_interface,
+            )
 
     @cached_property
     def successful_job_count_per_interface(self):
@@ -2837,13 +2897,49 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
     @cached_property
     def successful_jobs(self):
-        return Job.objects.filter(
-            pk__in=[
-                j.pk
-                for sublist in self.successful_jobs_per_interface.values()
-                for j in sublist
-            ]
-        )
+        return [
+            job
+            for jobs in self.successful_jobs_per_interface.values()
+            for job in jobs
+        ]
+
+    @property
+    def job_serializer_class(self):
+        if self.submission.phase.use_batch_mode:
+            from grandchallenge.evaluation.serializers import (
+                BatchJobTaskSerializer,
+            )
+
+            return BatchJobTaskSerializer
+        else:
+            from grandchallenge.algorithms.serializers import JobSerializer
+
+            return JobSerializer
+
+    @property
+    def has_pending_inference_jobs(self):
+        return self.submission.inference_jobs.active().exists()
+
+    def cancel_pending_inference_jobs(self):
+        inference_jobs = self.submission.inference_jobs
+        model = self.submission.inference_job_model
+
+        with check_lock_acquired():
+            locked_pks = list(
+                inference_jobs.filter(
+                    status__in=[
+                        model.PENDING,
+                        model.PROVISIONED,
+                        model.RETRY,
+                    ],
+                )
+                .select_for_update(skip_locked=True)
+                .values_list("pk", flat=True)
+            )
+            if locked_pks:
+                model.objects.filter(pk__in=locked_pks).update(
+                    status=model.CANCELLED
+                )
 
     @cached_property
     def inputs_complete(self):

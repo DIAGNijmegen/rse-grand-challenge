@@ -13,7 +13,7 @@ from config.lambda_tasks import (
     LambdaTaskQueueChoices,
 )
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.algorithms.models import AlgorithmModel, Job
+from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -330,21 +330,7 @@ def handle_failed_jobs(*, evaluation_pk: str | uuid.UUID):
             error_message=EvaluationErrorMessages.ALGORITHM_FAILURE,
         )
 
-    # Cancel any pending jobs for this algorithm image,
-    # we could limit by archive here but if non-evaluation
-    # jobs are cancelled then it is no big loss.
-    with check_lock_acquired():
-        locked_jobs = list(
-            Job.objects.filter(
-                creator=None,
-                algorithm_image_id=evaluation.submission.algorithm_image_id,
-                status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
-            )
-            .select_for_update(skip_locked=True)
-            .values_list("pk", flat=True)
-        )
-        if locked_jobs:
-            Job.objects.filter(pk__in=locked_jobs).update(status=Job.CANCELLED)
+    evaluation.cancel_pending_inference_jobs()
 
 
 @lambda_task(
@@ -382,49 +368,32 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
         )
         return
 
-    if AlgorithmModel.objects.filter(
-        submission__evaluation=evaluation_pk
-    ).exists():
-        pending_jobs_extra_filter = {
-            "algorithm_model__submission__evaluation": evaluation_pk
-        }
-    else:
-        pending_jobs_extra_filter = {"algorithm_model__isnull": True}
-
-    has_pending_jobs = (
-        Job.objects.active()
-        .filter(
-            algorithm_image__submission__evaluation=evaluation_pk,
-            creator__isnull=True,  # Evaluation inference jobs have no creator
-            **pending_jobs_extra_filter,
-        )
-        .exists()
-    )
-
-    if has_pending_jobs:
+    if evaluation.has_pending_inference_jobs:
         task_logger.info("Nothing to do: the algorithm has pending jobs.")
         return
 
     if evaluation.inputs_complete:
-        from grandchallenge.algorithms.serializers import JobSerializer
         from grandchallenge.components.models import (
             ComponentInterface,
             ComponentInterfaceValue,
         )
 
-        serializer = JobSerializer(evaluation.successful_jobs.all(), many=True)
+        successful_jobs = evaluation.successful_jobs
+        serializer = evaluation.job_serializer_class(
+            successful_jobs, many=True
+        )
+        output_to_job = {
+            output.pk: job.pk
+            for job in successful_jobs
+            for output in job.outputs.all()
+        }
+
         interface = ComponentInterface.objects.get(
             slug="predictions-json-file"
         )
         civ = ComponentInterfaceValue.objects.create(
             interface=interface, value=serializer.data
         )
-
-        output_to_job = {
-            o.pk: j.pk
-            for j in evaluation.successful_jobs.all()
-            for o in j.outputs.all()
-        }
 
         evaluation.inputs.add(*[civ.pk, *output_to_job.keys()])
         evaluation.input_prefixes = {
