@@ -648,14 +648,31 @@ def _mutate_container_image(
 
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):
-    """Create an uncompress tarball from a (compressed) tarball"""
+    """Create an uncompressed tarball from a (compressed) tarball.
+
+    The source archive is untrusted, so only regular files and directories
+    are copied. Symlinks, hardlinks, device nodes and other special members
+    are rejected to prevent the output archive from containing unexpected
+    member types.
+
+    The output is flushed to disk before returning so that callers that read
+    ``out_fileobj`` by path (for example in a subprocess) see the complete
+    tarball.
+    """
     with (
         tarfile.open(fileobj=in_fileobj, mode="r") as it,
         tarfile.open(fileobj=out_fileobj, mode="w|") as ot,
     ):
         for member in it.getmembers():
-            extracted = it.extractfile(member)
+            if not (member.isreg() or member.isdir()):
+                raise ValidationError(
+                    "The container image file contains unsupported entries. "
+                    "Was this created with docker save?"
+                )
+            extracted = it.extractfile(member) if member.isreg() else None
             ot.addfile(member, extracted)
+
+    out_fileobj.flush()
 
 
 def _validate_docker_image_manifest(*, instance) -> str:
