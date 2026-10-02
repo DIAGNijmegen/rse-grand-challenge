@@ -30,7 +30,6 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.base import (
     InferenceTaskDefinition,
-    total_inference_task_time_limit,
 )
 from grandchallenge.components.models import (
     CIVForObjectMixin,
@@ -2009,12 +2008,13 @@ class Submission(FieldChangeMixin, UUIDModel):
             "task_on_success": task_on_success,
             "task_on_failure": task_on_failure,
             "use_warm_pool": use_warm_pool,
+            "algorithm_interface": interface,
+            "time_limit": self.phase.algorithm_time_limit,  # per-task-time-limit
         }
 
         if self.phase.use_batch_mode:
             job = BatchJob.objects.create(
                 submission=self,
-                algorithm_interface=interface,
                 input_civ_sets=input_civ_sets,
                 **common_kwargs,
             )
@@ -2037,9 +2037,7 @@ class Submission(FieldChangeMixin, UUIDModel):
 
             job = Job.objects.create(
                 creator=None,  # System jobs, so no creator
-                algorithm_interface=interface,
                 input_civ_set=input_civ_sets[0],
-                time_limit=self.phase.algorithm_time_limit,
                 extra_viewer_groups=viewer_groups,
                 extra_logs_viewer_groups=viewer_groups,
                 **common_kwargs,
@@ -2162,24 +2160,9 @@ class BatchJobManager(ComponentJobManager):
         *,
         submission,
         input_civ_sets,
-        algorithm_interface,
         **kwargs,
     ):
-        per_task_time_limit = timedelta(
-            seconds=submission.phase.algorithm_time_limit
-        )
-        kwargs["time_limit"] = int(
-            total_inference_task_time_limit(
-                task_definitions=[
-                    InferenceTaskDefinition(
-                        input_civs=input_civs,
-                        time_limit=per_task_time_limit,
-                    )
-                    for input_civs in input_civ_sets
-                ]
-            ).total_seconds()
-        )
-
+        algorithm_interface = kwargs.pop("algorithm_interface")
         batch_job = super().create(submission=submission, **kwargs)
 
         for input_civs in input_civ_sets:

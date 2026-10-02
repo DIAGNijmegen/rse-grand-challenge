@@ -92,13 +92,6 @@ class InferenceTaskDefinition(NamedTuple):
     task_pk: str | None = None
 
 
-def total_inference_task_time_limit(*, task_definitions):
-    return sum(
-        (task_definition.time_limit for task_definition in task_definitions),
-        start=timedelta(),
-    )
-
-
 def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
     return ceil(
         (duration.total_seconds() / 3600)
@@ -397,8 +390,12 @@ class Executor(ABC):
 
     @property
     def total_task_time_limit(self):
-        return total_inference_task_time_limit(
-            task_definitions=self._task_definitions
+        return sum(
+            (
+                task_definition.time_limit
+                for task_definition in self._task_definitions
+            ),
+            start=timedelta(),
         )
 
     @abstractmethod
