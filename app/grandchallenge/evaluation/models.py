@@ -2160,9 +2160,9 @@ class BatchJobManager(ComponentJobManager):
         *,
         submission,
         input_civ_sets,
+        algorithm_interface,
         **kwargs,
     ):
-        algorithm_interface = kwargs.pop("algorithm_interface")
         batch_job = super().create(submission=submission, **kwargs)
 
         for input_civs in input_civ_sets:
