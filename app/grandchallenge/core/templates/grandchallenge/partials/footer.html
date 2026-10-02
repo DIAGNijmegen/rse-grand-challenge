@@ -3,7 +3,7 @@
 {% load cache %}
 {% load static %}
 
-{% cache 600 grandchallenge-partials-footer %}
+{% cache 0 fgrandchallenge-partials-footer %}
     {% get_flatpages as flatpages %}
     <footer class="footer">
         <div class="container">
@@ -54,16 +54,14 @@
                     <h6 class="text-uppercase text-primary mb-1">Follow Us</h6>
                     <ul class="d-flex list-unstyled ml-1 mb-2">
                         <li class="mt-2">
-                            <a class="text-secondary"
-                                style="font-size: 1.5rem;"
+                            <a class="h4 text-secondary"
                                 href="https://www.linkedin.com/company/grand-challenge/"
                                 title="Follow us on LinkedIn">
                                 <i class="fab fa-linkedin fa-lg"></i>
                             </a>
                         </li>
                         <li class="mt-2">
-                            <a class="mx-2 text-secondary"
-                                style="font-size: 1.5rem;"
+                            <a class="h4 mx-2 text-secondary"
                                 href="https://github.com/DIAGNijmegen/rse-grand-challenge/"
                                 title="Join us on GitHub">
                                 <i class="fab fa-github fa-lg"></i>
