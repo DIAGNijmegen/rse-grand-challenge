@@ -99,6 +99,29 @@ class IOCopyExecutor(Executor):
                     Key=f'{task["output_prefix"]}/{output_filename}.json',
                 )
 
+            # Create a 2D bounding box annotation file. Unlike results.json,
+            # the annotation socket is not reserved, so it can be selected as
+            # an algorithm output.
+            annotation_content = json.dumps(
+                {
+                    "version": {"major": 1, "minor": 0},
+                    "type": "2D bounding box",
+                    "name": "output",
+                    "corners": [
+                        [0, 0, 0],
+                        [10, 0, 0],
+                        [10, 10, 0],
+                        [0, 10, 0],
+                    ],
+                    "probability": 0.2,
+                }
+            ).encode("utf-8")
+            self._s3_client.upload_fileobj(
+                Fileobj=io.BytesIO(annotation_content),
+                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Key=f'{task["output_prefix"]}/annotation.json',
+            )
+
             # write arbitrary text file; should not be processed
             self._s3_client.upload_fileobj(
                 Fileobj=io.BytesIO(b"Some arbitrary text"),
