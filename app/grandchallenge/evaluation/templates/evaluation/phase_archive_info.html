@@ -40,12 +40,13 @@
                 </ul>
             {% endfor %}
             <p>
-                Currently, for each submission, {{ phase.jobs_to_schedule_per_submission }}
-                algorithm job{{ phase.jobs_to_schedule_per_submission|pluralize }} will be created from the {{ phase.jobs_to_schedule_per_submission }} valid archive item{{ phase.jobs_to_schedule_per_submission|pluralize }}. </p>
-            <p> The jobs are spread across the configured algorithm interfaces as follows:
+                Currently, for each submission, the {{ phase.valid_archive_item_count }}
+                valid archive item{{ phase.valid_archive_item_count|pluralize }}
+                will be processed by the submitted algorithm. </p>
+            <p> The valid archive items are spread across the configured algorithm interfaces as follows:
                 <ul>
                     {% for interface, count in phase.valid_archive_item_count_per_interface.items %}
-                        <li>Interface {{ forloop.counter }}: {{ count }} job{{ count|pluralize }}</li>
+                        <li>Interface {{ forloop.counter }}: {{ count }} item{{ count|pluralize }}</li>
                     {% endfor %}
                 </ul>
             </p>

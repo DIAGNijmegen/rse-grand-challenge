@@ -1438,9 +1438,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1499,9 +1499,9 @@ class TestInputsComplete:
         # no need to set outputs, we assume that only a job with valid outputs has a
         # status of SUCCESS
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
@@ -1563,9 +1563,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
@@ -1621,9 +1621,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1733,9 +1733,9 @@ class TestInputsComplete:
             ]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
@@ -1792,9 +1792,9 @@ class TestInputsComplete:
             [archive_items_and_jobs_for_interfaces.civs_for_interface2[1][1]]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1850,9 +1850,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1910,9 +1910,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1978,9 +1978,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -2040,9 +2040,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -2061,7 +2061,7 @@ class TestInputsComplete:
         eval_alg = EvaluationFactory(submission=submission, time_limit=10)
         assert not eval_alg.inputs_complete
 
-        # jobs_to_schedule_per_submission is 4 (2 valid archive items per
+        # valid_archive_item_count is 4 (2 valid archive items per
         # interface). A SUCCESS batch job with matching tasks completes it.
         BatchJobFactory(
             submission=submission,
@@ -2086,9 +2086,9 @@ class TestInputsComplete:
             time_limit=5,
         )
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
@@ -2170,7 +2170,7 @@ class TestInputsComplete:
         )
 
         # Only the two matching interface1 tasks count.
-        assert eval_alg.total_successful_jobs == 2
+        assert eval_alg.total_successful_inference_units == 2
         assert not eval_alg.inputs_complete
 
     def test_batch_tasks_with_recombined_item_values_are_ignored(
@@ -2213,7 +2213,7 @@ class TestInputsComplete:
             time_limit=5,
         )
 
-        assert eval_alg.total_successful_jobs == 0
+        assert eval_alg.total_successful_inference_units == 0
 
     def test_jobs_with_recombined_item_values_are_ignored(
         self, archive_items_and_jobs_for_interfaces
@@ -2249,11 +2249,11 @@ class TestInputsComplete:
         )
         job.inputs.set([ci1_value_from_item, ci2_value_from_item])
 
-        del eval_alg.successful_jobs_per_interface
-        del eval_alg.successful_job_count_per_interface
-        del eval_alg.total_successful_jobs
+        del eval_alg.successful_inference_units_per_interface
+        del eval_alg.successful_inference_unit_count_per_interface
+        del eval_alg.total_successful_inference_units
         del eval_alg.inputs_complete
-        assert eval_alg.total_successful_jobs == 0
+        assert eval_alg.total_successful_inference_units == 0
 
 
 @pytest.mark.django_db
@@ -2325,29 +2325,29 @@ def test_archive_item_matching_to_interfaces():
     assert phase.valid_archive_items_per_interface.keys() == {interface1}
     assert phase.valid_archive_items_per_interface[interface1].get() == i1
     assert phase.valid_archive_item_count_per_interface == {interface1: 1}
-    assert phase.jobs_to_schedule_per_submission == 1
+    assert phase.valid_archive_item_count == 1
 
     del phase.valid_archive_items_per_interface
     del phase.valid_archive_item_count_per_interface
-    del phase.jobs_to_schedule_per_submission
+    del phase.valid_archive_item_count
     phase.algorithm_interfaces.set([interface2])
     assert phase.valid_archive_items_per_interface.keys() == {interface2}
     assert phase.valid_archive_items_per_interface[interface2].get() == i2
     assert phase.valid_archive_item_count_per_interface == {interface2: 1}
-    assert phase.jobs_to_schedule_per_submission == 1
+    assert phase.valid_archive_item_count == 1
 
     del phase.valid_archive_items_per_interface
     del phase.valid_archive_item_count_per_interface
-    del phase.jobs_to_schedule_per_submission
+    del phase.valid_archive_item_count
     phase.algorithm_interfaces.set([interface3])
     assert phase.valid_archive_items_per_interface.keys() == {interface3}
     assert not phase.valid_archive_items_per_interface[interface3].exists()
     assert phase.valid_archive_item_count_per_interface == {interface3: 0}
-    assert phase.jobs_to_schedule_per_submission == 0
+    assert phase.valid_archive_item_count == 0
 
     del phase.valid_archive_items_per_interface
     del phase.valid_archive_item_count_per_interface
-    del phase.jobs_to_schedule_per_submission
+    del phase.valid_archive_item_count
     phase.algorithm_interfaces.set([interface1, interface3])
     assert phase.valid_archive_items_per_interface.keys() == {
         interface1,
@@ -2359,11 +2359,11 @@ def test_archive_item_matching_to_interfaces():
         interface1: 1,
         interface3: 0,
     }
-    assert phase.jobs_to_schedule_per_submission == 1
+    assert phase.valid_archive_item_count == 1
 
     del phase.valid_archive_items_per_interface
     del phase.valid_archive_item_count_per_interface
-    del phase.jobs_to_schedule_per_submission
+    del phase.valid_archive_item_count
     phase.algorithm_interfaces.set([interface1, interface2, interface3])
     assert phase.valid_archive_items_per_interface.keys() == {
         interface1,
@@ -2378,7 +2378,7 @@ def test_archive_item_matching_to_interfaces():
         interface2: 1,
         interface3: 0,
     }
-    assert phase.jobs_to_schedule_per_submission == 2
+    assert phase.valid_archive_item_count == 2
 
 
 @pytest.mark.django_db

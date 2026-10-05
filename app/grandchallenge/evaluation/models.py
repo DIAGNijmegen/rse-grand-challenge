@@ -1013,7 +1013,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     f"the current phase's children set as its parent."
                 )
 
-            if self.parent.jobs_to_schedule_per_submission < 1:
+            if self.parent.valid_archive_item_count < 1:
                 raise ValidationError(
                     "The parent phase needs to have at least 1 valid archive item."
                 )
@@ -1274,7 +1274,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         }
 
     @cached_property
-    def jobs_to_schedule_per_submission(self):
+    def valid_archive_item_count(self):
         return sum(self.valid_archive_item_count_per_interface.values())
 
     @property
@@ -2837,7 +2837,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         return self.outputs.exclude(interface__slug="metrics-json-file")
 
     @cached_property
-    def successful_jobs_per_interface(self):
+    def successful_inference_units_per_interface(self):
         if self.submission.phase.use_batch_mode:
             inference_units = BatchJobTask.objects.filter(
                 batch_job__in=self.submission.inference_jobs.filter(
@@ -2860,22 +2860,26 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
     @cached_property
-    def successful_job_count_per_interface(self):
+    def successful_inference_unit_count_per_interface(self):
         return {
-            interface: len(successful_jobs)
-            for interface, successful_jobs in self.successful_jobs_per_interface.items()
+            interface: len(successful_inference_units)
+            for interface, successful_inference_units in (
+                self.successful_inference_units_per_interface.items()
+            )
         }
 
     @cached_property
-    def total_successful_jobs(self):
-        return sum(self.successful_job_count_per_interface.values())
+    def total_successful_inference_units(self):
+        return sum(self.successful_inference_unit_count_per_interface.values())
 
     @cached_property
-    def successful_jobs(self):
+    def successful_inference_units(self):
         return [
-            job
-            for jobs in self.successful_jobs_per_interface.values()
-            for job in jobs
+            inference_unit
+            for inference_units in (
+                self.successful_inference_units_per_interface.values()
+            )
+            for inference_unit in inference_units
         ]
 
     @property
@@ -2923,8 +2927,8 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
         if self.submission.algorithm_image:
             return (
-                self.total_successful_jobs
-                == self.submission.phase.jobs_to_schedule_per_submission
+                self.total_successful_inference_units
+                == self.submission.phase.valid_archive_item_count
             )
         elif self.submission.predictions_file:
             return True

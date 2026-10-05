@@ -378,14 +378,14 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
             ComponentInterfaceValue,
         )
 
-        successful_jobs = evaluation.successful_jobs
+        successful_inference_units = evaluation.successful_inference_units
         serializer = evaluation.job_serializer_class(
-            successful_jobs, many=True
+            successful_inference_units, many=True
         )
-        output_to_job = {
-            output.pk: job.pk
-            for job in successful_jobs
-            for output in job.outputs.all()
+        output_to_inference_unit = {
+            output.pk: inference_unit.pk
+            for inference_unit in successful_inference_units
+            for output in inference_unit.outputs.all()
         }
 
         interface = ComponentInterface.objects.get(
@@ -395,9 +395,12 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
             interface=interface, value=serializer.data
         )
 
-        evaluation.inputs.add(*[civ.pk, *output_to_job.keys()])
+        evaluation.inputs.add(*[civ.pk, *output_to_inference_unit.keys()])
         evaluation.input_prefixes = {
-            str(o): f"{j}/output/" for o, j in output_to_job.items()
+            str(output_pk): f"{inference_unit_pk}/output/"
+            for output_pk, inference_unit_pk in (
+                output_to_inference_unit.items()
+            )
         }
         evaluation.status = evaluation.PENDING
         evaluation.save()
