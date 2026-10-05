@@ -206,28 +206,6 @@ def get_valid_jobs_for_interfaces_and_archive_items(
     )
 
 
-def get_valid_batch_job_tasks_for_interfaces_and_archive_items(
-    *,
-    submission,
-    algorithm_interfaces,
-    valid_archive_items_per_interface,
-):
-    tasks = BatchJobTask.objects.filter(
-        batch_job__submission=submission,
-        batch_job__algorithm_image=submission.algorithm_image,
-        batch_job__algorithm_model=submission.algorithm_model,
-        batch_job__status=BatchJob.SUCCESS,
-    )
-
-    return filter_inference_units_by_valid_archive_items(
-        inference_units=tasks.prefetch_related(
-            "inputs__interface", "outputs__interface"
-        ).select_related("batch_job__algorithm_image__algorithm"),
-        algorithm_interfaces=algorithm_interfaces,
-        valid_archive_items_per_interface=valid_archive_items_per_interface,
-    )
-
-
 def filter_inference_units_by_valid_archive_items(
     *,
     inference_units,
@@ -1878,7 +1856,7 @@ class Submission(FieldChangeMixin, UUIDModel):
     @property
     def inference_jobs(self):
         if self.phase.use_batch_mode:
-            return self.inference_job_model.objects.filter(submission=self)
+            return self.batchjob_set.all()
         else:
             if self.algorithm_model:
                 extra_filter = {"algorithm_model": self.algorithm_model}
@@ -2860,29 +2838,26 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
     @cached_property
     def successful_jobs_per_interface(self):
-        algorithm_interfaces = (
-            self.submission.phase.algorithm_interfaces.prefetch_related(
-                "inputs"
-            )
-        )
-        valid_archive_items_per_interface = (
-            self.submission.phase.valid_archive_items_per_interface
-        )
-
         if self.submission.phase.use_batch_mode:
-            return get_valid_batch_job_tasks_for_interfaces_and_archive_items(
-                submission=self.submission,
-                algorithm_interfaces=algorithm_interfaces,
-                valid_archive_items_per_interface=valid_archive_items_per_interface,
+            inference_units = BatchJobTask.objects.filter(
+                batch_job__in=self.submission.inference_jobs.filter(
+                    status=BatchJob.SUCCESS
+                )
             )
         else:
-            return get_valid_jobs_for_interfaces_and_archive_items(
-                subset_by_status=[Job.SUCCESS],
-                algorithm_image=self.submission.algorithm_image,
-                algorithm_model=self.submission.algorithm_model,
-                algorithm_interfaces=algorithm_interfaces,
-                valid_archive_items_per_interface=valid_archive_items_per_interface,
+            inference_units = self.submission.inference_jobs.filter(
+                status=Job.SUCCESS
             )
+
+        return filter_inference_units_by_valid_archive_items(
+            inference_units=inference_units.prefetch_related(
+                "inputs__interface", "outputs__interface"
+            ),
+            algorithm_interfaces=self.submission.phase.algorithm_interfaces.prefetch_related(
+                "inputs"
+            ),
+            valid_archive_items_per_interface=self.submission.phase.valid_archive_items_per_interface,
+        )
 
     @cached_property
     def successful_job_count_per_interface(self):
