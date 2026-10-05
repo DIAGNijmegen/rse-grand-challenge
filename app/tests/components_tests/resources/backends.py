@@ -106,35 +106,37 @@ class IOCopyExecutor(Executor):
                 Key=f'{task["output_prefix"]}/some_text.txt',
             )
 
-        # Create a task return code
-        inference_result = InferenceResult(
-            pk=self._job_id,
-            return_code=0,
-            user_safe_error_message="",
-            user_process_last_stderr_lines=[],
-            exec_duration=timedelta(seconds=1337),
-            invoke_duration=timedelta(seconds=1874),
-            outputs=[],
-            sagemaker_shim_version="0.5.0",
-        )
-        inference_result_content = inference_result.model_dump_json().encode(
-            "utf-8"
-        )
+        # Write an inference result per task
+        for task_definition in self._task_definitions:
+            task_pk = task_definition.task_pk
+            inference_result = InferenceResult(
+                pk=self._get_inference_task_pk(task_pk=task_pk),
+                return_code=0,
+                user_safe_error_message="",
+                user_process_last_stderr_lines=[],
+                exec_duration=timedelta(seconds=1337),
+                invoke_duration=timedelta(seconds=1874),
+                outputs=[],
+                sagemaker_shim_version="0.5.0",
+            )
+            inference_result_content = (
+                inference_result.model_dump_json().encode("utf-8")
+            )
 
-        signature = hmac.new(
-            key=self._signing_key,
-            msg=inference_result_content,
-            digestmod=hashlib.sha256,
-        ).hexdigest()
+            signature = hmac.new(
+                key=self._signing_key,
+                msg=inference_result_content,
+                digestmod=hashlib.sha256,
+            ).hexdigest()
 
-        self._s3_client.upload_fileobj(
-            Fileobj=io.BytesIO(inference_result_content),
-            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Key=self._get_inference_result_key(),
-            ExtraArgs={
-                "Metadata": {"signature_hmac_sha256": signature},
-            },
-        )
+            self._s3_client.upload_fileobj(
+                Fileobj=io.BytesIO(inference_result_content),
+                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Key=self._get_inference_result_key(task_pk=task_pk),
+                ExtraArgs={
+                    "Metadata": {"signature_hmac_sha256": signature},
+                },
+            )
 
         handle_event.execute_on_commit(
             event={
