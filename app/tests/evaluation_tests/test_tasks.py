@@ -1221,7 +1221,7 @@ def test_set_evaluation_inputs_for_batch_submission():
         submission__phase__archive=archive,
         submission__phase__use_batch_mode=True,
         submission__algorithm_image=ai,
-        time_limit=ai.algorithm.time_limit,
+        time_limit=60,
         status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
@@ -1246,6 +1246,7 @@ def test_set_evaluation_inputs_for_batch_submission():
         algorithm_interface=interface,
         input_civ_sets=[{civ} for civ in input_civs],
         status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
     )
 
     output_civ_for_task = {}
@@ -1285,7 +1286,7 @@ def test_set_evaluation_inputs_excludes_stale_batch_tasks():
         submission__phase__archive=archive,
         submission__phase__use_batch_mode=True,
         submission__algorithm_image=ai,
-        time_limit=ai.algorithm.time_limit,
+        time_limit=10,
         status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
@@ -1311,6 +1312,7 @@ def test_set_evaluation_inputs_excludes_stale_batch_tasks():
         algorithm_interface=interface,
         input_civ_sets=[{stale_civ}],
         status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
     )
     stale_task = stale_batch_job.tasks.get()
     stale_task.outputs.add(ComponentInterfaceValueFactory(interface=output_ci))
@@ -1326,6 +1328,7 @@ def test_set_evaluation_inputs_excludes_stale_batch_tasks():
         algorithm_interface=interface,
         input_civ_sets=[{current_civ}],
         status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
     )
     current_task = current_batch_job.tasks.get()
     current_output_civ = ComponentInterfaceValueFactory(interface=output_ci)
@@ -1362,7 +1365,7 @@ def test_set_evaluation_inputs_for_batch_submission_with_pending_jobs():
         submission__phase__archive=archive,
         submission__phase__use_batch_mode=True,
         submission__algorithm_image=ai,
-        time_limit=ai.algorithm.time_limit,
+        time_limit=10,
         status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
@@ -1381,6 +1384,7 @@ def test_set_evaluation_inputs_for_batch_submission_with_pending_jobs():
         algorithm_interface=interface,
         input_civ_sets=[{civ}],
         status=BatchJob.PENDING,
+        time_limit=ai.algorithm.time_limit,
     )
 
     set_evaluation_inputs(evaluation_pk=evaluation.pk)
@@ -1399,7 +1403,7 @@ def test_handle_failed_jobs_cancels_batch_jobs():
         submission__phase__archive=archive,
         submission__phase__use_batch_mode=True,
         submission__algorithm_image=ai,
-        time_limit=ai.algorithm.time_limit,
+        time_limit=10,
         status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
@@ -1414,6 +1418,7 @@ def test_handle_failed_jobs_cancels_batch_jobs():
         algorithm_interface=interface,
         input_civ_sets=[{ComponentInterfaceValueFactory(interface=input_ci)}],
         status=BatchJob.PENDING,
+        time_limit=ai.algorithm.time_limit,
     )
     successful_batch_job = BatchJobFactory(
         submission=evaluation.submission,
@@ -1421,6 +1426,7 @@ def test_handle_failed_jobs_cancels_batch_jobs():
         algorithm_interface=interface,
         input_civ_sets=[{ComponentInterfaceValueFactory(interface=input_ci)}],
         status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
     )
 
     handle_failed_jobs(evaluation_pk=evaluation.pk)

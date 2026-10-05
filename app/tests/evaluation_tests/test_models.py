@@ -2072,6 +2072,7 @@ class TestInputsComplete:
                 {fixture.civs_for_interface1[1]},
             ],
             status=BatchJob.SUCCESS,
+            time_limit=5,
         )
         BatchJobFactory(
             submission=submission,
@@ -2082,6 +2083,7 @@ class TestInputsComplete:
                 set(fixture.civs_for_interface2[1]),
             ],
             status=BatchJob.SUCCESS,
+            time_limit=5,
         )
 
         del eval_alg.successful_jobs_per_interface
@@ -2115,6 +2117,7 @@ class TestInputsComplete:
                 {fixture.civs_for_interface1[1]},
             ],
             status=BatchJob.EXECUTING,
+            time_limit=5,
         )
 
         assert not eval_alg.inputs_complete
@@ -2155,6 +2158,7 @@ class TestInputsComplete:
                 {fixture.civs_for_interface1[1]},
             ],
             status=BatchJob.SUCCESS,
+            time_limit=5,
         )
         BatchJobFactory(
             submission=submission,
@@ -2162,6 +2166,7 @@ class TestInputsComplete:
             algorithm_interface=fixture.interface2,
             input_civ_sets=unmatched_input_civ_sets,
             status=BatchJob.SUCCESS,
+            time_limit=5,
         )
 
         # Only the two matching interface1 tasks count.
@@ -2205,6 +2210,7 @@ class TestInputsComplete:
             algorithm_interface=fixture.interface2,
             input_civ_sets=[{ci1_value_from_item, ci2_value_from_item}],
             status=BatchJob.SUCCESS,
+            time_limit=5,
         )
 
         assert eval_alg.total_successful_jobs == 0
