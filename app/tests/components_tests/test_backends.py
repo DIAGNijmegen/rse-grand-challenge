@@ -940,6 +940,53 @@ def test_provision_batch_job(settings):
         assert inference_task["timeout"] == "PT10M"
 
 
+@pytest.mark.django_db
+def test_test_executor_writes_result_per_task():
+    str_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.STRING,
+        relative_path="string.json",
+        store_in_database=True,
+    )
+
+    batch_job = BatchJobFactory(
+        input_civ_sets=[
+            {str_interface.create_instance(value="first")},
+            {str_interface.create_instance(value="second")},
+        ],
+        time_limit=10,
+    )
+
+    task_definitions = [
+        InferenceTaskDefinition(
+            input_civs=task.inputs.all(),
+            task_pk=str(task.pk),
+            time_limit=timedelta(minutes=10),
+        )
+        for task in batch_job.tasks.prefetch_related(
+            "inputs__interface", "inputs__image__files"
+        ).all()
+    ]
+
+    executor = IOCopyExecutor(
+        **{
+            **batch_job.executor_kwargs,
+            "task_definitions": task_definitions,
+        }
+    )
+
+    executor.provision()
+    executor.execute()
+
+    inference_results = executor.inference_results
+
+    assert len(inference_results) == 2
+    assert {result.pk for result in inference_results} == {
+        executor._get_inference_task_pk(task_pk=task_definition.task_pk)
+        for task_definition in task_definitions
+    }
+    assert all(result.return_code == 0 for result in inference_results)
+
+
 def test_signing_key_env_set():
     job_pk = uuid4()
 
