@@ -2119,6 +2119,17 @@ class TestInputsComplete:
             status=BatchJob.EXECUTING,
             time_limit=5,
         )
+        BatchJobFactory(
+            submission=submission,
+            algorithm_image=fixture.algorithm_image,
+            algorithm_interface=fixture.interface2,
+            input_civ_sets=[
+                set(fixture.civs_for_interface2[0]),
+                set(fixture.civs_for_interface2[1]),
+            ],
+            status=BatchJob.SUCCESS,
+            time_limit=5,
+        )
 
         assert not eval_alg.inputs_complete
 
@@ -2176,11 +2187,8 @@ class TestInputsComplete:
     def test_batch_tasks_with_recombined_item_values_are_ignored(
         self, archive_items_and_jobs_for_interfaces
     ):
-        # This pins the exact value-set match at collection time. The task's
-        # inputs are all attached to valid archive items (so the DB join on
-        # inputs__archive_items passes), but the combination does not equal
-        # any single archive item's value set. Only the frozenset exact match
-        # excludes it. If a future change drops that match, this test fails.
+        # The task's inputs are all attached to valid archive items,
+        # but the combination does not equal any archive item's value set.
         fixture = archive_items_and_jobs_for_interfaces
         submission = SubmissionFactory(algorithm_image=fixture.algorithm_image)
         submission.phase.use_batch_mode = True
@@ -2192,10 +2200,7 @@ class TestInputsComplete:
 
         eval_alg = EvaluationFactory(submission=submission, time_limit=10)
 
-        # interface2 (inputs ci1, ci2). Build an input set from values that
-        # each belong to a valid archive item, but whose combination is not
-        # the value set of any interface2 archive item (ai3 and ai4 each pair
-        # a different ci1 value with a different ci2 value).
+        # ai3 and ai4 each pair a different ci1 value with a different ci2 value
         ci1_socket = fixture.interface1.inputs.get()
         ci1_value_from_item = fixture.items_for_interface1[0].values.get()
         ci2_value_from_item = next(
@@ -2218,10 +2223,8 @@ class TestInputsComplete:
     def test_jobs_with_recombined_item_values_are_ignored(
         self, archive_items_and_jobs_for_interfaces
     ):
-        # Job-mode counterpart of the batch test above. The job's inputs are
-        # all attached to valid archive items (so the DB join passes), but the
-        # combination matches no single archive item's value set, so only the
-        # exact value-set match excludes it.
+        # The job's inputs are all attached to valid archive items, but the
+        # combination matches no single archive item's value set.
         fixture = archive_items_and_jobs_for_interfaces
         submission = SubmissionFactory(algorithm_image=fixture.algorithm_image)
         submission.phase.archive = fixture.archive
