@@ -648,14 +648,31 @@ def _mutate_container_image(
 
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):
-    """Create an uncompress tarball from a (compressed) tarball"""
+    """Create an uncompressed tarball from a (compressed) tarball.
+
+    The source archive is untrusted, so only regular files and directories
+    are copied. Symlinks, hardlinks, device nodes and other special members
+    are rejected to prevent the output archive from containing unexpected
+    member types.
+
+    The output is flushed to disk before returning so that callers that read
+    ``out_fileobj`` by path (for example in a subprocess) see the complete
+    tarball.
+    """
     with (
         tarfile.open(fileobj=in_fileobj, mode="r") as it,
         tarfile.open(fileobj=out_fileobj, mode="w|") as ot,
     ):
         for member in it.getmembers():
-            extracted = it.extractfile(member)
+            if not (member.isreg() or member.isdir()):
+                raise ValidationError(
+                    "The container image file contains unsupported entries. "
+                    "Was this created with docker save?"
+                )
+            extracted = it.extractfile(member) if member.isreg() else None
             ot.addfile(member, extracted)
+
+    out_fileobj.flush()
 
 
 def _validate_docker_image_manifest(*, instance) -> str:
@@ -1578,7 +1595,7 @@ def add_image_to_object(  # noqa: C901
             obj = model.objects.select_for_update(nowait=True).get(
                 pk=object_pk
             )
-    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+    except ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist:
         task_logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 
@@ -1609,7 +1626,7 @@ def add_image_to_object(  # noqa: C901
 
     try:
         image = Image.objects.get(**image_lookup_kwargs)
-    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
+    except Image.DoesNotExist, Image.MultipleObjectsReturned:
         error_handler.handle_error(
             interface=interface,
             error_message="Image imports should result in a single image",
@@ -1699,7 +1716,7 @@ def add_file_to_object(
             obj = model.objects.select_for_update(nowait=True).get(
                 pk=object_pk
             )
-    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+    except ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist:
         task_logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 

@@ -202,7 +202,7 @@ class AmazonSageMakerTrainingLogsService:
                     log=log_event["message"].replace("\x00", "")
                 )
                 timestamp = ms_timestamp_to_datetime(log_event["timestamp"])
-            except (JSONDecodeError, KeyError, ValueError):
+            except JSONDecodeError, KeyError, ValueError:
                 logger.warning("Could not parse log")
                 continue
 

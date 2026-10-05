@@ -21,5 +21,5 @@ def decode_github_state(*, state):
             state, max_age=timedelta(minutes=10)
         )
         return GitHubState(**obj)
-    except (SignatureExpired, BadSignature):
+    except SignatureExpired, BadSignature:
         raise PermissionDenied
