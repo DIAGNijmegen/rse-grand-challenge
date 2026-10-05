@@ -3,7 +3,7 @@ authors = [
     {name = "James Meakin"},
 ]
 license = {text = "Apache-2.0"}
-requires-python = "==3.13.*"
+requires-python = "==3.14.*"
 dependencies = [
     "django<5.3",
     "django-countries",
@@ -108,7 +108,7 @@ line_length = 79
 
 [tool.black]
 line-length = 79
-target-version = ['py313']
+target-version = ['py314']
 
 [tool.curlylint.rules]
 html_has_lang = 'en'

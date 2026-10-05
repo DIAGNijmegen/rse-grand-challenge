@@ -1845,7 +1845,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         raise NotImplementedError
 
     @property
-    def container(self) -> "ComponentImage":
+    def container(self) -> ComponentImage:
         """
         Returns the container object associated with this instance, which
         should be a foreign key to an object that is a subclass of

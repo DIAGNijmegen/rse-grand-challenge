@@ -30,7 +30,7 @@ class SessionStore(DBStore):
 
         try:
             user_id = int(data.get("_auth_user_id"))
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             user_id = None
 
         obj.user_id = user_id

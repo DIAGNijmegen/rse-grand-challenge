@@ -21,7 +21,7 @@ repos:
       hooks:
           - id: pyupgrade
             language: python
-            args: [--py313-plus]
+            args: [--py314-plus]
     - repo: https://github.com/ambv/black
       rev: 26.5.1
       hooks:
