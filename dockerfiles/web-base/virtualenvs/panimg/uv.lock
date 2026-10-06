@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.14.*"
 
 [options]
@@ -581,7 +581,7 @@ wheels = [
 
 [[package]]
 name = "wsidicom"
-version = "0.35.0"
+version = "0.36.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cachetools" },
@@ -593,7 +593,7 @@ dependencies = [
     { name = "pydicom" },
     { name = "universal-pathlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3f/8d/7085f9b54cc67c7e0f888ba2062a8d66cabba0a7aaee428112fce273f8a0/wsidicom-0.35.0.tar.gz", hash = "sha256:513b347614505c3356bd4316a53bf05ede6f9e2b7d5780b58565540682afae95", size = 446673, upload-time = "2026-08-15T15:45:50.734Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/32/b54c377f6e5dd03ef5ec596a2745f2f344c24a145bb0427da0657a619106/wsidicom-0.36.1.tar.gz", hash = "sha256:c9d31b72134b657a5675b2392715410d5dc21ab7aa2f7673aed8bbdb0bc726f5", size = 511967, upload-time = "2026-09-28T15:45:59.448Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/6c/9bbe243c2d3db31e1b0514b2b812edf1b8d8f98f503239299b50edff2ba5/wsidicom-0.35.0-py3-none-any.whl", hash = "sha256:002335fb5f71ea288bc97c6b4e6323ef7f6fea3b06a8f38d3514bb85ac0e5369", size = 307146, upload-time = "2026-08-15T15:45:49.303Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/d1/72cd2dd9c3c22249f57d43b5f23a49db7e32d11151544d934ea9577ca1d9/wsidicom-0.36.1-py3-none-any.whl", hash = "sha256:8869cc4337a6deb065775b545b061426eb2f0757f7504517520980e78a95f02a", size = 354609, upload-time = "2026-09-28T15:45:57.967Z" },
 ]
