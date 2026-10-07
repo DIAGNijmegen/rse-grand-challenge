@@ -2252,10 +2252,6 @@ class TestInputsComplete:
         )
         job.inputs.set([ci1_value_from_item, ci2_value_from_item])
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
-        del eval_alg.inputs_complete
         assert eval_alg.total_successful_inference_units == 0
 
 
