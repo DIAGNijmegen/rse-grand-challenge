@@ -2115,29 +2115,29 @@ def test_archive_item_matching_to_interfaces():
     assert phase.valid_archive_items_per_interface.keys() == {interface1}
     assert phase.valid_archive_items_per_interface[interface1].get() == i1
     assert phase.valid_archive_item_count_per_interface == {interface1: 1}
-    assert phase.jobs_to_schedule_per_submission == 1
+    assert phase.valid_archive_item_count == 1
 
     del phase.valid_archive_items_per_interface
     del phase.valid_archive_item_count_per_interface
-    del phase.jobs_to_schedule_per_submission
+    del phase.valid_archive_item_count
     phase.algorithm_interfaces.set([interface2])
     assert phase.valid_archive_items_per_interface.keys() == {interface2}
     assert phase.valid_archive_items_per_interface[interface2].get() == i2
     assert phase.valid_archive_item_count_per_interface == {interface2: 1}
-    assert phase.jobs_to_schedule_per_submission == 1
+    assert phase.valid_archive_item_count == 1
 
     del phase.valid_archive_items_per_interface
     del phase.valid_archive_item_count_per_interface
-    del phase.jobs_to_schedule_per_submission
+    del phase.valid_archive_item_count
     phase.algorithm_interfaces.set([interface3])
     assert phase.valid_archive_items_per_interface.keys() == {interface3}
     assert not phase.valid_archive_items_per_interface[interface3].exists()
     assert phase.valid_archive_item_count_per_interface == {interface3: 0}
-    assert phase.jobs_to_schedule_per_submission == 0
+    assert phase.valid_archive_item_count == 0
 
     del phase.valid_archive_items_per_interface
     del phase.valid_archive_item_count_per_interface
-    del phase.jobs_to_schedule_per_submission
+    del phase.valid_archive_item_count
     phase.algorithm_interfaces.set([interface1, interface3])
     assert phase.valid_archive_items_per_interface.keys() == {
         interface1,
@@ -2149,11 +2149,11 @@ def test_archive_item_matching_to_interfaces():
         interface1: 1,
         interface3: 0,
     }
-    assert phase.jobs_to_schedule_per_submission == 1
+    assert phase.valid_archive_item_count == 1
 
     del phase.valid_archive_items_per_interface
     del phase.valid_archive_item_count_per_interface
-    del phase.jobs_to_schedule_per_submission
+    del phase.valid_archive_item_count
     phase.algorithm_interfaces.set([interface1, interface2, interface3])
     assert phase.valid_archive_items_per_interface.keys() == {
         interface1,
@@ -2168,7 +2168,7 @@ def test_archive_item_matching_to_interfaces():
         interface2: 1,
         interface3: 0,
     }
-    assert phase.jobs_to_schedule_per_submission == 2
+    assert phase.valid_archive_item_count == 2
 
 
 @pytest.mark.django_db
