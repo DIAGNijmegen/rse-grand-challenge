@@ -2839,9 +2839,8 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def get_inference_units_per_interface(self, *, subset_by_status):
         if self.submission.phase.use_batch_mode:
             inference_units = BatchJobTask.objects.filter(
-                batch_job__in=self.submission.inference_jobs.filter(
-                    status__in=subset_by_status
-                )
+                batch_job__submission=self.submission,
+                batch_job__status__in=subset_by_status,
             )
         else:
             inference_units = self.submission.inference_jobs.filter(
