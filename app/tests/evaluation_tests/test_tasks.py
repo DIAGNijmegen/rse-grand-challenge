@@ -31,6 +31,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.tasks import (
     cancel_external_evaluations_past_timeout,
+    check_prerequisites_for_evaluation_execution,
     create_algorithm_jobs_for_evaluation,
     handle_failed_jobs,
     set_evaluation_inputs,
@@ -1439,3 +1440,93 @@ def test_handle_failed_jobs_cancels_batch_jobs():
 
     successful_batch_job.refresh_from_db()
     assert successful_batch_job.status == BatchJob.SUCCESS
+
+
+@pytest.mark.django_db
+def test_check_prerequisites_blocked_by_failed_batch_job(mocker):
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__phase__submission_kind=SubmissionKindChoices.ALGORITHM,
+        submission__algorithm_image=ai,
+        time_limit=10,
+        status=Evaluation.VALIDATING_INPUTS,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    # A single valid archive item, processed by a batch job that failed.
+    civ = ComponentInterfaceValueFactory(interface=input_ci)
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.set([civ])
+
+    BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{civ}],
+        status=BatchJob.FAILURE,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    mocked_execute = mocker.patch(
+        "grandchallenge.evaluation.tasks.prepare_and_execute_evaluation"
+    )
+
+    check_prerequisites_for_evaluation_execution(evaluation_pk=evaluation.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.CANCELLED
+    assert EvaluationErrorMessages.UNSUCCESSFUL_JOBS in str(
+        evaluation.error_message
+    )
+    mocked_execute.execute_on_commit.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_check_prerequisites_proceeds_when_batch_jobs_successful(mocker):
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__phase__submission_kind=SubmissionKindChoices.ALGORITHM,
+        submission__algorithm_image=ai,
+        time_limit=10,
+        status=Evaluation.VALIDATING_INPUTS,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    civ = ComponentInterfaceValueFactory(interface=input_ci)
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.set([civ])
+
+    BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{civ}],
+        status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    mocked_execute = mocker.patch(
+        "grandchallenge.evaluation.tasks.prepare_and_execute_evaluation"
+    )
+
+    check_prerequisites_for_evaluation_execution(evaluation_pk=evaluation.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.VALIDATING_INPUTS
+    mocked_execute.execute_on_commit.assert_called_once_with(
+        evaluation_pk=evaluation.pk
+    )

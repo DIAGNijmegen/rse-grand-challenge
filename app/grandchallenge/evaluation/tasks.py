@@ -13,7 +13,6 @@ from config.lambda_tasks import (
     LambdaTaskQueueChoices,
 )
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -33,10 +32,7 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 def check_prerequisites_for_evaluation_execution(
     *, evaluation_pk: str | uuid.UUID
 ):
-    from grandchallenge.evaluation.models import (
-        Evaluation,
-        get_valid_jobs_for_interfaces_and_archive_items,
-    )
+    from grandchallenge.evaluation.models import Evaluation
 
     with check_lock_acquired():
         evaluation = (
@@ -64,26 +60,14 @@ def check_prerequisites_for_evaluation_execution(
         evaluation.submission.phase.submission_kind
         == SubmissionKindChoices.ALGORITHM
     ):
-        phase = evaluation.submission.phase
-        items = phase.valid_archive_items_per_interface
-        non_success_statuses = [
-            status[0]
-            for status in Job.STATUS_CHOICES
-            if status[0] != Job.SUCCESS
-        ]
-
-        jobs = get_valid_jobs_for_interfaces_and_archive_items(
-            algorithm_image=evaluation.submission.algorithm_image,
-            algorithm_model=evaluation.submission.algorithm_model,
-            algorithm_interfaces=phase.algorithm_interfaces.all(),
-            valid_archive_items_per_interface=items,
-            subset_by_status=non_success_statuses,
+        blocking_inference_units_per_interface = (
+            evaluation.blocking_inference_units_per_interface
         )
     else:
-        # prediction submissions never have blocking jobs
-        jobs = {}
+        # prediction submissions never have blocking inference units
+        blocking_inference_units_per_interface = {}
 
-    if any(jobs.values()):
+    if any(blocking_inference_units_per_interface.values()):
         evaluation.update_status(
             status=Evaluation.CANCELLED,
             error_message=EvaluationErrorMessages.UNSUCCESSFUL_JOBS,

@@ -2836,17 +2836,16 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def additional_outputs(self):
         return self.outputs.exclude(interface__slug="metrics-json-file")
 
-    @cached_property
-    def successful_inference_units_per_interface(self):
+    def get_inference_units_per_interface(self, *, subset_by_status):
         if self.submission.phase.use_batch_mode:
             inference_units = BatchJobTask.objects.filter(
                 batch_job__in=self.submission.inference_jobs.filter(
-                    status=BatchJob.SUCCESS
+                    status__in=subset_by_status
                 )
             )
         else:
             inference_units = self.submission.inference_jobs.filter(
-                status=Job.SUCCESS
+                status__in=subset_by_status
             )
 
         return filter_inference_units_by_valid_archive_items(
@@ -2857,6 +2856,21 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
                 "inputs"
             ),
             valid_archive_items_per_interface=self.submission.phase.valid_archive_items_per_interface,
+        )
+
+    @cached_property
+    def successful_inference_units_per_interface(self):
+        return self.get_inference_units_per_interface(
+            subset_by_status=[Job.SUCCESS]
+        )
+
+    @cached_property
+    def blocking_inference_units_per_interface(self):
+        non_success_statuses = [
+            status for status, _ in Job.STATUS_CHOICES if status != Job.SUCCESS
+        ]
+        return self.get_inference_units_per_interface(
+            subset_by_status=non_success_statuses
         )
 
     @cached_property
