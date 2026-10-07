@@ -1438,9 +1438,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1499,9 +1499,9 @@ class TestInputsComplete:
         # no need to set outputs, we assume that only a job with valid outputs has a
         # status of SUCCESS
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
@@ -1563,9 +1563,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
@@ -1621,9 +1621,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1733,9 +1733,9 @@ class TestInputsComplete:
             ]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
@@ -1792,9 +1792,9 @@ class TestInputsComplete:
             [archive_items_and_jobs_for_interfaces.civs_for_interface2[1][1]]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1850,9 +1850,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1910,9 +1910,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -1978,9 +1978,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -2040,9 +2040,9 @@ class TestInputsComplete:
             archive_items_and_jobs_for_interfaces.civs_for_interface2[1]
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert not eval_alg.inputs_complete
 
@@ -2086,9 +2086,9 @@ class TestInputsComplete:
             time_limit=5,
         )
 
-        del eval_alg.successful_inference_units_per_interface
-        del eval_alg.successful_inference_unit_count_per_interface
-        del eval_alg.total_successful_inference_units
+        del eval_alg.successful_inference_tasks_per_interface
+        del eval_alg.successful_inference_task_count_per_interface
+        del eval_alg.total_successful_inference_tasks
         del eval_alg.inputs_complete
         assert eval_alg.inputs_complete
 
@@ -2181,7 +2181,7 @@ class TestInputsComplete:
         )
 
         # Only the two matching interface1 tasks count.
-        assert eval_alg.total_successful_inference_units == 2
+        assert eval_alg.total_successful_inference_tasks == 2
         assert not eval_alg.inputs_complete
 
     def test_batch_tasks_with_recombined_item_values_are_ignored(
@@ -2218,7 +2218,7 @@ class TestInputsComplete:
             time_limit=5,
         )
 
-        assert eval_alg.total_successful_inference_units == 0
+        assert eval_alg.total_successful_inference_tasks == 0
 
     def test_jobs_with_recombined_item_values_are_ignored(
         self, archive_items_and_jobs_for_interfaces
@@ -2252,7 +2252,7 @@ class TestInputsComplete:
         )
         job.inputs.set([ci1_value_from_item, ci2_value_from_item])
 
-        assert eval_alg.total_successful_inference_units == 0
+        assert eval_alg.total_successful_inference_tasks == 0
 
 
 @pytest.mark.django_db

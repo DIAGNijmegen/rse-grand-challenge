@@ -1335,9 +1335,9 @@ def test_set_evaluation_inputs_excludes_stale_batch_tasks():
     current_output_civ = ComponentInterfaceValueFactory(interface=output_ci)
     current_task.outputs.add(current_output_civ)
 
-    del evaluation.successful_inference_units_per_interface
-    del evaluation.successful_inference_unit_count_per_interface
-    del evaluation.total_successful_inference_units
+    del evaluation.successful_inference_tasks_per_interface
+    del evaluation.successful_inference_task_count_per_interface
+    del evaluation.total_successful_inference_tasks
     del evaluation.inputs_complete
     assert evaluation.inputs_complete
 

@@ -60,14 +60,14 @@ def check_prerequisites_for_evaluation_execution(
         evaluation.submission.phase.submission_kind
         == SubmissionKindChoices.ALGORITHM
     ):
-        blocking_inference_units_per_interface = (
-            evaluation.blocking_inference_units_per_interface
+        blocking_inference_tasks_per_interface = (
+            evaluation.blocking_inference_tasks_per_interface
         )
     else:
-        # prediction submissions never have blocking inference units
-        blocking_inference_units_per_interface = {}
+        # prediction submissions never have blocking inference tasks
+        blocking_inference_tasks_per_interface = {}
 
-    if any(blocking_inference_units_per_interface.values()):
+    if any(blocking_inference_tasks_per_interface.values()):
         evaluation.update_status(
             status=Evaluation.CANCELLED,
             error_message=EvaluationErrorMessages.UNSUCCESSFUL_JOBS,
@@ -362,14 +362,14 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
             ComponentInterfaceValue,
         )
 
-        successful_inference_units = evaluation.successful_inference_units
+        successful_inference_tasks = evaluation.successful_inference_tasks
         serializer = evaluation.job_serializer_class(
-            successful_inference_units, many=True
+            successful_inference_tasks, many=True
         )
-        output_to_inference_unit = {
-            output.pk: inference_unit.pk
-            for inference_unit in successful_inference_units
-            for output in inference_unit.outputs.all()
+        output_to_inference_task = {
+            output.pk: inference_task.pk
+            for inference_task in successful_inference_tasks
+            for output in inference_task.outputs.all()
         }
 
         interface = ComponentInterface.objects.get(
@@ -379,11 +379,11 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
             interface=interface, value=serializer.data
         )
 
-        evaluation.inputs.add(*[civ.pk, *output_to_inference_unit.keys()])
+        evaluation.inputs.add(*[civ.pk, *output_to_inference_task.keys()])
         evaluation.input_prefixes = {
-            str(output_pk): f"{inference_unit_pk}/output/"
-            for output_pk, inference_unit_pk in (
-                output_to_inference_unit.items()
+            str(output_pk): f"{inference_task_pk}/output/"
+            for output_pk, inference_task_pk in (
+                output_to_inference_task.items()
             )
         }
         evaluation.status = evaluation.PENDING

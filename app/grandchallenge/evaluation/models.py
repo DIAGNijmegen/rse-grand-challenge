@@ -197,8 +197,8 @@ def get_valid_jobs_for_interfaces_and_archive_items(
         **extra_filter,
     )
 
-    return filter_inference_units_by_valid_archive_items(
-        inference_units=jobs.prefetch_related("inputs").select_related(
+    return filter_inference_tasks_by_valid_archive_items(
+        inference_tasks=jobs.prefetch_related("inputs").select_related(
             "algorithm_image__algorithm"
         ),
         algorithm_interfaces=algorithm_interfaces,
@@ -206,21 +206,26 @@ def get_valid_jobs_for_interfaces_and_archive_items(
     )
 
 
-def filter_inference_units_by_valid_archive_items(
+def filter_inference_tasks_by_valid_archive_items(
     *,
-    inference_units,
+    inference_tasks,
     algorithm_interfaces,
     valid_archive_items_per_interface,
 ):
     """
-    Groups inference units (Jobs or BatchJobTasks) by interface, keeping only
+    Groups inference tasks (Jobs or BatchJobTasks) by interface, keeping only
     those whose input set exactly matches one of the valid archive items'
     value sets for that interface.
+
+    An "inference task" is one archive item's worth of algorithm work:
+    a ``BatchJobTask`` in batch mode or otherwise a ``algorithms.Job``.
+    We're dealing with Django model instances here, rather than the abstract
+    executor representations of ``InferenceTask`` / ``InferenceTaskDefinition``.
     """
-    units_per_interface = {}
+    tasks_per_interface = {}
     for interface in algorithm_interfaces:
-        units_per_interface[interface] = []
-        units_for_interface = inference_units.filter(
+        tasks_per_interface[interface] = []
+        tasks_for_interface = inference_tasks.filter(
             algorithm_interface=interface,
             inputs__archive_items__in=valid_archive_items_per_interface[
                 interface
@@ -232,14 +237,14 @@ def filter_inference_units_by_valid_archive_items(
             for item in valid_archive_items_per_interface[interface]
         }
 
-        for unit in units_for_interface:
+        for task in tasks_for_interface:
             if (
-                frozenset(inpt.pk for inpt in unit.inputs.all())
+                frozenset(inpt.pk for inpt in task.inputs.all())
                 in archive_item_value_sets
             ):
-                units_per_interface[interface].append(unit)
+                tasks_per_interface[interface].append(task)
 
-    return units_per_interface
+    return tasks_per_interface
 
 
 def active_inference_jobs_count(*, algorithm_image=None):
@@ -2836,19 +2841,37 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def additional_outputs(self):
         return self.outputs.exclude(interface__slug="metrics-json-file")
 
-    def get_inference_units_per_interface(self, *, subset_by_status):
+    def get_inference_tasks_per_interface(self, *, subset_by_status):
+        """
+        The algorithm inference tasks for this submission, grouped by
+        interface.
+
+        An "inference task" is one archive item's worth of algorithm work:
+        a ``BatchJobTask`` when the phase runs in batch mode, or
+        a ``Job`` when the phase runs in single mode.
+
+        Only tasks whose status is in ``subset_by_status`` and whose inputs
+        exactly match a current valid archive item for the interface are
+        returned.
+
+        Note: inference task as defined here are distinct from the executor's
+        ``InferenceTask`` / ``InferenceTaskDefinition`` in
+        ``components.backends.base``. One inference task (Job or BatchJobTask)
+        maps to one backend ``InferenceTask`` during execution;
+        but they live at different layers.
+        """
         if self.submission.phase.use_batch_mode:
-            inference_units = BatchJobTask.objects.filter(
+            inference_tasks = BatchJobTask.objects.filter(
                 batch_job__submission=self.submission,
                 batch_job__status__in=subset_by_status,
             )
         else:
-            inference_units = self.submission.inference_jobs.filter(
+            inference_tasks = self.submission.inference_jobs.filter(
                 status__in=subset_by_status
             )
 
-        return filter_inference_units_by_valid_archive_items(
-            inference_units=inference_units.prefetch_related(
+        return filter_inference_tasks_by_valid_archive_items(
+            inference_tasks=inference_tasks.prefetch_related(
                 "inputs__interface", "outputs__interface"
             ),
             algorithm_interfaces=self.submission.phase.algorithm_interfaces.prefetch_related(
@@ -2858,41 +2881,41 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
     @cached_property
-    def successful_inference_units_per_interface(self):
-        return self.get_inference_units_per_interface(
+    def successful_inference_tasks_per_interface(self):
+        return self.get_inference_tasks_per_interface(
             subset_by_status=[Job.SUCCESS]
         )
 
     @cached_property
-    def blocking_inference_units_per_interface(self):
+    def blocking_inference_tasks_per_interface(self):
         non_success_statuses = [
             status for status, _ in Job.STATUS_CHOICES if status != Job.SUCCESS
         ]
-        return self.get_inference_units_per_interface(
+        return self.get_inference_tasks_per_interface(
             subset_by_status=non_success_statuses
         )
 
     @cached_property
-    def successful_inference_unit_count_per_interface(self):
+    def successful_inference_task_count_per_interface(self):
         return {
-            interface: len(successful_inference_units)
-            for interface, successful_inference_units in (
-                self.successful_inference_units_per_interface.items()
+            interface: len(successful_inference_tasks)
+            for interface, successful_inference_tasks in (
+                self.successful_inference_tasks_per_interface.items()
             )
         }
 
     @cached_property
-    def total_successful_inference_units(self):
-        return sum(self.successful_inference_unit_count_per_interface.values())
+    def total_successful_inference_tasks(self):
+        return sum(self.successful_inference_task_count_per_interface.values())
 
     @cached_property
-    def successful_inference_units(self):
+    def successful_inference_tasks(self):
         return [
-            inference_unit
-            for inference_units in (
-                self.successful_inference_units_per_interface.values()
+            inference_task
+            for inference_tasks in (
+                self.successful_inference_tasks_per_interface.values()
             )
-            for inference_unit in inference_units
+            for inference_task in inference_tasks
         ]
 
     @property
@@ -2940,7 +2963,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
         if self.submission.algorithm_image:
             return (
-                self.total_successful_inference_units
+                self.total_successful_inference_tasks
                 == self.submission.phase.valid_archive_item_count
             )
         elif self.submission.predictions_file:
