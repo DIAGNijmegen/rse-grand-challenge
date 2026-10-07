@@ -999,7 +999,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     f"the current phase's children set as its parent."
                 )
 
-            if self.parent.jobs_to_schedule_per_submission < 1:
+            if self.parent.valid_archive_item_count < 1:
                 raise ValidationError(
                     "The parent phase needs to have at least 1 valid archive item."
                 )
@@ -1260,7 +1260,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         }
 
     @cached_property
-    def jobs_to_schedule_per_submission(self):
+    def valid_archive_item_count(self):
         return sum(self.valid_archive_item_count_per_interface.values())
 
     @property
@@ -2853,7 +2853,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         if self.submission.algorithm_image:
             return (
                 self.total_successful_jobs
-                == self.submission.phase.jobs_to_schedule_per_submission
+                == self.submission.phase.valid_archive_item_count
             )
         elif self.submission.predictions_file:
             return True
