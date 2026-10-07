@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import re
@@ -12,6 +13,7 @@ from csp import constants as csp_constants
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
+from django.urls import Resolver404
 from django.utils._os import safe_join
 from django.utils.timezone import now
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
@@ -727,6 +729,7 @@ if SENTRY_DSN:
             os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
         ),
         before_send=sentry_before_send,
+        ignore_errors=[asyncio.CancelledError, Resolver404],
     )
     ignore_logger("django.security.DisallowedHost")
     ignore_logger("aws_xray_sdk")
