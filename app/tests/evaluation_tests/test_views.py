@@ -3221,7 +3221,6 @@ def test_phase_starter_kit_download(client):
     (
         "batch-job-detail",
         "batch-job-status-detail",
-        "batch-job-logs-detail",
     ),
 )
 def test_batch_job_detail_views_require_view_permission(client, viewname):
@@ -3262,6 +3261,61 @@ def test_batch_job_detail_views_require_view_permission(client, viewname):
     response = get_view_for_user(
         client=client,
         viewname=f"evaluation:{viewname}",
+        challenge=challenge,
+        reverse_kwargs=reverse_kwargs,
+        user=admin,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_batch_job_logs_detail_requires_view_permission(client, mocker):
+    mock_service = MagicMock()
+    mock_service.runtime_metrics_chart = {}
+    mock_service.execution_history = []
+    mock_service.task_logs = []
+    mocker.patch(
+        "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingLogsService",
+        return_value=mock_service,
+    )
+
+    batch_job = BatchJobFactory(time_limit=10)
+    submission = batch_job.submission
+    challenge = submission.phase.challenge
+
+    admin = UserFactory()
+    challenge.add_admin(admin)
+    participant = UserFactory()
+    challenge.add_participant(participant)
+    user = UserFactory()
+
+    reverse_kwargs = {
+        "slug": submission.phase.slug,
+        "submission_pk": submission.pk,
+        "pk": batch_job.pk,
+    }
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:batch-job-logs-detail",
+        challenge=challenge,
+        reverse_kwargs=reverse_kwargs,
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:batch-job-logs-detail",
+        challenge=challenge,
+        reverse_kwargs=reverse_kwargs,
+        user=participant,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="evaluation:batch-job-logs-detail",
         challenge=challenge,
         reverse_kwargs=reverse_kwargs,
         user=admin,
