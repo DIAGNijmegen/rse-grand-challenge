@@ -99,6 +99,7 @@
     <span class="n">protected_s3_storage</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.templatetags.remove_whitespace</span><span class="w"> </span><span class="kn">import</span> <span class="n">oxford_comma</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.utils.query</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_lock_acquired</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExtensionValidator</span><span class="p">,</span>
     <span class="n">JSONValidator</span><span class="p">,</span>
@@ -234,36 +235,54 @@
         <span class="o">**</span><span class="n">extra_filter</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">jobs_per_interface</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">filter_inference_tasks_by_valid_archive_items</span><span class="p">(</span>
+        <span class="n">inference_tasks</span><span class="o">=</span><span class="n">jobs</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
+            <span class="s2">"algorithm_image__algorithm"</span>
+        <span class="p">),</span>
+        <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="n">algorithm_interfaces</span><span class="p">,</span>
+        <span class="n">valid_archive_items_per_interface</span><span class="o">=</span><span class="n">valid_archive_items_per_interface</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_inference_tasks_by_valid_archive_items</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">inference_tasks</span><span class="p">,</span>
+    <span class="n">algorithm_interfaces</span><span class="p">,</span>
+    <span class="n">valid_archive_items_per_interface</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Groups inference tasks (Jobs or BatchJobTasks) by interface, keeping only</span>
+<span class="sd">    those whose input set exactly matches one of the valid archive items'</span>
+<span class="sd">    value sets for that interface.</span>
+
+<span class="sd">    An "inference task" is one archive item's worth of algorithm work:</span>
+<span class="sd">    a ``BatchJobTask`` in batch mode or otherwise a ``algorithms.Job``.</span>
+<span class="sd">    We're dealing with Django model instances here, rather than the abstract</span>
+<span class="sd">    executor representations of ``InferenceTask`` / ``InferenceTaskDefinition``.</span>
+<span class="sd">    """</span>
+    <span class="n">tasks_per_interface</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">algorithm_interfaces</span><span class="p">:</span>
-        <span class="n">jobs_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">jobs_for_interface</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">jobs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">algorithm_interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
-                <span class="n">inputs__archive_items__in</span><span class="o">=</span><span class="n">valid_archive_items_per_interface</span><span class="p">[</span>
-                    <span class="n">interface</span>
-                <span class="p">],</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">"algorithm_image__algorithm"</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">tasks_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tasks_for_interface</span> <span class="o">=</span> <span class="n">inference_tasks</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">algorithm_interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+            <span class="n">inputs__archive_items__in</span><span class="o">=</span><span class="n">valid_archive_items_per_interface</span><span class="p">[</span>
+                <span class="n">interface</span>
+            <span class="p">],</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
 
         <span class="n">archive_item_value_sets</span> <span class="o">=</span> <span class="p">{</span>
             <span class="nb">frozenset</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
             <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">valid_archive_items_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span>
         <span class="p">}</span>
 
-        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs_for_interface</span><span class="p">:</span>
-            <span class="c1"># subset to jobs whose input set exactly matches</span>
-            <span class="c1"># one of the valid archive items' value sets</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks_for_interface</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="nb">frozenset</span><span class="p">(</span><span class="n">inpt</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">inpt</span> <span class="ow">in</span> <span class="n">job</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+                <span class="nb">frozenset</span><span class="p">(</span><span class="n">inpt</span><span class="o">.</span><span class="n">pk</span> <span class="k">for</span> <span class="n">inpt</span> <span class="ow">in</span> <span class="n">task</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
                 <span class="ow">in</span> <span class="n">archive_item_value_sets</span>
             <span class="p">):</span>
-                <span class="n">jobs_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+                <span class="n">tasks_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">jobs_per_interface</span>
+    <span class="k">return</span> <span class="n">tasks_per_interface</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">active_inference_jobs_count</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">algorithm_image</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1889,6 +1908,22 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">inference_job_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">BatchJob</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span> <span class="k">else</span> <span class="n">Job</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inference_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">batchjob_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">:</span>
+                <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"algorithm_model"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"algorithm_model__isnull"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_job_model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">creator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">algorithm_image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">extra_filter</span><span class="p">,</span>
+            <span class="p">)</span>
+
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
@@ -2856,44 +2891,120 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">additional_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">interface__slug</span><span class="o">=</span><span class="s2">"metrics-json-file"</span><span class="p">)</span>
 
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">successful_jobs_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">algorithm_interfaces</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
-                <span class="s2">"inputs"</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inference_tasks_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">subset_by_status</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        The algorithm inference tasks for this submission, grouped by</span>
+<span class="sd">        interface.</span>
 
-        <span class="n">successful_jobs_per_interface</span> <span class="o">=</span> <span class="n">get_valid_jobs_for_interfaces_and_archive_items</span><span class="p">(</span>
-            <span class="n">subset_by_status</span><span class="o">=</span><span class="p">[</span><span class="n">Job</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">],</span>
-            <span class="n">algorithm_image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">,</span>
-            <span class="n">algorithm_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">,</span>
-            <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="n">algorithm_interfaces</span><span class="p">,</span>
+<span class="sd">        An "inference task" is one archive item's worth of algorithm work:</span>
+<span class="sd">        a ``BatchJobTask`` when the phase runs in batch mode, or</span>
+<span class="sd">        a ``Job`` when the phase runs in single mode.</span>
+
+<span class="sd">        Only tasks whose status is in ``subset_by_status`` and whose inputs</span>
+<span class="sd">        exactly match a current valid archive item for the interface are</span>
+<span class="sd">        returned.</span>
+
+<span class="sd">        Note: inference task as defined here are distinct from the executor's</span>
+<span class="sd">        ``InferenceTask`` / ``InferenceTaskDefinition`` in</span>
+<span class="sd">        ``components.backends.base``. One inference task (Job or BatchJobTask)</span>
+<span class="sd">        maps to one backend ``InferenceTask`` during execution;</span>
+<span class="sd">        but they live at different layers.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span><span class="p">:</span>
+            <span class="n">inference_tasks</span> <span class="o">=</span> <span class="n">BatchJobTask</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">batch_job__submission</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="p">,</span>
+                <span class="n">batch_job__status__in</span><span class="o">=</span><span class="n">subset_by_status</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">inference_tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">inference_jobs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">status__in</span><span class="o">=</span><span class="n">subset_by_status</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">filter_inference_tasks_by_valid_archive_items</span><span class="p">(</span>
+            <span class="n">inference_tasks</span><span class="o">=</span><span class="n">inference_tasks</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+                <span class="s2">"inputs__interface"</span><span class="p">,</span> <span class="s2">"outputs__interface"</span>
+            <span class="p">),</span>
+            <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
+                <span class="s2">"inputs"</span>
+            <span class="p">),</span>
             <span class="n">valid_archive_items_per_interface</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">valid_archive_items_per_interface</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">successful_jobs_per_interface</span>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">successful_inference_tasks_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference_tasks_per_interface</span><span class="p">(</span>
+            <span class="n">subset_by_status</span><span class="o">=</span><span class="p">[</span><span class="n">Job</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">]</span>
+        <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">successful_job_count_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">blocking_inference_tasks_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">non_success_statuses</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">status</span> <span class="k">for</span> <span class="n">status</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">Job</span><span class="o">.</span><span class="n">STATUS_CHOICES</span> <span class="k">if</span> <span class="n">status</span> <span class="o">!=</span> <span class="n">Job</span><span class="o">.</span><span class="n">SUCCESS</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference_tasks_per_interface</span><span class="p">(</span>
+            <span class="n">subset_by_status</span><span class="o">=</span><span class="n">non_success_statuses</span>
+        <span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">successful_inference_task_count_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="n">interface</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">successful_jobs</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">successful_jobs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successful_jobs_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="n">interface</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">successful_inference_tasks</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">successful_inference_tasks</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">successful_inference_tasks_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">)</span>
         <span class="p">}</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">total_successful_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">successful_job_count_per_interface</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_successful_inference_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">successful_inference_task_count_per_interface</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">successful_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Job</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">pk__in</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">j</span><span class="o">.</span><span class="n">pk</span>
-                <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">successful_jobs_per_interface</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">sublist</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">successful_inference_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">inference_task</span>
+            <span class="k">for</span> <span class="n">inference_tasks</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">successful_inference_tasks_per_interface</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">inference_task</span> <span class="ow">in</span> <span class="n">inference_tasks</span>
+        <span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">job_serializer_class</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.serializers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+                <span class="n">BatchJobTaskSerializer</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">BatchJobTaskSerializer</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.serializers</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSerializer</span>
+
+            <span class="k">return</span> <span class="n">JobSerializer</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_pending_inference_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">inference_jobs</span><span class="o">.</span><span class="n">active</span><span class="p">()</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cancel_pending_inference_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">inference_jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">inference_jobs</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">inference_job_model</span>
+
+        <span class="k">with</span> <span class="n">check_lock_acquired</span><span class="p">():</span>
+            <span class="n">locked_pks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">inference_jobs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">status__in</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">PENDING</span><span class="p">,</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">PROVISIONED</span><span class="p">,</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">select_for_update</span><span class="p">(</span><span class="n">skip_locked</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">"pk"</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">locked_pks</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk__in</span><span class="o">=</span><span class="n">locked_pks</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="n">status</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">CANCELLED</span>
+                <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2902,7 +3013,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">total_successful_jobs</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">total_successful_inference_tasks</span>
                 <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">valid_archive_item_count</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">predictions_file</span><span class="p">:</span>
