@@ -12,7 +12,10 @@ from rest_framework.fields import (
     JSONField,
     SerializerMethodField,
 )
-from rest_framework.relations import HyperlinkedRelatedField
+from rest_framework.relations import (
+    HyperlinkedRelatedField,
+    StringRelatedField,
+)
 from rest_framework.serializers import ModelSerializer
 
 from grandchallenge.algorithms.serializers import (
@@ -27,7 +30,12 @@ from grandchallenge.components.models import (
 from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
-from grandchallenge.evaluation.models import Evaluation, Phase, Submission
+from grandchallenge.evaluation.models import (
+    BatchJobTask,
+    Evaluation,
+    Phase,
+    Submission,
+)
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
 )
@@ -73,6 +81,25 @@ class SubmissionSerializer(ModelSerializer):
             "supplementary_file",
             "supplementary_url",
             "algorithm_image",
+        )
+
+
+class BatchJobTaskSerializer(ModelSerializer):
+    algorithm_image = StringRelatedField(source="batch_job.algorithm_image")
+    inputs = ComponentInterfaceValueSerializer(many=True)
+    outputs = ComponentInterfaceValueSerializer(many=True)
+    status = CharField(source="batch_job.get_status_display", read_only=True)
+
+    class Meta:
+        model = BatchJobTask
+        fields = (
+            "pk",
+            "algorithm_image",
+            "inputs",
+            "outputs",
+            "status",
+            "exec_duration",
+            "invoke_duration",
         )
 
 

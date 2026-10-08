@@ -31,7 +31,9 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.tasks import (
     cancel_external_evaluations_past_timeout,
+    check_prerequisites_for_evaluation_execution,
     create_algorithm_jobs_for_evaluation,
+    handle_failed_jobs,
     set_evaluation_inputs,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -50,6 +52,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import (
+    BatchJobFactory,
     EvaluationFactory,
     MethodFactory,
     PhaseFactory,
@@ -1209,3 +1212,321 @@ def test_create_algorithm_jobs_for_evaluation_invoice_workflow():
     job = Job.objects.get()
     assert job.utilization.invoice == invoice
     assert job.status == Job.PENDING
+
+
+@pytest.mark.django_db
+def test_set_evaluation_inputs_for_batch_submission():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__algorithm_image=ai,
+        time_limit=60,
+        status=Evaluation.EXECUTING_PREREQUISITES,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    output_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(
+        inputs=[input_ci], outputs=[output_ci]
+    )
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    input_civs = []
+    for _ in range(2):
+        civ = ComponentInterfaceValueFactory(interface=input_ci)
+        archive_item = ArchiveItemFactory(archive=archive)
+        archive_item.values.add(civ)
+        input_civs.append(civ)
+
+    batch_job = BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{civ} for civ in input_civs],
+        status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    output_civ_for_task = {}
+    for task in batch_job.tasks.all():
+        output_civ = ComponentInterfaceValueFactory(interface=output_ci)
+        task.outputs.add(output_civ)
+        output_civ_for_task[task] = output_civ
+
+    set_evaluation_inputs(evaluation_pk=evaluation.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.PENDING
+    assert evaluation.error_message == ""
+
+    predictions_civ = evaluation.inputs.get(
+        interface__slug="predictions-json-file"
+    )
+    # predictions.json is a list of BatchJobTasks (one per archive item)
+    assert len(predictions_civ.value) == 2
+    assert {entry["pk"] for entry in predictions_civ.value} == {
+        str(task.pk) for task in output_civ_for_task
+    }
+
+    assert evaluation.input_prefixes == {
+        str(output_civ.pk): f"{task.pk}/output/"
+        for task, output_civ in output_civ_for_task.items()
+    }
+    for output_civ in output_civ_for_task.values():
+        assert output_civ in evaluation.inputs.all()
+
+
+@pytest.mark.django_db
+def test_set_evaluation_inputs_excludes_stale_batch_tasks():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__algorithm_image=ai,
+        time_limit=10,
+        status=Evaluation.EXECUTING_PREREQUISITES,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    output_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(
+        inputs=[input_ci], outputs=[output_ci]
+    )
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    # A single archive item exists now
+    current_civ = ComponentInterfaceValueFactory(interface=input_ci)
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(current_civ)
+
+    # A previously-run batch task processed a value set that no longer
+    # corresponds to any archive item (the item was since edited)
+    stale_civ = ComponentInterfaceValueFactory(interface=input_ci)
+    stale_batch_job = BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{stale_civ}],
+        status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
+    )
+    stale_task = stale_batch_job.tasks.get()
+    stale_task.outputs.add(ComponentInterfaceValueFactory(interface=output_ci))
+
+    # The submission is not complete: the stale task does not count, and the
+    # current archive item has no successful task yet.
+    assert not evaluation.inputs_complete
+
+    # Run the task for the current archive item
+    current_batch_job = BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{current_civ}],
+        status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
+    )
+    current_task = current_batch_job.tasks.get()
+    current_output_civ = ComponentInterfaceValueFactory(interface=output_ci)
+    current_task.outputs.add(current_output_civ)
+
+    del evaluation.successful_inference_tasks_per_interface
+    del evaluation.successful_inference_task_count_per_interface
+    del evaluation.total_successful_inference_tasks
+    del evaluation.inputs_complete
+    assert evaluation.inputs_complete
+
+    set_evaluation_inputs(evaluation_pk=evaluation.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.PENDING
+
+    predictions_civ = evaluation.inputs.get(
+        interface__slug="predictions-json-file"
+    )
+    # Only the current task is present; the stale task is excluded
+    assert [entry["pk"] for entry in predictions_civ.value] == [
+        str(current_task.pk)
+    ]
+    assert evaluation.input_prefixes == {
+        str(current_output_civ.pk): f"{current_task.pk}/output/"
+    }
+
+
+@pytest.mark.django_db
+def test_set_evaluation_inputs_for_batch_submission_with_pending_jobs():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__algorithm_image=ai,
+        time_limit=10,
+        status=Evaluation.EXECUTING_PREREQUISITES,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    civ = ComponentInterfaceValueFactory(interface=input_ci)
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(civ)
+
+    BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{civ}],
+        status=BatchJob.PENDING,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    set_evaluation_inputs(evaluation_pk=evaluation.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.EXECUTING_PREREQUISITES
+    assert evaluation.inputs.count() == 0
+    assert evaluation.input_prefixes == {}
+
+
+@pytest.mark.django_db
+def test_handle_failed_jobs_cancels_batch_jobs():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__algorithm_image=ai,
+        time_limit=10,
+        status=Evaluation.EXECUTING_PREREQUISITES,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    pending_batch_job = BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{ComponentInterfaceValueFactory(interface=input_ci)}],
+        status=BatchJob.PENDING,
+        time_limit=ai.algorithm.time_limit,
+    )
+    successful_batch_job = BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{ComponentInterfaceValueFactory(interface=input_ci)}],
+        status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    handle_failed_jobs(evaluation_pk=evaluation.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.FAILURE
+
+    pending_batch_job.refresh_from_db()
+    assert pending_batch_job.status == BatchJob.CANCELLED
+
+    successful_batch_job.refresh_from_db()
+    assert successful_batch_job.status == BatchJob.SUCCESS
+
+
+@pytest.mark.django_db
+def test_check_prerequisites_blocked_by_failed_batch_job(mocker):
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__phase__submission_kind=SubmissionKindChoices.ALGORITHM,
+        submission__algorithm_image=ai,
+        time_limit=10,
+        status=Evaluation.VALIDATING_INPUTS,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    # A single valid archive item, processed by a batch job that failed.
+    civ = ComponentInterfaceValueFactory(interface=input_ci)
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.set([civ])
+
+    BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{civ}],
+        status=BatchJob.FAILURE,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    mocked_execute = mocker.patch(
+        "grandchallenge.evaluation.tasks.prepare_and_execute_evaluation"
+    )
+
+    check_prerequisites_for_evaluation_execution(evaluation_pk=evaluation.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.CANCELLED
+    assert EvaluationErrorMessages.UNSUCCESSFUL_JOBS in str(
+        evaluation.error_message
+    )
+    mocked_execute.execute_on_commit.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_check_prerequisites_proceeds_when_batch_jobs_successful(mocker):
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    evaluation = EvaluationFactory(
+        submission__phase__archive=archive,
+        submission__phase__use_batch_mode=True,
+        submission__phase__submission_kind=SubmissionKindChoices.ALGORITHM,
+        submission__algorithm_image=ai,
+        time_limit=10,
+        status=Evaluation.VALIDATING_INPUTS,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    civ = ComponentInterfaceValueFactory(interface=input_ci)
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.set([civ])
+
+    BatchJobFactory(
+        submission=evaluation.submission,
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        input_civ_sets=[{civ}],
+        status=BatchJob.SUCCESS,
+        time_limit=ai.algorithm.time_limit,
+    )
+
+    mocked_execute = mocker.patch(
+        "grandchallenge.evaluation.tasks.prepare_and_execute_evaluation"
+    )
+
+    check_prerequisites_for_evaluation_execution(evaluation_pk=evaluation.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.status == Evaluation.VALIDATING_INPUTS
+    mocked_execute.execute_on_commit.assert_called_once_with(
+        evaluation_pk=evaluation.pk
+    )
