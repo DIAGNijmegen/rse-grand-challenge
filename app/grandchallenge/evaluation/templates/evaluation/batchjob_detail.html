@@ -91,7 +91,7 @@
             <tbody>
                 {% for task in object.tasks.all %}
                     <tr>
-                        <td>{{ task.pk }}{% copy_button_only task.pk %}</td>
+                        <td>{{ task.pk }}{% copy_button task.pk %}</td>
                         <td>
                             <ul class="list-unstyled mb-0">
                                 {% for input in task.inputs.all|sort_civs %}

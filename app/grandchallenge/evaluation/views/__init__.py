@@ -754,7 +754,6 @@ class BatchJobList(
     PaginatedTableListView,
 ):
     model = BatchJob
-    template_name = "evaluation/batchjob_list.html"
     row_template = "evaluation/batchjob_list_row.html"
     login_url = reverse_lazy("account_login")
     raise_exception = True
