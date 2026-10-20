@@ -1193,6 +1193,24 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         reader_study = self.get_object()
         if not (reader_study.is_educational and reader_study.has_ground_truth):
             raise Http404()
+
+        user_answered_question_count = (
+            Answer.objects.filter(
+                display_set_id=case_pk,
+                question__in=reader_study.answerable_questions,
+                creator=request.user,
+                is_ground_truth=False,
+            )
+            .values("question")
+            .distinct()
+            .count()
+        )
+        if (
+            user_answered_question_count
+            < reader_study.answerable_question_count
+        ):
+            raise Http404()
+
         answers = (
             Answer.objects.filter(
                 display_set_id=case_pk,
