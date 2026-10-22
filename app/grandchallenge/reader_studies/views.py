@@ -14,6 +14,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import (
     Count,
+    Exists,
     F,
     IntegerField,
     OuterRef,
@@ -1194,24 +1195,19 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         if not (reader_study.is_educational and reader_study.has_ground_truth):
             raise Http404()
 
-        user_answered_question_count = (
-            Answer.objects.filter(
-                display_set_id=case_pk,
-                question__in=reader_study.answerable_questions,
-                creator=request.user,
-                is_ground_truth=False,
-            )
-            .values("question")
-            .distinct()
-            .count()
+        user_answers = Answer.objects.filter(
+            question=OuterRef("pk"),
+            display_set_id=case_pk,
+            creator=request.user,
+            is_ground_truth=False,
         )
-        if (
-            user_answered_question_count
-            < reader_study.answerable_question_count
-        ):
+
+        if reader_study.answerable_questions.exclude(
+            Exists(user_answers)
+        ).exists():
             raise Http404()
 
-        answers = (
+        ground_truths = (
             Answer.objects.filter(
                 display_set_id=case_pk,
                 question__reader_study=reader_study,
@@ -1223,11 +1219,11 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
 
         return JsonResponse(
             {
-                str(answer.question_id): {
-                    "answer_text": answer.answer_text,
-                    "explanation": answer.explanation,
+                str(ground_truth.question_id): {
+                    "answer_text": ground_truth.answer_text,
+                    "explanation": ground_truth.explanation,
                 }
-                for answer in answers
+                for ground_truth in ground_truths
             }
         )
 
