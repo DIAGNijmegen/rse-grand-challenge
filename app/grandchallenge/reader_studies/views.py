@@ -1197,7 +1197,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
 
         user_answers = Answer.objects.filter(
             question=OuterRef("pk"),
-            display_set_id=case_pk,
+            display_set=case_pk,
             creator=request.user,
             is_ground_truth=False,
         )
@@ -1208,7 +1208,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
             raise Http404()
 
         ground_truths = Answer.objects.filter(
-            display_set_id=case_pk,
+            display_set=case_pk,
             question__reader_study=reader_study,
             is_ground_truth=True,
         )
