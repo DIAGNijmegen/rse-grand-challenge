@@ -1207,20 +1207,16 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         ).exists():
             raise Http404()
 
-        ground_truths = (
-            Answer.objects.filter(
-                display_set_id=case_pk,
-                question__reader_study=reader_study,
-                is_ground_truth=True,
-            )
-            .prefetch_related("question__options")
-            .select_related("question")
+        ground_truths = Answer.objects.filter(
+            display_set_id=case_pk,
+            question__reader_study=reader_study,
+            is_ground_truth=True,
         )
 
         return JsonResponse(
             {
                 str(ground_truth.question_id): {
-                    "answer_text": ground_truth.answer_text,
+                    "answer": ground_truth.answer,
                     "explanation": ground_truth.explanation,
                 }
                 for ground_truth in ground_truths
