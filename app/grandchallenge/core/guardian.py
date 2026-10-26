@@ -249,22 +249,26 @@ def filter_by_permission(  # noqa  C901
         dfk_group_model.content_object.field.related_query_name()
     )
 
-    # Evaluate the pks in python to force the use of the index
-    group_pks = {*user.groups.values_list("pk", flat=True)}
-
-    group_filter_kwargs = {
-        f"{group_related_query_name}__group__pk__in": group_pks,
-        f"{group_related_query_name}__permission": permission,
-    }
-
     user_related_query_name = (
         dfk_user_model.content_object.field.related_query_name()
     )
 
-    user_filter_kwargs = {
-        f"{user_related_query_name}__user": user,
-        f"{user_related_query_name}__permission": permission,
-    }
+    def build_group_filter_kwargs():
+        # Evaluate the pks in python to force the use of the index.
+        # This is only done when the group filter is actually required, as
+        # this extra materialisation query is not needed if we only consider
+        # groups.
+        group_pks = {*user.groups.values_list("pk", flat=True)}
+        return {
+            f"{group_related_query_name}__group__pk__in": group_pks,
+            f"{group_related_query_name}__permission": permission,
+        }
+
+    def build_user_filter_kwargs():
+        return {
+            f"{user_related_query_name}__user": user,
+            f"{user_related_query_name}__permission": permission,
+        }
 
     if (
         group_filter_required
@@ -273,15 +277,15 @@ def filter_by_permission(  # noqa  C901
         and not only_consider_user_permissions
     ):
         pks = (
-            queryset.filter(**user_filter_kwargs)
-            .union(queryset.filter(**group_filter_kwargs))
+            queryset.filter(**build_user_filter_kwargs())
+            .union(queryset.filter(**build_group_filter_kwargs()))
             .values_list("pk", flat=True)
         )
         return queryset.filter(pk__in=pks)
     elif group_filter_required and not only_consider_user_permissions:
-        return queryset.filter(**group_filter_kwargs).distinct()
+        return queryset.filter(**build_group_filter_kwargs()).distinct()
     elif user_filter_required:
-        return queryset.filter(**user_filter_kwargs)
+        return queryset.filter(**build_user_filter_kwargs())
     else:
         raise ImproperlyConfigured(
             f"No filter required for filtering this queryset by {permission.codename}. "
