@@ -5,7 +5,7 @@
 # is built with --no-migrations (migrate --run-syncdb), those operations are
 # skipped and schema that depends on them (e.g. gin_trgm_ops indexes) fails to
 # create. Creating the extensions in template1 means every database created
-# afterwards -- including each pytest-xdist test database -- inherits them.
+# afterwards, including each pytest-xdist test database, inherits them.
 set -euo pipefail
 
 for database in template1 "${POSTGRES_DB}"; do
