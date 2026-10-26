@@ -1,0 +1,12 @@
+version: 0.2
+
+phases:
+    build:
+        commands:
+            # Build the test container
+            - make build_web_test
+            # Check migrations have been made
+            - make check_migrations
+            # Run the django tests
+            - make local_s3
+            - docker compose run --rm gc.localhost pytest --durations 10
