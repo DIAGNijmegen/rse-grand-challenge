@@ -9,4 +9,4 @@ phases:
             - make check_migrations
             # Run the django tests
             - make local_s3
-            - docker compose run --rm gc.localhost pytest --durations 10
+            - docker compose run --rm gc.localhost pytest --durations 10 -n "$(nproc --all)"
