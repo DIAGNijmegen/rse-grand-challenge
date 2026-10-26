@@ -1,14 +1,8 @@
 import logging
 
 from allauth.account.adapter import DefaultAccountAdapter
-from allauth.account.utils import user_email, user_username
-from allauth.core.exceptions import ImmediateHttpResponse
-from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.exceptions import ValidationError
-from django.http import HttpResponseForbidden
-from django.template import loader
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from grandchallenge.challenges.models import Challenge
@@ -69,31 +63,3 @@ class AccountAdapter(DefaultAccountAdapter):
                 subscription_type=EmailSubscriptionTypes.SYSTEM,
             )
         return response
-
-
-class SocialAccountAdapter(DefaultSocialAccountAdapter):
-    def is_open_for_signup(self, request, sociallogin):
-        email = sociallogin.account.extra_data.get("email")
-
-        try:
-            clean_email(email=email)
-        except ValidationError as error:
-            logger.info(f"Social signup disallowed: {error.message}")
-            raise ImmediateHttpResponse(
-                HttpResponseForbidden(
-                    loader.get_template("403.html").render(
-                        request=request, context={"reason": str(error.message)}
-                    )
-                )
-            )
-
-        return super().is_open_for_signup(request, sociallogin)
-
-    def populate_user(self, *args, **kwargs):
-        user = super().populate_user(*args, **kwargs)
-
-        if not user_username(user) and user_email(user):
-            # If no username set, use the first part of their email
-            user_username(user, user_email(user).split("@")[0])
-
-        return user
