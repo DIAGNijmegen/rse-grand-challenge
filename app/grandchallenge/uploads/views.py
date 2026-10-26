@@ -31,6 +31,9 @@ class UserUploadViewSet(
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (ViewObjectPermissionsFilter,)
 
+    # UserUpload object permissions are only ever assigned to the creator user
+    only_consider_user_permissions = True
+
     def get_serializer_class(self):
         if self.serializer_class is None:
             if self.action == "create":
