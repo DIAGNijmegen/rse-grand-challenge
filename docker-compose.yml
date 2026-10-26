@@ -34,6 +34,13 @@ services:
             <<: [*postgres-env]
         tmpfs:
             - /var/lib/postgresql/data/
+        volumes:
+            # Enable extensions in template1 so test databases inherit them
+            # (required when tests run with --no-migrations)
+            - type: bind
+              source: ./scripts/postgres-init
+              target: /docker-entrypoint-initdb.d
+              read_only: true
         healthcheck:
             test: ["CMD", "pg_isready", "-U", "grandchallenge"]
             interval: 10s
