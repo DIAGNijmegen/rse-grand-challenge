@@ -121,15 +121,6 @@ dl.inline dt:after {
     user-select: none;
 }
 
-ul.socialaccount_providers {
-    list-style-type: none;
-    padding: 0;
-}
-
-ul.socialaccount_providers > li {
-    min-width: 19rem;
-}
-
 .gc-card {
     border-radius: 0.9rem;
 }

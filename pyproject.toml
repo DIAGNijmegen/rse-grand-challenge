@@ -32,7 +32,7 @@ dependencies = [
     "citeproc-py",
     "pyswot",
     "django-redis",
-    "django-allauth[mfa,socialaccount]",
+    "django-allauth[mfa]",
     "requests",
     "Pillow",
     "django-activity-stream",

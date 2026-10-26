@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 import pytest
 from allauth.account.models import EmailAddress
-from django.contrib.auth import get_user_model
 from django.core import mail
 from django.utils.crypto import get_random_string
 from django.utils.http import int_to_base36
@@ -63,9 +62,6 @@ def test_2fa_required_for_staff(client):
             HTTPStatus.OK,
         ),
         ("account_reset_password_from_key_done", None, True, HTTPStatus.OK),
-        ("socialaccount_login_cancelled", None, True, HTTPStatus.OK),
-        ("socialaccount_login_error", None, True, HTTPStatus.UNAUTHORIZED),
-        ("socialaccount_connections", None, True, HTTPStatus.OK),
         ("mfa_activate_totp", None, True, HTTPStatus.FOUND),
         ("mfa_index", None, True, HTTPStatus.OK),
     ],
@@ -153,72 +149,22 @@ def test_allowed_urls():
         "mfa_reauthenticate",
         "mfa_download_recovery_codes",
         "mfa_view_recovery_codes",
-        "socialaccount_connections",
         "account_inactive",
         "account_reset_password_done",
         "account_reset_password_from_key",
         "mfa_deactivate_totp",
-        "socialaccount_login_cancelled",
         "account_reauthenticate",
         "account_email",
         "account_logout",
         "mfa_index",
         "account_login",
-        "socialaccount_login_error",
         "account_reset_password",
         "account_reset_password_from_key_done",
         "mfa_generate_recovery_codes",
         "account_change_password",
         "mfa_activate_totp",
-        "socialaccount_signup",
         "account_confirm_email",
         "account_confirm_login_code",
         "mfa_authenticate",
         "account_set_password",
-        "dummy_login",
-        "dummy_authenticate",
     }
-
-
-@pytest.mark.django_db
-def test_2fa_for_for_staff_users_with_social_login(client, settings):
-    settings.SOCIALACCOUNT_AUTO_SIGNUP = True
-
-    social_username = "dummy_user"
-
-    resp = client.post(reverse("dummy_login"))
-    resp = client.post(
-        resp["location"],
-        {
-            "id": "2",
-            "email": "a@b.com",
-            "email_verified": True,
-            "username": social_username,
-        },
-    )
-    assert resp.status_code == 302
-    assert resp["location"] == settings.LOGIN_REDIRECT_URL
-
-    user = get_user_model().objects.filter(username=social_username).get()
-    user.is_staff = True
-    user.save()
-
-    # User is now staff, should activate mfa
-    resp = client.get("/")
-    assert resp.status_code == 302
-    assert "/accounts/2fa/totp/activate/" in resp.url
-
-    # enable 2fa for the user
-    activate_2fa(user=user)
-
-    # logout and login again, should be asked to MFA authenticate
-    client.logout()
-    resp = client.post(reverse("dummy_login"))
-    resp = client.post(resp["location"], {"id": "2"})
-    assert resp.status_code == 302
-    assert "/accounts/2fa/authenticate/" in resp.url
-
-    resp = client.post(
-        resp.url, {"code": get_unused_recovery_codes(user=user)[0]}
-    )
-    assert resp["location"] == settings.LOGIN_REDIRECT_URL

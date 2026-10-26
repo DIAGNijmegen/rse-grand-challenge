@@ -500,7 +500,6 @@ THIRD_PARTY_APPS = [
     "allauth",
     "allauth.account",
     "allauth.mfa",
-    "allauth.socialaccount",
     # Notifications with overrides
     "actstream",
     "grandchallenge.notifications",
@@ -576,7 +575,6 @@ AUTHENTICATION_BACKENDS = [
 #
 # django-allauth
 # https://docs.allauth.org/en/latest/account/configuration.html
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
 # https://docs.allauth.org/en/latest/mfa/configuration.html
 # https://docs.allauth.org/en/latest/usersessions/configuration.html
 # https://docs.allauth.org/en/latest/common/configuration.html
@@ -608,11 +606,6 @@ ACCOUNT_USERNAME_BLACKLIST = USERNAME_DENYLIST
 ACCOUNT_USERNAME_VALIDATORS = (
     "grandchallenge.profiles.validators.username_validators"
 )
-
-SOCIALACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.SocialAccountAdapter"
-SOCIALACCOUNT_AUTO_SIGNUP = False
-SOCIALACCOUNT_STORE_TOKENS = False
-SOCIALACCOUNT_PROVIDERS = {}
 
 MFA_TOTP_TOLERANCE = 5
 
