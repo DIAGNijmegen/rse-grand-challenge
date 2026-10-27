@@ -2825,7 +2825,7 @@ def test_create_evaluation_requires_matching_algorithm_interfaces(
 
     user = UserFactory()
     phase.challenge.add_admin(user)
-    invoice = InvoiceFactory(
+    InvoiceFactory(
         challenge=phase.challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
@@ -2854,7 +2854,7 @@ def test_create_evaluation_requires_matching_algorithm_interfaces(
         time_limit=10,
     )
 
-    submission.create_evaluation(additional_inputs=None, invoice=invoice)
+    submission.create_evaluation()
 
     eval = Evaluation.objects.order_by("created").last()
 
@@ -2897,7 +2897,7 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
 
     user = UserFactory()
     phase.challenge.add_admin(user)
-    invoice = InvoiceFactory(
+    InvoiceFactory(
         challenge=phase.challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
@@ -2947,9 +2947,7 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
     ) as mocked_execute_eval:
         mocked_execute_eval.return_value = None
         with django_capture_on_commit_callbacks(execute=True):
-            submission.create_evaluation(
-                additional_inputs=None, invoice=invoice
-            )
+            submission.create_evaluation()
 
     eval = Evaluation.objects.order_by("created").last()
     assert eval.status == status
@@ -2978,7 +2976,7 @@ def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist
 
     user = UserFactory()
     phase.challenge.add_admin(user)
-    invoice = InvoiceFactory(
+    InvoiceFactory(
         challenge=phase.challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
@@ -3051,9 +3049,7 @@ def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist
     ) as mocked_execute_eval:
         mocked_execute_eval.return_value = None
         with django_capture_on_commit_callbacks(execute=True):
-            submission.create_evaluation(
-                additional_inputs=None, invoice=invoice
-            )
+            submission.create_evaluation()
 
     eval = Evaluation.objects.order_by("created").last()
     assert eval.status == Evaluation.VALIDATING_INPUTS

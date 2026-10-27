@@ -161,13 +161,13 @@ def test_create_evaluation_is_idempotent(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
-    i = InvoiceFactory(challenge=s.phase.challenge)
+    InvoiceFactory(challenge=s.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation(additional_inputs=None, invoice=i)
+        s.create_evaluation()
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation(additional_inputs=None, invoice=i)
+        s.create_evaluation()
 
     assert Evaluation.objects.count() == 1
     # max_inital_jobs is set to 1, so only one job should be created
@@ -183,13 +183,10 @@ def test_create_evaluation_sets_gpu_and_memory():
         phase__evaluation_requires_gpu_type=GPUTypeChoices.V100,
         phase__evaluation_requires_memory_gb=1337,
     )
-
+    InvoiceFactory(challenge=method.phase.challenge)
     submission = SubmissionFactory(phase=method.phase)
 
-    submission.create_evaluation(
-        additional_inputs=None,
-        invoice=InvoiceFactory(challenge=method.phase.challenge),
-    )
+    submission.create_evaluation()
 
     evaluation = Evaluation.objects.get()
 
@@ -668,13 +665,10 @@ def test_create_evaluation_uniqueness_checks(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
-    invoice = InvoiceFactory(challenge=sub.phase.challenge)
+    InvoiceFactory(challenge=sub.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=None,
-            invoice=invoice,
-        )
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 1
 
@@ -683,10 +677,7 @@ def test_create_evaluation_uniqueness_checks(
     assert sub.phase.active_ground_truth == gt
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=None,
-            invoice=invoice,
-        )
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 2
 
@@ -698,10 +689,7 @@ def test_create_evaluation_uniqueness_checks(
     assert sub.phase.active_image == m
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=None,
-            invoice=invoice,
-        )
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 3
 
@@ -709,10 +697,7 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=None,
-            invoice=invoice,
-        )
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 4
 
@@ -720,7 +705,7 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(additional_inputs=None, invoice=invoice)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 5
 
@@ -728,12 +713,12 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(additional_inputs=None, invoice=invoice)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 6
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(additional_inputs=None, invoice=invoice)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 6
 
@@ -741,17 +726,17 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.additional_evaluation_inputs.set([ci])
     ComponentInterfaceValueFactory(interface=ci, value="foo")
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
+        sub.process_civ_data_objects_and_execute_linked_task(
             additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")],
-            invoice=invoice,
+            user=sub.creator,
         )
 
     assert Evaluation.objects.count() == 7
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
+        sub.process_civ_data_objects_and_execute_linked_task(
             additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")],
-            invoice=invoice,
+            user=sub.creator,
         )
 
     assert Evaluation.objects.count() == 7
@@ -770,7 +755,7 @@ def test_create_evaluation_with_invoice(
     i = InvoiceFactory(challenge=s.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation(additional_inputs=None, invoice=i)
+        s.create_evaluation()
 
     evaluation = Evaluation.objects.get()
     assert evaluation.evaluation_utilization.invoice == i
