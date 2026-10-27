@@ -1695,7 +1695,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
     status = models.CharField(
         max_length=17,
         choices=SubmissionStatusChoices,
-        default=SubmissionStatusChoices.ACCEPTED,  # TODO [submission_gate] set to validating inputs when the new task is in place.
+        default=SubmissionStatusChoices.VALIDATING_INPUTS,
     )
     status_message = models.TextField(blank=True, default="")
     additional_inputs = models.ManyToManyField(
