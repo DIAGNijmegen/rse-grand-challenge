@@ -62,6 +62,19 @@ def validate_submission(*, submission_pk: str | uuid.UUID):
         task_logger.error("No algorithm or predictions file found")
 
 
+@lambda_task()
+def create_evaluation(*, submission_pk: str | uuid.UUID):
+    from grandchallenge.evaluation.models import Submission
+
+    submission = Submission.objects.get(pk=submission_pk)
+
+    if submission.status != submission.StatusChoices.ACCEPTED:
+        task_logger.error("Create evaluation called with unexpected status")
+        return
+
+    submission.create_evaluation()
+
+
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def check_prerequisites_for_evaluation_execution(
     *, evaluation_pk: str | uuid.UUID

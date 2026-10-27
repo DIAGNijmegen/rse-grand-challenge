@@ -77,6 +77,7 @@ from grandchallenge.evaluation.tasks import (
     assign_submission_permissions,
     calculate_ranks,
     check_prerequisites_for_evaluation_execution,
+    create_evaluation,
 )
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
@@ -1770,8 +1771,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             self.has_changed("status")
             and self.status == SubmissionStatusChoices.ACCEPTED
         ):
-            # TODO [submission_gate] create evaluation
-            pass
+            create_evaluation.execute_on_commit(submission_pk=self.pk)
 
     @property
     def is_editable(self):
