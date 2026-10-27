@@ -174,7 +174,7 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
 
     def handle_error(self, *, error_message, interface=None, user=None):
         from grandchallenge.algorithms.models import Job
-        from grandchallenge.evaluation.models import Evaluation
+        from grandchallenge.evaluation.models import Evaluation, Submission
 
         if interface:
             detailed_error_message = {interface.title: error_message}
@@ -191,7 +191,7 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
 
         # Avoid handling error for linked objects that are archive items or
         # display sets, that error handler sends another notification.
-        if isinstance(self._linked_object, (Evaluation, Job)):
+        if isinstance(self._linked_object, (Evaluation, Job, Submission)):
             linked_error_handler = self._linked_object.get_error_handler()
             linked_error_handler.handle_error(
                 error_message=error_message,
