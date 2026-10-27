@@ -28,6 +28,7 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.archives.models import Archive
+from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.base import (
     InferenceTaskDefinition,
@@ -1824,7 +1825,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
 
         self.save()
 
-    def create_evaluation(self, *, invoice):
+    def create_evaluation(self):
         if not self.additional_inputs_complete:
             raise RuntimeError(
                 "Additional inputs are required to create an evaluation for this phase"
@@ -1883,8 +1884,21 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 status=Evaluation.VALIDATING_INPUTS,
             )
             evaluation.inputs.add(self.additional_inputs.all())
-            evaluation.utilization.invoice = invoice
-            evaluation.utilization.save()
+
+            challenge = Challenge.objects.with_invoices_with_budget_authorization().get(
+                pk=self.phase.challenge.pk
+            )
+
+            try:
+                invoice = challenge.utilization_invoice
+            except InsufficientBudgetError:
+                evaluation.update_status(
+                    status=Evaluation.CANCELLED,
+                    error_message=EvaluationErrorMessages.INSUFFICIENT_BUDGET,
+                )
+            else:
+                evaluation.utilization.invoice = invoice
+                evaluation.utilization.save()
 
         if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             if not self.has_matching_algorithm_interfaces:
