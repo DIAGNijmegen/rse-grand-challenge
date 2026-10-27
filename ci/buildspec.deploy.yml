@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+    pre_build:
+        commands:
+            - ECR_REGISTRY="${ECR_CONTAINER_URL_APP%%/*}"
+            - aws ecr get-login-password --region "${AWS_DEFAULT_REGION}" | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+    build:
+        commands:
+            # redis is required for asset compression during the build
+            - docker compose up -d redis
+            - make build
+            - GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI="${ECR_CONTAINER_URL_APP}" make push_web_private
+            - echo "Container tag:" "$(make container_tag)"
