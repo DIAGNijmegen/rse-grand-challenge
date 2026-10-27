@@ -33,6 +33,7 @@ from grandchallenge.components.backends.base import (
     InferenceTaskDefinition,
 )
 from grandchallenge.components.models import (
+    CIVData,
     CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
@@ -1823,11 +1824,8 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
 
         self.save()
 
-    def create_evaluation(self, *, additional_inputs, invoice):
-        if (
-            self.phase.additional_evaluation_inputs.exists()
-            and not additional_inputs
-        ):
+    def create_evaluation(self, *, invoice):
+        if not self.additional_inputs_complete:
             raise RuntimeError(
                 "Additional inputs are required to create an evaluation for this phase"
             )
@@ -1862,7 +1860,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 return
 
             if Evaluation.objects.get_evaluations_with_same_inputs(
-                inputs=additional_inputs if additional_inputs else [],
+                inputs=self.additional_inputs.all(),
                 submission=self,
                 method=method,
                 ground_truth=ground_truth,
@@ -1884,6 +1882,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 requires_memory_gb=self.phase.evaluation_requires_memory_gb,
                 status=Evaluation.VALIDATING_INPUTS,
             )
+            evaluation.inputs.add(self.additional_inputs.all())
             evaluation.utilization.invoice = invoice
             evaluation.utilization.save()
 
@@ -1894,14 +1893,9 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                     error_message=EvaluationErrorMessages.INTERFACE_MISMATCH,
                 )
 
-        if additional_inputs:
-            evaluation.process_civ_data_objects_and_execute_linked_task(
-                civ_data_objects=additional_inputs, user=self.creator
-            )
-        else:
-            check_prerequisites_for_evaluation_execution.execute_on_commit(
-                evaluation_pk=evaluation.pk
-            )
+        check_prerequisites_for_evaluation_execution.execute_on_commit(
+            evaluation_pk=evaluation.pk
+        )
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
@@ -2557,7 +2551,14 @@ class EvaluationManager(ComponentJobManager):
         requires_gpu_type,
         requires_memory_gb,
     ):
-        existing_civs = self.retrieve_existing_civs(civ_data_objects=inputs)
+        # Inputs can be either a queryset of ComponentInterfaceValue or a list of
+        # CIVData objects.
+        if isinstance(inputs[0], CIVData):
+            existing_civs = self.retrieve_existing_civs(
+                civ_data_objects=inputs
+            )
+        else:
+            existing_civs = inputs
         unique_kwargs = {
             "submission": submission,
             "method": method,
