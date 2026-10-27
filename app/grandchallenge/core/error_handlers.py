@@ -104,10 +104,18 @@ class SubmissionCIVErrorHandler(ErrorHandler):
         self._submission = submission
 
     def handle_error(self, *, error_message, interface=None, user=None):
-        self._submission.update_status(
-            status=self._submission.StatusChoices.FAILED,
-            status_message=error_message,
-        )
+        if interface:
+            self._submission.update_status(
+                status=self._submission.StatusChoices.FAILED,
+                status_message="One or more of the inputs failed validation.",
+                # TODO [submission_gate] add detailed message for notification
+                # detailed_error_message=f"{interface.title}: {error_message}"
+            )
+        else:
+            self._submission.update_status(
+                status=self._submission.StatusChoices.FAILED,
+                status_message=error_message,
+            )
 
 
 class InvocationCIVErrorHandler(ErrorHandler):
