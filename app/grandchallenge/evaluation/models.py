@@ -2567,7 +2567,7 @@ class EvaluationManager(ComponentJobManager):
     ):
         # Inputs can be either a queryset of ComponentInterfaceValue or a list of
         # CIVData objects.
-        if isinstance(inputs[0], CIVData):
+        if inputs and isinstance(inputs[0], CIVData):
             existing_civs = self.retrieve_existing_civs(
                 civ_data_objects=inputs
             )
