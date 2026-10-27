@@ -34,17 +34,6 @@ services:
             <<: [*postgres-env]
         tmpfs:
             - /var/lib/postgresql/data/
-        # run-syncdb (--no-migrations) builds the whole schema in one
-        # transaction, taking a lock per table/index; raise the lock pool so it
-        # does not exhaust the default (64) max_locks_per_transaction.
-        command: ["postgres", "-c", "max_locks_per_transaction=256"]
-        volumes:
-            # Enable extensions in template1 so test databases inherit them
-            # (required when tests run with --no-migrations)
-            - type: bind
-              source: ./scripts/postgres-init
-              target: /docker-entrypoint-initdb.d
-              read_only: true
         healthcheck:
             test: ["CMD", "pg_isready", "-U", "grandchallenge"]
             interval: 10s
