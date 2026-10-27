@@ -69,10 +69,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
-from tests.uploads_tests.factories import (
-    create_completed_upload,
-    create_upload_from_file,
-)
+from tests.uploads_tests.factories import create_upload_from_file
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
@@ -1133,8 +1130,14 @@ def test_cancel_external_evaluations_past_timeout():
     (300, 43200),
 )
 def test_evaluation_time_limit_set(
-    django_capture_on_commit_callbacks, client, evaluation_time_limit
+    django_capture_on_commit_callbacks,
+    settings,
+    client,
+    evaluation_time_limit,
+    submission_file,
 ):
+    settings.LAMBDA_TASKS_EAGER = True
+
     phase = PhaseFactory(
         submission_kind=SubmissionKindChoices.CSV,
         submissions_limit_per_user_per_period=1,
@@ -1158,23 +1161,28 @@ def test_evaluation_time_limit_set(
     VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
 
-    user_upload = create_completed_upload(user=participant)
-
-    response = get_view_for_user(
-        client=client,
-        method=client.post,
-        user=participant,
-        viewname="evaluation:submission-create",
-        reverse_kwargs={
-            "challenge_short_name": phase.challenge.short_name,
-            "slug": phase.slug,
-        },
-        data={
-            "creator": participant.pk,
-            "phase": phase.pk,
-            "user_upload": user_upload.pk,
-        },
+    user_upload = create_upload_from_file(
+        creator=participant, file_path=Path(submission_file)
     )
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            user=participant,
+            viewname="evaluation:submission-create",
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+            },
+            data={
+                "creator": participant.pk,
+                "phase": phase.pk,
+                "user_upload": user_upload.pk,
+            },
+        )
 
     assert response.status_code == 302
 

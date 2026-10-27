@@ -2501,17 +2501,13 @@ class TestSubmissionCreationWithExtraInputs:
         assert response.status_code == 200
         # validation of files happens async, so submission and evaluation get created
         assert Submission.objects.count() == 1
-        assert Evaluation.objects.count() == 1
-        eval = Evaluation.objects.get()
-        # but in cancelled state and with an error message
-        assert eval.status == Evaluation.CANCELLED
+        submission = Submission.objects.get()
+        # but in failed state and with an error message
+        assert submission.status == submission.StatusChoices.FAILED
         assert (
             "One or more of the inputs failed validation."
-            == eval.error_message
+            == submission.status_message
         )
-        assert eval.detailed_error_message == {
-            algorithm_phase_with_multiple_inputs.ci_json_file.title: "Input validation failed"
-        }
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
@@ -2588,15 +2584,13 @@ class TestSubmissionCreationWithExtraInputs:
         assert response.status_code == 200
         # validation of images happens async, so job gets created
         assert Submission.objects.count() == 1
-        assert Evaluation.objects.count() == 1
-        eval = Evaluation.objects.get()
-        # but in cancelled state and with an error message
-        assert eval.status == Evaluation.CANCELLED
+        submission = Submission.objects.get()
+        # but in failed state and with an error message
+        assert submission.status == submission.StatusChoices.FAILED
         assert (
             "One or more of the inputs failed validation."
-            == eval.error_message
+            == submission.status_message
         )
-        assert "Input validation failed" in str(eval.detailed_error_message)
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
@@ -2646,8 +2640,12 @@ def test_parent_phase_algorithm_interfaces_locked(client):
 
 @pytest.mark.django_db
 def test_reschedule_evaluation_with_additional_inputs(
-    client, django_capture_on_commit_callbacks
+    client,
+    django_capture_on_commit_callbacks,
+    settings,
 ):
+    settings.LAMBDA_TASKS_EAGER = True
+
     # create phase with inputs
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
@@ -2692,7 +2690,7 @@ def test_reschedule_evaluation_with_additional_inputs(
     )
     eval1.inputs.set([civ_str, civ_bool])
 
-    with django_capture_on_commit_callbacks(execute=False):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="evaluation:evaluation-create",
             client=client,
@@ -2719,7 +2717,7 @@ def test_reschedule_evaluation_with_additional_inputs(
     evaluation_count = Evaluation.objects.count()
 
     assert evaluation_count == 2
-    assert eval2.inputs.count() == 2
+    assert eval2.inputs.count() == 3
     assert civ_str not in eval2.inputs.all()
     assert civ_bool not in eval2.inputs.all()
     assert eval2.inputs.get(interface=ci_str).value == "Bar"

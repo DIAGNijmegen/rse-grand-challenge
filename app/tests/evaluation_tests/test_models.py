@@ -725,17 +725,21 @@ def test_create_evaluation_uniqueness_checks(
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     sub.phase.additional_evaluation_inputs.set([ci])
     ComponentInterfaceValueFactory(interface=ci, value="foo")
+    sub.status = sub.StatusChoices.VALIDATING_INPUTS
+    sub.save()
     with django_capture_on_commit_callbacks(execute=True):
         sub.process_civ_data_objects_and_execute_linked_task(
-            additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")],
+            civ_data_objects=[CIVData(interface_slug=ci.slug, value="foo")],
             user=sub.creator,
         )
 
     assert Evaluation.objects.count() == 7
 
+    sub.status = sub.StatusChoices.VALIDATING_INPUTS
+    sub.save()
     with django_capture_on_commit_callbacks(execute=True):
         sub.process_civ_data_objects_and_execute_linked_task(
-            additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")],
+            civ_data_objects=[CIVData(interface_slug=ci.slug, value="foo")],
             user=sub.creator,
         )
 
