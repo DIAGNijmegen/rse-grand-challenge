@@ -167,15 +167,7 @@ class PhaseAdmin(admin.ModelAdmin):
 def reevaluate_submissions(modeladmin, request, queryset):
     """Creates a new evaluation for an existing submission"""
     for submission in queryset:
-        if submission.phase.additional_evaluation_inputs.exists():
-            modeladmin.message_user(
-                request,
-                f"Submission {submission.pk} cannot be reevaluated in the admin "
-                f"because it requires additional inputs. "
-                f"Please reschedule through the challenge UI.",
-                messages.WARNING,
-            )
-        elif submission.phase.external_evaluation:
+        if submission.phase.external_evaluation:
             modeladmin.message_user(
                 request,
                 "External evaluations cannot be requeued.",
