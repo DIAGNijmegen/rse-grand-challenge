@@ -186,7 +186,7 @@ def reevaluate_submissions(modeladmin, request, queryset):
                 pk=submission.phase.challenge.pk
             )
             try:
-                invoice = challenge.utilization_invoice
+                challenge.utilization_invoice
             except InsufficientBudgetError:
                 modeladmin.message_user(
                     request,
@@ -194,10 +194,7 @@ def reevaluate_submissions(modeladmin, request, queryset):
                     messages.WARNING,
                 )
             else:
-                submission.create_evaluation(
-                    additional_inputs=None,
-                    invoice=invoice,
-                )
+                submission.create_evaluation()
 
 
 @admin.register(Submission)
