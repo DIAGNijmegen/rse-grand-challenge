@@ -40,6 +40,7 @@ from grandchallenge.evaluation.tasks import (
     cancel_external_evaluations_past_timeout,
     check_prerequisites_for_evaluation_execution,
     create_algorithm_jobs_for_evaluation,
+    create_evaluation,
     handle_failed_jobs,
     set_evaluation_inputs,
     validate_submission,
@@ -94,6 +95,44 @@ def test_status_after_validate_submission_for_auto_evaluate(
 
     submission.refresh_from_db()
     assert submission.status == expected_status
+
+
+@pytest.mark.parametrize(
+    "auto_evaluate_new_submissions, evaluation_count",
+    [
+        (False, 0),
+        (True, 1),
+    ],
+)
+@pytest.mark.django_db
+def test_validate_submission_auto_evaluate_creates_evaluation(
+    auto_evaluate_new_submissions,
+    evaluation_count,
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    method = MethodFactory(
+        phase__submission_kind=SubmissionKindChoices.CSV,
+        phase__auto_evaluate_new_submissions=auto_evaluate_new_submissions,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    InvoiceFactory(challenge=method.phase.challenge)
+    submission = SubmissionFactory(
+        phase=method.phase,
+        status=SubmissionStatusChoices.VALIDATING_INPUTS,
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        validate_submission(submission_pk=submission.pk)
+
+    assert (
+        Evaluation.objects.filter(submission=submission).count()
+        == evaluation_count
+    )
 
 
 @pytest.mark.django_db
@@ -153,6 +192,43 @@ def test_validate_submission_noop_for_wrong_status(status):
 
     submission.refresh_from_db()
     assert submission.status == status
+
+
+@pytest.mark.parametrize(
+    "status",
+    set(SubmissionStatusChoices).difference(
+        [SubmissionStatusChoices.ACCEPTED]
+    ),
+)
+@pytest.mark.django_db
+def test_create_evaluation_noop_for_wrong_status(status):
+    submission = SubmissionFactory(status=status)
+
+    create_evaluation(submission_pk=submission.pk)
+
+    assert Evaluation.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_create_evaluation_task_creates_evaluation_when_accepted(
+    django_capture_on_commit_callbacks,
+    settings,
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    method = MethodFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+    InvoiceFactory(challenge=method.phase.challenge)
+    submission = SubmissionFactory(
+        phase=method.phase, status=SubmissionStatusChoices.ACCEPTED
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        create_evaluation(submission_pk=submission.pk)
+
+    assert Evaluation.objects.count() == 1
+    assert Evaluation.objects.get().submission == submission
 
 
 @pytest.mark.django_db
