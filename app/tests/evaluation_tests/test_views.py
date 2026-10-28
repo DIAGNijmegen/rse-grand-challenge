@@ -2500,17 +2500,13 @@ class TestSubmissionCreationWithExtraInputs:
         assert response.status_code == 200
         # validation of files happens async, so submission and evaluation get created
         assert Submission.objects.count() == 1
-        assert Evaluation.objects.count() == 1
-        eval = Evaluation.objects.get()
-        # but in cancelled state and with an error message
-        assert eval.status == Evaluation.CANCELLED
+        submission = Submission.objects.get()
+        # but in failed state and with an error message
+        assert submission.status == submission.StatusChoices.FAILED
         assert (
             "One or more of the inputs failed validation."
-            == eval.error_message
+            == submission.status_message
         )
-        assert eval.detailed_error_message == {
-            algorithm_phase_with_multiple_inputs.ci_json_file.title: "Input validation failed"
-        }
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
@@ -2587,15 +2583,13 @@ class TestSubmissionCreationWithExtraInputs:
         assert response.status_code == 200
         # validation of images happens async, so job gets created
         assert Submission.objects.count() == 1
-        assert Evaluation.objects.count() == 1
-        eval = Evaluation.objects.get()
-        # but in cancelled state and with an error message
-        assert eval.status == Evaluation.CANCELLED
+        submission = Submission.objects.get()
+        # but in failed state and with an error message
+        assert submission.status == submission.StatusChoices.FAILED
         assert (
             "One or more of the inputs failed validation."
-            == eval.error_message
+            == submission.status_message
         )
-        assert "Input validation failed" in str(eval.detailed_error_message)
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
@@ -2645,11 +2639,16 @@ def test_parent_phase_algorithm_interfaces_locked(client):
 
 @pytest.mark.django_db
 def test_reschedule_evaluation_with_additional_inputs(
-    client, django_capture_on_commit_callbacks
+    client,
+    django_capture_on_commit_callbacks,
+    settings,
 ):
+    settings.LAMBDA_TASKS_EAGER = True
+
     # create phase with inputs
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_int = ComponentInterfaceFactory(kind=InterfaceKindChoices.INTEGER)
     ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     phase.additional_evaluation_inputs.set([ci_str, ci_bool])
 
@@ -2691,7 +2690,7 @@ def test_reschedule_evaluation_with_additional_inputs(
     )
     eval1.inputs.set([civ_str, civ_bool])
 
-    with django_capture_on_commit_callbacks(execute=False):
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="evaluation:evaluation-create",
             client=client,
@@ -2718,7 +2717,7 @@ def test_reschedule_evaluation_with_additional_inputs(
     evaluation_count = Evaluation.objects.count()
 
     assert evaluation_count == 2
-    assert eval2.inputs.count() == 2
+    assert eval2.inputs.count() == 3
     assert civ_str not in eval2.inputs.all()
     assert civ_bool not in eval2.inputs.all()
     assert eval2.inputs.get(interface=ci_str).value == "Bar"
@@ -2757,6 +2756,43 @@ def test_reschedule_evaluation_with_additional_inputs(
         in str(response.content)
     )
     assert Evaluation.objects.count() == evaluation_count
+
+    # try rerunning with same inputs plus one extra, that should proceed
+    phase.additional_evaluation_inputs.set([ci_str, ci_int, ci_bool])
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="evaluation:evaluation-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="Bar"
+                ),
+                **get_interface_form_data(interface_slug=ci_int.slug, data=1),
+                **get_interface_form_data(
+                    interface_slug=ci_bool.slug, data=False
+                ),
+            },
+        )
+
+    assert response.status_code == 302
+
+    eval3 = Evaluation.objects.exclude(pk__in=[eval1.pk, eval2.pk]).get()
+    evaluation_count = Evaluation.objects.count()
+
+    assert evaluation_count == 3
+    assert eval3.inputs.count() == 4
+    assert civ_str not in eval3.inputs.all()
+    assert civ_bool not in eval3.inputs.all()
+    assert eval3.inputs.get(interface=ci_str).value == "Bar"
+    assert eval3.inputs.get(interface=ci_int).value == 1
+    assert not eval3.inputs.get(interface=ci_bool).value
 
     # try rerunning without a valid invoice, that should fail
     invoice.payment_status = PaymentStatusChoices.CANCELLED
@@ -2824,7 +2860,7 @@ def test_create_evaluation_requires_matching_algorithm_interfaces(
 
     user = UserFactory()
     phase.challenge.add_admin(user)
-    invoice = InvoiceFactory(
+    InvoiceFactory(
         challenge=phase.challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
@@ -2853,7 +2889,7 @@ def test_create_evaluation_requires_matching_algorithm_interfaces(
         time_limit=10,
     )
 
-    submission.create_evaluation(additional_inputs=None, invoice=invoice)
+    submission.create_evaluation()
 
     eval = Evaluation.objects.order_by("created").last()
 
@@ -2896,7 +2932,7 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
 
     user = UserFactory()
     phase.challenge.add_admin(user)
-    invoice = InvoiceFactory(
+    InvoiceFactory(
         challenge=phase.challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
@@ -2946,9 +2982,7 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
     ) as mocked_execute_eval:
         mocked_execute_eval.return_value = None
         with django_capture_on_commit_callbacks(execute=True):
-            submission.create_evaluation(
-                additional_inputs=None, invoice=invoice
-            )
+            submission.create_evaluation()
 
     eval = Evaluation.objects.order_by("created").last()
     assert eval.status == status
@@ -2977,7 +3011,7 @@ def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist
 
     user = UserFactory()
     phase.challenge.add_admin(user)
-    invoice = InvoiceFactory(
+    InvoiceFactory(
         challenge=phase.challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
@@ -3050,9 +3084,7 @@ def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist
     ) as mocked_execute_eval:
         mocked_execute_eval.return_value = None
         with django_capture_on_commit_callbacks(execute=True):
-            submission.create_evaluation(
-                additional_inputs=None, invoice=invoice
-            )
+            submission.create_evaluation()
 
     eval = Evaluation.objects.order_by("created").last()
     assert eval.status == Evaluation.VALIDATING_INPUTS

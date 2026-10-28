@@ -11,7 +11,6 @@ from grandchallenge.evaluation.admin import (
 )
 from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
@@ -61,41 +60,6 @@ def test_selectable_gpu_type_choices_invalid():
     assert (
         "JSON does not fulfill schema: instance &#x27;invalid_choice&#x27; is not "
         "one of " in str(form.errors)
-    )
-
-
-@pytest.mark.django_db
-def test_reevaluate_submission_only_for_evaluations_without_inputs(rf):
-    s1, s2 = SubmissionFactory.create_batch(2)
-    InvoiceFactory(challenge=s1.phase.challenge)
-    InvoiceFactory(challenge=s2.phase.challenge)
-
-    s1.phase.additional_evaluation_inputs.add(ComponentInterfaceFactory())
-
-    modeladmin = SubmissionAdmin(Submission, AdminSite)
-    request = rf.get("/foo")
-
-    # Add session
-    middleware = SessionMiddleware(lambda x: None)
-    middleware.process_request(request)
-    request.session.save()
-
-    # Add messages storage
-    messages_storage = FallbackStorage(request)
-    request.session["_messages"] = messages_storage
-    request._messages = messages_storage
-
-    reevaluate_submissions(
-        request=request,
-        modeladmin=modeladmin,
-        queryset=Submission.objects.all(),
-    )
-
-    messages = [m.message for m in request._messages]
-    assert len(messages) == 1, messages
-    assert (
-        messages[0]
-        == f"Submission {s1.pk} cannot be reevaluated in the admin because it requires additional inputs. Please reschedule through the challenge UI."
     )
 
 

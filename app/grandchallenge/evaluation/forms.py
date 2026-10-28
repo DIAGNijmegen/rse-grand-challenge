@@ -52,6 +52,7 @@ from grandchallenge.evaluation.models import (
     PhaseAlgorithmInterface,
     Submission,
 )
+from grandchallenge.evaluation.tasks import validate_submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
@@ -471,13 +472,11 @@ class SubmissionForm(
             )
 
         try:
-            invoice = self._phase.challenge.utilization_invoice
+            self._phase.challenge.utilization_invoice
         except InsufficientBudgetError:
             raise ValidationError(
                 "Challenge has insufficient budget. Please contact the challenge organizers."
             )
-        else:
-            cleaned_data["invoice"] = invoice
 
         return cleaned_data
 
@@ -662,10 +661,13 @@ class SubmissionForm(
 
         instance = super().save(*args, **kwargs)
 
-        instance.create_evaluation(
-            additional_inputs=self.cleaned_data["additional_inputs"],
-            invoice=self.cleaned_data["invoice"],
-        )
+        additional_inputs = self.cleaned_data["additional_inputs"]
+        if additional_inputs:
+            instance.process_civ_data_objects_and_execute_linked_task(
+                civ_data_objects=additional_inputs, user=instance.creator
+            )
+        else:
+            validate_submission.execute_on_commit(submission_pk=instance.pk)
 
         return instance
 
@@ -745,13 +747,11 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
         )
 
         try:
-            invoice = challenge.utilization_invoice
+            challenge.utilization_invoice
         except InsufficientBudgetError:
             raise ValidationError(
                 "Challenge has insufficient budget. Please contact support to add more funds."
             )
-        else:
-            cleaned_data["invoice"] = invoice
 
         if Evaluation.objects.get_evaluations_with_same_inputs(
             inputs=cleaned_data["additional_inputs"],

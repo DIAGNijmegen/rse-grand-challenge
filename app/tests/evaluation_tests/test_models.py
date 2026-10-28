@@ -23,6 +23,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.core.error_messages import EvaluationErrorMessages
 from grandchallenge.evaluation.models import (
     SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
     BatchJob,
@@ -161,13 +162,13 @@ def test_create_evaluation_is_idempotent(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
-    i = InvoiceFactory(challenge=s.phase.challenge)
+    InvoiceFactory(challenge=s.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation(additional_inputs=None, invoice=i)
+        s.create_evaluation()
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation(additional_inputs=None, invoice=i)
+        s.create_evaluation()
 
     assert Evaluation.objects.count() == 1
     # max_inital_jobs is set to 1, so only one job should be created
@@ -183,13 +184,10 @@ def test_create_evaluation_sets_gpu_and_memory():
         phase__evaluation_requires_gpu_type=GPUTypeChoices.V100,
         phase__evaluation_requires_memory_gb=1337,
     )
-
+    InvoiceFactory(challenge=method.phase.challenge)
     submission = SubmissionFactory(phase=method.phase)
 
-    submission.create_evaluation(
-        additional_inputs=None,
-        invoice=InvoiceFactory(challenge=method.phase.challenge),
-    )
+    submission.create_evaluation()
 
     evaluation = Evaluation.objects.get()
 
@@ -668,13 +666,10 @@ def test_create_evaluation_uniqueness_checks(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
-    invoice = InvoiceFactory(challenge=sub.phase.challenge)
+    InvoiceFactory(challenge=sub.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=None,
-            invoice=invoice,
-        )
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 1
 
@@ -683,10 +678,7 @@ def test_create_evaluation_uniqueness_checks(
     assert sub.phase.active_ground_truth == gt
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=None,
-            invoice=invoice,
-        )
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 2
 
@@ -698,10 +690,7 @@ def test_create_evaluation_uniqueness_checks(
     assert sub.phase.active_image == m
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=None,
-            invoice=invoice,
-        )
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 3
 
@@ -709,10 +698,7 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=None,
-            invoice=invoice,
-        )
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 4
 
@@ -720,7 +706,7 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(additional_inputs=None, invoice=invoice)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 5
 
@@ -728,30 +714,34 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(additional_inputs=None, invoice=invoice)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 6
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(additional_inputs=None, invoice=invoice)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 6
 
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     sub.phase.additional_evaluation_inputs.set([ci])
     ComponentInterfaceValueFactory(interface=ci, value="foo")
+    sub.status = sub.StatusChoices.VALIDATING_INPUTS
+    sub.save()
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")],
-            invoice=invoice,
+        sub.process_civ_data_objects_and_execute_linked_task(
+            civ_data_objects=[CIVData(interface_slug=ci.slug, value="foo")],
+            user=sub.creator,
         )
 
     assert Evaluation.objects.count() == 7
 
+    sub.status = sub.StatusChoices.VALIDATING_INPUTS
+    sub.save()
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation(
-            additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")],
-            invoice=invoice,
+        sub.process_civ_data_objects_and_execute_linked_task(
+            civ_data_objects=[CIVData(interface_slug=ci.slug, value="foo")],
+            user=sub.creator,
         )
 
     assert Evaluation.objects.count() == 7
@@ -770,10 +760,70 @@ def test_create_evaluation_with_invoice(
     i = InvoiceFactory(challenge=s.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation(additional_inputs=None, invoice=i)
+        s.create_evaluation()
 
     evaluation = Evaluation.objects.get()
     assert evaluation.evaluation_utilization.invoice == i
+
+
+@pytest.mark.django_db
+def test_create_evaluation_cancelled_on_insufficient_budget(
+    django_capture_on_commit_callbacks,
+    settings,
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    method = MethodFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+    submission = SubmissionFactory(phase=method.phase)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        submission.create_evaluation()
+
+    evaluation = Evaluation.objects.get()
+    assert evaluation.status == Evaluation.CANCELLED
+    assert (
+        evaluation.error_message == EvaluationErrorMessages.INSUFFICIENT_BUDGET
+    )
+
+
+@pytest.mark.django_db
+def test_create_evaluation_raises_when_inputs_incomplete():
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    phase.additional_evaluation_inputs.set([ci])
+
+    submission = SubmissionFactory(phase=phase)
+
+    with pytest.raises(RuntimeError, match="Additional inputs are required"):
+        submission.create_evaluation()
+
+
+@pytest.mark.django_db
+def test_create_evaluation_attaches_additional_inputs_to_evaluation(
+    django_capture_on_commit_callbacks,
+    settings,
+    algorithm_submission,
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    algorithm_submission.method.phase.additional_evaluation_inputs.set([ci])
+    InvoiceFactory(challenge=algorithm_submission.method.phase.challenge)
+
+    civ = ComponentInterfaceValueFactory(interface=ci, value="foo")
+    submission = SubmissionFactory(
+        phase=algorithm_submission.method.phase,
+        algorithm_image=algorithm_submission.algorithm_image,
+    )
+    submission.additional_inputs.add(civ)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        submission.create_evaluation()
+
+    evaluation = Evaluation.objects.get()
+    assert civ in evaluation.inputs.all()
 
 
 @pytest.mark.django_db

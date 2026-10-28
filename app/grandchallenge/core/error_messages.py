@@ -16,3 +16,4 @@ class EvaluationErrorMessages(StrEnum):
         "The algorithm interfaces do not match those defined for the phase."
     )
     UNSUPPORTED_INPUT = "Input file type is not supported"
+    INSUFFICIENT_BUDGET = "Challenge has insufficient budget. Please contact support to add more funds."

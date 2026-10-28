@@ -75,6 +75,7 @@ from grandchallenge.evaluation.models import (
     PhaseAlgorithmInterface,
     Submission,
 )
+from grandchallenge.evaluation.tasks import validate_submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.forge.forge import generate_phase_pack
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -540,10 +541,20 @@ class EvaluationCreate(
 
     def form_valid(self, form):
         redirect = super().form_valid(form)
-        self.submission.create_evaluation(
-            additional_inputs=form.cleaned_data["additional_inputs"],
-            invoice=form.cleaned_data["invoice"],
+        self.submission.update_status(
+            status=self.submission.StatusChoices.VALIDATING_INPUTS
         )
+        self.submission.additional_inputs.clear()
+        additional_inputs = form.cleaned_data["additional_inputs"]
+        if additional_inputs:
+            self.submission.process_civ_data_objects_and_execute_linked_task(
+                civ_data_objects=additional_inputs,
+                user=self.submission.creator,
+            )
+        else:
+            validate_submission.execute_on_commit(
+                submission_pk=self.submission.pk
+            )
         return redirect
 
     def get_context_data(self, *args, **kwargs):

@@ -167,15 +167,7 @@ class PhaseAdmin(admin.ModelAdmin):
 def reevaluate_submissions(modeladmin, request, queryset):
     """Creates a new evaluation for an existing submission"""
     for submission in queryset:
-        if submission.phase.additional_evaluation_inputs.exists():
-            modeladmin.message_user(
-                request,
-                f"Submission {submission.pk} cannot be reevaluated in the admin "
-                f"because it requires additional inputs. "
-                f"Please reschedule through the challenge UI.",
-                messages.WARNING,
-            )
-        elif submission.phase.external_evaluation:
+        if submission.phase.external_evaluation:
             modeladmin.message_user(
                 request,
                 "External evaluations cannot be requeued.",
@@ -186,7 +178,7 @@ def reevaluate_submissions(modeladmin, request, queryset):
                 pk=submission.phase.challenge.pk
             )
             try:
-                invoice = challenge.utilization_invoice
+                challenge.utilization_invoice
             except InsufficientBudgetError:
                 modeladmin.message_user(
                     request,
@@ -194,10 +186,7 @@ def reevaluate_submissions(modeladmin, request, queryset):
                     messages.WARNING,
                 )
             else:
-                submission.create_evaluation(
-                    additional_inputs=None,
-                    invoice=invoice,
-                )
+                submission.create_evaluation()
 
 
 @admin.register(Submission)
