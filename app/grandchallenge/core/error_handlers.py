@@ -104,10 +104,18 @@ class SubmissionCIVErrorHandler(ErrorHandler):
         self._submission = submission
 
     def handle_error(self, *, error_message, interface=None, user=None):
-        self._submission.update_status(
-            status=self._submission.StatusChoices.FAILED,
-            status_message=error_message,
-        )
+        if interface:
+            self._submission.update_status(
+                status=self._submission.StatusChoices.FAILED,
+                status_message="One or more of the inputs failed validation.",
+                # TODO [submission_gate] add detailed message for notification
+                # detailed_error_message=f"{interface.title}: {error_message}"
+            )
+        else:
+            self._submission.update_status(
+                status=self._submission.StatusChoices.FAILED,
+                status_message=error_message,
+            )
 
 
 class InvocationCIVErrorHandler(ErrorHandler):
@@ -166,7 +174,7 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
 
     def handle_error(self, *, error_message, interface=None, user=None):
         from grandchallenge.algorithms.models import Job
-        from grandchallenge.evaluation.models import Evaluation
+        from grandchallenge.evaluation.models import Evaluation, Submission
 
         if interface:
             detailed_error_message = {interface.title: error_message}
@@ -183,7 +191,7 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
 
         # Avoid handling error for linked objects that are archive items or
         # display sets, that error handler sends another notification.
-        if isinstance(self._linked_object, (Evaluation, Job)):
+        if isinstance(self._linked_object, (Evaluation, Job, Submission)):
             linked_error_handler = self._linked_object.get_error_handler()
             linked_error_handler.handle_error(
                 error_message=error_message,

@@ -72,6 +72,7 @@ from grandchallenge.core.error_handlers import (
     InvocationCIVErrorHandler,
     JobCIVErrorHandler,
     RawImageUploadSessionErrorHandler,
+    SubmissionCIVErrorHandler,
     UserUploadCIVErrorHandler,
 )
 from grandchallenge.core.error_messages import SystemErrorMessages
@@ -2787,7 +2788,7 @@ class CIVForObjectMixin:
         # local imports to prevent circular dependency
         from grandchallenge.algorithms.models import Invocation, Job
         from grandchallenge.archives.models import ArchiveItem
-        from grandchallenge.evaluation.models import Evaluation
+        from grandchallenge.evaluation.models import Evaluation, Submission
         from grandchallenge.reader_studies.models import DisplaySet
 
         if isinstance(linked_object, RawImageUploadSession):
@@ -2804,6 +2805,8 @@ class CIVForObjectMixin:
             return JobCIVErrorHandler(job=self)
         elif isinstance(self, Evaluation):
             return EvaluationCIVErrorHandler(job=self)
+        elif isinstance(self, Submission):
+            return SubmissionCIVErrorHandler(submission=self)
         elif isinstance(self, Invocation):
             return InvocationCIVErrorHandler(invocation=self)
         elif linked_object and isinstance(linked_object, UserUpload):
