@@ -850,7 +850,7 @@ COMPONENTS_OUTPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_OUTPUT_BUCKET_NAME", "grand-challenge-components-outputs"
 )
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10 * GIGABYTE
-COMPONENTS_MINIMUM_JOB_DURATION = 5 * 60  # 5 minutes
+COMPONENTS_MINIMUM_JOB_DURATION = 1  # 1 second
 COMPONENTS_MAXIMUM_JOB_DURATION = 24 * 60 * 60  # 24 hours
 # Time reserved, on top of the compute time limit, for general per-job set-up
 # such as container pulling, model loading and IO.
