@@ -429,6 +429,7 @@ class SubmissionList(
 
         columns.extend(
             [
+                Column(title="Status", sort_field="status"),
                 Column(title="Evaluations"),
                 Column(title="Comment", sort_field="comment"),
             ]
@@ -475,6 +476,13 @@ class SubmissionDetail(
             objects=self.object.evaluation_set.all()
         )
         return super().get_context_data(*args, **kwargs)
+
+
+class SubmissionStatusDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = "view_submission"
+    template_name_suffix = "_status_detail"
+    model = Submission
+    raise_exception = True
 
 
 class TeamContextMixin:

@@ -51,6 +51,18 @@
             {{ object.creator|user_profile_link }}
         </dd>
 
+        <dt>Status</dt>
+        <dd>
+            {% include 'evaluation/submission_status_detail.html' with object=object %}
+        </dd>
+
+        {% if object.status_message %}
+            <dt>Status Message</dt>
+            <dd>
+                {{ object.status_message }}
+            </dd>
+        {% endif %}
+
         {% if object.algorithm_image %}
             <dt>Algorithm</dt>
             <dd>
