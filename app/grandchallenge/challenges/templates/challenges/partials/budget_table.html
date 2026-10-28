@@ -121,7 +121,7 @@ Based on the following information:
                     {% for phase in task.costs_for_phases_in_task %}
                         <tr>
                             <td>Compute phase {{ forloop.counter }}</td>
-                            <td>{{ task.inference_time_average_minutes }} minutes average job time per case,
+                            <td>{{ task.inference_time_average_seconds }} seconds average job time per case,
                                 {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }} per submission,
                                 {{ phase.number_of_submissions_per_team }} submission{{ phase.number_of_submissions_per_team|pluralize }} per team,
                                 {{ phase.number_of_teams }} team{{ phase.number_of_teams|pluralize }}</td>

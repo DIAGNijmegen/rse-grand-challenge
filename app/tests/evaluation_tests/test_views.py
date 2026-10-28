@@ -1436,7 +1436,7 @@ def test_configure_algorithm_phases_view_challenge_request_one_task(client):
         algorithm_selectable_gpu_type_choices=["", "T4"],
         average_size_test_case_mb_for_tasks=[592],
         average_size_job_output_mb_for_tasks=[1],
-        inference_time_average_minutes_for_tasks=[33],
+        inference_time_average_seconds_for_tasks=[1980],
         task_id_for_phases=[1, 1],
         number_of_submissions_per_team_for_phases=[7, 1],
         number_of_teams_for_phases=[15, 15],
@@ -1464,7 +1464,7 @@ def test_configure_algorithm_phases_view_challenge_request_one_task(client):
     )
     assert (
         phase.algorithm_time_limit
-        == challenge_request.inference_time_average_minutes_for_tasks[0] * 60
+        == challenge_request.inference_time_average_seconds_for_tasks[0]
     )
     assert (
         phase.algorithm_selectable_gpu_type_choices
@@ -1492,7 +1492,7 @@ def test_configure_algorithm_phases_view_challenge_request_multiple_tasks(
         algorithm_selectable_gpu_type_choices=["", "T4"],
         average_size_test_case_mb_for_tasks=[592, 323],
         average_size_job_output_mb_for_tasks=[1],
-        inference_time_average_minutes_for_tasks=[33, 12],
+        inference_time_average_seconds_for_tasks=[1980, 720],
         task_id_for_phases=[1, 1, 2, 2],
         number_of_submissions_per_team_for_phases=[7, 1, 7, 1],
         number_of_teams_for_phases=[15, 15, 20, 20],
@@ -1527,10 +1527,9 @@ def test_configure_algorithm_phases_view_challenge_request_multiple_tasks(
         )
         assert (
             phase.algorithm_time_limit
-            == challenge_request.inference_time_average_minutes_for_tasks[
+            == challenge_request.inference_time_average_seconds_for_tasks[
                 task_idx
             ]
-            * 60
         )
         assert (
             phase.algorithm_selectable_gpu_type_choices
