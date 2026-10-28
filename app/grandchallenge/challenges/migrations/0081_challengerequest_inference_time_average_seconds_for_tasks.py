@@ -53,5 +53,6 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             convert_minutes_to_seconds,
             migrations.RunPython.noop,
+            elidable=True,
         ),
     ]
