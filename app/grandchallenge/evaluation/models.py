@@ -1825,7 +1825,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
 
         self.save()
 
-    def create_evaluation(self):  # noqa: C901
+    def create_evaluation(self):
         if not self.additional_inputs_complete:
             raise RuntimeError(
                 "Additional inputs are required to create an evaluation for this phase"
@@ -1883,8 +1883,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 requires_memory_gb=self.phase.evaluation_requires_memory_gb,
                 status=Evaluation.VALIDATING_INPUTS,
             )
-            if self.additional_inputs.exists():
-                evaluation.inputs.add(*self.additional_inputs.all())
+            evaluation.inputs.add(*self.additional_inputs.all())
             challenge = Challenge.objects.with_invoices_with_budget_authorization().get(
                 pk=self.phase.challenge.pk
             )
