@@ -66,11 +66,13 @@
     <span class="n">Job</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.archives.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.challenges.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InsufficientBudgetError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.challenges.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Challenge</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">InferenceTaskDefinition</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CIVData</span><span class="p">,</span>
     <span class="n">CIVForObjectMixin</span><span class="p">,</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
@@ -113,6 +115,7 @@
     <span class="n">assign_submission_permissions</span><span class="p">,</span>
     <span class="n">calculate_ranks</span><span class="p">,</span>
     <span class="n">check_prerequisites_for_evaluation_execution</span><span class="p">,</span>
+    <span class="n">create_evaluation</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.templatetags.evaluation_extras</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_jsonpath</span><span class="p">,</span>
@@ -1743,7 +1746,7 @@
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">SubmissionStatusChoices</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">ACCEPTED</span><span class="p">,</span>  <span class="c1"># TODO [submission_gate] set to validating inputs when the new task is in place.</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">status_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
     <span class="n">additional_inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
@@ -1818,8 +1821,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">"status"</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">ACCEPTED</span>
         <span class="p">):</span>
-            <span class="c1"># TODO [submission_gate] create evaluation</span>
-            <span class="k">pass</span>
+            <span class="n">create_evaluation</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span><span class="n">submission_pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_editable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1873,11 +1875,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">additional_inputs</span><span class="p">,</span> <span class="n">invoice</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="n">additional_inputs</span>
-        <span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs_complete</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"Additional inputs are required to create an evaluation for this phase"</span>
             <span class="p">)</span>
@@ -1912,7 +1911,7 @@
                 <span class="k">return</span>
 
             <span class="k">if</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_evaluations_with_same_inputs</span><span class="p">(</span>
-                <span class="n">inputs</span><span class="o">=</span><span class="n">additional_inputs</span> <span class="k">if</span> <span class="n">additional_inputs</span> <span class="k">else</span> <span class="p">[],</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
                 <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
                 <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
                 <span class="n">ground_truth</span><span class="o">=</span><span class="n">ground_truth</span><span class="p">,</span>
@@ -1934,8 +1933,21 @@
                 <span class="n">requires_memory_gb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_requires_memory_gb</span><span class="p">,</span>
                 <span class="n">status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">evaluation</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">invoice</span> <span class="o">=</span> <span class="n">invoice</span>
-            <span class="n">evaluation</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="n">evaluation</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+            <span class="n">challenge</span> <span class="o">=</span> <span class="n">Challenge</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_invoices_with_budget_authorization</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span>
+            <span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">invoice</span> <span class="o">=</span> <span class="n">challenge</span><span class="o">.</span><span class="n">utilization_invoice</span>
+            <span class="k">except</span> <span class="n">InsufficientBudgetError</span><span class="p">:</span>
+                <span class="n">evaluation</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span>
+                    <span class="n">status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+                    <span class="n">error_message</span><span class="o">=</span><span class="n">EvaluationErrorMessages</span><span class="o">.</span><span class="n">INSUFFICIENT_BUDGET</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">evaluation</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">invoice</span> <span class="o">=</span> <span class="n">invoice</span>
+                <span class="n">evaluation</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_matching_algorithm_interfaces</span><span class="p">:</span>
@@ -1944,14 +1956,9 @@
                     <span class="n">error_message</span><span class="o">=</span><span class="n">EvaluationErrorMessages</span><span class="o">.</span><span class="n">INTERFACE_MISMATCH</span><span class="p">,</span>
                 <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">additional_inputs</span><span class="p">:</span>
-            <span class="n">evaluation</span><span class="o">.</span><span class="n">process_civ_data_objects_and_execute_linked_task</span><span class="p">(</span>
-                <span class="n">civ_data_objects</span><span class="o">=</span><span class="n">additional_inputs</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">creator</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">check_prerequisites_for_evaluation_execution</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span>
-                <span class="n">evaluation_pk</span><span class="o">=</span><span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span>
-            <span class="p">)</span>
+        <span class="n">check_prerequisites_for_evaluation_execution</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span>
+            <span class="n">evaluation_pk</span><span class="o">=</span><span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">"view_submission"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -2607,7 +2614,14 @@
         <span class="n">requires_gpu_type</span><span class="p">,</span>
         <span class="n">requires_memory_gb</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="n">existing_civs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_existing_civs</span><span class="p">(</span><span class="n">civ_data_objects</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="c1"># Inputs can be either a queryset of ComponentInterfaceValue or a list of</span>
+        <span class="c1"># CIVData objects.</span>
+        <span class="k">if</span> <span class="n">inputs</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CIVData</span><span class="p">):</span>
+            <span class="n">existing_civs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_existing_civs</span><span class="p">(</span>
+                <span class="n">civ_data_objects</span><span class="o">=</span><span class="n">inputs</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">existing_civs</span> <span class="o">=</span> <span class="n">inputs</span>
         <span class="n">unique_kwargs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"submission"</span><span class="p">:</span> <span class="n">submission</span><span class="p">,</span>
             <span class="s2">"method"</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
