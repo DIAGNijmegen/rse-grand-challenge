@@ -2649,6 +2649,7 @@ def test_reschedule_evaluation_with_additional_inputs(
     # create phase with inputs
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_int = ComponentInterfaceFactory(kind=InterfaceKindChoices.INTEGER)
     ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     phase.additional_evaluation_inputs.set([ci_str, ci_bool])
 
@@ -2756,6 +2757,43 @@ def test_reschedule_evaluation_with_additional_inputs(
         in str(response.content)
     )
     assert Evaluation.objects.count() == evaluation_count
+
+    # try rerunning with same inputs plus one extra, that should proceed
+    phase.additional_evaluation_inputs.set([ci_str, ci_int, ci_bool])
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="evaluation:evaluation-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="Bar"
+                ),
+                **get_interface_form_data(interface_slug=ci_int.slug, data=1),
+                **get_interface_form_data(
+                    interface_slug=ci_bool.slug, data=False
+                ),
+            },
+        )
+
+    assert response.status_code == 302
+
+    eval3 = Evaluation.objects.exclude(pk__in=[eval1.pk, eval2.pk]).get()
+    evaluation_count = Evaluation.objects.count()
+
+    assert evaluation_count == 3
+    assert eval3.inputs.count() == 4
+    assert civ_str not in eval3.inputs.all()
+    assert civ_bool not in eval3.inputs.all()
+    assert eval3.inputs.get(interface=ci_str).value == "Bar"
+    assert eval3.inputs.get(interface=ci_int).value == 1
+    assert not eval3.inputs.get(interface=ci_bool).value
 
     # try rerunning without a valid invoice, that should fail
     invoice.payment_status = PaymentStatusChoices.CANCELLED
