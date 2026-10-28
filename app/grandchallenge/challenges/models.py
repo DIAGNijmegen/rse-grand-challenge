@@ -1233,6 +1233,19 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     inference_time_average_minutes_for_tasks = models.JSONField(
         help_text="Average run time per algorithm job in minutes, for each task.",
         default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 5,
+                        "maximum": 60,
+                    },
+                }
+            )
+        ],
     )
     inference_time_average_seconds_for_tasks = models.JSONField(
         help_text="Average run time per algorithm job in seconds, for each task.",
