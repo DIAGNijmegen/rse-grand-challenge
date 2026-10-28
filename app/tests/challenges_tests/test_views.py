@@ -329,9 +329,11 @@ def test_budget_field_update(client, challenge_reviewer):
             "average_size_job_output_mb_for_tasks": "[1, 1]",
             "inference_time_average_seconds_for_tasks": "[300, 600]",
             "task_id_for_phases": "[1, 1, 2, 2]",
+            "phase_ids": "[1, 2, 3, 4]",
             "number_of_teams_for_phases": "[500, 500, 500, 500]",
             "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
             "number_of_test_cases_for_phases": "[3, 100, 3, 100]",
+            "use_batch_mode_for_phases": "[false, false, false, false]",
         },
     )
     assert response.status_code == 200

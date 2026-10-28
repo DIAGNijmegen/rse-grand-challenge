@@ -107,9 +107,11 @@ def test_budget_update_form():
         "average_size_test_case_mb_for_tasks": "[10, 100]",
         "average_size_job_output_mb_for_tasks": "[1, 1]",
         "task_id_for_phases": "[1, 1, 2, 2]",
+        "phase_ids": "[1, 2, 3, 4]",
         "number_of_teams_for_phases": "[500, 500, 500, 500]",
         "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
         "number_of_test_cases_for_phases": "[3, 100, 3, 100]",
+        "use_batch_mode_for_phases": "[false, false, false, false]",
     }
     form = ChallengeRequestBudgetUpdateForm(
         data=data, instance=challenge_request
@@ -125,9 +127,11 @@ def test_budget_update_form():
         "average_size_job_output_mb_for_tasks": "[1, 1]",
         "inference_time_average_seconds_for_tasks": "[300, 600]",
         "task_id_for_phases": "[1, 1, 2, 2]",
+        "phase_ids": "[1, 2, 3, 4]",
         "number_of_teams_for_phases": "[500, 500, 500, 500]",
         "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
         "number_of_test_cases_for_phases": "[3, 100, 3, 100]",
+        "use_batch_mode_for_phases": "[false, false, false, false]",
     }
     form2 = ChallengeRequestBudgetUpdateForm(
         data=data2, instance=challenge_request
@@ -167,6 +171,14 @@ def test_budget_update_form():
             "not all phases defined",
         ),
         (
+            {"phase_ids": "[1, 2, 3]"},
+            "not all phases defined",
+        ),
+        (
+            {"use_batch_mode_for_phases": "[false, false, false]"},
+            "not all phases defined",
+        ),
+        (
             {"number_of_teams_for_phases": "[1, 10, 10, 10]"},
             "later phase has more teams",
         ),
@@ -187,9 +199,11 @@ def test_budget_update_form_invalid(invalid_data, reason_invalid):
         "average_size_job_output_mb_for_tasks": "[1, 1]",
         "inference_time_average_seconds_for_tasks": "[300, 600]",
         "task_id_for_phases": "[1, 1, 2, 2]",
+        "phase_ids": "[1, 2, 3, 4]",
         "number_of_teams_for_phases": "[10, 10, 10, 10]",
         "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
         "number_of_test_cases_for_phases": "[3, 100, 3, 100]",
+        "use_batch_mode_for_phases": "[false, false, false, false]",
     }
     form = ChallengeRequestBudgetUpdateForm(
         data=data, instance=challenge_request

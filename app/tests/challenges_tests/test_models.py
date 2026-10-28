@@ -156,6 +156,7 @@ def test_is_active_until_set():
                 average_size_job_output_mb_for_tasks=[1],
                 inference_time_average_seconds_for_tasks=[600],
                 task_id_for_phases=[1],
+                phase_ids=[1],
                 number_of_teams_for_phases=[3],
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
@@ -172,6 +173,7 @@ def test_is_active_until_set():
                 average_size_job_output_mb_for_tasks=[1],
                 inference_time_average_seconds_for_tasks=[600],
                 task_id_for_phases=[1],
+                phase_ids=[1],
                 number_of_teams_for_phases=[10],
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
@@ -188,6 +190,7 @@ def test_is_active_until_set():
                 average_size_job_output_mb_for_tasks=[1],
                 inference_time_average_seconds_for_tasks=[600],
                 task_id_for_phases=[1],
+                phase_ids=[1],
                 number_of_teams_for_phases=[10],
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
@@ -204,6 +207,7 @@ def test_is_active_until_set():
                 average_size_job_output_mb_for_tasks=[1, 1],
                 inference_time_average_seconds_for_tasks=[300, 600],
                 task_id_for_phases=[1, 1, 2, 2],
+                phase_ids=[1, 2, 3, 4],
                 number_of_submissions_per_team_for_phases=[10, 1, 10, 1],
                 number_of_teams_for_phases=[3, 3, 3, 3],
                 number_of_test_cases_for_phases=[3, 100, 3, 100],
@@ -220,6 +224,7 @@ def test_is_active_until_set():
                 average_size_job_output_mb_for_tasks=[10000],
                 inference_time_average_seconds_for_tasks=[300],
                 task_id_for_phases=[1],
+                phase_ids=[1],
                 number_of_teams_for_phases=[3],
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
@@ -282,6 +287,7 @@ def test_challenge_request_budget_calculation(settings):
         average_size_job_output_mb_for_tasks=[10],
         inference_time_average_seconds_for_tasks=[600],
         task_id_for_phases=[1, 1],
+        phase_ids=[1, 2],
         number_of_teams_for_phases=[10, 10],
         number_of_submissions_per_team_for_phases=[100, 10],
         number_of_test_cases_for_phases=[100, 500],
@@ -290,19 +296,19 @@ def test_challenge_request_budget_calculation(settings):
     costs_for_phases = [
         {
             # "name": "Phase 1",
-            "compute_time_hours": 16667,
-            "compute_costs_euros": 19500.39,
+            "compute_time_hours": 25000,
+            "compute_costs_euros": 29250.00,
             "data_storage_size_gb": 986,
             "data_storage_costs_euros": 660.62,
-            "compute_and_storage_costs_euros": 20161.01,
+            "compute_and_storage_costs_euros": 29910.62,
         },
         {
             # "name": "Phase 2",
-            "compute_time_hours": 8333,
-            "compute_costs_euros": 9749.61,
+            "compute_time_hours": 12500,
+            "compute_costs_euros": 14625.00,
             "data_storage_size_gb": 537,
             "data_storage_costs_euros": 359.79,
-            "compute_and_storage_costs_euros": 10109.40,
+            "compute_and_storage_costs_euros": 14984.79,
         },
     ]
     assert challenge_request.storage_costs_euros_per_gb() == 0.67
@@ -337,7 +343,7 @@ def test_challenge_request_budget_calculation(settings):
             challenge_request.compute_costs_euros_for_tasks[0],
             abs=0.01,
         )
-        == 29250.00
+        == 43875.00
     )
     assert (
         pytest.approx(
@@ -360,7 +366,7 @@ def test_challenge_request_budget_calculation(settings):
             + challenge_request.storage_costs_euros_for_tasks[0],
             abs=0.01,
         )
-        == 34290.41
+        == 48915.41
     )
 
     for i_phase in range(2):
@@ -384,6 +390,126 @@ def test_challenge_request_budget_calculation(settings):
         + challenge_request.compute_and_storage_costs_euros_for_phases[1]
         + challenge_request.total_docker_storage_costs_euros
     )
+
+
+@pytest.mark.django_db
+def test_batch_mode_archive_items_per_job(settings):
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 60 * 60
+    settings.COMPONENTS_JOB_SETUP_DURATION = 5 * 60
+
+    challenge_request = ChallengeRequestFactory(
+        task_ids=[1, 2],
+        # 300s average -> 600s phase time limit (2x). The usable batch window
+        # is 3600 - 300 = 3300s, so 3300 // 600 = 5 cases fit per batch job.
+        inference_time_average_seconds_for_tasks=[300, 300],
+        task_id_for_phases=[1, 2],
+        phase_ids=[1, 2],
+        number_of_teams_for_phases=[1, 1],
+        number_of_submissions_per_team_for_phases=[1, 1],
+        number_of_test_cases_for_phases=[100, 100],
+        use_batch_mode_for_phases=[True, False],
+    )
+
+    # Batch phase packs 5 cases per job; non-batch phase is one case per job.
+    assert challenge_request.archive_items_per_job_for_phases == [5, 1]
+
+
+@pytest.mark.django_db
+def test_batch_mode_reduces_number_of_jobs(settings):
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 60 * 60
+    settings.COMPONENTS_JOB_SETUP_DURATION = 5 * 60
+
+    challenge_request = ChallengeRequestFactory(
+        task_ids=[1, 2],
+        inference_time_average_seconds_for_tasks=[300, 300],
+        task_id_for_phases=[1, 2],
+        phase_ids=[1, 2],
+        number_of_teams_for_phases=[2, 2],
+        number_of_submissions_per_team_for_phases=[3, 3],
+        number_of_test_cases_for_phases=[100, 100],
+        use_batch_mode_for_phases=[True, False],
+    )
+
+    # 6 submissions per phase. Batch: ceil(100 / 5) = 20 jobs per submission.
+    # Non-batch: 100 jobs per submission.
+    assert challenge_request.number_of_algorithm_jobs_for_phases == [
+        6 * 20,
+        6 * 100,
+    ]
+    # Each case still produces an output regardless of batching.
+    assert challenge_request.number_of_job_outputs_for_phases == [
+        6 * 100,
+        6 * 100,
+    ]
+
+
+@pytest.mark.django_db
+def test_batch_mode_compute_seconds_per_job(settings):
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 60 * 60
+    settings.COMPONENTS_JOB_SETUP_DURATION = 5 * 60
+
+    challenge_request = ChallengeRequestFactory(
+        task_ids=[1, 2],
+        inference_time_average_seconds_for_tasks=[300, 300],
+        task_id_for_phases=[1, 2],
+        phase_ids=[1, 2],
+        number_of_teams_for_phases=[1, 1],
+        number_of_submissions_per_team_for_phases=[1, 1],
+        number_of_test_cases_for_phases=[100, 100],
+        use_batch_mode_for_phases=[True, False],
+    )
+
+    # Batch: 300s per case * 5 cases + 300s set-up = 1800s.
+    # Non-batch: 300s per case * 1 case + 300s set-up = 600s.
+    assert challenge_request.compute_seconds_per_job_for_phases == [1800, 600]
+
+
+@pytest.mark.django_db
+def test_consider_batching_ignores_phases_already_batching(settings):
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 60 * 60
+    settings.COMPONENTS_JOB_SETUP_DURATION = 5 * 60
+
+    challenge_request = ChallengeRequestFactory(
+        task_ids=[1, 2],
+        inference_time_average_seconds_for_tasks=[300, 300],
+        task_id_for_phases=[1, 2],
+        phase_ids=[1, 2],
+        number_of_teams_for_phases=[1, 1],
+        number_of_submissions_per_team_for_phases=[1, 1],
+        # Both phases have a high case count, but the batching one is already
+        # handled, so only the non-batch phase should trigger the suggestion.
+        number_of_test_cases_for_phases=[2000, 2000],
+        use_batch_mode_for_phases=[True, False],
+    )
+
+    assert challenge_request.consider_batching is True
+
+    challenge_request.use_batch_mode_for_phases = [True, True]
+    assert challenge_request.consider_batching is False
+
+
+@pytest.mark.django_db
+def test_batch_mode_without_benefit(settings):
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 60 * 60
+    settings.COMPONENTS_JOB_SETUP_DURATION = 5 * 60
+
+    challenge_request = ChallengeRequestFactory(
+        task_ids=[1],
+        average_size_test_case_mb_for_tasks=[10],
+        average_size_job_output_mb_for_tasks=[1],
+        # 1800s average -> 3600s phase time limit (2x), which exceeds the
+        # 3300s usable batch window, so only one case fits per job.
+        inference_time_average_seconds_for_tasks=[1800],
+        task_id_for_phases=[1],
+        phase_ids=[1],
+        number_of_teams_for_phases=[1],
+        number_of_submissions_per_team_for_phases=[1],
+        number_of_test_cases_for_phases=[100],
+        use_batch_mode_for_phases=[True],
+    )
+
+    assert challenge_request.archive_items_per_job_for_phases == [1]
+    assert challenge_request.batch_mode_without_benefit is True
 
 
 @pytest.mark.django_db
@@ -697,6 +823,7 @@ def test_challenge_request_submission_cleaning(data, expected_error):
                 "average_size_job_output_mb_for_tasks": [1, 1],
                 "inference_time_average_seconds_for_tasks": [300, 600],
                 "task_id_for_phases": [1, 1, 2, 2],
+                "phase_ids": [1, 2, 3, 4],
                 "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
                 "number_of_teams_for_phases": [10, 10, 10, 10],
                 "number_of_test_cases_for_phases": [3, 100, 3, 100],
@@ -711,6 +838,7 @@ def test_challenge_request_submission_cleaning(data, expected_error):
                 "average_size_job_output_mb_for_tasks": [1, 1],
                 "inference_time_average_seconds_for_tasks": [300, 600],
                 "task_id_for_phases": [1, 1, 2, 2],
+                "phase_ids": [1, 2, 3, 4],
                 "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
                 "number_of_teams_for_phases": [10, 10, 10, 10],
                 "number_of_test_cases_for_phases": [3, 100, 3, 100],

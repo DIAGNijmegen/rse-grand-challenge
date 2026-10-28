@@ -408,9 +408,11 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             "average_size_job_output_mb_for_tasks",
             "inference_time_average_seconds_for_tasks",
             "task_id_for_phases",
+            "phase_ids",
             "number_of_teams_for_phases",
             "number_of_submissions_per_team_for_phases",
             "number_of_test_cases_for_phases",
+            "use_batch_mode_for_phases",
         )
 
     def __init__(self, *args, **kwargs):
@@ -444,9 +446,11 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             Fieldset(
                 "Phases",
                 "task_id_for_phases",
+                "phase_ids",
                 "number_of_teams_for_phases",
                 "number_of_submissions_per_team_for_phases",
                 "number_of_test_cases_for_phases",
+                "use_batch_mode_for_phases",
                 css_class="border rounded px-2 my-4",
             ),
             ButtonHolder(
@@ -500,9 +504,11 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         all_phases_list_equal_length = True
 
         for field_name in (
+            "phase_ids",
             "number_of_teams_for_phases",
             "number_of_submissions_per_team_for_phases",
             "number_of_test_cases_for_phases",
+            "use_batch_mode_for_phases",
         ):
             field_value = cleaned_data[field_name]
             if len(task_id_for_phases) != len(field_value):

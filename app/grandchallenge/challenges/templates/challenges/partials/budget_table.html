@@ -46,6 +46,12 @@ Based on the following information:
         A high number of test cases was specified for one or more phases. Grand Challenge starts one algorithm job per case. Consider batching them to limit costs and overhead.
     </div>
 {% endif %}
+{% if object.batch_mode_without_benefit %}
+    <div class="alert alert-warning">
+        <i class="fa fa-exclamation-triangle"></i>
+        Batch mode is enabled for one or more tasks, but the average inference time is too long for more than one case to fit in a single batch job. Batching will not reduce the number of jobs for those tasks.
+    </div>
+{% endif %}
 
 <br>
 <h4>To be invoiced</h4>
@@ -120,11 +126,23 @@ Based on the following information:
                 <tbody>
                     {% for phase in task.costs_for_phases_in_task %}
                         <tr>
-                            <td>Compute phase {{ forloop.counter }}</td>
+                            <td>Compute phase {{ forloop.counter }}
+                                {% if phase.use_batch_mode %}
+                                    <span class="badge badge-info">Batch mode</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Non-Batch mode</span>
+                                {% endif %}
+                            </td>
                             <td>{{ task.inference_time_average_seconds }} seconds average job time per case,
                                 {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }} per submission,
                                 {{ phase.number_of_submissions_per_team }} submission{{ phase.number_of_submissions_per_team|pluralize }} per team,
-                                {{ phase.number_of_teams }} team{{ phase.number_of_teams|pluralize }}</td>
+                                {{ phase.number_of_teams }} team{{ phase.number_of_teams|pluralize }}.
+                                {% if phase.use_batch_mode %}
+                                    Up to {{ phase.archive_items_per_job }} case{{ phase.archive_items_per_job|pluralize }} are processed per job, resulting in a total of {{ phase.number_of_jobs }} job{{ phase.number_of_jobs|pluralize }}.
+                                {% else %}
+                                    One job per case, resulting in a total of {{ phase.number_of_jobs }} job{{ phase.number_of_jobs|pluralize }}.
+                                {% endif %}
+                            </td>
                             <td class="text-right">{{ task.compute_costs_euros_per_hour|euro }}</td>
                             <td>{{ phase.compute_time_hours }}</td>
                             <td>Hours</td>
@@ -134,8 +152,8 @@ Based on the following information:
                             <td>Data storage phase {{ forloop.counter }}</td>
                             <td>{{ task.average_size_test_case_mb }} MB average size per case,
                                 {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }},
-                                {{ task.average_size_job_output_mb }} MB average output per job,
-                                {{ phase.number_of_jobs }} job{{ phase.number_of_jobs|pluralize }},
+                                {{ task.average_size_job_output_mb }} MB average output per case,
+                                {{ phase.number_of_job_outputs }} output{{ phase.number_of_job_outputs|pluralize }},
                                 for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
                             <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
                             <td>{{ phase.data_storage_size_gb }}</td>

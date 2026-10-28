@@ -356,9 +356,11 @@ class ChallengeRequestBudgetCalculator(
             "inference_time_average_seconds_for_tasks": [300, 600],
             "task_ids": [1, 2],
             "task_id_for_phases": [1, 1, 2, 2],
+            "phase_ids": [1, 2, 3, 4],
             "number_of_teams_for_phases": [10, 10, 20, 20],
             "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
             "number_of_test_cases_for_phases": [3, 300, 3, 300],
+            "use_batch_mode_for_phases": [False, False, False, False],
         }
 
     def form_valid(self, form):

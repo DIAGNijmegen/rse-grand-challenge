@@ -1251,12 +1251,13 @@ def test_configure_algorithm_phases_form_challenge_request_multiple_tasks():
         average_size_job_output_mb_for_tasks=[1, 1],
         inference_time_average_seconds_for_tasks=[1980, 720],
         task_id_for_phases=[1, 1, 2, 2],
+        phase_ids=[1, 2, 3, 4],
         number_of_submissions_per_team_for_phases=[7, 1, 7, 1],
         number_of_teams_for_phases=[15, 15, 20, 20],
         number_of_test_cases_for_phases=[3, 50, 3, 250],
     )
 
-    form_no_task_id = ConfigureAlgorithmPhasesForm(
+    form_no_phase_id = ConfigureAlgorithmPhasesForm(
         challenge=ch,
         challenge_request=challenge_request,
         data={
@@ -1264,24 +1265,24 @@ def test_configure_algorithm_phases_form_challenge_request_multiple_tasks():
         },
     )
 
-    assert not form_no_task_id.is_valid()
-    assert form_no_task_id.errors[f"task_{phases[0].pk}"] == [
-        "The task ID must be provided."
+    assert not form_no_phase_id.is_valid()
+    assert form_no_phase_id.errors[f"phase_id_{phases[0].pk}"] == [
+        "The phase ID must be provided."
     ]
-    assert f"task_{phases[1].pk}" not in form_no_task_id.errors
+    assert f"phase_id_{phases[1].pk}" not in form_no_phase_id.errors
 
-    form_invalid_task_id = ConfigureAlgorithmPhasesForm(
+    form_invalid_phase_id = ConfigureAlgorithmPhasesForm(
         challenge=ch,
         challenge_request=challenge_request,
         data={
             f"phase_{phases[0].pk}": True,
-            f"task_{phases[0].pk}": 3,
+            f"phase_id_{phases[0].pk}": 5,
         },
     )
 
-    assert not form_invalid_task_id.is_valid()
-    assert form_invalid_task_id.errors[f"task_{phases[0].pk}"] == [
-        "Select a valid choice. 3 is not one of the available choices."
+    assert not form_invalid_phase_id.is_valid()
+    assert form_invalid_phase_id.errors[f"phase_id_{phases[0].pk}"] == [
+        "Select a valid choice. 5 is not one of the available choices."
     ]
 
     form_valid = ConfigureAlgorithmPhasesForm(
@@ -1289,7 +1290,7 @@ def test_configure_algorithm_phases_form_challenge_request_multiple_tasks():
         challenge_request=challenge_request,
         data={
             f"phase_{phases[0].pk}": True,
-            f"task_{phases[0].pk}": 1,
+            f"phase_id_{phases[0].pk}": 1,
         },
     )
 

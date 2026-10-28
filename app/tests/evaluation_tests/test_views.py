@@ -1438,6 +1438,7 @@ def test_configure_algorithm_phases_view_challenge_request_one_task(client):
         average_size_job_output_mb_for_tasks=[1],
         inference_time_average_seconds_for_tasks=[1980],
         task_id_for_phases=[1, 1],
+        phase_ids=[1, 2],
         number_of_submissions_per_team_for_phases=[7, 1],
         number_of_teams_for_phases=[15, 15],
         number_of_test_cases_for_phases=[3, 50],
@@ -1453,6 +1454,7 @@ def test_configure_algorithm_phases_view_challenge_request_one_task(client):
         },
         data={
             f"phase_{phase.pk}": True,
+            f"phase_id_{phase.pk}": 1,
         },
     )
     assert response.status_code == 302, response.context["form"].errors
@@ -1464,7 +1466,7 @@ def test_configure_algorithm_phases_view_challenge_request_one_task(client):
     )
     assert (
         phase.algorithm_time_limit
-        == challenge_request.inference_time_average_seconds_for_tasks[0]
+        == 2 * challenge_request.inference_time_average_seconds_for_tasks[0]
     )
     assert (
         phase.algorithm_selectable_gpu_type_choices
@@ -1494,6 +1496,7 @@ def test_configure_algorithm_phases_view_challenge_request_multiple_tasks(
         average_size_job_output_mb_for_tasks=[1],
         inference_time_average_seconds_for_tasks=[1980, 720],
         task_id_for_phases=[1, 1, 2, 2],
+        phase_ids=[1, 2, 3, 4],
         number_of_submissions_per_team_for_phases=[7, 1, 7, 1],
         number_of_teams_for_phases=[15, 15, 20, 20],
         number_of_test_cases_for_phases=[3, 50, 3, 250],
@@ -1509,10 +1512,11 @@ def test_configure_algorithm_phases_view_challenge_request_multiple_tasks(
             "challenge_short_name": ch.short_name,
         },
         data={
+            # phase id 1 belongs to task 1, phase id 3 belongs to task 2
             f"phase_{phases[0].pk}": True,
-            f"task_{phases[0].pk}": 1,
+            f"phase_id_{phases[0].pk}": 1,
             f"phase_{phases[1].pk}": True,
-            f"task_{phases[1].pk}": 2,
+            f"phase_id_{phases[1].pk}": 3,
         },
     )
 
@@ -1527,7 +1531,8 @@ def test_configure_algorithm_phases_view_challenge_request_multiple_tasks(
         )
         assert (
             phase.algorithm_time_limit
-            == challenge_request.inference_time_average_seconds_for_tasks[
+            == 2
+            * challenge_request.inference_time_average_seconds_for_tasks[
                 task_idx
             ]
         )
