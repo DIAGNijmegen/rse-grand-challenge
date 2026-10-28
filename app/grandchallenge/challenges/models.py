@@ -1072,7 +1072,7 @@ budget_field_names = (
     "algorithm_maximum_settable_memory_gb",
     "average_size_test_case_mb_for_tasks",
     "average_size_job_output_mb_for_tasks",
-    "inference_time_average_minutes_for_tasks",
+    "inference_time_average_seconds_for_tasks",
     "task_id_for_phases",
     "number_of_teams_for_phases",
     "number_of_submissions_per_team_for_phases",
@@ -1233,6 +1233,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     inference_time_average_minutes_for_tasks = models.JSONField(
         help_text="Average run time per algorithm job in minutes, for each task.",
         default=list,
+    )
+    inference_time_average_seconds_for_tasks = models.JSONField(
+        help_text="Average run time per algorithm job in seconds, for each task.",
+        default=list,
         validators=[
             JSONValidator(
                 schema={
@@ -1240,8 +1244,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     "type": "array",
                     "items": {
                         "type": "integer",
-                        "minimum": 5,
-                        "maximum": 60,
+                        "minimum": 1,
+                        "maximum": 60 * 60,
                     },
                 }
             )
@@ -1657,9 +1661,9 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @cached_property
-    def inference_time_average_minutes_for_phases(self):
+    def inference_time_average_seconds_for_phases(self):
         return [
-            self.inference_time_average_minutes_for_tasks[task_index]
+            self.inference_time_average_seconds_for_tasks[task_index]
             for task_index in self.task_index_for_phases
         ]
 
@@ -1715,14 +1719,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @cached_property
     def compute_time_hours_for_phases(self):
         return [
-            round(
-                n_jobs
-                * datetime.timedelta(minutes=average_minutes).total_seconds()
-                / 3600
-            )
-            for n_jobs, average_minutes in zip(
+            round(n_jobs * average_seconds / 3600)
+            for n_jobs, average_seconds in zip(
                 self.number_of_algorithm_jobs_for_phases,
-                self.inference_time_average_minutes_for_phases,
+                self.inference_time_average_seconds_for_phases,
                 strict=True,
             )
         ]
@@ -2007,7 +2007,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "docker_storage_costs_euros": self.docker_storage_costs_euros_for_tasks[
                     task_index
                 ],
-                "inference_time_average_minutes": self.inference_time_average_minutes_for_tasks[
+                "inference_time_average_seconds": self.inference_time_average_seconds_for_tasks[
                     task_index
                 ],
                 "compute_costs_euros_per_hour": self.compute_costs_euros_per_hour,

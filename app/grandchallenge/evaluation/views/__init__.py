@@ -1225,12 +1225,9 @@ class ConfigureAlgorithmPhasesView(
                 task_idx = None
 
             if task_idx is not None:
-                phase.algorithm_time_limit = (
-                    self.challenge_request.inference_time_average_minutes_for_tasks[
-                        task_idx
-                    ]
-                    * 60
-                )
+                phase.algorithm_time_limit = self.challenge_request.inference_time_average_seconds_for_tasks[
+                    task_idx
+                ]
 
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM

@@ -353,7 +353,7 @@ class ChallengeRequestBudgetCalculator(
             "algorithm_maximum_settable_memory_gb": 32,
             "average_size_test_case_mb_for_tasks": [10, 40],
             "average_size_job_output_mb_for_tasks": [1, 1],
-            "inference_time_average_minutes_for_tasks": [5, 10],
+            "inference_time_average_seconds_for_tasks": [300, 600],
             "task_ids": [1, 2],
             "task_id_for_phases": [1, 1, 2, 2],
             "number_of_teams_for_phases": [10, 10, 20, 20],

@@ -406,7 +406,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             "algorithm_maximum_settable_memory_gb",
             "average_size_test_case_mb_for_tasks",
             "average_size_job_output_mb_for_tasks",
-            "inference_time_average_minutes_for_tasks",
+            "inference_time_average_seconds_for_tasks",
             "task_id_for_phases",
             "number_of_teams_for_phases",
             "number_of_submissions_per_team_for_phases",
@@ -438,7 +438,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
                 "algorithm_maximum_settable_memory_gb",
                 "average_size_test_case_mb_for_tasks",
                 "average_size_job_output_mb_for_tasks",
-                "inference_time_average_minutes_for_tasks",
+                "inference_time_average_seconds_for_tasks",
                 css_class="border rounded px-2 my-4",
             ),
             Fieldset(
@@ -478,7 +478,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         for field_name in (
             "average_size_test_case_mb_for_tasks",
             "average_size_job_output_mb_for_tasks",
-            "inference_time_average_minutes_for_tasks",
+            "inference_time_average_seconds_for_tasks",
         ):
             field_value = cleaned_data.get(field_name)
             if len(task_ids) != len(field_value):
