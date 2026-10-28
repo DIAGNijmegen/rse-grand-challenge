@@ -12,7 +12,7 @@ from grandchallenge.cases.models import (
     PostProcessImageTask,
     RawImageUploadSession,
 )
-from grandchallenge.evaluation.models import Evaluation, Method
+from grandchallenge.evaluation.models import BatchJob, Evaluation, Method
 from grandchallenge.workstations.models import Session
 
 CLOUDWATCH_METRICS_LIMIT = 1000
@@ -72,6 +72,7 @@ def _get_metrics():
     models = [
         Job,
         Evaluation,
+        BatchJob,
         Session,
         RawImageUploadSession,
         PostProcessImageTask,
@@ -118,6 +119,7 @@ def _get_metrics():
             ]
         ),
         Evaluation.objects.active(),
+        BatchJob.objects.active(),
         Job.objects.active(),
         RawImageUploadSession.objects.filter(
             status__in=[
