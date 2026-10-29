@@ -388,8 +388,7 @@ STATICFILES_FINDERS = (
 )
 
 # CSS Compression settings
-COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
-LIBSASS_OUTPUT_STYLE = "compressed"
+COMPRESS_PRECOMPILERS = (("text/x-scss", "sass {infile} {outfile}"),)
 COMPRESS_OFFLINE = strtobool(os.environ.get("COMPRESS_OFFLINE", "True"))
 
 # Make this unique, and don't share it with anybody.

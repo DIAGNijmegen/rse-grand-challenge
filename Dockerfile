@@ -26,8 +26,6 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
-        # For libsass TODO: deprecated, replace with dart-libsass
-        build-essential \
         # ruby3.1, rugged and nokogiri for licensee
         ruby3.1 \
         ruby-rugged \
@@ -41,6 +39,14 @@ RUN apt-get update \
 # Fetch and install licensee for checking licenses
 # Separate install required as the bundled version does not include the --json flag
 RUN gem install licensee -v 9.16.1
+
+# Fetch and install dart-sass for compiling scss
+RUN mkdir -p /opt/dart-sass \
+    && wget https://github.com/sass/dart-sass/releases/download/1.107.0/dart-sass-1.107.0-linux-arm64.tar.gz -O /opt/dart-sass/src.tar.gz \
+    && echo "df6b06b97c722f70facedd40efa10ddc625ece905ebd581347881ea398762f7f  /opt/dart-sass/src.tar.gz" | shasum -c - || exit 1 \
+    && tar -C /opt/dart-sass/ --strip-components=1 -xzvf /opt/dart-sass/src.tar.gz \
+    && rm /opt/dart-sass/src.tar.gz
+ENV PATH="/opt/dart-sass/:${PATH}"
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \

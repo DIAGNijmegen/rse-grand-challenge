@@ -43,7 +43,6 @@ dependencies = [
     "Pygments",
     "django-forms-dynamic",
     "django-compressor",
-    "django-libsass",
     "django-csp",
     "psycopg[c]>3.1.8",
     "pyjwt",
