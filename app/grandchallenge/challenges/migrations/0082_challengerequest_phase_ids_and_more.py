@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
             name="use_batch_mode_for_phases",
             field=models.JSONField(
                 default=list,
-                help_text="Whether algorithm inference runs in batch mode, for each phase.",
+                help_text="Whether algorithm inference runs in batch mode, for each phase, e.g. [false, false, true, true].",
                 validators=[
                     grandchallenge.core.validators.JSONValidator(
                         schema={
