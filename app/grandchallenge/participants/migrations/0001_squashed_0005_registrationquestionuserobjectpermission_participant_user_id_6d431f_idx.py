@@ -12,20 +12,6 @@ import grandchallenge.participants.models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("participants", "0001_initial"),
-        ("participants", "0002_registrationquestion_and_more"),
-        ("participants", "0003_alter_registrationquestion_options_and_more"),
-        (
-            "participants",
-            "0004_registrationquestiongroupobjectpermission_participant_group_i_eaa954_idx",
-        ),
-        (
-            "participants",
-            "0005_registrationquestionuserobjectpermission_participant_user_id_6d431f_idx",
-        ),
-    ]
-
     initial = True
 
     dependencies = [

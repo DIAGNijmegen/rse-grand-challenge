@@ -7,14 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("policies", "0001_initial"),
-        ("policies", "0002_auto_20200611_1053"),
-        ("policies", "0003_auto_20220517_0740"),
-        ("policies", "0004_delete_historicalpolicy"),
-        ("policies", "0005_policy_policies_policy_unique_slug"),
-    ]
-
     initial = True
 
     dependencies = [

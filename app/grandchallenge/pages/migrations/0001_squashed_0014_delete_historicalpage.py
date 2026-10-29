@@ -8,35 +8,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("pages", "0001_initial"),
-        ("pages", "0002_auto_20210601_0802"),
-        ("pages", "0003_historicalpage"),
-        ("pages", "0004_auto_20220413_0945"),
-        ("pages", "0005_remove_historicalpage_slug"),
-        ("pages", "0006_auto_20220517_0740"),
-        ("pages", "0007_pagegroupobjectpermission_pageuserobjectpermission"),
-        (
-            "pages",
-            "0008_historicalpage_created_historicalpage_modified_and_more",
-        ),
-        (
-            "pages",
-            "0009_historicalpage_markdown_historicalpage_uses_markdown_and_more",
-        ),
-        ("pages", "0010_remove_historicalpage_html_remove_page_html"),
-        ("pages", "0011_remove_historicalpage_uses_markdown_and_more"),
-        (
-            "pages",
-            "0012_pagegroupobjectpermission_pages_pageg_group_i_804aca_idx",
-        ),
-        (
-            "pages",
-            "0013_pageuserobjectpermission_pages_pageu_user_id_a27d82_idx",
-        ),
-        ("pages", "0014_delete_historicalpage"),
-    ]
-
     initial = True
 
     dependencies = [

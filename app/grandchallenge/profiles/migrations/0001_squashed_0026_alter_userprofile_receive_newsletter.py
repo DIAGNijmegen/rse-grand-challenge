@@ -13,47 +13,6 @@ import grandchallenge.core.storage
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("profiles", "0001_initial"),
-        ("profiles", "0002_auto_20181030_1605"),
-        ("profiles", "0003_userprofile_is_verified"),
-        ("profiles", "0004_remove_userprofile_is_verified"),
-        ("profiles", "0005_auto_20210213_1330"),
-        ("profiles", "0006_userprofile_display_organizations"),
-        ("profiles", "0007_auto_20210331_1646"),
-        ("profiles", "0008_auto_20210406_0757"),
-        ("profiles", "0009_auto_20210512_1516"),
-        ("profiles", "0010_remove_userprofile_notifications_last_read_at"),
-        ("profiles", "0011_userprofile_receive_newsletter"),
-        ("profiles", "0012_alter_userprofile_mugshot"),
-        (
-            "profiles",
-            "0013_userprofilegroupobjectpermission_userprofileuserobjectpermission",
-        ),
-        ("profiles", "0014_userprofile_unread_messages_email_last_sent_at"),
-        ("profiles", "0015_userprofile_notification_email_choice"),
-        ("profiles", "0016_migrate_notification_email_choice"),
-        ("profiles", "0017_alter_userprofile_receive_notification_emails"),
-        ("profiles", "0018_remove_userprofile_receive_notification_emails"),
-        ("profiles", "0019_migrate_mfa"),
-        ("profiles", "0020_bannedemailaddress"),
-        (
-            "profiles",
-            "0021_userprofileuserobjectpermission_profiles_us_user_id_b2d437_idx",
-        ),
-        (
-            "profiles",
-            "0022_userprofilegroupobjectpermission_profiles_us_group_i_4e7a22_idx",
-        ),
-        (
-            "profiles",
-            "0023_userprofile_mugshot_height_userprofile_mugshot_width",
-        ),
-        ("profiles", "0024_alter_userprofile_mugshot"),
-        ("profiles", "0025_alter_userprofile_mugshot"),
-        ("profiles", "0026_alter_userprofile_receive_newsletter"),
-    ]
-
     initial = True
 
     dependencies = [

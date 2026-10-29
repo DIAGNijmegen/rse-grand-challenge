@@ -11,32 +11,6 @@ import grandchallenge.core.storage
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("blogs", "0001_initial"),
-        ("blogs", "0002_auto_20200908_0942"),
-        ("blogs", "0003_auto_20210512_1502"),
-        ("blogs", "0004_auto_20210614_0734"),
-        ("blogs", "0005_post_companies"),
-        ("blogs", "0006_auto_20211004_1109"),
-        ("blogs", "0007_auto_20220517_0740"),
-        ("blogs", "0008_alter_post_logo"),
-        ("blogs", "0009_postgroupobjectpermission_postuserobjectpermission"),
-        ("blogs", "0010_remove_post_companies"),
-        ("blogs", "0011_remove_historicalpost_slug"),
-        (
-            "blogs",
-            "0012_postuserobjectpermission_blogs_postu_user_id_70c456_idx",
-        ),
-        (
-            "blogs",
-            "0013_postgroupobjectpermission_blogs_postg_group_i_4b4b92_idx",
-        ),
-        ("blogs", "0014_delete_historicalpost"),
-        ("blogs", "0015_post_logo_height_post_logo_width"),
-        ("blogs", "0016_alter_post_logo"),
-        ("blogs", "0017_alter_post_logo"),
-    ]
-
     initial = True
 
     dependencies = [

@@ -7,18 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("knox", "0001_initial"),
-        ("knox", "0002_auto_20150916_1425"),
-        ("knox", "0003_auto_20150916_1526"),
-        ("knox", "0004_authtoken_expires"),
-        ("knox", "0005_authtoken_token_key"),
-        ("knox", "0006_auto_20160818_0932"),
-        ("knox", "0007_auto_20190111_0542"),
-        ("knox", "0008_remove_authtoken_salt"),
-        ("knox", "0009_rename_digest_authtoken_key"),
-    ]
-
     initial = True
 
     dependencies = [

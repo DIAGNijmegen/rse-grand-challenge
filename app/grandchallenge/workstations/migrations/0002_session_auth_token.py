@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("knox", "0007_auto_20190111_0542"),
+        ("knox", "0001_squashed_0009_rename_digest_authtoken_key"),
         ("workstations", "0001_squashed_0011_auto_20201001_0758"),
     ]
 

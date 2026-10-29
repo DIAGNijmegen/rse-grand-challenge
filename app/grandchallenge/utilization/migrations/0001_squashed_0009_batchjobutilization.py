@@ -14,27 +14,6 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("utilization", "0001_initial"),
-        ("utilization", "0002_jobutilization_evaluationutilization"),
-        ("utilization", "0003_auto_20250520_1012"),
-        (
-            "utilization",
-            "0004_evaluationutilization_utilization_created_c88254_idx_and_more",
-        ),
-        ("utilization", "0005_jobwarmpoolutilization"),
-        (
-            "utilization",
-            "0006_endpointutilization_endpointutilizationreaderstudy_and_more",
-        ),
-        ("utilization", "0007_endpointutilization_credits_consumed_and_more"),
-        (
-            "utilization",
-            "0008_evaluationutilization_invoice_jobutilization_invoice_and_more",
-        ),
-        ("utilization", "0009_batchjobutilization"),
-    ]
-
     initial = True
 
     dependencies = [

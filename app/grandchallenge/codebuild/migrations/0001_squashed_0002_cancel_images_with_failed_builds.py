@@ -8,11 +8,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("codebuild", "0001_initial"),
-        ("codebuild", "0002_cancel_images_with_failed_builds"),
-    ]
-
     initial = True
 
     dependencies = [

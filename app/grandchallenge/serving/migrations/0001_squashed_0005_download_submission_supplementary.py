@@ -7,17 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("serving", "0001_initial"),
-        ("serving", "0002_download_challenge_request_and_more"),
-        (
-            "serving",
-            "0003_alter_download_unique_together_remove_download_count",
-        ),
-        ("serving", "0004_download_algorithm_image_download_algorithm_model"),
-        ("serving", "0005_download_submission_supplementary"),
-    ]
-
     initial = True
 
     dependencies = [
