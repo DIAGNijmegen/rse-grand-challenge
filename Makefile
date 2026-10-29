@@ -8,7 +8,9 @@ container_tag:
 
 build_web_dist:
 	docker buildx build \
-		--platform=linux/arm64
+		--platform=linux/arm64 \
+		--provenance=false \
+		--sbom=false \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--target dist \
 		-t $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME) \
