@@ -2200,8 +2200,13 @@ def test_submission_list_row_template_ajax_renders_for_challenge_participant(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
-def test_submission_list_row_renders_status(client, status):
+@pytest.mark.parametrize(
+    "status",
+    set(SubmissionStatusChoices).difference(
+        [SubmissionStatusChoices.PENDING_REVIEW]
+    ),
+)
+def test_submission_list_row_renders_status_for_admin(client, status):
     admin = UserFactory()
     phase = PhaseFactory()
     phase.challenge.add_admin(admin)
@@ -2228,8 +2233,13 @@ def test_submission_list_row_renders_status(client, status):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
-def test_submission_detail_renders_status(client, status):
+@pytest.mark.parametrize(
+    "status",
+    set(SubmissionStatusChoices).difference(
+        [SubmissionStatusChoices.PENDING_REVIEW]
+    ),
+)
+def test_submission_detail_renders_status_for_admin(client, status):
     admin = UserFactory()
     phase = PhaseFactory()
     phase.challenge.add_admin(admin)
@@ -2244,6 +2254,57 @@ def test_submission_detail_renders_status(client, status):
             "pk": submission.pk,
         },
         user=admin,
+    )
+
+    assert response.status_code == 200
+    assert SubmissionStatusChoices(status).label in str(response.content)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
+def test_submission_list_row_renders_status_for_participant(client, status):
+    user = UserFactory()
+    phase = PhaseFactory()
+    phase.challenge.add_participant(user)
+    SubmissionFactory(phase=phase, status=status, creator=user)
+
+    headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-list",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"challenge_short_name": phase.challenge.short_name},
+        user=user,
+        data={"draw": "1", "length": "25"},
+        **headers,
+    )
+    response_content = json.loads(response.content.decode("utf-8"))
+
+    assert response.status_code == 200
+    # Status is the 5th column (index 4) for a participant:
+    # link, created, phase, status, evaluations, comment
+    status_cell = response_content["data"][0][3]
+    assert SubmissionStatusChoices(status).label in status_cell
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
+def test_submission_detail_renders_status_for_participant(client, status):
+    user = UserFactory()
+    phase = PhaseFactory()
+    phase.challenge.add_participant(user)
+    submission = SubmissionFactory(phase=phase, status=status, creator=user)
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-detail",
+        client=client,
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase.slug,
+            "pk": submission.pk,
+        },
+        user=user,
     )
 
     assert response.status_code == 200
