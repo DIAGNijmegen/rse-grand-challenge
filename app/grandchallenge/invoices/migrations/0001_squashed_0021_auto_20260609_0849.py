@@ -14,51 +14,6 @@ import grandchallenge.invoices.models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("invoices", "0001_initial"),
-        (
-            "invoices",
-            "0002_invoice_payment_type_alter_invoice_payment_status_and_more",
-        ),
-        ("invoices", "0003_data_payment_status_and_type"),
-        ("invoices", "0004_alter_invoice_payment_status_and_more"),
-        ("invoices", "0005_invoiceuserobjectpermission_and_more"),
-        ("invoices", "0006_assign_perms_challenge_admins"),
-        ("invoices", "0007_alter_invoice_billing_address_and_more"),
-        (
-            "invoices",
-            "0008_invoicegroupobjectpermission_invoices_in_group_i_3c5e79_idx",
-        ),
-        ("invoices", "0009_remove_invoice_payment_status_in_choices_and_more"),
-        (
-            "invoices",
-            "0010_invoiceuserobjectpermission_invoices_in_user_id_66e98c_idx",
-        ),
-        ("invoices", "0011_invoice_expires_on"),
-        ("invoices", "0012_migrate_invoice_expires_on"),
-        (
-            "invoices",
-            "0013_invoice_follow_up_on_alter_invoice_last_checked_on_and_more",
-        ),
-        ("invoices", "0014_invoice_compute_costs_utilized_euros_millicents"),
-        (
-            "invoices",
-            "0015_invoice_follow_up_on_required_for_initialized_post_paid",
-        ),
-        (
-            "invoices",
-            "0016_rename_compute_costs_utilized_euros_millicents_invoice_compute_cost_euro_millicents",
-        ),
-        ("invoices", "0017_alter_invoice_compute_cost_euro_millicents"),
-        (
-            "invoices",
-            "0018_invoice_paid_or_cancelled_status_required_for_complimentary_payment_type",
-        ),
-        ("invoices", "0019_invoice_external_pk_and_more"),
-        ("invoices", "0020_auto_20260609_0849"),
-        ("invoices", "0021_auto_20260609_0849"),
-    ]
-
     initial = True
 
     dependencies = [

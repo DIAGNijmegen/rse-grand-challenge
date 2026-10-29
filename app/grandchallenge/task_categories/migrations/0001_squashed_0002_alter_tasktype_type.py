@@ -6,11 +6,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("task_categories", "0001_initial"),
-        ("task_categories", "0002_alter_tasktype_type"),
-    ]
-
     initial = True
 
     dependencies = []

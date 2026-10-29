@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("modalities", "0001_initial"),
         ("anatomy", "0001_initial"),
-        ("task_categories", "0001_initial"),
+        ("task_categories", "0001_squashed_0002_alter_tasktype_type"),
         ("challenges", "0012_alter_challenge_require_participant_review"),
     ]
 

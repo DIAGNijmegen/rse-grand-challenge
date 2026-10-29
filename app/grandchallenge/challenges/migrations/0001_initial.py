@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         ("anatomy", "0001_initial"),
         ("auth", "0012_alter_user_first_name_max_length"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("task_categories", "0001_initial"),
+        ("task_categories", "0001_squashed_0002_alter_tasktype_type"),
         ("publications", "0003_auto_20201001_0758"),
         ("modalities", "0001_initial"),
     ]
