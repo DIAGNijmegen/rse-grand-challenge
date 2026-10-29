@@ -13,14 +13,12 @@ container_tag:
 	@echo $(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
 build_web_test:
-	@docker pull --platform=linux/arm64 $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) || { \
-		docker buildx build \
-			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-			--target test-base \
-			-t $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) \
-			-f dockerfiles/web-base/Dockerfile \
-			.; \
-	}
+	docker buildx build \
+		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+		--target test-base \
+		-t $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) \
+		-f dockerfiles/web-base/Dockerfile \
+		.; \
 	docker buildx build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
@@ -34,14 +32,12 @@ build_web_test:
 		.
 
 build_web_dist:
-	@docker pull --platform=linux/arm64 $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) || { \
-		docker buildx build \
-			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-			--target base \
-			-t $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) \
-			-f dockerfiles/web-base/Dockerfile \
-			.; \
-	}
+	docker buildx build \
+		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+		--target base \
+		-t $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) \
+		-f dockerfiles/web-base/Dockerfile \
+		.; \
 	docker buildx build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
