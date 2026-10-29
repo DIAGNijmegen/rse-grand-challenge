@@ -10,18 +10,6 @@ import grandchallenge.github.models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("github", "0001_initial"),
-        ("github", "0002_auto_20210630_1807"),
-        ("github", "0003_githubusertoken"),
-        ("github", "0004_auto_20210916_0746"),
-        ("github", "0005_githubusertoken_github_user_id"),
-        ("github", "0006_githubwebhookmessage_clone_status"),
-        ("github", "0007_auto_20220125_1411"),
-        ("github", "0008_auto_20220201_1203"),
-        ("github", "0009_alter_githubwebhookmessage_zipfile"),
-    ]
-
     initial = True
 
     dependencies = [

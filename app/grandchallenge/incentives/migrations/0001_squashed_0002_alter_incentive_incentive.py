@@ -5,11 +5,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("incentives", "0001_initial"),
-        ("incentives", "0002_alter_incentive_incentive"),
-    ]
-
     initial = True
 
     dependencies = []

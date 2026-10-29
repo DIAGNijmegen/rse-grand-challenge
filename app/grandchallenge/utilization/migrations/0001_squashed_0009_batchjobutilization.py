@@ -44,8 +44,7 @@ class Migration(migrations.Migration):
         ),
         ("evaluation", "0089_evaluation_use_warm_pool"),
         ("evaluation", "0112_phase_use_batch_mode_and_more"),
-        ("invoices", "0012_migrate_invoice_expires_on"),
-        ("invoices", "0021_auto_20260609_0849"),
+        ("invoices", "0001_squashed_0021_auto_20260609_0849"),
         (
             "reader_studies",
             "0001_squashed_0080_readerstudy_unique_reader_study_slug_and_more",

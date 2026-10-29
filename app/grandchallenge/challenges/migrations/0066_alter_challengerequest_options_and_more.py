@@ -12,9 +12,9 @@ class Migration(migrations.Migration):
             "challenges",
             "0065_remove_challenge_accumulated_compute_cost_in_cents_and_more",
         ),
-        ("incentives", "0002_alter_incentive_incentive"),
+        ("incentives", "0001_squashed_0002_alter_incentive_incentive"),
         ("modalities", "0002_alter_imagingmodality_modality"),
-        ("task_categories", "0002_alter_tasktype_type"),
+        ("task_categories", "0001_squashed_0002_alter_tasktype_type"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

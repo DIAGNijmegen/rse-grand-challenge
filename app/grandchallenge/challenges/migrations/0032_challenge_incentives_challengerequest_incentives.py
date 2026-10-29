@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("incentives", "0001_initial"),
+        ("incentives", "0001_squashed_0002_alter_incentive_incentive"),
         (
             "challenges",
             "0031_alter_challenge_accumulated_compute_cost_in_cents_and_more",

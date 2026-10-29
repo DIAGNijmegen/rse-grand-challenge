@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("algorithms", "0010_algorithm_repo_name"),
         ("algorithms", "0102_alter_endpoint_options_alter_job_options"),
-        ("github", "0002_auto_20210630_1807"),
+        ("github", "0001_squashed_0009_alter_githubwebhookmessage_zipfile"),
     ]
 
     operations = [
