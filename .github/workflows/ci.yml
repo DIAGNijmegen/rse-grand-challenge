@@ -105,8 +105,8 @@ jobs:
             - name: Build the distributable container
               # The redis cache is required for compressing the files
               run: |
-                  docker compose up -d redis
-                  make build_web_dist
+                docker compose up -d redis
+                GRAND_CHALLENGE_WEB_REPOSITORY_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make build_web_dist
             - name: Configure AWS credentials for ECR
               uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
               with:
@@ -115,7 +115,7 @@ jobs:
             - name: Push to ECR
               run: |
                 aws ecr get-login-password --region ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_REGION }} | docker login --username AWS --password-stdin ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_HOST }}
-                GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make push_web_dist
+                GRAND_CHALLENGE_WEB_REPOSITORY_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make push_web_dist
             - name: Create Summary
               run: |
                 echo "## Container Tag" >> $GITHUB_STEP_SUMMARY
