@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                 ("expiry", models.DateTimeField(blank=True, null=True)),
                 (
                     "token_key",
-                    models.CharField(db_index=True, default="", max_length=8),
+                    models.CharField(db_index=True, max_length=8),
                 ),
             ],
         ),

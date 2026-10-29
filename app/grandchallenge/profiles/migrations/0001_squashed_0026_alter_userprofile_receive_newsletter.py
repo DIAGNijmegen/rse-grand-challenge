@@ -130,7 +130,6 @@ class Migration(migrations.Migration):
                 (
                     "receive_newsletter",
                     models.BooleanField(
-                        default=False,
                         help_text="Would you like to be put on our mailing list and receive newsletters about Grand Challenge updates?",
                     ),
                 ),
