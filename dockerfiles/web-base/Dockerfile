@@ -28,6 +28,7 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
+        build-essential \
         # ruby3.1, rugged and nokogiri for licensee
         ruby3.1 \
         ruby-rugged \
@@ -104,7 +105,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ##################
 # TEST CONTAINER #
 ##################
-FROM base AS test-base
+FROM --platform=linux/arm64 base AS test-base
 
 USER root
 RUN apt-get update \
