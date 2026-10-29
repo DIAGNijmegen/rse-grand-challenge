@@ -3505,3 +3505,149 @@ def test_batch_job_list_scoped_to_submission(client):
     object_list = response.context[-1]["object_list"]
     assert batch_job in object_list
     assert other_batch_job not in object_list
+
+
+@pytest.mark.django_db
+class TestSubmissionStatusViews:
+    def test_status_update_reject_sets_status_and_message(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-status-update",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": SubmissionStatusChoices.REJECTED,
+                "status_message": "Not good enough",
+            },
+        )
+
+        assert response.status_code == 302
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.REJECTED
+        assert submission.status_message == "Not good enough"
+
+    def test_status_update_accept_sets_status_and_creates_evaluation(
+        self, client, django_capture_on_commit_callbacks
+    ):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        with patch(
+            "grandchallenge.evaluation.models.create_evaluation"
+        ) as mocked_create_evaluation:
+            with django_capture_on_commit_callbacks(execute=True):
+                response = get_view_for_user(
+                    viewname="evaluation:submission-status-update",
+                    client=client,
+                    method=client.post,
+                    reverse_kwargs={
+                        "challenge_short_name": phase.challenge.short_name,
+                        "slug": phase.slug,
+                        "pk": submission.pk,
+                    },
+                    user=admin,
+                    data={
+                        "status": SubmissionStatusChoices.ACCEPTED,
+                        "status_message": "",
+                    },
+                )
+
+        assert response.status_code == 302
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.ACCEPTED
+        mocked_create_evaluation.execute_on_commit.assert_called_once_with(
+            submission_pk=submission.pk
+        )
+
+    def test_status_update_forbidden_for_participant(self, client):
+        participant = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_participant(participant)
+        submission = SubmissionFactory(
+            phase=phase,
+            creator=participant,
+            status=SubmissionStatusChoices.PENDING_REVIEW,
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-status-update",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=participant,
+            data={
+                "status": SubmissionStatusChoices.REJECTED,
+                "status_message": "nope",
+            },
+        )
+
+        assert response.status_code == 403
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+        assert submission.status_message == ""
+
+    def test_reject_view_renders_for_admin(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+        )
+
+        assert response.status_code == 200
+        assert submission.status_update_url in str(response.content)
+        assert "status_message" in str(response.content)
+
+    def test_reject_view_forbidden_for_participant(self, client):
+        participant = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_participant(participant)
+        submission = SubmissionFactory(
+            phase=phase,
+            creator=participant,
+            status=SubmissionStatusChoices.PENDING_REVIEW,
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=participant,
+        )
+
+        assert response.status_code == 403
