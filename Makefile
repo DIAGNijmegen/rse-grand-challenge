@@ -18,7 +18,6 @@ build_web_test:
 		--target test \
 		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):latest \
-		-f dockerfiles/web/Dockerfile \
 		.
 
 build_web_dist:
@@ -29,7 +28,6 @@ build_web_dist:
 		--target dist \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest \
-		-f dockerfiles/web/Dockerfile \
 		.
 
 push_web_private:
