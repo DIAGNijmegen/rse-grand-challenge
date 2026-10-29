@@ -1439,6 +1439,7 @@ def test_configure_algorithm_phases_view_challenge_request_one_task(client):
         inference_time_average_seconds_for_tasks=[1980],
         task_id_for_phases=[1, 1],
         phase_ids=[1, 2],
+        use_batch_mode_for_phases=[False, False],
         number_of_submissions_per_team_for_phases=[7, 1],
         number_of_teams_for_phases=[15, 15],
         number_of_test_cases_for_phases=[3, 50],

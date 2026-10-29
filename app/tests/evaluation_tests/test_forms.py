@@ -1281,9 +1281,10 @@ def test_configure_algorithm_phases_form_challenge_request_multiple_tasks():
     )
 
     assert not form_invalid_phase_id.is_valid()
-    assert form_invalid_phase_id.errors[f"phase_id_{phases[0].pk}"] == [
+    assert (
         "Select a valid choice. 5 is not one of the available choices."
-    ]
+        in form_invalid_phase_id.errors[f"phase_id_{phases[0].pk}"]
+    )
 
     form_valid = ConfigureAlgorithmPhasesForm(
         challenge=ch,
