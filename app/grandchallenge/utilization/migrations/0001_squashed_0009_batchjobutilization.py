@@ -48,9 +48,8 @@ class Migration(migrations.Migration):
         ("invoices", "0021_auto_20260609_0849"),
         (
             "reader_studies",
-            "0066_displaysetuserobjectpermission_reader_stud_user_id_eb81eb_idx_and_more",
+            "0001_squashed_0080_readerstudy_unique_reader_study_slug_and_more",
         ),
-        ("reader_studies", "0076_readerstudyalgorithm_and_more"),
         (
             "workstations",
             "0027_feedbackgroupobjectpermission_workstation_group_i_ac4715_idx_and_more",
