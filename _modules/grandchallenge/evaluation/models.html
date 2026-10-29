@@ -1827,6 +1827,29 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">is_editable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">ACCEPTED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"success"</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
+            <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">REJECTED</span><span class="p">,</span>
+        <span class="p">}:</span>
+            <span class="k">return</span> <span class="s2">"danger"</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">PENDING_REVIEW</span><span class="p">,</span>
+            <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span><span class="p">,</span>
+        <span class="p">}:</span>
+            <span class="k">return</span> <span class="s2">"info"</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"dark"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"secondary"</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">add_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">civ</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">civ</span><span class="p">)</span>
@@ -1988,6 +2011,17 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">"evaluation:submission-detail"</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"pk"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="s2">"challenge_short_name"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+                <span class="s2">"slug"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">"evaluation:submission-status-detail"</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">"pk"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
                 <span class="s2">"challenge_short_name"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
