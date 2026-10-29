@@ -1,0 +1,18 @@
+<form hx-post="{{ object.status_update_url }}"
+      hx-target="#status-{{ object.pk }}"
+      hx-select="#status-{{ object.pk }}"
+      hx-swap="outerHTML">
+    {% csrf_token %}
+    <div>
+    <input type="hidden" name="status" value="{{ object.StatusChoices.REJECTED }}">
+    <textarea name="status_message" placeholder="Reason for rejection" required>{{ object.status_message }}</textarea>
+    </div>
+    <button type="button" hx-get="{{ object.status_url }}" hx-target="#status-{{ object.pk }}" hx-swap="outerHTML"
+            class="btn btn-secondary ml-0">Cancel</button>
+    <button type="submit"
+            title="Reject"
+            class="btn btn-danger ml-0"
+    >
+        <i class="fas fa-fw fa-times-circle"></i>Reject
+    </button>
+</form>

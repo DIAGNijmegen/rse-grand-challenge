@@ -1979,6 +1979,39 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             },
         )
 
+    @property
+    def status_update_url(self) -> str:
+        return reverse(
+            "evaluation:submission-status-update",
+            kwargs={
+                "pk": self.pk,
+                "challenge_short_name": self.phase.challenge.short_name,
+                "slug": self.phase.slug,
+            },
+        )
+
+    @property
+    def accept_url(self) -> str:
+        return reverse(
+            "evaluation:submission-accept",
+            kwargs={
+                "pk": self.pk,
+                "challenge_short_name": self.phase.challenge.short_name,
+                "slug": self.phase.slug,
+            },
+        )
+
+    @property
+    def reject_url(self) -> str:
+        return reverse(
+            "evaluation:submission-reject",
+            kwargs={
+                "pk": self.pk,
+                "challenge_short_name": self.phase.challenge.short_name,
+                "slug": self.phase.slug,
+            },
+        )
+
     @cached_property
     def has_matching_algorithm_interfaces(self):
         algorithm_interfaces = set(
