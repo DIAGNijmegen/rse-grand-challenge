@@ -10,26 +10,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("notifications", "0001_initial"),
-        ("notifications", "0002_auto_20210906_0855"),
-        ("notifications", "0003_remove_notification_action"),
-        ("notifications", "0004_alter_notification_type"),
-        (
-            "notifications",
-            "0005_followgroupobjectpermission_followuserobjectpermission_notificationgroupobjectpermission_notificatio",
-        ),
-        (
-            "notifications",
-            "0006_followuserobjectpermission_notificatio_user_id_094079_idx_and_more",
-        ),
-        (
-            "notifications",
-            "0007_followgroupobjectpermission_notificatio_group_i_cc45cf_idx_and_more",
-        ),
-        ("notifications", "0008_migrate_forum_follows_and_notifications"),
-    ]
-
     initial = True
 
     dependencies = [

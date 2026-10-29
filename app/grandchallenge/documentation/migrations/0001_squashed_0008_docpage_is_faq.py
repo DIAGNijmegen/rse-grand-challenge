@@ -11,20 +11,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("documentation", "0001_initial"),
-        ("documentation", "0002_trigram_extension"),
-        ("documentation", "0003_auto_20220517_0740"),
-        ("documentation", "0004_remove_historicaldocpage_slug"),
-        ("documentation", "0005_delete_historicaldocpage"),
-        (
-            "documentation",
-            "0006_docpage_content_plain_docpage_search_vector_and_more",
-        ),
-        ("documentation", "0007_auto_20250610_1630"),
-        ("documentation", "0008_docpage_is_faq"),
-    ]
-
     initial = True
 
     dependencies = [

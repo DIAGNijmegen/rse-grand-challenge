@@ -7,19 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("teams", "0001_initial"),
-        ("teams", "0002_teamgroupobjectpermission_teamuserobjectpermission"),
-        (
-            "teams",
-            "0003_teamuserobjectpermission_teams_teamu_user_id_03fef1_idx",
-        ),
-        (
-            "teams",
-            "0004_teamgroupobjectpermission_teams_teamg_group_i_88ea09_idx",
-        ),
-    ]
-
     initial = True
 
     dependencies = [

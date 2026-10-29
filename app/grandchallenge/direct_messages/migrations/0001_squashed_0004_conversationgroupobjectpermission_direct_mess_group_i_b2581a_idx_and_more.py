@@ -9,22 +9,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("direct_messages", "0001_initial"),
-        (
-            "direct_messages",
-            "0002_alter_conversationparticipant_unique_together_and_more",
-        ),
-        (
-            "direct_messages",
-            "0003_conversationuserobjectpermission_direct_mess_user_id_3dc03c_idx_and_more",
-        ),
-        (
-            "direct_messages",
-            "0004_conversationgroupobjectpermission_direct_mess_group_i_b2581a_idx_and_more",
-        ),
-    ]
-
     initial = True
 
     dependencies = [

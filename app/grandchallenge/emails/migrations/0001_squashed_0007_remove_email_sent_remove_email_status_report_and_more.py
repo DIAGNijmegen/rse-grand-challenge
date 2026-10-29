@@ -7,19 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("emails", "0001_initial"),
-        ("emails", "0002_alter_email_options"),
-        ("emails", "0003_rawemail"),
-        ("emails", "0004_rawemail_errored"),
-        ("emails", "0005_rawemail_status_and_more"),
-        ("emails", "0006_auto_20260601_0730"),
-        (
-            "emails",
-            "0007_remove_email_sent_remove_email_status_report_and_more",
-        ),
-    ]
-
     initial = True
 
     dependencies = []

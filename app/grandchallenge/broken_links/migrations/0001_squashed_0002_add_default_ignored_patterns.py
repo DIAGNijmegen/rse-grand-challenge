@@ -7,11 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("broken_links", "0001_initial"),
-        ("broken_links", "0002_add_default_ignored_patterns"),
-    ]
-
     initial = True
 
     dependencies = []

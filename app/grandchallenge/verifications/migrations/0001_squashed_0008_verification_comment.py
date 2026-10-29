@@ -7,23 +7,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("verifications", "0001_initial"),
-        ("verifications", "0002_auto_20201210_1040"),
-        ("verifications", "0003_alter_verification_email"),
-        (
-            "verifications",
-            "0004_verificationuserset_verificationusersetuser_and_more",
-        ),
-        ("verifications", "0005_alter_verification_email"),
-        ("verifications", "0006_verificationuserset_auto_deactivate_and_more"),
-        (
-            "verifications",
-            "0007_alter_verificationusersetuser_unique_together",
-        ),
-        ("verifications", "0008_verification_comment"),
-    ]
-
     initial = True
 
     dependencies = [
