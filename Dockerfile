@@ -3,7 +3,7 @@
 ###################
 ARG PYTHON_VERSION
 
-FROM --platform=linux/amd64 python:${PYTHON_VERSION}-slim-bookworm AS base
+FROM --platform=linux/arm64 python:${PYTHON_VERSION}-slim-bookworm AS base
 
 # Install system dependencies
 RUN apt-get update \
@@ -28,6 +28,8 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
+        # For libsass TODO: deprecated, replace with dart-libsass
+        build-essential \
         # ruby3.1, rugged and nokogiri for licensee
         ruby3.1 \
         ruby-rugged \
@@ -44,8 +46,8 @@ RUN gem install licensee -v 9.16.1
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \
-    && wget https://github.com/google/go-containerregistry/releases/download/v0.21.1/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
-    && echo "ffca5eafe0af8078f2c627fb852104f9d762fad1eb36c04e93ca14fce76d47d2  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
+    && wget https://github.com/google/go-containerregistry/releases/download/v0.21.1/go-containerregistry_Linux_arm64.tar.gz -O /opt/crane/src.tar.gz \
+    && echo "2ca7e6beca62cb289ee8e4089801e6d0d934508ae827cf7ca8f54fd6fcbadc54  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/crane/ -xzvf /opt/crane/src.tar.gz crane \
     && chmod a+x /opt/crane/crane \
     && mv /opt/crane/crane /usr/local/bin/ \
@@ -53,8 +55,8 @@ RUN mkdir -p /opt/crane \
 
 # Fetch and install git lfs for github integration
 RUN mkdir -p /opt/git-lfs \
-    && wget https://github.com/git-lfs/git-lfs/releases/download/v3.4.1/git-lfs-linux-amd64-v3.4.1.tar.gz -O /opt/git-lfs/src.tar.gz \
-    && echo "1772dc260961db27958088740b7e9ecebf945abad8c2d504d412448f53faf147  /opt/git-lfs/src.tar.gz" | shasum --algorithm 256 -c - || exit 1 \
+    && wget https://github.com/git-lfs/git-lfs/releases/download/v3.4.1/git-lfs-linux-arm64-v3.4.1.tar.gz -O /opt/git-lfs/src.tar.gz \
+    && echo "f93c5070223d95eb44fea0ee2f2db26656793d5f3417366f77dd20b9518c46ce  /opt/git-lfs/src.tar.gz" | shasum --algorithm 256 -c - || exit 1 \
     && tar -C /opt/git-lfs/ -xzvf /opt/git-lfs/src.tar.gz \
     && bash /opt/git-lfs/git-lfs-3.4.1/install.sh \
     && rm -r /opt/git-lfs
@@ -82,14 +84,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Create isolated virtual environments from locked dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/biom/pyproject.toml,target=/tmp/biom/pyproject.toml \
-    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/biom/uv.lock,target=/tmp/biom/uv.lock \
+    --mount=type=bind,source=virtualenvs/biom/pyproject.toml,target=/tmp/biom/pyproject.toml \
+    --mount=type=bind,source=virtualenvs/biom/uv.lock,target=/tmp/biom/uv.lock \
     UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/biom \
     uv sync --frozen --no-install-project --project /tmp/biom
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/panimg/pyproject.toml,target=/tmp/panimg/pyproject.toml \
-    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/panimg/uv.lock,target=/tmp/panimg/uv.lock \
+    --mount=type=bind,source=virtualenvs/panimg/pyproject.toml,target=/tmp/panimg/pyproject.toml \
+    --mount=type=bind,source=virtualenvs/panimg/uv.lock,target=/tmp/panimg/uv.lock \
     UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/panimg \
     uv sync --frozen --no-install-project --project /tmp/panimg
 
@@ -104,7 +106,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ##################
 # TEST CONTAINER #
 ##################
-FROM base AS test-base
+FROM --platform=linux/arm64 base AS test
 
 USER root
 RUN apt-get update \
@@ -130,3 +132,22 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project
 RUN playwright install
+
+COPY --chown=django:django setup.cfg /home/django
+
+WORKDIR /app
+RUN mkdir /tmp/.pytest_cache
+COPY --chown=django:django ./app/ /app/
+
+##################
+# Dist Container #
+##################
+FROM --platform=linux/arm64 base AS dist
+
+WORKDIR /app
+COPY --chown=django:django ./app/ /app/
+
+ARG COMMIT_ID=unknown
+ENV COMMIT_ID=$COMMIT_ID
+
+RUN python manage.py collectstatic --noinput && GRAND_CHALLENGE_USE_LOC_MEM_CACHE=true python manage.py compress --force

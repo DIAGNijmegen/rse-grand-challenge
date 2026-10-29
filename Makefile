@@ -5,60 +5,30 @@ GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
 GRAND_CHALLENGE_WEB_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web
 GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-test
-GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-base
-GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base
 
 .PHONY: container_tag
 container_tag:
 	@echo $(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
 build_web_test:
-	@docker pull $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) || { \
-		docker buildx build \
-			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-			--target test-base \
-			-t $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) \
-			-f dockerfiles/web-base/Dockerfile \
-			.; \
-	}
 	docker buildx build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
-		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
-		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
 		--target test \
 		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):latest \
-		-f dockerfiles/web/Dockerfile \
 		.
 
 build_web_dist:
-	@docker pull $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) || { \
-		docker buildx build \
-			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-			--target base \
-			-t $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) \
-			-f dockerfiles/web-base/Dockerfile \
-			.; \
-	}
 	docker buildx build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
-		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
-		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
 		--target dist \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest \
-		-f dockerfiles/web/Dockerfile \
 		.
-
-push_web_base:
-	docker push $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH)
-
-push_web_test_base:
-	docker push $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH)
 
 push_web_private:
 	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)

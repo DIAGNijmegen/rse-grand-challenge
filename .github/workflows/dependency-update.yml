@@ -15,7 +15,7 @@ concurrency:
 jobs:
     dependency-update:
         name: Dependency Update
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04-arm
         steps:
             - name: Generate a token
               id: app-token
@@ -38,8 +38,8 @@ jobs:
               run: |
                   LOCK_OUTPUT=$(
                     uv lock --upgrade --no-progress 2>&1
-                    uv lock --upgrade --no-progress --project dockerfiles/web-base/virtualenvs/biom 2>&1
-                    uv lock --upgrade --no-progress --project dockerfiles/web-base/virtualenvs/panimg 2>&1
+                    uv lock --upgrade --no-progress virtualenvs/biom 2>&1
+                    uv lock --upgrade --no-progress virtualenvs/panimg 2>&1
                   )
                   echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
                   echo "$LOCK_OUTPUT" >> $GITHUB_ENV
