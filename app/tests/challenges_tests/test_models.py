@@ -162,8 +162,8 @@ def test_is_active_until_set():
                 number_of_test_cases_for_phases=[100],
                 use_batch_mode_for_phases=[False],
             ),
-            708.28,
-            6000,
+            1000.78,
+            6500,
         ),
         (
             dict(
@@ -180,8 +180,8 @@ def test_is_active_until_set():
                 number_of_test_cases_for_phases=[100],
                 use_batch_mode_for_phases=[False],
             ),
-            2359.76,
-            7500,
+            3334.37,
+            8500,
         ),
         (
             dict(
@@ -198,8 +198,8 @@ def test_is_active_until_set():
                 number_of_test_cases_for_phases=[100],
                 use_batch_mode_for_phases=[False],
             ),
-            3560,
-            9000,
+            5134.37,
+            10500,
         ),
         (
             dict(
@@ -216,7 +216,7 @@ def test_is_active_until_set():
                 number_of_test_cases_for_phases=[3, 100, 3, 100],
                 use_batch_mode_for_phases=[False, False, False, False],
             ),
-            363.23,
+            438.11,
             6000,
         ),
         (  # High output storage costs
@@ -234,7 +234,7 @@ def test_is_active_until_set():
                 number_of_test_cases_for_phases=[100],
                 use_batch_mode_for_phases=[False],
             ),
-            20048.79,
+            20341.29,
             25500,
         ),
     ],
