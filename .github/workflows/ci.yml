@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
     precommit:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04-arm
         steps:
             - name: Install Python ${{ env.PYTHON_VERSION }}
               uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -27,7 +27,7 @@ jobs:
               run: pre-commit run --all-files
 
     django-tests:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04-arm
         steps:
             - name: Set up Python ${{ env.PYTHON_VERSION }}
               uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -46,7 +46,8 @@ jobs:
                   docker compose run --rm gc.localhost pytest --durations 10
 
     forge-integration-tests:
-        runs-on: ubuntu-latest
+        # Use x86_64 as this is what SageMaker uses
+        runs-on: ubuntu-26.04
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: Set up Python ${{ env.PYTHON_VERSION }}
@@ -67,7 +68,7 @@ jobs:
                 uv run pytest -n 1 -m "forge_integration"
 
     javascript-tests:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04-arm
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: Setup Node.js
@@ -81,7 +82,7 @@ jobs:
               run: npm test
 
     docs:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04-arm
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: Build the test container
@@ -99,7 +100,7 @@ jobs:
 
     deploy:
         needs: [django-tests, javascript-tests]
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04-arm
         permissions:
             # These permissions are needed to interact with GitHub's OIDC Token endpoint.
             id-token: write
