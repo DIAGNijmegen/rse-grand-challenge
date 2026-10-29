@@ -28,6 +28,7 @@ from grandchallenge.evaluation.models import (
     Evaluation,
     PhaseAlgorithmInterface,
     Submission,
+    SubmissionStatusChoices,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import (
@@ -2160,7 +2161,7 @@ def test_submission_list_row_template_ajax_renders_for_challenge_admin(client):
 
     assert response.status_code == 200
     assert response_content["recordsTotal"] == 1
-    assert len(response_content["data"][0]) == 6
+    assert len(response_content["data"][0]) == 7
     assert phase.title in response_content["data"][0][2]
 
 
@@ -2194,8 +2195,90 @@ def test_submission_list_row_template_ajax_renders_for_challenge_participant(
 
     assert response.status_code == 200
     assert response_content["recordsTotal"] == 1
-    assert len(response_content["data"][0]) == 5
+    assert len(response_content["data"][0]) == 6
     assert phase.title in response_content["data"][0][2]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
+def test_submission_list_row_renders_status(client, status):
+    admin = UserFactory()
+    phase = PhaseFactory()
+    phase.challenge.add_admin(admin)
+    SubmissionFactory(phase=phase, status=status)
+
+    headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-list",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"challenge_short_name": phase.challenge.short_name},
+        user=admin,
+        data={"draw": "1", "length": "25"},
+        **headers,
+    )
+    response_content = json.loads(response.content.decode("utf-8"))
+
+    assert response.status_code == 200
+    # Status is the 5th column (index 4) for an admin:
+    # link, created, phase, user, status, evaluations, comment
+    status_cell = response_content["data"][0][4]
+    assert SubmissionStatusChoices(status).label in status_cell
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
+def test_submission_detail_renders_status(client, status):
+    admin = UserFactory()
+    phase = PhaseFactory()
+    phase.challenge.add_admin(admin)
+    submission = SubmissionFactory(phase=phase, status=status)
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-detail",
+        client=client,
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase.slug,
+            "pk": submission.pk,
+        },
+        user=admin,
+    )
+
+    assert response.status_code == 200
+    assert SubmissionStatusChoices(status).label in str(response.content)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status,message",
+    (
+        (SubmissionStatusChoices.REJECTED, "Rejected by the admins"),
+        (SubmissionStatusChoices.FAILED, "Input validation failed"),
+    ),
+)
+def test_submission_detail_renders_status_message(client, status, message):
+    admin = UserFactory()
+    phase = PhaseFactory()
+    phase.challenge.add_admin(admin)
+    submission = SubmissionFactory(
+        phase=phase, status=status, status_message=message
+    )
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-detail",
+        client=client,
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase.slug,
+            "pk": submission.pk,
+        },
+        user=admin,
+    )
+
+    assert response.status_code == 200
+    assert message in str(response.content)
 
 
 @pytest.mark.django_db

@@ -1777,6 +1777,29 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
     def is_editable(self):
         return self.status == SubmissionStatusChoices.VALIDATING_INPUTS
 
+    @property
+    def animate(self):
+        return self.status == SubmissionStatusChoices.VALIDATING_INPUTS
+
+    @property
+    def status_context(self):
+        if self.status == SubmissionStatusChoices.ACCEPTED:
+            return "success"
+        elif self.status in {
+            SubmissionStatusChoices.FAILED,
+            SubmissionStatusChoices.REJECTED,
+        }:
+            return "danger"
+        elif self.status in {
+            SubmissionStatusChoices.PENDING_REVIEW,
+            SubmissionStatusChoices.VALIDATING_INPUTS,
+        }:
+            return "info"
+        elif self.status == SubmissionStatusChoices.CANCELLED:
+            return "dark"
+        else:
+            return "secondary"
+
     def add_civ(self, *, civ):
         super().add_civ(civ=civ)
         return self.additional_inputs.add(civ)
@@ -1938,6 +1961,17 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
     def get_absolute_url(self):
         return reverse(
             "evaluation:submission-detail",
+            kwargs={
+                "pk": self.pk,
+                "challenge_short_name": self.phase.challenge.short_name,
+                "slug": self.phase.slug,
+            },
+        )
+
+    @property
+    def status_url(self) -> str:
+        return reverse(
+            "evaluation:submission-status-detail",
             kwargs={
                 "pk": self.pk,
                 "challenge_short_name": self.phase.challenge.short_name,

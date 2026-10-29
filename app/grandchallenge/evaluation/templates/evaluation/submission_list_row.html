@@ -17,16 +17,14 @@
 
 <split></split>
 
+{% include 'evaluation/submission_status_detail.html' with object=object %}
+
+<split></split>
+
 <ul class="list-unstyled mb-0 text-left">
     {% for evaluation in object.evaluation_set.all %}
         <li>
             {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
-        </li>
-    {% empty %}
-        <li>
-            {% if object.user_upload and not object.predictions_file %}
-                <span class="badge badge-info">Preparing</span>
-            {% endif %}
         </li>
     {% endfor %}
 </ul>
