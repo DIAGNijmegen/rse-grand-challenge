@@ -1754,7 +1754,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @cached_property
     def batch_mode_without_benefit(self):
-        # Batching only helps when more than one archive item fits in a job.
         return any(
             use_batch_mode and items_per_job <= 1
             for use_batch_mode, items_per_job in zip(

@@ -482,8 +482,6 @@ def test_consider_batching_ignores_phases_already_batching(settings):
         phase_ids=[1, 2],
         number_of_teams_for_phases=[1, 1],
         number_of_submissions_per_team_for_phases=[1, 1],
-        # Both phases have a high case count, but the batching one is already
-        # handled, so only the non-batch phase should trigger the suggestion.
         number_of_test_cases_for_phases=[2000, 2000],
         use_batch_mode_for_phases=[True, False],
     )
