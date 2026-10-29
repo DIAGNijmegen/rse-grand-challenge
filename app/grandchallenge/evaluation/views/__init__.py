@@ -502,6 +502,7 @@ class SubmissionStatusUpdate(
             phase__challenge=self.request.challenge,
             phase__slug=self.kwargs["slug"],
             pk=self.kwargs["pk"],
+            status=self.model.StatusChoices.PENDING_REVIEW,
         )
 
     def get_permission_object(self):
@@ -528,6 +529,7 @@ class SubmissionReject(
             phase__challenge=self.request.challenge,
             phase__slug=self.kwargs["slug"],
             pk=self.kwargs["pk"],
+            status=self.model.StatusChoices.PENDING_REVIEW,
         )
 
     def get_permission_object(self):

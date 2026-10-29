@@ -3575,6 +3575,41 @@ class TestSubmissionStatusViews:
             submission_pk=submission.pk
         )
 
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [SubmissionStatusChoices.PENDING_REVIEW]
+        ),
+    )
+    def test_status_update_not_pending_returns_404(
+        self, client, django_capture_on_commit_callbacks, status
+    ):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(phase=phase, status=status)
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="evaluation:submission-status-update",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "challenge_short_name": phase.challenge.short_name,
+                    "slug": phase.slug,
+                    "pk": submission.pk,
+                },
+                user=admin,
+                data={
+                    "status": SubmissionStatusChoices.ACCEPTED,
+                    "status_message": "",
+                },
+            )
+
+        assert response.status_code == 404
+        submission.refresh_from_db()
+        assert submission.status == status
+
     def test_status_update_forbidden_for_participant(self, client):
         participant = UserFactory()
         phase = PhaseFactory()
@@ -3628,6 +3663,31 @@ class TestSubmissionStatusViews:
         assert response.status_code == 200
         assert submission.status_update_url in str(response.content)
         assert "status_message" in str(response.content)
+
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [SubmissionStatusChoices.PENDING_REVIEW]
+        ),
+    )
+    def test_reject_view_not_pending_returns_404(self, client, status):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(phase=phase, status=status)
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+        )
+
+        assert response.status_code == 404
 
     def test_reject_view_forbidden_for_participant(self, client):
         participant = UserFactory()
