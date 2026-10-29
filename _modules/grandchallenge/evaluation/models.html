@@ -1311,7 +1311,7 @@
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">valid_archive_item_count_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="n">interface</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_archive_items</span><span class="p">)</span>
+            <span class="n">interface</span><span class="p">:</span> <span class="n">valid_archive_items</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">valid_archive_items</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_archive_items_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
 
