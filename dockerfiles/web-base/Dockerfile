@@ -28,7 +28,7 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
-        build-essential \
+        libsass-dev \
         # ruby3.1, rugged and nokogiri for licensee
         ruby3.1 \
         ruby-rugged \
