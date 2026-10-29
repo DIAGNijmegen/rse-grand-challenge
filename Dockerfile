@@ -106,7 +106,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ##################
 # TEST CONTAINER #
 ##################
-FROM --platform=linux/arm64 base AS test-base
+FROM --platform=linux/arm64 base AS test
 
 USER root
 RUN apt-get update \
