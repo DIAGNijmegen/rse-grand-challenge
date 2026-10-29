@@ -127,10 +127,11 @@ Based on the following information:
                     {% for phase in task.costs_for_phases_in_task %}
                         <tr>
                             <td>Compute phase {{ forloop.counter }}
+                                <br>
                                 {% if phase.use_batch_mode %}
-                                    <span class="badge badge-info">Batch mode</span>
+                                    <span class="badge badge-info"><i class="fas fa-layer-group mr-1"></i> Batch mode</span>
                                 {% else %}
-                                    <span class="badge badge-secondary">Non-Batch mode</span>
+                                    <span class="badge badge-secondary"><i class="fas fa-cube mr-1"></i> Single mode</span>
                                 {% endif %}
                             </td>
                             <td>{{ task.inference_time_average_seconds }} seconds average job time per case,

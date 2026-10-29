@@ -1078,6 +1078,7 @@ budget_field_names = (
     "number_of_teams_for_phases",
     "number_of_submissions_per_team_for_phases",
     "number_of_test_cases_for_phases",
+    "use_batch_mode_for_phases",
 )
 
 
@@ -1332,7 +1333,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ],
     )
     use_batch_mode_for_phases = models.JSONField(
-        help_text="Whether algorithm inference runs in batch mode, for each phase.",
+        help_text=(
+            "Whether algorithm inference runs in batch mode, for each phase, "
+            "e.g. [false, false, true, true]."
+        ),
         default=list,
         validators=[
             JSONValidator(
