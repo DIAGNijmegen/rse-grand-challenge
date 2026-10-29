@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(cleanup_tokens),
+        migrations.RunPython(cleanup_tokens, elidable=True),
         migrations.AlterField(
             model_name="authtoken",
             name="token_key",
