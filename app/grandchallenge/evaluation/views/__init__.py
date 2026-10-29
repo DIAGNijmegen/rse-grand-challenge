@@ -511,29 +511,6 @@ class SubmissionStatusUpdate(
         return self.object.status_url
 
 
-class SubmissionAccept(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    DetailView,
-):
-    model = Submission
-    template_name_suffix = "_confirm_accept"
-    permission_required = "change_challenge"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_object(self, queryset=None):
-        return get_object_or_404(
-            self.model,
-            phase__challenge=self.request.challenge,
-            phase__slug=self.kwargs["slug"],
-            pk=self.kwargs["pk"],
-        )
-
-    def get_permission_object(self):
-        return self.request.challenge
-
-
 class SubmissionReject(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,

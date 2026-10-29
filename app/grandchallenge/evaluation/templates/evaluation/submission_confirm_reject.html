@@ -5,7 +5,7 @@
     {% csrf_token %}
     <div>
     <input type="hidden" name="status" value="{{ object.StatusChoices.REJECTED }}">
-    <textarea name="status_message" placeholder="Reason for rejection" required>{{ object.status_message }}</textarea>
+    <textarea name="status_message" placeholder="Reason for rejection" required></textarea>
     </div>
     <button type="button" hx-get="{{ object.status_url }}" hx-target="#status-{{ object.pk }}" hx-swap="outerHTML"
             class="btn btn-secondary ml-0">Cancel</button>

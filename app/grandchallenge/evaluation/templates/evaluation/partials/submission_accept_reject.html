@@ -1,35 +1,21 @@
-{% if object.status == object.StatusChoices.PENDING_REVIEW %}
-    <form hx-post="{{ object.status_update_url }}"
-          hx-target="#status-{{ object.pk }}"
-          hx-select="#status-{{ object.pk }}"
-          hx-swap="outerHTML"
-          class="d-inline">
-        {% csrf_token %}
-        <input type="hidden" name="status" value="{{ object.StatusChoices.ACCEPTED }}">
-        <button type="submit"
-                title="Accept"
-                class="btn btn-success ml-0">
-            <i class="fas fa-fw fa-check-circle mr-1"></i>Accept
-        </button>
-    </form>
-    <button hx-get="{{ object.reject_url }}"
-            hx-target="#status-{{ object.pk }}"
-            hx-swap="innerHTML"
-            class="btn btn-danger ml-0"
-            title="Reject"
-    >
-        <i class="fas fa-fw fa-times-circle mr-1"></i>Reject
-    </button>
-{% elif object.status == object.StatusChoices.REJECTED %}
-    <span class="badge badge-{{ object.status_context }} mr-1">
-        {{ object.get_status_display }}
-    </span>
-    <button hx-get="{{ object.accept_url }}"
-            hx-target="#status-{{ object.pk }}"
-            hx-swap="innerHTML"
-            class="btn btn-success ml-0"
+<form hx-post="{{ object.status_update_url }}"
+      hx-target="#status-{{ object.pk }}"
+      hx-select="#status-{{ object.pk }}"
+      hx-swap="outerHTML"
+      class="d-inline">
+    {% csrf_token %}
+    <input type="hidden" name="status" value="{{ object.StatusChoices.ACCEPTED }}">
+    <button type="submit"
             title="Accept"
-    >
+            class="btn btn-success ml-0">
         <i class="fas fa-fw fa-check-circle mr-1"></i>Accept
     </button>
-{% endif %}
+</form>
+<button hx-get="{{ object.reject_url }}"
+        hx-target="#status-{{ object.pk }}"
+        hx-swap="innerHTML"
+        class="btn btn-danger ml-0"
+        title="Reject"
+>
+    <i class="fas fa-fw fa-times-circle mr-1"></i>Reject
+</button>

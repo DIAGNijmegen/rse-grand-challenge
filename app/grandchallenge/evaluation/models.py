@@ -1991,17 +1991,6 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         )
 
     @property
-    def accept_url(self) -> str:
-        return reverse(
-            "evaluation:submission-accept",
-            kwargs={
-                "pk": self.pk,
-                "challenge_short_name": self.phase.challenge.short_name,
-                "slug": self.phase.slug,
-            },
-        )
-
-    @property
     def reject_url(self) -> str:
         return reverse(
             "evaluation:submission-reject",

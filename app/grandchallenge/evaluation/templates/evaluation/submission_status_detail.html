@@ -6,7 +6,7 @@
          hx-select="#status-{{ object.pk }}"
      {% endif %}
 >
-    {% if "change_challenge" in challenge_perms and object.status == object.StatusChoices.PENDING_REVIEW or object.status == object.StatusChoices.REJECTED %}
+    {% if "change_challenge" in challenge_perms and object.status == object.StatusChoices.PENDING_REVIEW %}
         {% include "evaluation/partials/submission_accept_reject.html" with object=object csrf_token=csrf_token only %}
     {% else %}
         <span class="badge badge-{{ object.status_context }} mr-1">

@@ -36,7 +36,6 @@ from grandchallenge.evaluation.views import (
     PhaseStarterKitDetail,
     PhaseStarterKitDownload,
     PhaseUpdate,
-    SubmissionAccept,
     SubmissionCreate,
     SubmissionDetail,
     SubmissionList,
@@ -188,11 +187,6 @@ urlpatterns = [
         "<slug:slug>/submissions/<uuid:pk>/status/update/",
         SubmissionStatusUpdate.as_view(),
         name="submission-status-update",
-    ),
-    path(
-        "<slug:slug>/submissions/<uuid:pk>/accept/",
-        SubmissionAccept.as_view(),
-        name="submission-accept",
     ),
     path(
         "<slug:slug>/submissions/<uuid:pk>/reject/",
