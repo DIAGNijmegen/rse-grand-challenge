@@ -28,7 +28,8 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
-        libsass-dev \
+        # For libsass TODO: deprecated, replace with dart-libsass
+        build-essential \
         # ruby3.1, rugged and nokogiri for licensee
         ruby3.1 \
         ruby-rugged \
@@ -83,14 +84,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Create isolated virtual environments from locked dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/biom/pyproject.toml,target=/tmp/biom/pyproject.toml \
-    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/biom/uv.lock,target=/tmp/biom/uv.lock \
+    --mount=type=bind,source=virtualenvs/biom/pyproject.toml,target=/tmp/biom/pyproject.toml \
+    --mount=type=bind,source=virtualenvs/biom/uv.lock,target=/tmp/biom/uv.lock \
     UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/biom \
     uv sync --frozen --no-install-project --project /tmp/biom
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/panimg/pyproject.toml,target=/tmp/panimg/pyproject.toml \
-    --mount=type=bind,source=dockerfiles/web-base/virtualenvs/panimg/uv.lock,target=/tmp/panimg/uv.lock \
+    --mount=type=bind,source=virtualenvs/panimg/pyproject.toml,target=/tmp/panimg/pyproject.toml \
+    --mount=type=bind,source=virtualenvs/panimg/uv.lock,target=/tmp/panimg/uv.lock \
     UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/panimg \
     uv sync --frozen --no-install-project --project /tmp/panimg
 
@@ -131,3 +132,22 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project
 RUN playwright install
+
+COPY --chown=django:django setup.cfg /home/django
+
+WORKDIR /app
+RUN mkdir /tmp/.pytest_cache
+COPY --chown=django:django ./app/ /app/
+
+##################
+# Dist Container #
+##################
+FROM --platform=linux/arm64 base AS dist
+
+WORKDIR /app
+COPY --chown=django:django ./app/ /app/
+
+ARG COMMIT_ID=unknown
+ENV COMMIT_ID=$COMMIT_ID
+
+RUN python manage.py collectstatic --noinput && GRAND_CHALLENGE_USE_LOC_MEM_CACHE=true python manage.py compress --force

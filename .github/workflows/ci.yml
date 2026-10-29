@@ -127,11 +127,6 @@ jobs:
               with:
                   role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
                   aws-region: us-east-1
-            - name: Push to ECR Public
-              run: |
-                aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen
-                make push_web_base
-                make push_web_test_base
             - name: Create Summary
               run: |
                 echo "## Container Tag" >> $GITHUB_STEP_SUMMARY
