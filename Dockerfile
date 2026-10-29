@@ -1,9 +1,7 @@
 ###################
 #  Base Container #
 ###################
-ARG PYTHON_VERSION
-
-FROM --platform=linux/arm64 python:${PYTHON_VERSION}-slim-bookworm AS base
+FROM python:3.14-slim-bookworm AS base
 
 # Install system dependencies
 RUN apt-get update \
@@ -106,7 +104,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ##################
 # TEST CONTAINER #
 ##################
-FROM --platform=linux/arm64 base AS test
+FROM base AS test
 
 USER root
 RUN apt-get update \
@@ -142,7 +140,7 @@ COPY --chown=django:django ./app/ /app/
 ##################
 # Dist Container #
 ##################
-FROM --platform=linux/arm64 base AS dist
+FROM base AS dist
 
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/

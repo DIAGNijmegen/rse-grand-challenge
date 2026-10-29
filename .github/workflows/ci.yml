@@ -34,9 +34,6 @@ jobs:
               with:
                   python-version: ${{ env.PYTHON_VERSION }}
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-            - name: Build the test container
-              run: |
-                  make build_web_test
             - name: Check migrations have been made
               run: make check_migrations
             - name: Run the django tests
@@ -85,9 +82,6 @@ jobs:
         runs-on: ubuntu-26.04-arm
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-            - name: Build the test container
-              run: |
-                  make build_web_test
             - name: Build the docs
               run: |
                   make docs
@@ -121,7 +115,7 @@ jobs:
             - name: Push to ECR
               run: |
                 aws ecr get-login-password --region ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_REGION }} | docker login --username AWS --password-stdin ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_HOST }}
-                GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make push_web_private
+                GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make push_web_dist
             - name: Create Summary
               run: |
                 echo "## Container Tag" >> $GITHUB_STEP_SUMMARY

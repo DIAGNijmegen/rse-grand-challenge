@@ -51,7 +51,11 @@ services:
         restart: always
 
     gc.localhost:
-        image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
+        build:
+            context: .
+            target: test
+        image: grand-challenge-web
+        pull_policy: never
         ports:
             - "127.0.0.1:8000:8000"
         environment:
@@ -71,10 +75,6 @@ services:
             registry:
                 condition: service_started
         volumes:
-            # Bind the app directory for live reloading in development
-            - type: bind
-              source: ./app
-              target: /app/
             # The pytest_cache is only needed for testing
             - type: volume
               source: pytest-cache

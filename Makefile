@@ -1,43 +1,25 @@
 USER_ID=$(shell id -u)
-PYTHON_VERSION="3.14"
 LOCKFILE_HASH=$(shell shasum -a 512 uv.lock | cut -c 1-8)
 GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
-GRAND_CHALLENGE_WEB_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web
-GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-test
 
 .PHONY: container_tag
 container_tag:
 	@echo $(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
-build_web_test:
-	docker buildx build \
-		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
-		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
-		--target test \
-		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
-		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):latest \
-		.
-
 build_web_dist:
 	docker buildx build \
-		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+		--platform=linux/arm64
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
-		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
 		--target dist \
-		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
-		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest \
+		-t $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		.
 
-push_web_private:
-	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+push_web_dist:
 	docker push $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
-build: build_web_test build_web_dist
-
 push_staging: build_web_dist
-	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+	docker tag $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 	aws ecr get-login-password --region $(GRAND_CHALLENGE_STAGING_REGION) --profile $(GRAND_CHALLENGE_STAGING_PROFILE) | docker login --username AWS --password-stdin $(GRAND_CHALLENGE_STAGING_ECR_HOST)
 	docker push $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
@@ -50,7 +32,7 @@ check_migrations:
 migrations:
 	docker compose run -u $(USER_ID) --rm gc.localhost python manage.py makemigrations
 
-runserver: build_web_test development_fixtures
+runserver: development_fixtures
 	bash -c "trap 'docker compose down' EXIT; docker compose up"
 
 rundeps:
