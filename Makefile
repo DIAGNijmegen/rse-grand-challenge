@@ -1,27 +1,26 @@
 USER_ID=$(shell id -u)
-LOCKFILE_HASH=$(shell shasum -a 512 uv.lock | cut -c 1-8)
 GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
 
 .PHONY: container_tag
 container_tag:
-	@echo $(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+	@echo $(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)
 
 build_web_dist:
 	docker buildx build \
 		--platform=linux/arm64
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--target dist \
-		-t $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
+		-t $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME) \
 		.
 
 push_web_dist:
-	docker push $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+	docker push $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)
 
 push_staging: build_web_dist
-	docker tag $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+	docker tag $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)
 	aws ecr get-login-password --region $(GRAND_CHALLENGE_STAGING_REGION) --profile $(GRAND_CHALLENGE_STAGING_PROFILE) | docker login --username AWS --password-stdin $(GRAND_CHALLENGE_STAGING_ECR_HOST)
-	docker push $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+	docker push $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)
 
 migrate:
 	docker compose run --rm gc.localhost python manage.py migrate
