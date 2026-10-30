@@ -28,11 +28,7 @@ class Migration(migrations.Migration):
         ("auth", "0012_alter_user_first_name_max_length"),
         (
             "challenges",
-            "0053_challengeuserobjectpermission_challenges__user_id_7f9623_idx_and_more",
-        ),
-        (
-            "challenges",
-            "0080_alter_challengerequest_average_size_test_case_mb_for_tasks_and_more",
+            "0001_squashed_0082_challengerequest_phase_ids_and_more",
         ),
         (
             "evaluation",

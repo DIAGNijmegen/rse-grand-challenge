@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "challenges",
-            "0029_alter_challenge_educational_alter_challenge_hidden",
+            "0001_squashed_0082_challengerequest_phase_ids_and_more",
         ),
         ("evaluation", "0039_alter_phase_title"),
     ]

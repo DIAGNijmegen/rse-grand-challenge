@@ -25,7 +25,10 @@ class Migration(migrations.Migration):
             "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
         ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("challenges", "0001_initial"),
+        (
+            "challenges",
+            "0001_squashed_0082_challengerequest_phase_ids_and_more",
+        ),
         (
             "components",
             "0001_squashed_0029_alter_componentinterface_overlay_segments",

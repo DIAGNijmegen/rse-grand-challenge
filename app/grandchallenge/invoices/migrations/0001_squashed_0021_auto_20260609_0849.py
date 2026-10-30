@@ -18,9 +18,10 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("challenges", "0030_challenge_compute_cost_euro_millicents_and_more"),
-        ("challenges", "0071_alter_challengerequest_status_and_more"),
-        ("challenges", "0072_alter_challenge_compute_cost_euro_millicents"),
+        (
+            "challenges",
+            "0001_squashed_0082_challengerequest_phase_ids_and_more",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

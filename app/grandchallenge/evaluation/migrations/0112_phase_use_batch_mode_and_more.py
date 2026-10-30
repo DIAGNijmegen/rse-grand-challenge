@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         ),
         (
             "challenges",
-            "0080_alter_challengerequest_average_size_test_case_mb_for_tasks_and_more",
+            "0001_squashed_0082_challengerequest_phase_ids_and_more",
         ),
         (
             "components",
