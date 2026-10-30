@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         ("cases", "0001_squashed_0029_alter_image_segments"),
         (
             "challenges",
-            "0029_alter_challenge_educational_alter_challenge_hidden",
+            "0001_squashed_0082_challengerequest_phase_ids_and_more",
         ),
         (
             "components",

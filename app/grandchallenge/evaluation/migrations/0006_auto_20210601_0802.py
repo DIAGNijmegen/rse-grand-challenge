@@ -7,7 +7,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("challenges", "0006_auto_20210601_0802"),
+        (
+            "challenges",
+            "0001_squashed_0082_challengerequest_phase_ids_and_more",
+        ),
         ("evaluation", "0005_auto_20210423_1305"),
     ]
 
