@@ -40,8 +40,8 @@ from grandchallenge.evaluation.views import (
     SubmissionDetail,
     SubmissionList,
     SubmissionReject,
+    SubmissionReview,
     SubmissionStatusDetail,
-    SubmissionStatusUpdate,
 )
 
 app_name = "evaluation"
@@ -184,9 +184,9 @@ urlpatterns = [
         name="submission-status-detail",
     ),
     path(
-        "<slug:slug>/submissions/<uuid:pk>/status/update/",
-        SubmissionStatusUpdate.as_view(),
-        name="submission-status-update",
+        "<slug:slug>/submissions/<uuid:pk>/review/",
+        SubmissionReview.as_view(),
+        name="submission-review",
     ),
     path(
         "<slug:slug>/submissions/<uuid:pk>/reject/",
