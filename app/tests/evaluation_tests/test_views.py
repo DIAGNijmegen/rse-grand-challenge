@@ -3585,7 +3585,7 @@ class TestSubmissionStatusViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-status-update",
+            viewname="evaluation:submission-review",
             client=client,
             method=client.post,
             reverse_kwargs={
@@ -3620,7 +3620,7 @@ class TestSubmissionStatusViews:
         ) as mocked_create_evaluation:
             with django_capture_on_commit_callbacks(execute=True):
                 response = get_view_for_user(
-                    viewname="evaluation:submission-status-update",
+                    viewname="evaluation:submission-review",
                     client=client,
                     method=client.post,
                     reverse_kwargs={
@@ -3658,7 +3658,7 @@ class TestSubmissionStatusViews:
 
         with django_capture_on_commit_callbacks(execute=True):
             response = get_view_for_user(
-                viewname="evaluation:submission-status-update",
+                viewname="evaluation:submission-review",
                 client=client,
                 method=client.post,
                 reverse_kwargs={
@@ -3677,6 +3677,43 @@ class TestSubmissionStatusViews:
         submission.refresh_from_db()
         assert submission.status == status
 
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [
+                SubmissionStatusChoices.REJECTED,
+                SubmissionStatusChoices.ACCEPTED,
+            ]
+        ),
+    )
+    def test_status_update_status_validation(self, client, status):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-review",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": status,
+            },
+        )
+
+        assert response.status_code == 400
+
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+
     def test_status_update_forbidden_for_participant(self, client):
         participant = UserFactory()
         phase = PhaseFactory()
@@ -3688,7 +3725,7 @@ class TestSubmissionStatusViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-status-update",
+            viewname="evaluation:submission-review",
             client=client,
             method=client.post,
             reverse_kwargs={
@@ -3728,7 +3765,7 @@ class TestSubmissionStatusViews:
         )
 
         assert response.status_code == 200
-        assert submission.status_update_url in str(response.content)
+        assert submission.review_url in str(response.content)
         assert "status_message" in str(response.content)
 
     @pytest.mark.parametrize(

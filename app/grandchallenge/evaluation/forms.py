@@ -686,6 +686,25 @@ class SubmissionForm(
         widgets = {"creator": forms.HiddenInput, "phase": forms.HiddenInput}
 
 
+class SubmissionReviewForm(forms.ModelForm):
+    class Meta:
+        model = Submission
+        fields = ("status", "status_message")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["status"].choices = [
+            (
+                self.Meta.model.StatusChoices.ACCEPTED.value,
+                self.Meta.model.StatusChoices.ACCEPTED.label,
+            ),
+            (
+                self.Meta.model.StatusChoices.REJECTED.value,
+                self.Meta.model.StatusChoices.REJECTED.label,
+            ),
+        ]
+
+
 class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()
