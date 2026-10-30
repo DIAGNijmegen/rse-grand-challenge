@@ -11,8 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("algorithms", "0054_alter_algorithmimage_options_and_more"),
-        ("cases", "0001_initial"),
-        ("cases", "0013_alter_image_segments"),
+        ("cases", "0001_squashed_0029_alter_image_segments"),
         (
             "challenges",
             "0029_alter_challenge_educational_alter_challenge_hidden",

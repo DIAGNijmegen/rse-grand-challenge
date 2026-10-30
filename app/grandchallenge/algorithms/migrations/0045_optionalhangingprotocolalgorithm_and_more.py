@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hanging_protocols", "0010_alter_hangingprotocol_json"),
+        ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
         ("algorithms", "0044_algorithmimage_size_in_registry_and_more"),
     ]
 

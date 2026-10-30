@@ -16,7 +16,10 @@ class Migration(migrations.Migration):
         ("actstream", "0003_add_follow_flag"),
         ("auth", "0012_alter_user_first_name_max_length"),
         ("contenttypes", "0002_remove_content_type_name"),
-        ("discussion_forums", "0002_migrate_old_forums"),
+        (
+            "discussion_forums",
+            "0001_squashed_0004_remove_forum_source_object_and_more",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

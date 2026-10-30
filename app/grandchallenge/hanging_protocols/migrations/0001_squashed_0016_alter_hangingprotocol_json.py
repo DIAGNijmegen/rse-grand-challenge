@@ -12,34 +12,6 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("hanging_protocols", "0001_initial"),
-        ("hanging_protocols", "0002_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0003_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0004_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0005_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0006_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0007_alter_hangingprotocol_json"),
-        (
-            "hanging_protocols",
-            "0008_hangingprotocolgroupobjectpermission_hangingprotocoluserobjectpermission",
-        ),
-        ("hanging_protocols", "0009_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0010_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0011_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0012_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0013_alter_hangingprotocol_json"),
-        (
-            "hanging_protocols",
-            "0014_hangingprotocoluserobjectpermission_hanging_pro_user_id_802c8d_idx",
-        ),
-        (
-            "hanging_protocols",
-            "0015_hangingprotocolgroupobjectpermission_hanging_pro_group_i_67be21_idx",
-        ),
-        ("hanging_protocols", "0016_alter_hangingprotocol_json"),
-    ]
-
     initial = True
 
     dependencies = [

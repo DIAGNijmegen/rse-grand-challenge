@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("workstations", "0010_workstationimage_latest_shimmed_version"),
-        ("hanging_protocols", "0004_alter_hangingprotocol_json"),
+        ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
         ("workstation_configs", "0015_auto_20220607_0841"),
         ("evaluation", "0026_evaluation_attempt"),
     ]

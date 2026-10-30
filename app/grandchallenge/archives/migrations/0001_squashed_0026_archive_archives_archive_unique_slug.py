@@ -14,47 +14,6 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("archives", "0001_initial"),
-        ("archives", "0002_auto_20201214_0939"),
-        ("archives", "0003_auto_20201215_0931"),
-        ("archives", "0004_archive_organizations"),
-        ("archives", "0005_archive_social_image"),
-        ("archives", "0006_archiveitem"),
-        ("archives", "0007_remove_archive_images"),
-        ("archives", "0008_auto_20210512_1437"),
-        ("archives", "0009_auto_20210601_0802"),
-        ("archives", "0010_archive_access_request_handling"),
-        ("archives", "0011_archive_hanging_protocol"),
-        ("archives", "0012_archive_view_content"),
-        ("archives", "0013_alter_archive_view_content"),
-        ("archives", "0014_auto_20220602_0640"),
-        (
-            "archives",
-            "0015_archivegroupobjectpermission_archiveitemgroupobjectpermission_archiveitemuserobjectpermission_archiv",
-        ),
-        ("archives", "0016_optionalhangingprotocolarchive_and_more"),
-        ("archives", "0017_archive_item_delete_permission_granting"),
-        ("archives", "0018_archiveitem_title_and_more"),
-        (
-            "archives",
-            "0019_alter_optionalhangingprotocolarchive_unique_together",
-        ),
-        ("archives", "0020_remove_archive_algorithms"),
-        (
-            "archives",
-            "0021_archivegroupobjectpermission_archives_ar_group_i_5375aa_idx_and_more",
-        ),
-        (
-            "archives",
-            "0022_archiveitemuserobjectpermission_archives_ar_user_id_13fbd3_idx_and_more",
-        ),
-        ("archives", "0023_archive_logo_height_archive_logo_width_and_more"),
-        ("archives", "0024_alter_archive_logo_alter_archive_social_image"),
-        ("archives", "0025_alter_archive_logo_alter_archive_social_image"),
-        ("archives", "0026_archive_archives_archive_unique_slug"),
-    ]
-
     initial = True
 
     dependencies = [
@@ -62,12 +21,9 @@ class Migration(migrations.Migration):
         ("anatomy", "0001_initial"),
         ("anatomy", "0002_alter_bodyregion_region_and_more"),
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("cases", "0001_initial"),
+        ("cases", "0001_squashed_0029_alter_image_segments"),
         ("components", "0003_auto_20210323_1452"),
-        ("hanging_protocols", "0001_initial"),
-        ("hanging_protocols", "0010_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0012_alter_hangingprotocol_json"),
-        ("hanging_protocols", "0016_alter_hangingprotocol_json"),
+        ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
         ("modalities", "0001_initial"),
         ("modalities", "0002_alter_imagingmodality_modality"),
         ("organizations", "0001_initial"),

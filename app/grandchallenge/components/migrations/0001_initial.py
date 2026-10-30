@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [("cases", "0001_initial")]
+    dependencies = [("cases", "0001_squashed_0029_alter_image_segments")]
 
     operations = [
         migrations.CreateModel(

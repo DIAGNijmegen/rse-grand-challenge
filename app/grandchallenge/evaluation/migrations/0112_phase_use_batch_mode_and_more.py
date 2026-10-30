@@ -7,7 +7,10 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("algorithms", "0104_alter_job_algorithm_interface"),
-        ("archives", "0026_archive_archives_archive_unique_slug"),
+        (
+            "archives",
+            "0001_squashed_0026_archive_archives_archive_unique_slug",
+        ),
         (
             "challenges",
             "0080_alter_challengerequest_average_size_test_case_mb_for_tasks_and_more",
@@ -17,7 +20,7 @@ class Migration(migrations.Migration):
             "evaluation",
             "0111_batchjob_batchjobgroupobjectpermission_batchjobtask_and_more",
         ),
-        ("hanging_protocols", "0016_alter_hangingprotocol_json"),
+        ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
         (
             "workstation_configs",
             "0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
