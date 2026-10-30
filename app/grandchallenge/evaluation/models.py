@@ -1722,6 +1722,10 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 name="submission_status_valid",
             ),
         ]
+        permissions = [
+            ("review_submission", "Can accept or reject submission"),
+            ("cancel_submission", "Can cancel submission"),
+        ]
 
     @cached_property
     def is_evaluated_with_active_image_and_ground_truth(self):
@@ -1935,6 +1939,9 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
+        assign_perm(
+            "review_submission", self.phase.challenge.admins_group, self
+        )
         if self.phase.external_evaluation:
             external_evaluators_group = (
                 self.phase.challenge.external_evaluators_group
@@ -1953,6 +1960,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 )
 
         if self.creator:
+            assign_perm("cancel_submission", self.creator, self)
             if self.phase.public:
                 assign_perm("view_submission", self.creator, self)
             else:
@@ -2278,13 +2286,13 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
-    allowed_permissions = frozenset({"view_submission"})
+    allowed_permissions = frozenset({"view_submission", "cancel_submission"})
 
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 
 class SubmissionGroupObjectPermission(GroupObjectPermissionBase):
-    allowed_permissions = frozenset({"view_submission"})
+    allowed_permissions = frozenset({"view_submission", "review_submission"})
 
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
