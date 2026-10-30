@@ -51,14 +51,9 @@ jobs:
               uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
               with:
                 python-version: ${{ env.PYTHON_VERSION }}
-            - name: Install pycurl dependencies
-              run: |
-                sudo apt-get update
-                sudo apt-get install -y libcurl4-openssl-dev libssl-dev
             - name: Pull the algorithm-example base container
               run: |
-                docker pull --platform=linux/amd64 \
-                pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime
+                docker pull pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime
             - name: Run the forge integration tests
               run: |
                 cd app

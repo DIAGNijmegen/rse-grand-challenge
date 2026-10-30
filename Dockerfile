@@ -1,7 +1,7 @@
 ###################
 #  Base Container #
 ###################
-FROM python:3.14-slim-bookworm AS base
+FROM python:3.14-slim-trixie AS base
 
 # Install system dependencies
 RUN apt-get update \
@@ -13,12 +13,8 @@ RUN apt-get update \
         libxft-dev \
         libffi-dev \
         wget \
-        gettext \
         # postgres packages for psycopg2
         libpq-dev \
-        # curl and ssl for pycurl
-        libcurl4-openssl-dev \
-        libssl-dev \
         # for python-magic
         libmagic1 \
         # openslide and vips for image imports with panimg
@@ -26,14 +22,12 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
-        # ruby3.1, rugged and nokogiri for licensee
-        ruby3.1 \
+        # ruby, rugged and nokogiri for licensee
+        ruby \
         ruby-rugged \
         ruby-nokogiri \
         # git for CodeBuild integration
         git \
-        # for dbshell
-        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Fetch and install licensee for checking licenses
