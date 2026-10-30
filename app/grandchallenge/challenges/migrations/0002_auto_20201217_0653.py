@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("organizations", "0001_initial"),
+        ("organizations", "0001_squashed_0013_alter_organization_logo"),
         ("challenges", "0001_initial"),
     ]
 

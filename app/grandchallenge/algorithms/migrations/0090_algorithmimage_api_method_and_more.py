@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
         ("algorithms", "0089_job_algorithms__created_679c29_idx"),
         (
             "uploads",
-            "0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
+            "0001_squashed_0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
         ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

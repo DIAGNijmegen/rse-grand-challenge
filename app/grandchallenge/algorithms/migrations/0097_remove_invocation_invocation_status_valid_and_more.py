@@ -10,7 +10,10 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("algorithms", "0096_invocation"),
-        ("components", "0029_alter_componentinterface_overlay_segments"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
     ]
 
     operations = [

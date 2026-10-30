@@ -6,11 +6,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("anatomy", "0001_initial"),
-        ("anatomy", "0002_alter_bodyregion_region_and_more"),
-    ]
-
     initial = True
 
     dependencies = []

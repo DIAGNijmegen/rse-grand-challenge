@@ -16,7 +16,10 @@ class Migration(migrations.Migration):
             "challenges",
             "0029_alter_challenge_educational_alter_challenge_hidden",
         ),
-        ("components", "0015_alter_componentinterface_overlay_segments"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         ("evaluation", "0001_initial"),
         (
             "evaluation",

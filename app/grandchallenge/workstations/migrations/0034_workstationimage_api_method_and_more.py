@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "uploads",
-            "0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
+            "0001_squashed_0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
         ),
         ("workstations", "0033_alter_workstation_logo"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

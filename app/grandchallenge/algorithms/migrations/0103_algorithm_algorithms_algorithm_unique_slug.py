@@ -7,12 +7,12 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("algorithms", "0102_alter_endpoint_options_alter_job_options"),
-        ("anatomy", "0002_alter_bodyregion_region_and_more"),
+        ("anatomy", "0001_squashed_0002_alter_bodyregion_region_and_more"),
         ("auth", "0012_alter_user_first_name_max_length"),
         ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
-        ("modalities", "0002_alter_imagingmodality_modality"),
-        ("organizations", "0013_alter_organization_logo"),
-        ("publications", "0005_alter_publication_identifier"),
+        ("modalities", "0001_squashed_0002_alter_imagingmodality_modality"),
+        ("organizations", "0001_squashed_0013_alter_organization_logo"),
+        ("publications", "0001_squashed_0005_alter_publication_identifier"),
         (
             "workstation_configs",
             "0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",

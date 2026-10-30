@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
         ("algorithms", "0093_remove_endpoint_endpoint_status_valid_and_more"),
         (
             "components",
-            "0028_remove_componentinterfacevalue_storage_cost_per_year_usd_millicents",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
         ),
     ]
 

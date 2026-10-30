@@ -16,40 +16,6 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("organizations", "0001_initial"),
-        ("organizations", "0002_auto_20210512_1437"),
-        ("organizations", "0003_auto_20210601_0802"),
-        ("organizations", "0004_alter_organization_logo"),
-        (
-            "organizations",
-            "0005_organizationgroupobjectpermission_organizationuserobjectpermission",
-        ),
-        ("organizations", "0006_organization_exempt_from_base_costs"),
-        (
-            "organizations",
-            "0007_organization_algorithm_maximum_settable_memory_gb_and_more",
-        ),
-        (
-            "organizations",
-            "0008_organizationgroupobjectpermission_organizatio_group_i_f92672_idx",
-        ),
-        (
-            "organizations",
-            "0009_organizationuserobjectpermission_organizatio_user_id_a3cd10_idx",
-        ),
-        (
-            "organizations",
-            "0010_alter_organization_algorithm_maximum_settable_memory_gb",
-        ),
-        (
-            "organizations",
-            "0011_organization_logo_height_organization_logo_width",
-        ),
-        ("organizations", "0012_alter_organization_logo"),
-        ("organizations", "0013_alter_organization_logo"),
-    ]
-
     initial = True
 
     dependencies = [

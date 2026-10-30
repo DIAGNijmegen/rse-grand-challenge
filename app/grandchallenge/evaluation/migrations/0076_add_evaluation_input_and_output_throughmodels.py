@@ -8,7 +8,10 @@ import grandchallenge.evaluation.models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("components", "0025_alter_componentinterface_overlay_segments"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         ("evaluation", "0075_alter_phase_inputs_alter_phase_outputs"),
     ]
 

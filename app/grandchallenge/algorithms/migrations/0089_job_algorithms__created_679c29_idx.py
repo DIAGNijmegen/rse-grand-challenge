@@ -12,7 +12,10 @@ class Migration(migrations.Migration):
             "0088_alter_algorithm_logo_alter_algorithm_social_image_and_more",
         ),
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("components", "0027_alter_componentinterfacevalue_file"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

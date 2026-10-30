@@ -16,7 +16,10 @@ class Migration(migrations.Migration):
     dependencies = [
         ("algorithms", "0103_algorithm_algorithms_algorithm_unique_slug"),
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("components", "0029_alter_componentinterface_overlay_segments"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         ("evaluation", "0110_delete_combinedleaderboard"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
