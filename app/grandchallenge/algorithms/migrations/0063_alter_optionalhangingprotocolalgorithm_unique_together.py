@@ -5,7 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("hanging_protocols", "0012_alter_hangingprotocol_json"),
+        ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
         ("algorithms", "0062_algorithmusercredit"),
     ]
 

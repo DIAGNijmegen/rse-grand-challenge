@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
         ("algorithms", "0102_alter_endpoint_options_alter_job_options"),
         ("anatomy", "0002_alter_bodyregion_region_and_more"),
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("hanging_protocols", "0016_alter_hangingprotocol_json"),
+        ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
         ("modalities", "0002_alter_imagingmodality_modality"),
         ("organizations", "0013_alter_organization_logo"),
         ("publications", "0005_alter_publication_identifier"),

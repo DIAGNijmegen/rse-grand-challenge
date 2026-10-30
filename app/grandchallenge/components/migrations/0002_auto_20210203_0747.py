@@ -10,7 +10,10 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
 
-    dependencies = [("cases", "0001_initial"), ("components", "0001_initial")]
+    dependencies = [
+        ("cases", "0001_squashed_0029_alter_image_segments"),
+        ("components", "0001_initial"),
+    ]
 
     operations = [
         migrations.AddField(

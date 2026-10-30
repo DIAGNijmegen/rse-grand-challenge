@@ -13,56 +13,6 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("cases", "0001_initial"),
-        ("cases", "0002_auto_20210305_1248"),
-        ("cases", "0003_auto_20210406_0753"),
-        ("cases", "0004_auto_20210929_1055"),
-        ("cases", "0005_rawimageuploadsession_import_result"),
-        ("cases", "0006_rawimageuploadsession_user_uploads"),
-        ("cases", "0007_remove_image_study"),
-        ("cases", "0008_delete_rawimagefile"),
-        ("cases", "0009_imagefile_post_processed"),
-        ("cases", "0010_image_segments"),
-        (
-            "cases",
-            "0011_imagegroupobjectpermission_imageuserobjectpermission_rawimageuploadsessiongroupobjectpermission_rawi",
-        ),
-        ("cases", "0012_alter_imagefile_file"),
-        ("cases", "0013_alter_image_segments"),
-        ("cases", "0014_imagefile_size_in_storage"),
-        (
-            "cases",
-            "0015_imagegroupobjectpermission_cases_image_group_i_04c912_idx_and_more",
-        ),
-        (
-            "cases",
-            "0016_rawimageuploadsessiongroupobjectpermission_cases_rawim_group_i_1ab41f_idx",
-        ),
-        (
-            "cases",
-            "0017_remove_imagefile_post_processed_postprocessimagetask_and_more",
-        ),
-        ("cases", "0018_alter_image_color_space_alter_image_height_and_more"),
-        ("cases", "0019_alter_dicomimagesetupload_user_uploads"),
-        ("cases", "0020_remove_dicomimageset_image_frame_ids_and_more"),
-        ("cases", "0021_dicomimagesetupload_task_on_success"),
-        ("cases", "0022_auto_20251021_1014"),
-        ("cases", "0023_alter_rawimageuploadsession_error_message"),
-        ("cases", "0024_dicomimagesetuploadgroupobjectpermission_and_more"),
-        ("cases", "0025_alter_imagefile_file"),
-        (
-            "cases",
-            "0026_dicomimagesetupload_linked_object_content_type_and_more",
-        ),
-        (
-            "cases",
-            "0027_alter_image_patient_age_alter_image_patient_id_and_more",
-        ),
-        ("cases", "0028_remove_image_patient_age_and_more"),
-        ("cases", "0029_alter_image_segments"),
-    ]
-
     initial = True
 
     dependencies = [

@@ -26,9 +26,8 @@ class Migration(migrations.Migration):
         ("algorithms", "0104_alter_job_algorithm_interface"),
         (
             "archives",
-            "0022_archiveitemuserobjectpermission_archives_ar_user_id_13fbd3_idx_and_more",
+            "0001_squashed_0026_archive_archives_archive_unique_slug",
         ),
-        ("archives", "0026_archive_archives_archive_unique_slug"),
         ("auth", "0012_alter_user_first_name_max_length"),
         (
             "challenges",

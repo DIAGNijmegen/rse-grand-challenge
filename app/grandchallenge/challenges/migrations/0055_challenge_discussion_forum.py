@@ -7,7 +7,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("discussion_forums", "0001_initial"),
+        (
+            "discussion_forums",
+            "0001_squashed_0004_remove_forum_source_object_and_more",
+        ),
         (
             "challenges",
             "0054_alter_challengerequest_algorithm_maximum_settable_memory_gb",

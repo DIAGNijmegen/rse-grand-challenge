@@ -12,13 +12,6 @@ import grandchallenge.core.models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("discussion_forums", "0001_initial"),
-        ("discussion_forums", "0002_migrate_old_forums"),
-        ("discussion_forums", "0003_add_auto_now"),
-        ("discussion_forums", "0004_remove_forum_source_object_and_more"),
-    ]
-
     initial = True
 
     dependencies = [
