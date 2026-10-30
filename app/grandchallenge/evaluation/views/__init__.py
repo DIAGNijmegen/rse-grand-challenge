@@ -15,7 +15,11 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Prefetch
-from django.http import FileResponse, Http404
+from django.http import (
+    FileResponse,
+    Http404,
+    HttpResponseBadRequest,
+)
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -496,6 +500,15 @@ class SubmissionStatusUpdate(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    # A review through this view can only move a pending submission to
+    # ACCEPTED or REJECTED.
+    allowed_statuses = frozenset(
+        {
+            Submission.StatusChoices.ACCEPTED,
+            Submission.StatusChoices.REJECTED,
+        }
+    )
+
     def get_object(self, queryset=None):
         return get_object_or_404(
             self.model,
@@ -504,6 +517,18 @@ class SubmissionStatusUpdate(
             pk=self.kwargs["pk"],
             status=self.model.StatusChoices.PENDING_REVIEW,
         )
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class=form_class)
+        form.fields["status"].choices = [
+            choice
+            for choice in form.fields["status"].choices
+            if choice[0] in self.allowed_statuses
+        ]
+        return form
+
+    def form_invalid(self, form):
+        return HttpResponseBadRequest()
 
     def get_success_url(self):
         return self.object.status_url

@@ -3677,6 +3677,44 @@ class TestSubmissionStatusViews:
         submission.refresh_from_db()
         assert submission.status == status
 
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [
+                SubmissionStatusChoices.PENDING_REVIEW,
+                SubmissionStatusChoices.REJECTED,
+                SubmissionStatusChoices.ACCEPTED,
+            ]
+        ),
+    )
+    def test_status_update_status_validation(self, client, status):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-status-update",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": status,
+            },
+        )
+
+        assert response.status_code == 400
+
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+
     def test_status_update_forbidden_for_participant(self, client):
         participant = UserFactory()
         phase = PhaseFactory()
