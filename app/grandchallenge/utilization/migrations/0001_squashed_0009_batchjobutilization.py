@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
         ),
         (
             "workstations",
-            "0027_feedbackgroupobjectpermission_workstation_group_i_ac4715_idx_and_more",
+            "0001_squashed_0045_workstation_workstations_workstation_unique_slug",
         ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

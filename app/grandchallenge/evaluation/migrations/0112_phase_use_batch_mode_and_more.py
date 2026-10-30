@@ -29,11 +29,11 @@ class Migration(migrations.Migration):
         ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
         (
             "workstation_configs",
-            "0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
+            "0001_squashed_0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
         ),
         (
             "workstations",
-            "0045_workstation_workstations_workstation_unique_slug",
+            "0001_squashed_0045_workstation_workstations_workstation_unique_slug",
         ),
     ]
 

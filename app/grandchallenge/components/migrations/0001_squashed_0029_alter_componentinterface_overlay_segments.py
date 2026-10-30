@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
         ("cases", "0001_squashed_0029_alter_image_segments"),
         (
             "workstation_configs",
-            "0016_alter_workstationconfig_overlay_segments",
+            "0001_squashed_0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
         ),
     ]
 
