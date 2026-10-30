@@ -492,7 +492,7 @@ class SubmissionStatusUpdate(
 ):
     model = Submission
     fields = ("status", "status_message")
-    permission_required = "change_challenge"
+    permission_required = "review_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -504,9 +504,6 @@ class SubmissionStatusUpdate(
             pk=self.kwargs["pk"],
             status=self.model.StatusChoices.PENDING_REVIEW,
         )
-
-    def get_permission_object(self):
-        return self.request.challenge
 
     def get_success_url(self):
         return self.object.status_url
@@ -519,7 +516,7 @@ class SubmissionReject(
 ):
     model = Submission
     template_name_suffix = "_confirm_reject"
-    permission_required = "change_challenge"
+    permission_required = "review_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -531,9 +528,6 @@ class SubmissionReject(
             pk=self.kwargs["pk"],
             status=self.model.StatusChoices.PENDING_REVIEW,
         )
-
-    def get_permission_object(self):
-        return self.request.challenge
 
 
 class TeamContextMixin:
