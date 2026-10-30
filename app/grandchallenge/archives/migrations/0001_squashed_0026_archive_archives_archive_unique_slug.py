@@ -32,13 +32,14 @@ class Migration(migrations.Migration):
         ("modalities", "0001_squashed_0002_alter_imagingmodality_modality"),
         ("organizations", "0001_squashed_0013_alter_organization_logo"),
         ("publications", "0001_squashed_0005_alter_publication_identifier"),
-        ("workstation_configs", "0001_squashed_0008_auto_20201001_0758"),
         (
             "workstation_configs",
-            "0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
+            "0001_squashed_0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
         ),
-        ("workstations", "0001_squashed_0011_auto_20201001_0758"),
-        ("workstations", "0044_remove_session_user_finished"),
+        (
+            "workstations",
+            "0001_squashed_0045_workstation_workstations_workstation_unique_slug",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

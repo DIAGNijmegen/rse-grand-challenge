@@ -32,7 +32,10 @@ class Migration(migrations.Migration):
             "evaluation",
             "0071_alter_combinedleaderboardphase_unique_together_and_more",
         ),
-        ("workstations", "0018_remove_workstationimage_ready"),
+        (
+            "workstations",
+            "0001_squashed_0045_workstation_workstations_workstation_unique_slug",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

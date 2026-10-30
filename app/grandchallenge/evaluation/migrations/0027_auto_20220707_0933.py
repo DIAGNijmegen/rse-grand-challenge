@@ -9,9 +9,15 @@ import grandchallenge.core.validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workstations", "0010_workstationimage_latest_shimmed_version"),
+        (
+            "workstations",
+            "0001_squashed_0045_workstation_workstations_workstation_unique_slug",
+        ),
         ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
-        ("workstation_configs", "0015_auto_20220607_0841"),
+        (
+            "workstation_configs",
+            "0001_squashed_0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
+        ),
         ("evaluation", "0026_evaluation_attempt"),
     ]
 

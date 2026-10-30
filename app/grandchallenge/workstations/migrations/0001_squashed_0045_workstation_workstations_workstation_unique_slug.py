@@ -18,87 +18,6 @@ import grandchallenge.workstations.models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("workstations", "0001_squashed_0011_auto_20201001_0758"),
-        ("workstations", "0002_session_auth_token"),
-        ("workstations", "0003_auto_20210402_1508"),
-        ("workstations", "0004_auto_20210512_1437"),
-        ("workstations", "0005_auto_20210601_0802"),
-        ("workstations", "0006_workstationimage_user_upload"),
-        ("workstations", "0007_remove_workstationimage_staged_image_uuid"),
-        ("workstations", "0008_auto_20220517_0740"),
-        ("workstations", "0009_alter_workstation_logo"),
-        ("workstations", "0010_workstationimage_latest_shimmed_version"),
-        ("workstations", "0011_auto_20220707_1129"),
-        ("workstations", "0012_auto_20220713_2004"),
-        ("workstations", "0013_feedback"),
-        ("workstations", "0014_alter_feedback_context"),
-        (
-            "workstations",
-            "0015_feedbackgroupobjectpermission_feedbackuserobjectpermission_sessiongroupobjectpermission_sessionusero",
-        ),
-        ("workstations", "0016_auto_20230214_1453"),
-        ("workstations", "0017_auto_20230404_1208"),
-        ("workstations", "0018_remove_workstationimage_ready"),
-        (
-            "workstations",
-            "0019_workstationimage_storage_cost_per_year_usd_millicents",
-        ),
-        ("workstations", "0020_workstationimage_size_in_registry_and_more"),
-        ("workstations", "0021_workstationimage_desired_gpu_type"),
-        ("workstations", "0022_remove_workstationimage_is_on_sagemaker"),
-        (
-            "workstations",
-            "0023_remove_workstationimage_desired_gpu_type_and_more",
-        ),
-        ("workstations", "0024_sessioncost_sessioncostreaderstudy_and_more"),
-        ("workstations", "0025_workstationimage_is_archived"),
-        (
-            "workstations",
-            "0026_feedbackuserobjectpermission_workstation_user_id_f2985d_idx_and_more",
-        ),
-        (
-            "workstations",
-            "0027_feedbackgroupobjectpermission_workstation_group_i_ac4715_idx_and_more",
-        ),
-        (
-            "workstations",
-            "0028_remove_sessioncostreaderstudy_reader_study_and_more",
-        ),
-        ("workstations", "0029_delete_historicalsession"),
-        (
-            "workstations",
-            "0030_workstation_logo_height_workstation_logo_width",
-        ),
-        ("workstations", "0031_alter_workstation_logo"),
-        ("workstations", "0032_alter_workstationimage_image"),
-        ("workstations", "0033_alter_workstation_logo"),
-        ("workstations", "0034_workstationimage_api_method_and_more"),
-        (
-            "workstations",
-            "0035_remove_workstationimage_storage_cost_per_year_usd_millicents",
-        ),
-        (
-            "workstations",
-            "0036_session_host_address_session_http_port_and_more",
-        ),
-        ("workstations", "0037_alter_workstationimage_http_port_and_more"),
-        ("workstations", "0038_session_task_arn_alter_session_logs"),
-        ("workstations", "0039_remove_session_logs_and_more"),
-        ("workstations", "0040_remove_session_auth_token_session_claimed_at"),
-        ("workstations", "0041_auto_20260618_0905"),
-        ("workstations", "0042_session_creator_requires_claimed_at"),
-        (
-            "workstations",
-            "0043_alter_session_status_alter_session_user_finished",
-        ),
-        ("workstations", "0044_remove_session_user_finished"),
-        (
-            "workstations",
-            "0045_workstation_workstations_workstation_unique_slug",
-        ),
-    ]
-
     initial = True
 
     dependencies = [
@@ -109,10 +28,9 @@ class Migration(migrations.Migration):
             "uploads",
             "0001_squashed_0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
         ),
-        ("workstation_configs", "0001_squashed_0008_auto_20201001_0758"),
         (
             "workstation_configs",
-            "0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
+            "0001_squashed_0033_lookuptable_workstation_configs_lookuptable_unique_slug_and_more",
         ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
