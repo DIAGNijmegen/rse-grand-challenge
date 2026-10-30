@@ -84,7 +84,10 @@ def test_hiding_phase_updates_perms(
     }
 
     assert get_groups_with_set_perms(e.submission) == {
-        e.submission.phase.challenge.admins_group: {"view_submission"},
+        e.submission.phase.challenge.admins_group: {
+            "view_submission",
+            "review_submission",
+        },
     }
     assert e.submission.creator.has_perm("view_submission", e.submission)
 
@@ -99,7 +102,10 @@ def test_hiding_phase_updates_perms(
         },
     }
     assert get_groups_with_set_perms(e.submission) == {
-        e.submission.phase.challenge.admins_group: {"view_submission"},
+        e.submission.phase.challenge.admins_group: {
+            "view_submission",
+            "review_submission",
+        },
     }
 
 
@@ -128,7 +134,10 @@ def test_unhiding_phase_updates_perms(
         },
     }
     assert get_groups_with_set_perms(e.submission) == {
-        e.submission.phase.challenge.admins_group: {"view_submission"},
+        e.submission.phase.challenge.admins_group: {
+            "view_submission",
+            "review_submission",
+        },
     }
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -144,7 +153,10 @@ def test_unhiding_phase_updates_perms(
     }
 
     assert get_groups_with_set_perms(e.submission) == {
-        e.submission.phase.challenge.admins_group: {"view_submission"},
+        e.submission.phase.challenge.admins_group: {
+            "view_submission",
+            "review_submission",
+        },
     }
     assert e.submission.creator.has_perm("view_submission", e.submission)
 
@@ -163,17 +175,29 @@ def test_method_permissions():
 @pytest.mark.django_db
 def test_submission_permissions():
     """
-    Challenge admins and submission creators should be able to view
-    submissions.
+    Challenge admins can view and review submissions, and submission creators
+    can view and cancel their own submissions.
     """
     s: Submission = SubmissionFactory()
 
     assert get_groups_with_set_perms(s) == {
-        s.phase.challenge.admins_group: {"view_submission"}
+        s.phase.challenge.admins_group: {
+            "view_submission",
+            "review_submission",
+        }
     }
-    assert get_users_with_perms(
-        s, attach_perms=True, with_group_users=False
-    ) == {s.creator: ["view_submission"]}
+    assert get_users_with_set_perms(s, with_group_users=False) == {
+        s.creator: {"view_submission", "cancel_submission"}
+    }
+
+    admin = UserFactory()
+    s.phase.challenge.add_admin(admin)
+
+    # Admins can review but not cancel; creators can cancel but not review.
+    assert admin.has_perm("review_submission", s) is True
+    assert admin.has_perm("cancel_submission", s) is False
+    assert s.creator.has_perm("review_submission", s) is False
+    assert s.creator.has_perm("cancel_submission", s) is True
 
 
 @pytest.mark.parametrize("hidden_challenge", [True, False])
@@ -368,6 +392,7 @@ def test_external_evaluations_perms():
     assert get_groups_with_set_perms(e.submission) == {
         admins: {
             "view_submission",
+            "review_submission",
         },
     }
 
@@ -393,7 +418,10 @@ def test_external_evaluations_perms():
     }
 
     assert get_groups_with_set_perms(e2.submission) == {
-        admins: {"view_submission"},
+        admins: {
+            "view_submission",
+            "review_submission",
+        },
     }
 
     assert get_groups_with_set_perms(e2.submission.algorithm_image) == {
