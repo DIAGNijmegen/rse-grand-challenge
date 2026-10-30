@@ -1074,9 +1074,11 @@ budget_field_names = (
     "average_size_job_output_mb_for_tasks",
     "inference_time_average_seconds_for_tasks",
     "task_id_for_phases",
+    "phase_ids",
     "number_of_teams_for_phases",
     "number_of_submissions_per_team_for_phases",
     "number_of_test_cases_for_phases",
+    "use_batch_mode_for_phases",
 )
 
 
@@ -1330,6 +1332,24 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
         ],
     )
+    use_batch_mode_for_phases = models.JSONField(
+        help_text=(
+            "Whether algorithm inference runs in batch mode, for each phase, "
+            "e.g. [false, false, true, true]."
+        ),
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "boolean",
+                    },
+                }
+            )
+        ],
+    )
     task_ids = models.JSONField(
         help_text="List the task id's, e.g. [1, 2, 3].",
         default=list,
@@ -1357,6 +1377,22 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     "items": {
                         "type": "integer",
                     },
+                }
+            )
+        ],
+    )
+    phase_ids = models.JSONField(
+        help_text="List the phase id's, e.g. [1, 2, 3].",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                    },
+                    "uniqueItems": True,
                 }
             )
         ],
@@ -1708,10 +1744,23 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def consider_batching(self):
         return any(
-            [
-                n_test_cases > 1000
-                for n_test_cases in self.number_of_test_cases_for_phases
-            ]
+            n_test_cases > 1000 and not use_batch_mode
+            for n_test_cases, use_batch_mode in zip(
+                self.number_of_test_cases_for_phases,
+                self.use_batch_mode_for_phases,
+                strict=True,
+            )
+        )
+
+    @cached_property
+    def batch_mode_without_benefit(self):
+        return any(
+            use_batch_mode and items_per_job <= 1
+            for use_batch_mode, items_per_job in zip(
+                self.use_batch_mode_for_phases,
+                self.archive_items_per_job_for_phases,
+                strict=True,
+            )
         )
 
     @property
@@ -1719,7 +1768,80 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return sum(self.number_of_submissions_for_phases)
 
     @cached_property
+    def algorithm_time_limit_seconds_for_phases(self):
+        # The phase is configured with a time limit of twice the average
+        # inference time, and that also determines how many archvive items
+        # can be processed by one BatchJob
+        return [
+            2 * average_seconds
+            for average_seconds in self.inference_time_average_seconds_for_phases
+        ]
+
+    @cached_property
+    def archive_items_per_job_for_phases(self):
+        maximum_batch_inference_duration = (
+            settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
+            - settings.COMPONENTS_JOB_SETUP_DURATION
+        )
+        return [
+            (
+                max(maximum_batch_inference_duration // time_limit_seconds, 1)
+                if use_batch_mode
+                else 1
+            )
+            for use_batch_mode, time_limit_seconds in zip(
+                self.use_batch_mode_for_phases,
+                self.algorithm_time_limit_seconds_for_phases,
+                strict=True,
+            )
+        ]
+
+    @cached_property
     def number_of_algorithm_jobs_for_phases(self):
+        return [
+            n_submissions * math.ceil(n_images / items_per_job)
+            for n_submissions, n_images, items_per_job in zip(
+                self.number_of_submissions_for_phases,
+                self.number_of_test_cases_for_phases,
+                self.archive_items_per_job_for_phases,
+                strict=True,
+            )
+        ]
+
+    @cached_property
+    def compute_seconds_per_job_for_phases(self):
+        # Each job incurs the general set-up time once, plus the average
+        # inference time for every archive item it processes.
+        return [
+            average_seconds * items_per_job
+            + settings.COMPONENTS_JOB_SETUP_DURATION
+            for average_seconds, items_per_job in zip(
+                self.inference_time_average_seconds_for_phases,
+                self.archive_items_per_job_for_phases,
+                strict=True,
+            )
+        ]
+
+    @cached_property
+    def compute_time_hours_for_phases(self):
+        return [
+            round(n_jobs * compute_seconds_per_job / 3600)
+            for n_jobs, compute_seconds_per_job in zip(
+                self.number_of_algorithm_jobs_for_phases,
+                self.compute_seconds_per_job_for_phases,
+                strict=True,
+            )
+        ]
+
+    @property
+    def total_compute_time(self):
+        return timedelta(hours=sum(self.compute_time_hours_for_phases))
+
+    @cached_property
+    def number_of_job_outputs_for_phases(self):
+        # Batch mode packs multiple archive items into a single job, but every
+        # item still produces its own output, so output storage tracks the
+        # number of items processed rather than the number of jobs.
         return [
             n_submissions * n_images
             for n_submissions, n_images in zip(
@@ -1728,21 +1850,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 strict=True,
             )
         ]
-
-    @cached_property
-    def compute_time_hours_for_phases(self):
-        return [
-            round(n_jobs * average_seconds / 3600)
-            for n_jobs, average_seconds in zip(
-                self.number_of_algorithm_jobs_for_phases,
-                self.inference_time_average_seconds_for_phases,
-                strict=True,
-            )
-        ]
-
-    @property
-    def total_compute_time(self):
-        return timedelta(hours=sum(self.compute_time_hours_for_phases))
 
     @cached_property
     def data_storage_size_gb_for_phases(self):
@@ -1756,9 +1863,9 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
         output_size_mb_for_phases = [
-            n_jobs * output_mb
-            for n_jobs, output_mb in zip(
-                self.number_of_algorithm_jobs_for_phases,
+            n_outputs * output_mb
+            for n_outputs, output_mb in zip(
+                self.number_of_job_outputs_for_phases,
                 self.average_size_job_output_mb_for_phases,
                 strict=True,
             )
@@ -2069,10 +2176,17 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "number_of_jobs": self.number_of_algorithm_jobs_for_phases[
                     phase_index
                 ],
+                "use_batch_mode": self.use_batch_mode_for_phases[phase_index],
+                "archive_items_per_job": self.archive_items_per_job_for_phases[
+                    phase_index
+                ],
                 "compute_costs_euros": self.compute_costs_euros_for_phases[
                     phase_index
                 ],
                 "data_storage_costs_euros": self.data_storage_costs_euros_for_phases[
+                    phase_index
+                ],
+                "number_of_job_outputs": self.number_of_job_outputs_for_phases[
                     phase_index
                 ],
                 "compute_and_storage_costs_euros": self.compute_and_storage_costs_euros_for_phases[

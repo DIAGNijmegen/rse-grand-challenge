@@ -1193,8 +1193,8 @@ class ConfigureAlgorithmPhasesView(
             return None
 
     def form_valid(self, form):
-        for phase in form.cleaned_data["selected_phases"]:
-            self.turn_phase_into_algorithm_phase(phase_with_task=phase)
+        for selected_phase in form.cleaned_data["selected_phases"]:
+            self.turn_phase_into_algorithm_phase(selected_phase=selected_phase)
         messages.success(self.request, "Phases were successfully updated")
         return super().form_valid(form)
 
@@ -1203,8 +1203,8 @@ class ConfigureAlgorithmPhasesView(
             "challenges:requests-list",
         )
 
-    def turn_phase_into_algorithm_phase(self, *, phase_with_task):
-        phase = Phase.objects.get(pk=phase_with_task.phase_pk)
+    def turn_phase_into_algorithm_phase(self, *, selected_phase):
+        phase = Phase.objects.get(pk=selected_phase.phase_pk)
         archive = Archive.objects.create(
             title=format_html(
                 "{challenge_name} {phase_title} dataset",
@@ -1234,19 +1234,22 @@ class ConfigureAlgorithmPhasesView(
                 self.challenge_request.algorithm_maximum_settable_memory_gb
             )
 
-            if len(self.challenge_request.task_ids) == 1:
-                task_idx = 0
-            elif phase_with_task.task_id is not None:
-                task_idx = self.challenge_request.task_ids.index(
-                    phase_with_task.task_id
+            if selected_phase.request_phase_id is not None:
+                phase_index = self.challenge_request.phase_ids.index(
+                    selected_phase.request_phase_id
                 )
             else:
-                task_idx = None
+                phase_index = None
 
-            if task_idx is not None:
-                phase.algorithm_time_limit = self.challenge_request.inference_time_average_seconds_for_tasks[
-                    task_idx
+            if phase_index is not None:
+                phase.algorithm_time_limit = self.challenge_request.algorithm_time_limit_seconds_for_phases[
+                    phase_index
                 ]
+                phase.use_batch_mode = (
+                    self.challenge_request.use_batch_mode_for_phases[
+                        phase_index
+                    ]
+                )
 
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM

@@ -774,14 +774,16 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
         return cleaned_data
 
 
-class PhaseWithTask(NamedTuple):
+class SelectedPhase(NamedTuple):
     phase_pk: str
-    task_id: int | None
+    request_phase_id: int | None = None
 
 
 class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
     def __init__(self, *args, challenge, challenge_request=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.challenge_request = challenge_request
 
         phases = (
             Phase.objects.select_related("challenge")
@@ -800,10 +802,10 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
                 required=False,
             )
 
-            if challenge_request and len(challenge_request.task_ids) > 1:
-                self.fields[f"task_{phase.pk}"] = forms.TypedChoiceField(
-                    label=f"Task ID for {phase}",
-                    choices=[(i, i) for i in challenge_request.task_ids],
+            if challenge_request:
+                self.fields[f"phase_id_{phase.pk}"] = forms.TypedChoiceField(
+                    label=f"Phase ID used in the request form for {phase}",
+                    choices=[(i, i) for i in challenge_request.phase_ids],
                     coerce=int,
                     empty_value=None,
                     required=False,
@@ -814,26 +816,34 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
         selected_phases = [
             name
             for name, value in cleaned_data.items()
-            if name.startswith("phase_") and value
+            if name.startswith("phase_")
+            and not name.startswith("phase_id_")
+            and value
         ]
         cleaned_selected_phases = []
 
         for name in selected_phases:
             phase_pk = name.split("_")[1]
-            task_id = cleaned_data.get(f"task_{phase_pk}")
 
-            if task_id is None and f"task_{phase_pk}" in cleaned_data:
-                self.add_error(
-                    field=f"task_{phase_pk}",
-                    error="The task ID must be provided.",
+            if self.challenge_request is None:
+                cleaned_selected_phases.append(
+                    SelectedPhase(phase_pk=phase_pk, request_phase_id=None)
                 )
             else:
-                cleaned_selected_phases.append(
-                    PhaseWithTask(
-                        phase_pk=phase_pk,
-                        task_id=task_id,
+                request_phase_id = cleaned_data.get(f"phase_id_{phase_pk}")
+
+                if request_phase_id is None:
+                    self.add_error(
+                        field=f"phase_id_{phase_pk}",
+                        error="The phase ID must be provided.",
                     )
-                )
+                else:
+                    cleaned_selected_phases.append(
+                        SelectedPhase(
+                            phase_pk=phase_pk,
+                            request_phase_id=request_phase_id,
+                        )
+                    )
 
         cleaned_data["selected_phases"] = cleaned_selected_phases
         return cleaned_data
