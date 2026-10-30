@@ -6,7 +6,10 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("algorithms", "0051_alter_algorithmimage_image"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         ("evaluation", "0056_alter_phase_algorithm_time_limit"),
     ]
 

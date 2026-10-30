@@ -10,7 +10,10 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("algorithms", "0054_alter_algorithmimage_options_and_more"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         ("cases", "0001_squashed_0029_alter_image_segments"),
         (
             "challenges",

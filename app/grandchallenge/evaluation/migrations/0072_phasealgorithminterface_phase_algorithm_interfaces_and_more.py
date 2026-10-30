@@ -6,7 +6,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("algorithms", "0066_create_interfaces_for_jobs"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         (
             "evaluation",
             "0071_alter_combinedleaderboardphase_unique_together_and_more",

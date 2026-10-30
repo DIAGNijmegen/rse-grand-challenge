@@ -17,7 +17,10 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("algorithms", "0001_initial"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         ("anatomy", "0001_squashed_0002_alter_bodyregion_region_and_more"),
         ("auth", "0012_alter_user_first_name_max_length"),
         ("cases", "0001_squashed_0029_alter_image_segments"),
