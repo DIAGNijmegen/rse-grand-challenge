@@ -1772,6 +1772,10 @@
                 <span class="n">name</span><span class="o">=</span><span class="s2">"submission_status_valid"</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">]</span>
+        <span class="n">permissions</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">"review_submission"</span><span class="p">,</span> <span class="s2">"Can accept or reject submission"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"cancel_submission"</span><span class="p">,</span> <span class="s2">"Can cancel submission"</span><span class="p">),</span>
+        <span class="p">]</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_evaluated_with_active_image_and_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1985,6 +1989,9 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">"view_submission"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="s2">"review_submission"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">external_evaluation</span><span class="p">:</span>
             <span class="n">external_evaluators_group</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">external_evaluators_group</span>
@@ -2003,6 +2010,7 @@
                 <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">:</span>
+            <span class="n">assign_perm</span><span class="p">(</span><span class="s2">"cancel_submission"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">public</span><span class="p">:</span>
                 <span class="n">assign_perm</span><span class="p">(</span><span class="s2">"view_submission"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -2328,13 +2336,13 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmissionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
-    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"view_submission"</span><span class="p">})</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"view_submission"</span><span class="p">,</span> <span class="s2">"cancel_submission"</span><span class="p">})</span>
 
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmissionGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
-    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"view_submission"</span><span class="p">})</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"view_submission"</span><span class="p">,</span> <span class="s2">"review_submission"</span><span class="p">})</span>
 
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
