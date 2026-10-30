@@ -6,12 +6,6 @@ FROM python:3.14-slim-trixie AS base
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        libpng-dev \
-        libjpeg-dev \
-        libjpeg62-turbo-dev \
-        libfreetype6-dev \
-        libxft-dev \
-        libffi-dev \
         wget \
         # postgres packages for psycopg2
         libpq-dev \
