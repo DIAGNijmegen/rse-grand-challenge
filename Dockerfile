@@ -117,8 +117,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 
 USER root
-RUN playwright install --with-deps chromium
+RUN playwright install-deps chromium
 USER django:django
+RUN playwright install chromium
 
 COPY --chown=django:django setup.cfg /home/django
 

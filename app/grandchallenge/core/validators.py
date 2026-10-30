@@ -102,19 +102,34 @@ class ExtensionValidator:
         return hash(ExtensionValidator) + 7 * hash(self.allowed_extensions)
 
 
+def mimetype_from_buffer(*, buffer: bytes) -> str:
+    mimetype = magic.from_buffer(buffer, mime=True)
+
+    # Zip local file header, empty archive, and spanned archive signatures.
+    # libmagic cannot always refine a truncated zip prefix (one without the
+    # end-of-central-directory record) to application/zip, so it falls back to
+    # application/octet-stream. Detect the signature ourselves in that case.
+    zip_signatures = (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
+
+    if mimetype == "application/octet-stream" and buffer[:4] in zip_signatures:
+        return "application/zip"
+
+    return mimetype
+
+
 def get_file_mimetype(file):
     n_bytes = 2048
 
     try:
         file.seek(0)
-        mimetype = magic.from_buffer(file.read(n_bytes), mime=True)
+        buffer = file.read(n_bytes)
         file.seek(0)
     except AttributeError:
         # File not open, so manage that here
         with file.open("rb") as f:
-            mimetype = magic.from_buffer(f.read(n_bytes), mime=True)
+            buffer = f.read(n_bytes)
 
-    return mimetype
+    return mimetype_from_buffer(buffer=buffer)
 
 
 class JSONSchemaRetrieve:
