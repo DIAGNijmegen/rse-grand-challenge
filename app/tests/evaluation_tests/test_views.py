@@ -3585,7 +3585,7 @@ class TestSubmissionStatusViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-status-update",
+            viewname="evaluation:submission-review",
             client=client,
             method=client.post,
             reverse_kwargs={
@@ -3620,7 +3620,7 @@ class TestSubmissionStatusViews:
         ) as mocked_create_evaluation:
             with django_capture_on_commit_callbacks(execute=True):
                 response = get_view_for_user(
-                    viewname="evaluation:submission-status-update",
+                    viewname="evaluation:submission-review",
                     client=client,
                     method=client.post,
                     reverse_kwargs={
@@ -3658,7 +3658,7 @@ class TestSubmissionStatusViews:
 
         with django_capture_on_commit_callbacks(execute=True):
             response = get_view_for_user(
-                viewname="evaluation:submission-status-update",
+                viewname="evaluation:submission-review",
                 client=client,
                 method=client.post,
                 reverse_kwargs={
@@ -3681,7 +3681,6 @@ class TestSubmissionStatusViews:
         "status",
         set(SubmissionStatusChoices).difference(
             [
-                SubmissionStatusChoices.PENDING_REVIEW,
                 SubmissionStatusChoices.REJECTED,
                 SubmissionStatusChoices.ACCEPTED,
             ]
@@ -3696,7 +3695,7 @@ class TestSubmissionStatusViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-status-update",
+            viewname="evaluation:submission-review",
             client=client,
             method=client.post,
             reverse_kwargs={
@@ -3726,7 +3725,7 @@ class TestSubmissionStatusViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-status-update",
+            viewname="evaluation:submission-review",
             client=client,
             method=client.post,
             reverse_kwargs={
@@ -3766,7 +3765,7 @@ class TestSubmissionStatusViews:
         )
 
         assert response.status_code == 200
-        assert submission.status_update_url in str(response.content)
+        assert submission.review_url in str(response.content)
         assert "status_message" in str(response.content)
 
     @pytest.mark.parametrize(

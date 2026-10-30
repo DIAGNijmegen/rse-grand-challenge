@@ -490,7 +490,7 @@ class SubmissionStatusDetail(ObjectPermissionRequiredMixin, DetailView):
     raise_exception = True
 
 
-class SubmissionStatusUpdate(
+class SubmissionReview(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     UpdateView,
