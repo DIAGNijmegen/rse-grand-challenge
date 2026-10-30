@@ -114,14 +114,6 @@ RUN apt-get update \
         graphviz \
         # make for sphinx docs
         make \
-        # playwright dependencies
-        libatk1.0-0 \
-        libatk-bridge2.0-0 \
-        libatspi2.0-0 \
-        libxcomposite1 \
-        libxrandr2 \
-        libgbm1 \
-        libxkbcommon0 \
     && rm -rf /var/lib/apt/lists/*
 USER django:django
 
@@ -129,7 +121,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project
-RUN playwright install
+
+USER root
+RUN playwright install --with-deps chromium
+USER django:django
 
 COPY --chown=django:django setup.cfg /home/django
 
