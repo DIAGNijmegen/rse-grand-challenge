@@ -32,10 +32,8 @@ class Migration(migrations.Migration):
         ),
         (
             "evaluation",
-            "0087_evaluationgroundtruthuserobjectpermission_evaluation__user_id_3b94cc_idx_and_more",
+            "0001_squashed_0118_alter_submission_options",
         ),
-        ("evaluation", "0089_evaluation_use_warm_pool"),
-        ("evaluation", "0112_phase_use_batch_mode_and_more"),
         ("invoices", "0001_squashed_0021_auto_20260609_0849"),
         (
             "reader_studies",

@@ -23,15 +23,7 @@ class Migration(migrations.Migration):
             "components",
             "0001_squashed_0029_alter_componentinterface_overlay_segments",
         ),
-        ("evaluation", "0001_initial"),
-        (
-            "evaluation",
-            "0040_combinedleaderboard_combinedleaderboardphase_and_more",
-        ),
-        (
-            "evaluation",
-            "0071_alter_combinedleaderboardphase_unique_together_and_more",
-        ),
+        ("evaluation", "0001_squashed_0118_alter_submission_options"),
         (
             "workstations",
             "0001_squashed_0045_workstation_workstations_workstation_unique_slug",
