@@ -22,7 +22,10 @@ class Migration(migrations.Migration):
         ("workstations", "0001_squashed_0011_auto_20201001_0758"),
         ("auth", "0012_alter_user_first_name_max_length"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("components", "0001_initial"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
     ]
 
     operations = [

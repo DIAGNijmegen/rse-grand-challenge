@@ -23,7 +23,10 @@ class Migration(migrations.Migration):
         ("algorithms", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("challenges", "0001_initial"),
-        ("components", "0001_initial"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         (
             "archives",
             "0001_squashed_0026_archive_archives_archive_unique_slug",

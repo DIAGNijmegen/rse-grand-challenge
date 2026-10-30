@@ -6,11 +6,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("modalities", "0001_initial"),
-        ("modalities", "0002_alter_imagingmodality_modality"),
-    ]
-
     initial = True
 
     dependencies = []

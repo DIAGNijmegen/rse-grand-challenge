@@ -6,9 +6,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("modalities", "0001_initial"),
-        ("anatomy", "0001_initial"),
-        ("publications", "0003_auto_20201001_0758"),
+        ("modalities", "0001_squashed_0002_alter_imagingmodality_modality"),
+        ("anatomy", "0001_squashed_0002_alter_bodyregion_region_and_more"),
+        ("publications", "0001_squashed_0005_alter_publication_identifier"),
         ("algorithms", "0001_initial"),
     ]
 

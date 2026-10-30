@@ -17,12 +17,12 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("anatomy", "0001_initial"),
+        ("anatomy", "0001_squashed_0002_alter_bodyregion_region_and_more"),
         ("auth", "0012_alter_user_first_name_max_length"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("task_categories", "0001_squashed_0002_alter_tasktype_type"),
-        ("publications", "0003_auto_20201001_0758"),
-        ("modalities", "0001_initial"),
+        ("publications", "0001_squashed_0005_alter_publication_identifier"),
+        ("modalities", "0001_squashed_0002_alter_imagingmodality_modality"),
     ]
 
     operations = [

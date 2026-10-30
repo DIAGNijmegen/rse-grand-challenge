@@ -7,14 +7,6 @@ import grandchallenge.publications.fields
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("publications", "0001_initial"),
-        ("publications", "0002_auto_20200918_1132"),
-        ("publications", "0003_auto_20201001_0758"),
-        ("publications", "0004_publication_citation"),
-        ("publications", "0005_alter_publication_identifier"),
-    ]
-
     initial = True
 
     dependencies = []

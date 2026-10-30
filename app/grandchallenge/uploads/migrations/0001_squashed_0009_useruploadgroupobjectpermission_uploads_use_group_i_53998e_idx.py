@@ -9,27 +9,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("uploads", "0001_initial"),
-        ("uploads", "0002_userupload"),
-        ("uploads", "0003_delete_publicmedia"),
-        ("uploads", "0004_auto_20211012_0957"),
-        (
-            "uploads",
-            "0005_useruploadgroupobjectpermission_useruploaduserobjectpermission",
-        ),
-        ("uploads", "0006_userupload_mimetype"),
-        ("uploads", "0007_delete_summernoteattachment"),
-        (
-            "uploads",
-            "0008_useruploaduserobjectpermission_uploads_use_user_id_866a16_idx",
-        ),
-        (
-            "uploads",
-            "0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
-        ),
-    ]
-
     initial = True
 
     dependencies = [

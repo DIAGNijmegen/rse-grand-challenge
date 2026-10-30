@@ -6,7 +6,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("uploads", "0004_auto_20211012_0957"),
+        (
+            "uploads",
+            "0001_squashed_0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
+        ),
         ("evaluation", "0014_method_user_upload"),
     ]
 

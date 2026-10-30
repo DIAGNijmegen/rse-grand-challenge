@@ -6,7 +6,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("uploads", "0003_delete_publicmedia"),
+        (
+            "uploads",
+            "0001_squashed_0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
+        ),
         ("workstations", "0005_auto_20210601_0802"),
     ]
 

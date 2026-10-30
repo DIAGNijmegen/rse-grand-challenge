@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "organizations",
-            "0005_organizationgroupobjectpermission_organizationuserobjectpermission",
+            "0001_squashed_0013_alter_organization_logo",
         ),
         ("challenges", "0027_delete_externalchallenge"),
     ]

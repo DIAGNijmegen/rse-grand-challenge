@@ -18,11 +18,10 @@ class Migration(migrations.Migration):
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
         ("contenttypes", "0002_remove_content_type_name"),
-        ("modalities", "0001_initial"),
-        ("uploads", "0004_auto_20211012_0957"),
+        ("modalities", "0001_squashed_0002_alter_imagingmodality_modality"),
         (
             "uploads",
-            "0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
+            "0001_squashed_0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
         ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

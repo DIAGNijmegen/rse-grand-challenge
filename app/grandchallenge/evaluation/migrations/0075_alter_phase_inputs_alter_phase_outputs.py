@@ -10,7 +10,10 @@ def remove_phase_inputs(apps, _schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("components", "0024_alter_componentinterface_kind_and_more"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         ("evaluation", "0074_alter_phase_algorithm_inputs_and_more"),
     ]
 

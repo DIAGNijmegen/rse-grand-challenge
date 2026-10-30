@@ -7,10 +7,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("anatomy", "0002_alter_bodyregion_region_and_more"),
+        ("anatomy", "0001_squashed_0002_alter_bodyregion_region_and_more"),
         ("challenges", "0067_auto_20260310_1335"),
         ("incentives", "0001_squashed_0002_alter_incentive_incentive"),
-        ("modalities", "0002_alter_imagingmodality_modality"),
+        ("modalities", "0001_squashed_0002_alter_imagingmodality_modality"),
         ("task_categories", "0001_squashed_0002_alter_tasktype_type"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

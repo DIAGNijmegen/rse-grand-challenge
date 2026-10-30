@@ -16,44 +16,6 @@ import grandchallenge.core.validators
 
 class Migration(migrations.Migration):
 
-    replaces = [
-        ("components", "0001_initial"),
-        ("components", "0002_auto_20210203_0747"),
-        ("components", "0003_auto_20210323_1452"),
-        ("components", "0004_auto_20210601_0802"),
-        ("components", "0005_componentinterface_schema"),
-        ("components", "0006_auto_20211027_0537"),
-        ("components", "0007_auto_20211116_0906"),
-        ("components", "0008_alter_componentinterfacevalue_file"),
-        ("components", "0009_alter_componentinterface_kind"),
-        ("components", "0010_auto_20220602_0902"),
-        ("components", "0011_auto_20220610_1020"),
-        ("components", "0012_auto_20220707_1847"),
-        ("components", "0013_alter_componentinterface_kind"),
-        ("components", "0014_alter_componentinterface_kind"),
-        ("components", "0015_alter_componentinterface_overlay_segments"),
-        (
-            "components",
-            "0016_componentinterfacevalue_storage_cost_per_year_usd_millicents",
-        ),
-        ("components", "0017_componentinterfacevalue_size_in_storage"),
-        ("components", "0018_alter_componentinterface_kind"),
-        ("components", "0019_alter_componentinterface_kind"),
-        ("components", "0020_alter_componentinterface_kind"),
-        ("components", "0021_alter_componentinterface_kind_and_more"),
-        ("components", "0022_alter_componentinterface_kind_and_more"),
-        ("components", "0023_alter_componentinterface_overlay_segments"),
-        ("components", "0024_alter_componentinterface_kind_and_more"),
-        ("components", "0025_alter_componentinterface_overlay_segments"),
-        ("components", "0026_alter_componentinterface_kind"),
-        ("components", "0027_alter_componentinterfacevalue_file"),
-        (
-            "components",
-            "0028_remove_componentinterfacevalue_storage_cost_per_year_usd_millicents",
-        ),
-        ("components", "0029_alter_componentinterface_overlay_segments"),
-    ]
-
     initial = True
 
     dependencies = [

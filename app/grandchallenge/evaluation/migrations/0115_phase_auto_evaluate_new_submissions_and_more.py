@@ -8,11 +8,14 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("algorithms", "0105_alter_job_time_limit"),
-        ("components", "0029_alter_componentinterface_overlay_segments"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         ("evaluation", "0114_phase_average_batch_job_duration"),
         (
             "uploads",
-            "0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
+            "0001_squashed_0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
         ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

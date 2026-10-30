@@ -5,7 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("components", "0024_alter_componentinterface_kind_and_more"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         ("algorithms", "0066_create_interfaces_for_jobs"),
     ]
 

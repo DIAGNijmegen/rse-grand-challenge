@@ -18,18 +18,17 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("algorithms", "0001_initial"),
-        ("anatomy", "0001_initial"),
-        ("anatomy", "0002_alter_bodyregion_region_and_more"),
+        ("anatomy", "0001_squashed_0002_alter_bodyregion_region_and_more"),
         ("auth", "0012_alter_user_first_name_max_length"),
         ("cases", "0001_squashed_0029_alter_image_segments"),
-        ("components", "0003_auto_20210323_1452"),
+        (
+            "components",
+            "0001_squashed_0029_alter_componentinterface_overlay_segments",
+        ),
         ("hanging_protocols", "0001_squashed_0016_alter_hangingprotocol_json"),
-        ("modalities", "0001_initial"),
-        ("modalities", "0002_alter_imagingmodality_modality"),
-        ("organizations", "0001_initial"),
-        ("organizations", "0013_alter_organization_logo"),
-        ("publications", "0003_auto_20201001_0758"),
-        ("publications", "0005_alter_publication_identifier"),
+        ("modalities", "0001_squashed_0002_alter_imagingmodality_modality"),
+        ("organizations", "0001_squashed_0013_alter_organization_logo"),
+        ("publications", "0001_squashed_0005_alter_publication_identifier"),
         ("workstation_configs", "0001_squashed_0008_auto_20201001_0758"),
         (
             "workstation_configs",
