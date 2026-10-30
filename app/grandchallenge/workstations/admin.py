@@ -163,7 +163,6 @@ class FeedbackAdmin(ModelAdmin):
 class WorkstationImageAdmin(ComponentImageAdmin):
     readonly_fields = (
         *ComponentImageAdmin.readonly_fields,
-        "image",
         "workstation",
     )
 
