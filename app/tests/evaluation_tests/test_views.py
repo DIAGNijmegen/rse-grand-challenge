@@ -2206,8 +2206,13 @@ def test_submission_list_row_template_ajax_renders_for_challenge_participant(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
-def test_submission_list_row_renders_status(client, status):
+@pytest.mark.parametrize(
+    "status",
+    set(SubmissionStatusChoices).difference(
+        [SubmissionStatusChoices.PENDING_REVIEW]
+    ),
+)
+def test_submission_list_row_renders_status_for_admin(client, status):
     admin = UserFactory()
     phase = PhaseFactory()
     phase.challenge.add_admin(admin)
@@ -2234,8 +2239,13 @@ def test_submission_list_row_renders_status(client, status):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
-def test_submission_detail_renders_status(client, status):
+@pytest.mark.parametrize(
+    "status",
+    set(SubmissionStatusChoices).difference(
+        [SubmissionStatusChoices.PENDING_REVIEW]
+    ),
+)
+def test_submission_detail_renders_status_for_admin(client, status):
     admin = UserFactory()
     phase = PhaseFactory()
     phase.challenge.add_admin(admin)
@@ -2250,6 +2260,57 @@ def test_submission_detail_renders_status(client, status):
             "pk": submission.pk,
         },
         user=admin,
+    )
+
+    assert response.status_code == 200
+    assert SubmissionStatusChoices(status).label in str(response.content)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
+def test_submission_list_row_renders_status_for_participant(client, status):
+    user = UserFactory()
+    phase = PhaseFactory()
+    phase.challenge.add_participant(user)
+    SubmissionFactory(phase=phase, status=status, creator=user)
+
+    headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-list",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"challenge_short_name": phase.challenge.short_name},
+        user=user,
+        data={"draw": "1", "length": "25"},
+        **headers,
+    )
+    response_content = json.loads(response.content.decode("utf-8"))
+
+    assert response.status_code == 200
+    # Status is the 5th column (index 4) for a participant:
+    # link, created, phase, status, evaluations, comment
+    status_cell = response_content["data"][0][3]
+    assert SubmissionStatusChoices(status).label in status_cell
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", SubmissionStatusChoices.values)
+def test_submission_detail_renders_status_for_participant(client, status):
+    user = UserFactory()
+    phase = PhaseFactory()
+    phase.challenge.add_participant(user)
+    submission = SubmissionFactory(phase=phase, status=status, creator=user)
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-detail",
+        client=client,
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase.slug,
+            "pk": submission.pk,
+        },
+        user=user,
     )
 
     assert response.status_code == 200
@@ -3511,3 +3572,209 @@ def test_batch_job_list_scoped_to_submission(client):
     object_list = response.context[-1]["object_list"]
     assert batch_job in object_list
     assert other_batch_job not in object_list
+
+
+@pytest.mark.django_db
+class TestSubmissionStatusViews:
+    def test_status_update_reject_sets_status_and_message(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-status-update",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": SubmissionStatusChoices.REJECTED,
+                "status_message": "Not good enough",
+            },
+        )
+
+        assert response.status_code == 302
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.REJECTED
+        assert submission.status_message == "Not good enough"
+
+    def test_status_update_accept_sets_status_and_creates_evaluation(
+        self, client, django_capture_on_commit_callbacks
+    ):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        with patch(
+            "grandchallenge.evaluation.models.create_evaluation"
+        ) as mocked_create_evaluation:
+            with django_capture_on_commit_callbacks(execute=True):
+                response = get_view_for_user(
+                    viewname="evaluation:submission-status-update",
+                    client=client,
+                    method=client.post,
+                    reverse_kwargs={
+                        "challenge_short_name": phase.challenge.short_name,
+                        "slug": phase.slug,
+                        "pk": submission.pk,
+                    },
+                    user=admin,
+                    data={
+                        "status": SubmissionStatusChoices.ACCEPTED,
+                        "status_message": "",
+                    },
+                )
+
+        assert response.status_code == 302
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.ACCEPTED
+        mocked_create_evaluation.execute_on_commit.assert_called_once_with(
+            submission_pk=submission.pk
+        )
+
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [SubmissionStatusChoices.PENDING_REVIEW]
+        ),
+    )
+    def test_status_update_not_pending_returns_404(
+        self, client, django_capture_on_commit_callbacks, status
+    ):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(phase=phase, status=status)
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="evaluation:submission-status-update",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "challenge_short_name": phase.challenge.short_name,
+                    "slug": phase.slug,
+                    "pk": submission.pk,
+                },
+                user=admin,
+                data={
+                    "status": SubmissionStatusChoices.ACCEPTED,
+                    "status_message": "",
+                },
+            )
+
+        assert response.status_code == 404
+        submission.refresh_from_db()
+        assert submission.status == status
+
+    def test_status_update_forbidden_for_participant(self, client):
+        participant = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_participant(participant)
+        submission = SubmissionFactory(
+            phase=phase,
+            creator=participant,
+            status=SubmissionStatusChoices.PENDING_REVIEW,
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-status-update",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=participant,
+            data={
+                "status": SubmissionStatusChoices.REJECTED,
+                "status_message": "nope",
+            },
+        )
+
+        assert response.status_code == 403
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+        assert submission.status_message == ""
+
+    def test_reject_view_renders_for_admin(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+        )
+
+        assert response.status_code == 200
+        assert submission.status_update_url in str(response.content)
+        assert "status_message" in str(response.content)
+
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [SubmissionStatusChoices.PENDING_REVIEW]
+        ),
+    )
+    def test_reject_view_not_pending_returns_404(self, client, status):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(phase=phase, status=status)
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+        )
+
+        assert response.status_code == 404
+
+    def test_reject_view_forbidden_for_participant(self, client):
+        participant = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_participant(participant)
+        submission = SubmissionFactory(
+            phase=phase,
+            creator=participant,
+            status=SubmissionStatusChoices.PENDING_REVIEW,
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=participant,
+        )
+
+        assert response.status_code == 403

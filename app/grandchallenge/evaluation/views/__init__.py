@@ -485,6 +485,57 @@ class SubmissionStatusDetail(ObjectPermissionRequiredMixin, DetailView):
     raise_exception = True
 
 
+class SubmissionStatusUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
+    model = Submission
+    fields = ("status", "status_message")
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            self.model,
+            phase__challenge=self.request.challenge,
+            phase__slug=self.kwargs["slug"],
+            pk=self.kwargs["pk"],
+            status=self.model.StatusChoices.PENDING_REVIEW,
+        )
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_success_url(self):
+        return self.object.status_url
+
+
+class SubmissionReject(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = Submission
+    template_name_suffix = "_confirm_reject"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            self.model,
+            phase__challenge=self.request.challenge,
+            phase__slug=self.kwargs["slug"],
+            pk=self.kwargs["pk"],
+            status=self.model.StatusChoices.PENDING_REVIEW,
+        )
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+
 class TeamContextMixin:
     @cached_property
     def user_teams(self):

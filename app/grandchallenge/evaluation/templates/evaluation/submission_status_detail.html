@@ -1,10 +1,19 @@
-<span class="badge badge-{{ object.status_context }}"
-      {% if object.animate %}
-          hx-get="{{ object.status_url }}" hx-trigger="load delay:30s" hx-swap="outerHTML"
-      {% endif %}
+<div id="status-{{ object.pk }}"
+     {% if object.animate %}
+         hx-get="{{ object.status_url }}"
+         hx-trigger="load delay:30s"
+         hx-swap="outerHTML"
+         hx-select="#status-{{ object.pk }}"
+     {% endif %}
 >
-    {% if object.animate %}
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    {% if "change_challenge" in challenge_perms and object.status == object.StatusChoices.PENDING_REVIEW %}
+        {% include "evaluation/partials/submission_accept_reject.html" with object=object csrf_token=csrf_token only %}
+    {% else %}
+        <span class="badge badge-{{ object.status_context }} mr-1">
+            {% if object.animate %}
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            {% endif %}
+            {{ object.get_status_display }}
+        </span>
     {% endif %}
-    {{ object.get_status_display }}
-</span>
+</div>
