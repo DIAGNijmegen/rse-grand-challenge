@@ -7,7 +7,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("algorithms", "0105_alter_job_time_limit"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         (
             "components",
             "0001_squashed_0029_alter_componentinterface_overlay_segments",

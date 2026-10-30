@@ -19,11 +19,8 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "algorithms",
-            "0074_algorithmimageuserobjectpermission_algorithms__user_id_ba5ee9_idx_and_more",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
         ),
-        ("algorithms", "0077_job_use_warm_pool"),
-        ("algorithms", "0094_remove_endpoint_algorithm_interface_and_more"),
-        ("algorithms", "0104_alter_job_algorithm_interface"),
         (
             "archives",
             "0001_squashed_0026_archive_archives_archive_unique_slug",

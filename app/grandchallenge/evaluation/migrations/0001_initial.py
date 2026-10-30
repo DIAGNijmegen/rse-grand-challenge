@@ -20,7 +20,10 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("algorithms", "0001_initial"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("challenges", "0001_initial"),
         (

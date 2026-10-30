@@ -14,7 +14,10 @@ import grandchallenge.core.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("algorithms", "0103_algorithm_algorithms_algorithm_unique_slug"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         ("auth", "0012_alter_user_first_name_max_length"),
         (
             "components",

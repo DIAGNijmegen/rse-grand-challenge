@@ -7,7 +7,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("algorithms", "0049_algorithmmodel_job_algorithm_model_and_more"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         ("evaluation", "0053_alter_phase_extra_results_columns"),
     ]
 

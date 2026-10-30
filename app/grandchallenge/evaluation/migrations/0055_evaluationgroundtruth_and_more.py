@@ -17,7 +17,10 @@ class Migration(migrations.Migration):
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("algorithms", "0050_alter_algorithmmodel_comment"),
+        (
+            "algorithms",
+            "0001_squashed_0106_alter_algorithm_time_limit_alter_job_time_limit",
+        ),
         (
             "uploads",
             "0001_squashed_0009_useruploadgroupobjectpermission_uploads_use_group_i_53998e_idx",
