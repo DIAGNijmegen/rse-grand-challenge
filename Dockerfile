@@ -1,24 +1,14 @@
 ###################
 #  Base Container #
 ###################
-FROM python:3.14-slim-bookworm AS base
+FROM python:3.14-slim-trixie AS base
 
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        libpng-dev \
-        libjpeg-dev \
-        libjpeg62-turbo-dev \
-        libfreetype6-dev \
-        libxft-dev \
-        libffi-dev \
         wget \
-        gettext \
         # postgres packages for psycopg2
         libpq-dev \
-        # curl and ssl for pycurl
-        libcurl4-openssl-dev \
-        libssl-dev \
         # for python-magic
         libmagic1 \
         # openslide and vips for image imports with panimg
@@ -26,14 +16,12 @@ RUN apt-get update \
         libopenslide-dev \
         libvips-dev \
         gcc \
-        # ruby3.1, rugged and nokogiri for licensee
-        ruby3.1 \
+        # ruby, rugged and nokogiri for licensee
+        ruby \
         ruby-rugged \
         ruby-nokogiri \
         # git for CodeBuild integration
         git \
-        # for dbshell
-        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Fetch and install licensee for checking licenses
@@ -120,14 +108,6 @@ RUN apt-get update \
         graphviz \
         # make for sphinx docs
         make \
-        # playwright dependencies
-        libatk1.0-0 \
-        libatk-bridge2.0-0 \
-        libatspi2.0-0 \
-        libxcomposite1 \
-        libxrandr2 \
-        libgbm1 \
-        libxkbcommon0 \
     && rm -rf /var/lib/apt/lists/*
 USER django:django
 
@@ -135,7 +115,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project
-RUN playwright install
+
+USER root
+RUN playwright install-deps chromium
+USER django:django
+RUN playwright install chromium
 
 COPY --chown=django:django setup.cfg /home/django
 

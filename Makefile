@@ -32,7 +32,10 @@ check_migrations:
 migrations:
 	docker compose run -u $(USER_ID) --rm gc.localhost python manage.py makemigrations
 
-runserver: development_fixtures
+build:
+	docker compose build gc.localhost
+
+runserver: build development_fixtures
 	bash -c "trap 'docker compose down' EXIT; docker compose up"
 
 rundeps:

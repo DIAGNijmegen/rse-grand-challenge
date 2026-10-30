@@ -1,7 +1,6 @@
 import os
 
 import boto3
-import magic
 from botocore.config import Config
 from django.conf import settings
 from django.db import models
@@ -16,6 +15,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import copy_s3_object
+from grandchallenge.core.validators import mimetype_from_buffer
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 
@@ -198,7 +198,7 @@ class UserUpload(UUIDModel):
                 Range=f"bytes=0-{max_bytes}",
             )["Body"].read()
 
-        return magic.from_buffer(header, mime=True)
+        return mimetype_from_buffer(buffer=header)
 
     def create_multipart_upload(self):
         if self.status != self.StatusChoices.PENDING:
