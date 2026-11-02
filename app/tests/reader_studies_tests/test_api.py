@@ -1388,16 +1388,20 @@ def test_ground_truth_denied_when_partially_answered(client):
     q2 = QuestionFactory(
         answer_type=Question.AnswerType.CHOICE, reader_study=rs
     )
+    QuestionFactory(answer_type=Question.AnswerType.HEADING, reader_study=rs)
+
     op1 = CategoricalOptionFactory(question=q1, title="option1")
     op2 = CategoricalOptionFactory(question=q2, title="option2")
 
-    ds = DisplaySetFactory(reader_study=rs)
+    ds1 = DisplaySetFactory(reader_study=rs)
+    ds2 = DisplaySetFactory(reader_study=rs)
 
+    # Add ground truth
     AnswerFactory(
-        question=q1, answer=op1.pk, is_ground_truth=True, display_set=ds
+        question=q1, answer=op1.pk, is_ground_truth=True, display_set=ds1
     )
     AnswerFactory(
-        question=q2, answer=op2.pk, is_ground_truth=True, display_set=ds
+        question=q2, answer=op2.pk, is_ground_truth=True, display_set=ds1
     )
 
     # The reader has only answered one of the two questions
@@ -1405,19 +1409,50 @@ def test_ground_truth_denied_when_partially_answered(client):
         question=q1,
         answer=op1.pk,
         is_ground_truth=False,
-        display_set=ds,
+        display_set=ds1,
         creator=reader,
     )
 
     response = get_view_for_user(
         viewname="api:reader-study-ground-truth",
-        reverse_kwargs={"pk": rs.pk, "case_pk": ds.pk},
+        reverse_kwargs={"pk": rs.pk, "case_pk": ds1.pk},
         user=reader,
         client=client,
         content_type="application/json",
         follow=True,
     )
+    assert response.status_code == 404
 
+    # Answer the missing question
+    AnswerFactory(
+        question=q2,
+        answer=op2.pk,
+        is_ground_truth=False,
+        display_set=ds1,
+        creator=reader,
+    )
+
+    # The ground truth should now be accessible since all questions have been answered
+    response = get_view_for_user(
+        viewname="api:reader-study-ground-truth",
+        reverse_kwargs={"pk": rs.pk, "case_pk": ds1.pk},
+        user=reader,
+        client=client,
+        content_type="application/json",
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert {str(q1.pk), str(q2.pk)} == set(response.json().keys())
+
+    # Display set 2 has no answer and should still be inaccessible
+    response = get_view_for_user(
+        viewname="api:reader-study-ground-truth",
+        reverse_kwargs={"pk": rs.pk, "case_pk": ds2.pk},
+        user=reader,
+        client=client,
+        content_type="application/json",
+        follow=True,
+    )
     assert response.status_code == 404
 
 
