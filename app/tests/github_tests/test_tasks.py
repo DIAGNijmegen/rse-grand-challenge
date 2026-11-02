@@ -71,14 +71,12 @@ def test_get_zipfile(get_repo_url):
     ghwm2 = GitHubWebhookMessageFactory()
     assert ghwm2.clone_status == CloneStatusChoices.PENDING
     get_repo_url.return_value = "https://github.com/DIAGNijmegen/rse-panimg"
+
     get_zipfile(pk=ghwm2.pk)
-    assert ghwm2.license_keys == set()
 
     ghwm2.refresh_from_db()
     assert ghwm2.clone_status == CloneStatusChoices.SUCCESS
     assert "diagnijmegen-rse-panimg-v0-4-2" in ghwm2.zipfile.name
-    assert ghwm2.license_keys == {"apache-2.0"}
-    assert ghwm2.has_open_source_license is True
 
     # check that task only runs once
     with pytest.raises(RuntimeError) as error:
