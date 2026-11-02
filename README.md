@@ -7,9 +7,9 @@
 
 In the era of Deep Learning, developing robust machine learning solutions to problems in biomedical imaging requires access to large amounts of annotated training data, fair comparisons of state of the art machine learning solutions, and clinical validation using real world data. Grand Challenge can assist Researchers, Data Scientists, and Clinicians in collaborating to develop these solutions by providing:
 
-* Archives: Manage medical imaging data.
-* Reader Studies: Train experts and have them annotate medical imaging data.
-* Challenges: Gather and assess machine learning solutions.
-* Algorithms: Deploy machine learning solutions for clinical validation.
+- Archives: Manage medical imaging data.
+- Reader Studies: Train experts and have them annotate medical imaging data.
+- Challenges: Gather and assess machine learning solutions.
+- Algorithms: Deploy machine learning solutions for clinical validation.
 
 If you would like to start your own website, or contribute to the development of the framework, please see [the docs](https://diagnijmegen.github.io/rse-grand-challenge/).

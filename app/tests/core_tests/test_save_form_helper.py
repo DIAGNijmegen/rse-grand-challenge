@@ -66,7 +66,7 @@ def test_save_form_helper_always_sets_disable_attribute(form_class):
 def test_dynamic_fields_included_in_default_layout():
     form = DynamicFieldForm(data={})
     layout = form.helper.layout
-    field_names = [field for field in layout[0].fields]
+    field_names = [*layout[0].fields]
     assert "dynamic" in field_names
 
 
@@ -86,8 +86,8 @@ def test_mixin_ordering_does_not_matter():
     layout_b = form_b.helper.layout
 
     # Both should include from_mixin in their default layout
-    fields_a = [field for field in layout_a[0].fields]
-    fields_b = [field for field in layout_b[0].fields]
+    fields_a = [*layout_a[0].fields]
+    fields_b = [*layout_b[0].fields]
 
     assert "from_mixin" in fields_a
     assert "from_mixin" in fields_b

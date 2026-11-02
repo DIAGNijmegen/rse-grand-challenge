@@ -28,7 +28,9 @@ from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 
 
-@lambda_task(retry_on=(LockNotAcquiredException,))
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
 def validate_submission(*, submission_pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import Submission
 
@@ -498,7 +500,7 @@ def filter_by_creators_best(*, evaluations, ranks):
         ):
             best_result_per_user[creator] = e
 
-    return [r for r in best_result_per_user.values()]
+    return [*best_result_per_user.values()]
 
 
 @lambda_task(
