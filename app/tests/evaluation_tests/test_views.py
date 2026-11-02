@@ -3709,7 +3709,8 @@ class TestSubmissionStatusViews:
             },
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 200
+        assert "Unable to update submission." in response.content.decode()
 
         submission.refresh_from_db()
         assert submission.status == SubmissionStatusChoices.PENDING_REVIEW

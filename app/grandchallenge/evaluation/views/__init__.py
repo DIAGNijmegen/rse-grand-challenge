@@ -18,7 +18,7 @@ from django.db.models import Prefetch
 from django.http import (
     FileResponse,
     Http404,
-    HttpResponseBadRequest,
+    HttpResponse,
 )
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -515,7 +515,7 @@ class SubmissionReview(
     http_method_names = ["post"]
 
     def form_invalid(self, form):
-        return HttpResponseBadRequest()
+        return HttpResponse("Unable to update submission.")
 
     def get_success_url(self):
         return self.object.status_url
