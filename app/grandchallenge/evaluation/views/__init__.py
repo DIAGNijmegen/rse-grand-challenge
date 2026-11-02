@@ -490,17 +490,7 @@ class SubmissionStatusDetail(ObjectPermissionRequiredMixin, DetailView):
     raise_exception = True
 
 
-class SubmissionReview(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    UpdateView,
-):
-    model = Submission
-    form_class = SubmissionReviewForm
-    permission_required = "review_submission"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
+class SubmissionPendingReviewMixin:
     def get_object(self, queryset=None):
         return get_object_or_404(
             self.model,
@@ -509,6 +499,19 @@ class SubmissionReview(
             pk=self.kwargs["pk"],
             status=self.model.StatusChoices.PENDING_REVIEW,
         )
+
+
+class SubmissionReview(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SubmissionPendingReviewMixin,
+    UpdateView,
+):
+    model = Submission
+    form_class = SubmissionReviewForm
+    permission_required = "review_submission"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def form_invalid(self, form):
         return HttpResponseBadRequest()
@@ -520,6 +523,7 @@ class SubmissionReview(
 class SubmissionReject(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    SubmissionPendingReviewMixin,
     DetailView,
 ):
     model = Submission
@@ -527,15 +531,6 @@ class SubmissionReject(
     permission_required = "review_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-    def get_object(self, queryset=None):
-        return get_object_or_404(
-            self.model,
-            phase__challenge=self.request.challenge,
-            phase__slug=self.kwargs["slug"],
-            pk=self.kwargs["pk"],
-            status=self.model.StatusChoices.PENDING_REVIEW,
-        )
 
 
 class TeamContextMixin:
