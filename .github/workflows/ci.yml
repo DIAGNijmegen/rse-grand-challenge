@@ -50,10 +50,10 @@ jobs:
             - name: Set up Python ${{ env.PYTHON_VERSION }}
               uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
               with:
-                python-version: ${{ env.PYTHON_VERSION }}
+                  python-version: ${{ env.PYTHON_VERSION }}
             - name: Pull the algorithm-example base container
               run: |
-                docker pull pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime
+                  docker pull pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime
             - name: Run the forge integration tests
               run: |
                   cd app
