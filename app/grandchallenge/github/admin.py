@@ -24,12 +24,10 @@ class GitHubWebhookMessageAdmin(admin.ModelAdmin):
         "repo_name",
         "tag",
         "clone_status",
-        "license_keys",
-        "has_open_source_license",
         "user_error",
     )
     list_filter = ("clone_status",)
-    search_fields = ("payload", "license_check_result")
+    search_fields = ("payload",)
     exclude = ("zipfile",)
     readonly_fields = (
         "payload",

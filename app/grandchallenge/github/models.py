@@ -7,6 +7,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 
 from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
@@ -104,7 +105,9 @@ class GitHubWebhookMessage(models.Model):
         storage=private_s3_storage,
         max_length=255,
     )
-    license_check_result = models.JSONField(blank=True, default=dict)
+    license_check_result = deprecate_field(
+        models.JSONField(blank=True, default=dict), raise_on_access=True
+    )
     stdout = models.TextField(blank=True)
     stderr = models.TextField(blank=True)
     clone_status = models.CharField(
@@ -136,42 +139,18 @@ class GitHubWebhookMessage(models.Model):
 
     @property
     def user_error(self):
-        lfs_error_message = (
-            f"Repository {self.repo_name} has used all of its LFS "
-            f"bandwidth. Please purchase more data packs on GitHub for "
-            f"this repo so that we can clone it."
-        )
-
         repo_too_big_error_message = (
             f"Repository {self.repo_name} is too large to checkout, "
             f"please remove any large files from your git history, "
             f"and upload the model separately."
         )
 
-        if "This repository is over its data quota" in self.stdout:
-            return lfs_error_message
-        elif "This repository exceeded its LFS budget" in self.stdout:
-            return lfs_error_message
-        elif "warning: Clone succeeded, but checkout failed" in self.stderr:
+        if "warning: Clone succeeded, but checkout failed" in self.stderr:
             return repo_too_big_error_message
         elif "No space left on device" in self.stderr:
             return repo_too_big_error_message
         else:
             return ""
-
-    @property
-    def licenses(self):
-        return self.license_check_result.get("licenses", [])
-
-    @property
-    def license_keys(self):
-        return {_license.get("key") for _license in self.licenses}
-
-    @property
-    def has_open_source_license(self):
-        return bool(self.license_keys) and self.license_keys.issubset(
-            settings.OPEN_SOURCE_LICENSES
-        )
 
     def save(self, *args, **kwargs):
         post_save_task = None

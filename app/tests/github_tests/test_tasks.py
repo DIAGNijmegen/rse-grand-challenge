@@ -23,9 +23,7 @@ def test_get_zipfile_oserror_no_space_left(mocker):
         "grandchallenge.github.tasks.get_repo_url",
         return_value="https://x-access-token:token@github.com/DIAGNijmegen/rse-panimg",
     )
-    mocker.patch("grandchallenge.github.tasks.install_lfs")
     mocker.patch("grandchallenge.github.tasks.fetch_repo")
-    mocker.patch("grandchallenge.github.tasks.check_license")
     mocker.patch(
         "grandchallenge.github.tasks.save_zipfile",
         side_effect=OSError(28, "No space left on device"),
