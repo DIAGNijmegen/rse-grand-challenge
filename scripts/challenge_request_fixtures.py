@@ -30,9 +30,9 @@ def run():
             fake.random_int(1, 1000),
             fake.random_int(1, 1000),
         ],
-        inference_time_average_minutes_for_tasks=[
-            fake.random_int(5, 60),
-            fake.random_int(5, 60),
+        inference_time_average_seconds_for_tasks=[
+            fake.random_int(1, 360),
+            fake.random_int(1, 360),
         ],
         task_id_for_phases=[1, 1, 1, 2, 2, 2],
         number_of_teams_for_phases=(
