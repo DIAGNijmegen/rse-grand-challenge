@@ -1329,15 +1329,15 @@ def test_ground_truth(client, django_assert_max_num_queries):
     assert response.status_code == 200
     response = response.json()
     assert response[str(q1.pk)] == {
-        "answer_text": op1.title,
+        "answer": op1.pk,
         "explanation": "",
     }
     assert response[str(q2.pk)] == {
-        "answer_text": f"{op2.title}, {op3.title}",
+        "answer": [op2.pk, op3.pk],
         "explanation": "",
     }
     assert response[str(q3.pk)] == {
-        "answer_text": f"{op4.title}, {op5.title}",
+        "answer": [op4.pk, op5.pk],
         "explanation": "",
     }
 
