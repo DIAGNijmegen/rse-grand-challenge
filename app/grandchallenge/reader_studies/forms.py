@@ -853,7 +853,7 @@ class GroundTruthCSVForm(SaveFormInitMixin, UserMixin, Form):
                 f"be: {','.join(self._reader_study.ground_truth_file_headers)}"
             )
 
-        ground_truth = [x for x in rdr]
+        ground_truth = [*rdr]
 
         self.create_answers(ground_truth=ground_truth)
 

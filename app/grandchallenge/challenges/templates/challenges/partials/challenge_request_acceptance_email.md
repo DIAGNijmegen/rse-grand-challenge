@@ -8,9 +8,9 @@ To get your challenge ready, please have a close look at [our documentation](htt
 
 Next steps:
 1. On your challenge page, go to Admin - General Settings and carefully review all information there. All of the options are described in our documentation.
-    1. Upload a logo and banner for your challenge
-    2. Optionally enable the forum (recommended) and teams features
-    3. Choose your preferred access request handling policy
+   1. Upload a logo and banner for your challenge
+   2. Optionally enable the forum (recommended) and teams features
+   3. Choose your preferred access request handling policy
 2. Add information about your challenge, your submission procedure, the challenge timeline etc. to your challenge page by editing and adding custom subpages to your challenge. For more information, see the tab 'Add custom pages' in our documentation.
 3. Our support team will be in touch with you shortly to help you set up the technical aspects of your challenge.
 

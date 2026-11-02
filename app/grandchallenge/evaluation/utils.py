@@ -44,7 +44,7 @@ def rank_results(
     )
 
     rank_scores = {
-        pk: score_method([m for m in metrics.values()])
+        pk: score_method([*metrics.values()])
         for pk, metrics in rank_per_metric.items()
     }
 

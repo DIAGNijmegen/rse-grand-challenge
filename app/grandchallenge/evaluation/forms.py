@@ -633,9 +633,7 @@ class SubmissionForm(
         related_users = self._get_submission_relevant_users(creator=creator)
 
         if related_users and (
-            self._phase.has_active_evaluations(
-                users={related_user for related_user in related_users}
-            )
+            self._phase.has_active_evaluations(users={*related_users})
             or any(
                 self._phase.get_next_submission(user=related_user)[
                     "remaining_submissions"
