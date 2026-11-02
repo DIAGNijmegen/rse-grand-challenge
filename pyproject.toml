@@ -53,6 +53,7 @@ dependencies = [
     "aioboto3",
     "httpx",
     "django-pictures",
+    "tzdata",
     # Requirements for forge
     "black",
     "isort",

@@ -1150,6 +1150,7 @@ dependencies = [
     { name = "python-magic" },
     { name = "requests" },
     { name = "sentry-sdk" },
+    { name = "tzdata" },
     { name = "ua-parser" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -1234,6 +1235,7 @@ requires-dist = [
     { name = "python-magic" },
     { name = "requests" },
     { name = "sentry-sdk" },
+    { name = "tzdata" },
     { name = "ua-parser" },
     { name = "uvicorn", extras = ["standard"] },
 ]
