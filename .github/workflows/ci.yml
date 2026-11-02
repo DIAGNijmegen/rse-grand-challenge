@@ -50,19 +50,19 @@ jobs:
             - name: Set up Python ${{ env.PYTHON_VERSION }}
               uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
               with:
-                python-version: ${{ env.PYTHON_VERSION }}
+                  python-version: ${{ env.PYTHON_VERSION }}
             - name: Install pycurl dependencies
               run: |
-                sudo apt-get update
-                sudo apt-get install -y libcurl4-openssl-dev libssl-dev
+                  sudo apt-get update
+                  sudo apt-get install -y libcurl4-openssl-dev libssl-dev
             - name: Pull the algorithm-example base container
               run: |
-                docker pull --platform=linux/amd64 \
-                pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime
+                  docker pull --platform=linux/amd64 \
+                  pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime
             - name: Run the forge integration tests
               run: |
-                cd app
-                uv run pytest -n 1 -m "forge_integration"
+                  cd app
+                  uv run pytest -n 1 -m "forge_integration"
 
     javascript-tests:
         runs-on: ubuntu-26.04-arm
@@ -71,8 +71,8 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
               with:
-                  node-version: '20'
-                  cache: 'npm'
+                  node-version: "20"
+                  cache: "npm"
             - name: Install dependencies
               run: npm ci
             - name: Run tests
@@ -105,18 +105,18 @@ jobs:
             - name: Build the distributable container
               # The redis cache is required for compressing the files
               run: |
-                docker compose up -d redis
-                GRAND_CHALLENGE_WEB_REPOSITORY_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make build_web_dist
+                  docker compose up -d redis
+                  GRAND_CHALLENGE_WEB_REPOSITORY_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make build_web_dist
             - name: Configure AWS credentials for ECR
               uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
               with:
-                role-to-assume: ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_ROLE_ARN }}
-                aws-region: ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_REGION }}
+                  role-to-assume: ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_ROLE_ARN }}
+                  aws-region: ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_REGION }}
             - name: Push to ECR
               run: |
-                aws ecr get-login-password --region ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_REGION }} | docker login --username AWS --password-stdin ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_HOST }}
-                GRAND_CHALLENGE_WEB_REPOSITORY_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make push_web_dist
+                  aws ecr get-login-password --region ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_REGION }} | docker login --username AWS --password-stdin ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_HOST }}
+                  GRAND_CHALLENGE_WEB_REPOSITORY_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make push_web_dist
             - name: Create Summary
               run: |
-                echo "## Container Tag" >> $GITHUB_STEP_SUMMARY
-                echo "\`$(make container_tag)\`" >> $GITHUB_STEP_SUMMARY
+                  echo "## Container Tag" >> $GITHUB_STEP_SUMMARY
+                  echo "\`$(make container_tag)\`" >> $GITHUB_STEP_SUMMARY

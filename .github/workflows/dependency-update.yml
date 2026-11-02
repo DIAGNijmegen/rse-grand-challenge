@@ -31,7 +31,7 @@ jobs:
             - name: Install uv and set the python version
               uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
               with:
-                python-version: ${{ env.PYTHON_VERSION }}
+                  python-version: ${{ env.PYTHON_VERSION }}
             - name: Update Dependencies
               id: dependency-update
               timeout-minutes: 5
@@ -55,8 +55,8 @@ jobs:
                   delete-branch: true
                   title: "Update dependencies"
                   body: |
-                    Automated dependency update:
+                      Automated dependency update:
 
-                    ```
-                    ${{ env.LOCK_OUTPUT }}
-                    ```
+                      ```
+                      ${{ env.LOCK_OUTPUT }}
+                      ```

@@ -500,7 +500,7 @@ def filter_by_creators_best(*, evaluations, ranks):
         ):
             best_result_per_user[creator] = e
 
-    return [r for r in best_result_per_user.values()]
+    return [*best_result_per_user.values()]
 
 
 @lambda_task(
