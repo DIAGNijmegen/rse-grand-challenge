@@ -512,6 +512,7 @@ class SubmissionReview(
     permission_required = "review_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+    http_method_names = ["post"]
 
     def form_invalid(self, form):
         return HttpResponseBadRequest()
