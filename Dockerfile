@@ -7,26 +7,17 @@ FROM python:3.14-slim-trixie AS base
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         wget \
-        # postgres packages for psycopg2
+        # postgres and gcc packages for psycopg[c]
         libpq-dev \
+        gcc \
         # for python-magic
         libmagic1 \
         # openslide and vips for image imports with panimg
-        # gcc is required to compile the extensions
         libopenslide-dev \
         libvips-dev \
-        gcc \
-        # ruby, rugged and nokogiri for licensee
-        ruby \
-        ruby-rugged \
-        ruby-nokogiri \
         # git for CodeBuild integration
         git \
     && rm -rf /var/lib/apt/lists/*
-
-# Fetch and install licensee for checking licenses
-# Separate install required as the bundled version does not include the --json flag
-RUN gem install licensee -v 9.16.1
 
 # Fetch and install dart-sass for compiling scss
 RUN mkdir -p /opt/dart-sass \
@@ -44,14 +35,6 @@ RUN mkdir -p /opt/crane \
     && chmod a+x /opt/crane/crane \
     && mv /opt/crane/crane /usr/local/bin/ \
     && rm -r /opt/crane
-
-# Fetch and install git lfs for github integration
-RUN mkdir -p /opt/git-lfs \
-    && wget https://github.com/git-lfs/git-lfs/releases/download/v3.4.1/git-lfs-linux-arm64-v3.4.1.tar.gz -O /opt/git-lfs/src.tar.gz \
-    && echo "f93c5070223d95eb44fea0ee2f2db26656793d5f3417366f77dd20b9518c46ce  /opt/git-lfs/src.tar.gz" | shasum --algorithm 256 -c - || exit 1 \
-    && tar -C /opt/git-lfs/ -xzvf /opt/git-lfs/src.tar.gz \
-    && bash /opt/git-lfs/git-lfs-3.4.1/install.sh \
-    && rm -r /opt/git-lfs
 
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\

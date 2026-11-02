@@ -52,16 +52,6 @@ def get_repo_url(payload):
     return repo_url.replace("//", f"//x-access-token:{access_token}@")
 
 
-def install_lfs():
-    process = subprocess.run(
-        ["git", "lfs", "install"],
-        text=True,
-        check=True,
-        capture_output=True,
-    )
-    return process
-
-
 def fetch_repo(payload, repo_url, tmpdirname, recurse_submodules):
     cmd = [
         "git",
@@ -83,16 +73,6 @@ def fetch_repo(payload, repo_url, tmpdirname, recurse_submodules):
         capture_output=True,
     )
     return process
-
-
-def check_license(tmpdirname):
-    process = subprocess.run(
-        ["licensee", "detect", tmpdirname, "--json", "--no-remote"],
-        text=True,
-        check=False,  # licensee returns non-zero when no license is detected, but this is okay
-        capture_output=True,
-    )
-    return json.loads(process.stdout)
 
 
 def save_zipfile(ghwm, tmpdirname):
@@ -135,16 +115,11 @@ def get_zipfile(*, pk: int):
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         try:
-            # Run git lfs install here, doing it in the dockerfile does not
-            # seem to work
-            install_lfs()
             fetch_repo(payload, repo_url, tmpdirname, recurse_submodules)
-            license_check_result = check_license(tmpdirname)
             temp_file = save_zipfile(ghwm, tmpdirname)
 
             # update GithubWebhook object
             ghwm.zipfile = temp_file
-            ghwm.license_check_result = license_check_result
             ghwm.clone_status = GitHubWebhookMessage.CloneStatusChoices.SUCCESS
             ghwm.save()
 
