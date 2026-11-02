@@ -86,7 +86,7 @@ class ComponentImageAdmin(admin.ModelAdmin):
     search_fields = ("pk", "creator__username", "image_sha256")
     actions = (cancel_image_imports,)
 
-    @admin.display(description="image")
+    @admin.display()
     def image_path(self, obj):
         return obj.image.name or "-"
 
