@@ -1127,7 +1127,7 @@ def test_ground_truth_from_answers_workflow(
     assert response.status_code == 200, "Can retrieve ground truth"
 
     response = response.json()
-    assert response[str(q.pk)]["answer_text"], "Ground truth is retrieved OK"
+    assert response[str(q.pk)]["answer"], "Ground truth is retrieved OK"
 
     reader_answer.refresh_from_db()
     assert reader_answer.score is not None, " Scores are assigned"
