@@ -16,7 +16,12 @@
         <span class="badge badge-{{ object.status_context }} mr-1">
             {{ object.get_status_display }}
         </span>
-        {% include "evaluation/partials/submission_cancel.html" with object=object csrf_token=csrf_token only %}
+        <a href="{{ object.cancel_url }}"
+           class="btn btn-danger"
+           title="Cancel submission"
+        >
+            <i class="fas fa-fw fa-times-circle"></i>Cancel
+        </a>
     {% else %}
         <span class="badge badge-{{ object.status_context }} mr-1">
             {% if object.animate %}

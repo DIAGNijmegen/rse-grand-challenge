@@ -774,9 +774,11 @@ class SubmissionRejectForm(SaveFormInitMixin, forms.ModelForm):
 
 
 class SubmissionCancelForm(SaveFormInitMixin, forms.ModelForm):
+    save_button_text = "I understand. Cancel this submission."
+
     class Meta:
         model = Submission
-        fields = ("status",)
+        fields = ("status", "status_message")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -786,34 +788,8 @@ class SubmissionCancelForm(SaveFormInitMixin, forms.ModelForm):
         self.fields["status"].choices = [(status.value, status.label)]
         self.initial["status"] = status.value
         self.fields["status"].widget = HiddenInput()
-
-        self.helper = FormHelper(self)
-        self.helper.include_media = False
-        self.helper.form_tag = True
-        self.helper.attrs = {
-            "hx-post": self.instance.cancel_url,
-            "hx-target": f"#status-{self.instance.pk}",
-            "hx-select": f"#status-{self.instance.pk}",
-            "hx-swap": "outerHTML",
-        }
-        self.helper.layout.append(
-            StrictButton(
-                "Abort",
-                type="button",
-                css_class="btn btn-secondary ml-0 d-inline",
-                hx_get=self.instance.status_url,
-                hx_target=f"#status-{self.instance.pk}",
-                hx_select=f"#status-{self.instance.pk}",
-                hx_swap="outerHTML",
-            )
-        )
-        self.helper.layout.append(
-            StrictButton(
-                '<i class="fas fa-fw fa-times-circle mr-1"></i>Cancel submission',
-                type="submit",
-                css_class="btn btn-danger ml-0",
-            )
-        )
+        self.initial["status_message"] = "Cancelled by user"
+        self.fields["status_message"].widget = HiddenInput()
 
 
 class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
