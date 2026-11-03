@@ -1,59 +1,56 @@
-###################
-#  Base Container #
-###################
-FROM python:3.14-slim-trixie AS base
+######################
+#  Builder Container #
+######################
+# Compiles the python virtual environments. This stage contains the full
+# build toolchain (gcc and the -dev headers) required to build C extensions
+# such as psycopg[c]. None of these build tools are carried into the runtime
+# image: only the resulting virtual environments are copied across.
+FROM python:3.14-slim-trixie AS builder
 
-# Install system dependencies
+# Install build dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        # wget (and TLS roots) for fetching pre-built tooling below
         wget \
-        # postgres and gcc packages for psycopg[c]
+        ca-certificates \
+        # postgres and gcc packages for building psycopg[c]
         libpq-dev \
         gcc \
         # for python-magic
         libmagic1 \
-        # openslide and vips for image imports with panimg
+        # openslide and vips development headers for building panimg deps
         libopenslide-dev \
         libvips-dev \
-        # git for CodeBuild integration
-        git \
     && rm -rf /var/lib/apt/lists/*
 
-# Fetch and install dart-sass for compiling scss
+# Selects the sagemaker-shim release downloaded below. Must stay in sync with
+# the COMPONENTS_SAGEMAKER_SHIM_VERSION declared in the base stage, which the
+# app reads at runtime to locate and version-check the shim binary.
+ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=0.8.3
+
+# Fetch and unpack dart-sass for compiling scss
 RUN mkdir -p /opt/dart-sass \
     && wget https://github.com/sass/dart-sass/releases/download/1.107.0/dart-sass-1.107.0-linux-arm64.tar.gz -O /opt/dart-sass/src.tar.gz \
     && echo "df6b06b97c722f70facedd40efa10ddc625ece905ebd581347881ea398762f7f  /opt/dart-sass/src.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/dart-sass/ --strip-components=1 -xzvf /opt/dart-sass/src.tar.gz \
     && rm /opt/dart-sass/src.tar.gz
-ENV PATH="/opt/dart-sass/:${PATH}"
 
-# Fetch and install crane for pushing containers
+# Fetch and unpack crane for pushing containers
 RUN mkdir -p /opt/crane \
     && wget https://github.com/google/go-containerregistry/releases/download/v0.21.1/go-containerregistry_Linux_arm64.tar.gz -O /opt/crane/src.tar.gz \
     && echo "2ca7e6beca62cb289ee8e4089801e6d0d934508ae827cf7ca8f54fd6fcbadc54  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/crane/ -xzvf /opt/crane/src.tar.gz crane \
-    && chmod a+x /opt/crane/crane \
-    && mv /opt/crane/crane /usr/local/bin/ \
-    && rm -r /opt/crane
+    && chmod a+x /opt/crane/crane
 
-ENV PYTHONUNBUFFERED=1\
-    AWS_XRAY_SDK_ENABLED=false\
-    COMPONENTS_SAGEMAKER_SHIM_VERSION=0.8.3\
-    PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
-
-RUN mkdir -p /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs \
-    && groupadd -r django && useradd -m -r -g django django \
-    && chown django:django /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs
-
-USER django:django
-
-# Fetch and install sagemaker shim for shimming containers
+# Fetch and unpack sagemaker shim for shimming containers
 RUN mkdir -p /opt/sagemaker-shim \
     && wget "https://github.com/DIAGNijmegen/rse-sagemaker-shim/releases/download/v${COMPONENTS_SAGEMAKER_SHIM_VERSION}/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" -P /opt/sagemaker-shim/ \
     && echo "779f50797ef74c8b1d524ee32cd303680130621a324fbbf1059558b7d0ca93bc  /opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && chmod -R a+rX /opt/sagemaker-shim
+
+RUN mkdir -p /opt/grand-challenge /opt/virtualenvs
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
@@ -78,20 +75,92 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
 
+###################
+#  Base Container #
+###################
+# The runtime base. Contains only the shared libraries required to *run* the
+# compiled dependencies (not the -dev headers) and no compiler. The virtual
+# environments are copied in from the builder stage.
+FROM python:3.14-slim-trixie AS base
+
+# Install runtime system dependencies.
+# These are the runtime shared-library counterparts of the -dev packages used
+# in the builder stage. gcc, the -dev headers, and wget are deliberately
+# absent: pre-built tooling is fetched in the builder stage and copied in.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        # postgres runtime library for psycopg[c]
+        libpq5 \
+        # for python-magic
+        libmagic1 \
+        # openslide and vips runtime libraries for image imports with panimg
+        libopenslide0 \
+        libvips42t64 \
+        # git for CodeBuild integration
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dart-sass (for compiling scss), fetched in the builder stage
+COPY --from=builder /opt/dart-sass /opt/dart-sass
+ENV PATH="/opt/dart-sass/:${PATH}"
+
+# Install crane (for pushing containers), fetched in the builder stage
+COPY --from=builder /opt/crane/crane /usr/local/bin/crane
+
+# Must stay in sync with the COMPONENTS_SAGEMAKER_SHIM_VERSION in the
+# builder stage: that value selects the downloaded shim binary, this one is
+# read by the app at runtime to locate and version-check it.
+ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=0.8.3\
+    PYTHONUNBUFFERED=1\
+    AWS_XRAY_SDK_ENABLED=false\
+    PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
+
+RUN mkdir -p /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs \
+    && groupadd -r django && useradd -m -r -g django django \
+    && chown django:django /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs
+
+# Install sagemaker shim (for shimming containers), fetched in the builder stage
+COPY --from=builder --chown=django:django /opt/sagemaker-shim /opt/sagemaker-shim
+
+USER django:django
+
+# Copy the pre-built virtual environments from the builder stage. The paths are
+# identical to the builder so the environments resolve without relocation.
+# No --chown: the venvs are only read at runtime (never written), so leaving
+# them root-owned and world-readable avoids rewriting every file into a new
+# layer with changed ownership.
+COPY --from=builder /opt/virtualenvs /opt/virtualenvs
+COPY --from=builder /opt/grand-challenge/.venv /opt/grand-challenge/.venv
+
+WORKDIR /opt/grand-challenge
+
 ##################
 # TEST CONTAINER #
 ##################
+# Extends base with the build toolchain (so dev dependencies with C extensions
+# can be installed) plus documentation and browser-testing tooling. This image
+# is never shipped to production.
 FROM base AS test
 
 USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        # build toolchain for compiling dev dependencies
+        libpq-dev \
+        gcc \
         # Add java and graphviz for plantuml documentation
         default-jre \
         graphviz \
         # make for sphinx docs
         make \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# The main venv is copied root-owned in the base stage (it is read-only in
+# dist). The test stage installs dev dependencies into it, so hand ownership
+# to django here. This rewrites the venv into a new layer, but only in the
+# test image, which is never shipped.
+RUN chown -R django:django /opt/grand-challenge/.venv
 USER django:django
 
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -113,6 +182,8 @@ COPY --chown=django:django ./app/ /app/
 ##################
 # Dist Container #
 ##################
+# The production image. Built from base, so it contains no compiler and no
+# -dev headers.
 FROM base AS dist
 
 WORKDIR /app
