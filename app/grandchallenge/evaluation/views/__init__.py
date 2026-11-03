@@ -18,7 +18,6 @@ from django.db.models import Prefetch
 from django.http import (
     FileResponse,
     Http404,
-    HttpResponse,
 )
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -68,8 +67,9 @@ from grandchallenge.evaluation.forms import (
     PhaseAlgorithmInterfaceDeleteForm,
     PhaseCreateForm,
     PhaseUpdateForm,
+    SubmissionAcceptForm,
     SubmissionForm,
-    SubmissionReviewForm,
+    SubmissionRejectForm,
 )
 from grandchallenge.evaluation.models import (
     BatchJob,
@@ -501,21 +501,18 @@ class SubmissionPendingReviewMixin:
         )
 
 
-class SubmissionReview(
+class SubmissionAccept(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SubmissionPendingReviewMixin,
     UpdateView,
 ):
     model = Submission
-    form_class = SubmissionReviewForm
+    template_name_suffix = "_status_update_form"
     permission_required = "review_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-    http_method_names = ["post"]
-
-    def form_invalid(self, form):
-        return HttpResponse("Unable to update submission.")
+    form_class = SubmissionAcceptForm
 
     def get_success_url(self):
         return self.object.status_url
@@ -525,13 +522,17 @@ class SubmissionReject(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SubmissionPendingReviewMixin,
-    DetailView,
+    UpdateView,
 ):
     model = Submission
-    template_name_suffix = "_confirm_reject"
+    template_name_suffix = "_status_update_form"
     permission_required = "review_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+    form_class = SubmissionRejectForm
+
+    def get_success_url(self):
+        return self.object.status_url
 
 
 class TeamContextMixin:
