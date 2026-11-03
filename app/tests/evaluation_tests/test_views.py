@@ -3846,3 +3846,146 @@ class TestSubmissionStatusUpdateViews:
         assert response.status_code == 200
         submission.refresh_from_db()
         assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+
+    def test_cancel_sets_status_and_message(self, client):
+        submission = SubmissionFactory(
+            status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-cancel",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": submission.phase.challenge.short_name,
+                "slug": submission.phase.slug,
+                "pk": submission.pk,
+            },
+            user=submission.creator,
+            data={
+                "status": SubmissionStatusChoices.CANCELLED,
+                "status_message": "Cancelled by user",
+            },
+        )
+
+        assert response.status_code == 302
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.CANCELLED
+        assert submission.status_message == "Cancelled by user"
+
+    def test_cancel_view_renders_for_creator(self, client):
+        submission = SubmissionFactory(
+            status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-cancel",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": submission.phase.challenge.short_name,
+                "slug": submission.phase.slug,
+                "pk": submission.pk,
+            },
+            user=submission.creator,
+        )
+
+        assert response.status_code == 200
+        assert f"Cancel Submission {submission.pk}" in str(response.content)
+        assert "status_message" in str(response.content)
+
+    def test_cancel_view_forbidden_for_other_participant(self, client):
+        participant = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_participant(participant)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=participant,
+        )
+
+        assert response.status_code == 403
+
+    def test_cancel_view_forbidden_for_admin(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+        )
+
+        assert response.status_code == 403
+
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [SubmissionStatusChoices.PENDING_REVIEW]
+        ),
+    )
+    def test_cancel_view_not_pending_returns_404(self, client, status):
+        submission = SubmissionFactory(status=status)
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-cancel",
+            client=client,
+            reverse_kwargs={
+                "challenge_short_name": submission.phase.challenge.short_name,
+                "slug": submission.phase.slug,
+                "pk": submission.pk,
+            },
+            user=submission.creator,
+        )
+
+        assert response.status_code == 404
+
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [
+                SubmissionStatusChoices.CANCELLED,
+            ]
+        ),
+    )
+    def test_cancel_view_status_validation(self, client, status):
+        submission = SubmissionFactory(
+            status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-cancel",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": submission.phase.challenge.short_name,
+                "slug": submission.phase.slug,
+                "pk": submission.pk,
+            },
+            user=submission.creator,
+            data={
+                "status": status,
+                "status_message": "some message",
+            },
+        )
+
+        assert response.status_code == 200
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
