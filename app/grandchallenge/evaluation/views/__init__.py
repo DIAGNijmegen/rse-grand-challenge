@@ -68,6 +68,7 @@ from grandchallenge.evaluation.forms import (
     PhaseCreateForm,
     PhaseUpdateForm,
     SubmissionAcceptForm,
+    SubmissionCancelForm,
     SubmissionForm,
     SubmissionRejectForm,
 )
@@ -530,6 +531,23 @@ class SubmissionReject(
     raise_exception = True
     login_url = reverse_lazy("account_login")
     form_class = SubmissionRejectForm
+
+    def get_success_url(self):
+        return self.object.status_url
+
+
+class SubmissionCancel(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SubmissionPendingReviewMixin,
+    UpdateView,
+):
+    model = Submission
+    template_name_suffix = "_status_update_form"
+    permission_required = "cancel_submission"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    form_class = SubmissionCancelForm
 
     def get_success_url(self):
         return self.object.status_url

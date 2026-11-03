@@ -773,6 +773,49 @@ class SubmissionRejectForm(SaveFormInitMixin, forms.ModelForm):
         )
 
 
+class SubmissionCancelForm(SaveFormInitMixin, forms.ModelForm):
+    class Meta:
+        model = Submission
+        fields = ("status",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        status = self.Meta.model.StatusChoices.CANCELLED
+
+        self.fields["status"].choices = [(status.value, status.label)]
+        self.initial["status"] = status.value
+        self.fields["status"].widget = HiddenInput()
+
+        self.helper = FormHelper(self)
+        self.helper.include_media = False
+        self.helper.form_tag = True
+        self.helper.attrs = {
+            "hx-post": self.instance.cancel_url,
+            "hx-target": f"#status-{self.instance.pk}",
+            "hx-select": f"#status-{self.instance.pk}",
+            "hx-swap": "outerHTML",
+        }
+        self.helper.layout.append(
+            StrictButton(
+                "Abort",
+                type="button",
+                css_class="btn btn-secondary ml-0 d-inline",
+                hx_get=self.instance.status_url,
+                hx_target=f"#status-{self.instance.pk}",
+                hx_select=f"#status-{self.instance.pk}",
+                hx_swap="outerHTML",
+            )
+        )
+        self.helper.layout.append(
+            StrictButton(
+                '<i class="fas fa-fw fa-times-circle mr-1"></i>Cancel submission',
+                type="submit",
+                css_class="btn btn-danger ml-0",
+            )
+        )
+
+
 class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()
