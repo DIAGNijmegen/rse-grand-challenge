@@ -61,7 +61,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
 
                 <img class="" src="test-empty-class.png"/>
 
-                <img class="ml-3"src="test-existing-class.png"/>
+                <img class="ml-3" src="test-existing-class.png"/>
 
                 > Quote Me
 
