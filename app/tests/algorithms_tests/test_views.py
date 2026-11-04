@@ -27,6 +27,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.evaluation.models import SubmissionStatusChoices
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
@@ -47,7 +48,11 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.conftest import get_interface_form_data
-from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
+from tests.evaluation_tests.factories import (
+    EvaluationFactory,
+    PhaseFactory,
+    SubmissionFactory,
+)
 from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
@@ -2636,3 +2641,44 @@ def test_algorithm_implementation_interfaces_locked(client):
     )
 
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_algorithm_detail_shows_pending_submissions_warning(client):
+    algorithm_image = AlgorithmImageFactory()
+    editor = UserFactory()
+    algorithm_image.algorithm.add_editor(editor)
+    submission = SubmissionFactory(
+        algorithm_image=algorithm_image,
+        status=SubmissionStatusChoices.PENDING_REVIEW,
+    )
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": algorithm_image.algorithm.slug},
+        client=client,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "This algorithm has pending submissions. Please note that changing the active"
+        in response.rendered_content
+    )
+    assert submission.cancel_url in response.rendered_content
+
+    submission.status = SubmissionStatusChoices.CANCELLED
+    submission.save()
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": algorithm_image.algorithm.slug},
+        client=client,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "This algorithm has pending submissions. Please note that changing the active"
+        not in response.rendered_content
+    )

@@ -3913,6 +3913,9 @@ class TestSubmissionStatusUpdateViews:
         )
 
         assert response.status_code == 403
+        assert "Only the submission creator can cancel the submission." in str(
+            response.content
+        )
 
     def test_cancel_view_forbidden_for_admin(self, client):
         admin = UserFactory()
@@ -3934,6 +3937,9 @@ class TestSubmissionStatusUpdateViews:
         )
 
         assert response.status_code == 403
+        assert "Only the submission creator can cancel the submission." in str(
+            response.content
+        )
 
     @pytest.mark.parametrize(
         "status",
