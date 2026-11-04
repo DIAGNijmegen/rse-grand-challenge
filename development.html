@@ -226,6 +226,37 @@ If this is a development dependency then use the <code class="docutils literal n
 <p>and commit the updated <code class="docutils literal notranslate"><span class="pre">uv.lock</span></code>.</p>
 <p>The containers will need to be rebuilt after running these steps, so stop the <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">runserver</span></code> process with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code> and restart.</p>
 </section>
+<section id="vendored-frontend-assets">
+<h2>Vendored frontend assets<a class="headerlink" href="#vendored-frontend-assets" title="Link to this heading">¶</a></h2>
+<p>The frontend depends on a set of vendored JavaScript, CSS and font assets
+(bootstrap, jQuery, DataTables, vega, and so on). These are <strong>not</strong> committed
+to the repository. They are described in the <code class="docutils literal notranslate"><span class="pre">[tool.amass]</span></code> section of the
+root <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and installed by <a class="reference external" href="https://pypi.org/project/amass/">amass</a>.</p>
+<p>When developing through docker compose (<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">runserver</span></code>) you do not need to
+do anything: the assets are baked into the container image at build time (into
+<code class="docutils literal notranslate"><span class="pre">/opt/vendored/static</span></code>, outside <code class="docutils literal notranslate"><span class="pre">/app</span></code> so the development bind mount of
+<code class="docutils literal notranslate"><span class="pre">./app</span></code> does not shadow them). Rebuild the image (<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">build</span></code>) after
+changing the <code class="docutils literal notranslate"><span class="pre">[tool.amass]</span></code> dependencies.</p>
+<p>When running the app natively (Python directly on your machine) install the
+assets yourself. <code class="docutils literal notranslate"><span class="pre">amass</span></code> reads <code class="docutils literal notranslate"><span class="pre">amass.lock</span></code> and <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> from the
+current directory, so <strong>run it from the repository root</strong>, not from <code class="docutils literal notranslate"><span class="pre">app/</span></code>
+(running it from <code class="docutils literal notranslate"><span class="pre">app/</span></code> fails with <code class="docutils literal notranslate"><span class="pre">FileNotFoundError:</span> <span class="pre">amass.lock</span></code>). Point
+it at a directory outside the source tree with <code class="docutils literal notranslate"><span class="pre">--output</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span>&lt;repository<span class="w"> </span>root&gt;
+<span class="gp">$ </span>uv<span class="w"> </span>run<span class="w"> </span>amass<span class="w"> </span>install<span class="w"> </span>--output<span class="w"> </span>.vendored
+</pre></div>
+</div>
+<p>Django reads the install location from the <code class="docutils literal notranslate"><span class="pre">VENDORED_STATIC_ROOT</span></code> environment
+variable: it is added to <code class="docutils literal notranslate"><span class="pre">STATICFILES_DIRS</span></code> under the <code class="docutils literal notranslate"><span class="pre">vendored</span></code> prefix and
+passed to sass as a load path for <code class="docutils literal notranslate"><span class="pre">base.scss</span></code>. The sample <code class="docutils literal notranslate"><span class="pre">.env</span></code> sets
+<code class="docutils literal notranslate"><span class="pre">VENDORED_STATIC_ROOT=../.vendored/</span></code> — a path relative to <code class="docutils literal notranslate"><span class="pre">app/</span></code> (where
+<code class="docutils literal notranslate"><span class="pre">manage.py</span></code> runs) that points at the same <code class="docutils literal notranslate"><span class="pre">.vendored</span></code> directory created by
+the command above. If you install the assets elsewhere, set
+<code class="docutils literal notranslate"><span class="pre">VENDORED_STATIC_ROOT</span></code> to match.</p>
+<p>To change the pinned asset versions, edit <code class="docutils literal notranslate"><span class="pre">[tool.amass.dependencies]</span></code> in
+<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>, regenerate the lock from the repository root with
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span> <span class="pre">amass</span> <span class="pre">lock</span></code>, and commit the updated <code class="docutils literal notranslate"><span class="pre">amass.lock</span></code>.</p>
+</section>
 <section id="going-to-production">
 <h2>Going to Production<a class="headerlink" href="#going-to-production" title="Link to this heading">¶</a></h2>
 <p>The docker compose file included here is for development only.
