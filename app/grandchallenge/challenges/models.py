@@ -1250,7 +1250,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     }
                 )
             ],
-        )
+        ),
+        raise_on_access=True,
     )
     inference_time_average_seconds_for_tasks = models.JSONField(
         help_text="Average run time per algorithm job in seconds, for each task.",
