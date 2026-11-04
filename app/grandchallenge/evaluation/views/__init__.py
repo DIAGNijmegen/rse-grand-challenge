@@ -860,11 +860,11 @@ class BatchJobDetail(
     row_template = "evaluation/batchjobtask_list_row.html"
     search_fields = ["pk"]
     columns = [
-        Column(title="Task ID"),
+        Column(title="Task ID", sort_field="pk"),
         Column(title="Inputs"),
         Column(title="Outputs"),
-        Column(title="Exec Duration"),
-        Column(title="Invoke Duration"),
+        Column(title="Exec Duration", sort_field="exec_duration"),
+        Column(title="Invoke Duration", sort_field="invoke_duration"),
     ]
 
     @cached_property
