@@ -1,0 +1,48 @@
+{% load copy_button %}
+{% load civ %}
+
+{{ object.pk|copy_button }}
+
+<split></split>
+
+<ul class="list-unstyled mb-0">
+    {% for input in object.inputs.all|sort_civs %}
+        <li>
+            {% include 'components/partials/civ.html' with object=input display_inline=True only %}
+        </li>
+    {% empty %}
+        <li>
+            <i class="fa fa-eye-slash text-warning"></i> No inputs were found
+        </li>
+    {% endfor %}
+</ul>
+
+<split></split>
+
+<ul class="list-unstyled mb-0">
+    {% for output in object.outputs.all|sort_civs %}
+        <li>
+            {% include 'components/partials/civ.html' with object=output display_inline=True only %}
+        </li>
+    {% empty %}
+        <li>
+            <i class="fa fa-eye-slash text-warning"></i> No outputs were found
+        </li>
+    {% endfor %}
+</ul>
+
+<split></split>
+
+{% if object.exec_duration %}
+    {{ object.exec_duration.total_seconds|floatformat:0 }} s
+{% else %}
+    <span class="text-muted">-</span>
+{% endif %}
+
+<split></split>
+
+{% if object.invoke_duration %}
+    {{ object.invoke_duration.total_seconds|floatformat:0 }} s
+{% else %}
+    <span class="text-muted">-</span>
+{% endif %}

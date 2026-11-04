@@ -9,6 +9,7 @@ from grandchallenge.evaluation.views import (
     BatchJobList,
     BatchJobLogsDetail,
     BatchJobStatusDetail,
+    BatchJobTaskList,
     ConfigureAlgorithmPhasesView,
     EvaluationAdminList,
     EvaluationCreate,
@@ -202,6 +203,11 @@ urlpatterns = [
         "<slug:slug>/submissions/<uuid:submission_pk>/batch-jobs/<uuid:pk>/",
         BatchJobDetail.as_view(),
         name="batch-job-detail",
+    ),
+    path(
+        "<slug:slug>/submissions/<uuid:submission_pk>/batch-jobs/<uuid:pk>/tasks/",
+        BatchJobTaskList.as_view(),
+        name="batch-job-task-list",
     ),
     path(
         "<slug:slug>/submissions/<uuid:submission_pk>/batch-jobs/<uuid:pk>/status/",
