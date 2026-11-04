@@ -67,16 +67,8 @@
                 <a href="{{ object.algorithm_image.get_absolute_url }}">
                     Container for {{ object.algorithm_image.algorithm }} uploaded
                     by {{ object.algorithm_image.creator }} {{ object.algorithm_image.created|naturaltime }}
-                </a></dd>
-        {% endif %}
-
-        {% if object.algorithm_image %}
-            <dt>Algorithm</dt>
-            <dd>
-                <a href="{{ object.algorithm_image.get_absolute_url }}">
-                    Container for {{ object.algorithm_image.algorithm }} uploaded
-                    by {{ object.algorithm_image.creator }} {{ object.algorithm_image.created|naturaltime }}
-                </a></dd>
+                </a>
+            </dd>
         {% endif %}
 
         {% if object.comment %}
