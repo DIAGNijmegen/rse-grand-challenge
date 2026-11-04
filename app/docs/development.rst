@@ -215,6 +215,45 @@ and commit the updated ``uv.lock``.
 
 The containers will need to be rebuilt after running these steps, so stop the ``make runserver`` process with ``CTRL+C`` and restart.
 
+Vendored frontend assets
+------------------------
+
+The frontend depends on a set of vendored JavaScript, CSS and font assets
+(bootstrap, jQuery, DataTables, vega, and so on). These are **not** committed
+to the repository. They are described in the ``[tool.amass]`` section of the
+root ``pyproject.toml`` and installed by amass_.
+
+When developing through docker compose (``make runserver``) you do not need to
+do anything: the assets are baked into the container image at build time (into
+``/opt/vendored/static``, outside ``/app`` so the development bind mount of
+``./app`` does not shadow them). Rebuild the image (``make build``) after
+changing the ``[tool.amass]`` dependencies.
+
+When running the app natively (Python directly on your machine) install the
+assets yourself. ``amass`` reads ``amass.lock`` and ``pyproject.toml`` from the
+current directory, so **run it from the repository root**, not from ``app/``
+(running it from ``app/`` fails with ``FileNotFoundError: amass.lock``). Point
+it at a directory outside the source tree with ``--output``:
+
+.. code-block:: console
+
+    $ cd <repository root>
+    $ uv run amass install --output .vendored
+
+Django reads the install location from the ``VENDORED_STATIC_ROOT`` environment
+variable: it is added to ``STATICFILES_DIRS`` under the ``vendored`` prefix and
+passed to sass as a load path for ``base.scss``. The sample ``.env`` sets
+``VENDORED_STATIC_ROOT=../.vendored/`` — a path relative to ``app/`` (where
+``manage.py`` runs) that points at the same ``.vendored`` directory created by
+the command above. If you install the assets elsewhere, set
+``VENDORED_STATIC_ROOT`` to match.
+
+To change the pinned asset versions, edit ``[tool.amass.dependencies]`` in
+``pyproject.toml``, regenerate the lock from the repository root with
+``uv run amass lock``, and commit the updated ``amass.lock``.
+
+.. _amass: https://pypi.org/project/amass/
+
 Going to Production
 -------------------
 

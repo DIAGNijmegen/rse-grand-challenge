@@ -102,6 +102,11 @@ node_modules/
 app/algorithm.tar.gz
 app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 
+# Vendored frontend assets installed by amass (see [tool.amass]).
+# These are kept out of the repository and installed via `amass install`.
+app/grandchallenge/core/static/vendored/
+.vendored/
+
 # Users environment file
 *.env
 

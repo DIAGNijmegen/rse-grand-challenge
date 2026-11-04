@@ -6,6 +6,9 @@ requires-python = "==3.14.*"
 exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P7D"
 
+[options.exclude-newer-package]
+amass = "2026-11-05T00:00:00Z"
+
 [[package]]
 name = "aioboto3"
 version = "15.5.0"
@@ -151,7 +154,7 @@ wheels = [
 
 [[package]]
 name = "amass"
-version = "0.4.3"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -159,9 +162,9 @@ dependencies = [
     { name = "packaging" },
     { name = "tomlkit" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1c/b9/3684ac3ae297f5f4f62c3c82c19b06ba6c47465d19ac7ecd0088b4c19da9/amass-0.4.3.tar.gz", hash = "sha256:ee8ac6ff437f37d4d06c8c65a7c2cbab5b6c76c8474f343bac088c427ccfeb0d", size = 12108, upload-time = "2026-08-21T10:48:57.032Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/8a/10b942bf170f7660e5a1e0b13d659b3f193e5d15e244f6367fa7cb67eb81/amass-0.5.0.tar.gz", hash = "sha256:4896cce90b02d65b86add9d8fbbdc3578f3f67154e1735cf0f3ac5eb2193fe64", size = 13808, upload-time = "2026-11-04T09:09:33.564Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/80/28a7f2ddad82625128316aac453c68ce38fcb8ba461365a9b63c6419e480/amass-0.4.3-py3-none-any.whl", hash = "sha256:239dc8fdaea94b9b340b9068b5e9ddb3881d3e6714a45aa042de31885be72e05", size = 10394, upload-time = "2026-08-21T10:48:55.961Z" },
+    { url = "https://files.pythonhosted.org/packages/62/35/6561563806cce0e61b1989ce34b824d54afc80a7dea5aac65846393e5cc3/amass-0.5.0-py3-none-any.whl", hash = "sha256:1827266a46e4a20cd5ae3e0ae3985896361f595b6906e7742dbe9cf34cc9ce12", size = 11227, upload-time = "2026-11-04T09:09:32.362Z" },
 ]
 
 [[package]]
@@ -1103,6 +1106,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aioboto3" },
+    { name = "amass" },
     { name = "aws-xray-sdk" },
     { name = "black" },
     { name = "boto3" },
@@ -1161,7 +1165,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "amass" },
     { name = "boto3-stubs", extra = ["cloudwatch", "codebuild", "ecr", "lambda", "logs", "medical-imaging", "rds", "s3", "sagemaker", "ses"] },
     { name = "django-debug-toolbar" },
     { name = "factory-boy" },
@@ -1188,6 +1191,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aioboto3" },
+    { name = "amass", specifier = ">=0.5.0" },
     { name = "aws-xray-sdk" },
     { name = "black" },
     { name = "boto3", specifier = ">1.18.8" },
@@ -1246,7 +1250,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "amass" },
     { name = "boto3-stubs", extras = ["cloudwatch", "codebuild", "ecr", "lambda", "logs", "medical-imaging", "rds", "s3", "sagemaker", "ses"] },
     { name = "django-debug-toolbar" },
     { name = "factory-boy" },

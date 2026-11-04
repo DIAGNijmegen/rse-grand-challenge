@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import Uppy from "../../../grandchallenge/core/static/vendored/uppy/uppy.min.js";
+import Uppy from "vendored/uppy/uppy.min.js";
 
 global.Uppy = Uppy;
 const {

@@ -115,9 +115,9 @@ ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=0.8.3\
     AWS_XRAY_SDK_ENABLED=false\
     PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
 
-RUN mkdir -p /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs \
+RUN mkdir -p /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs /opt/vendored \
     && groupadd -r django && useradd -m -r -g django django \
-    && chown django:django /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs
+    && chown django:django /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs /opt/vendored
 
 # Install sagemaker shim (for shimming containers), fetched in the builder stage
 COPY --from=builder --chown=django:django /opt/sagemaker-shim /opt/sagemaker-shim
@@ -133,6 +133,16 @@ COPY --from=builder /opt/virtualenvs /opt/virtualenvs
 COPY --from=builder /opt/grand-challenge/.venv /opt/grand-challenge/.venv
 
 WORKDIR /opt/grand-challenge
+
+# Install the vendored frontend assets (js/css/fonts) with amass. These are
+# not committed to the repository, so they are fetched here at build time.
+# Running this in the base stage means both the test and dist stages inherit
+# the assets. They are installed to /opt/vendored/static, outside /app, so
+# that the development bind mount of ./app over /app does not shadow them: the
+# same baked-in assets are used in development, test and production.
+RUN --mount=type=bind,source=pyproject.toml,target=/opt/grand-challenge/pyproject.toml \
+    --mount=type=bind,source=amass.lock,target=/opt/grand-challenge/amass.lock \
+    amass install --output /opt/vendored/static
 
 ##################
 # TEST CONTAINER #
