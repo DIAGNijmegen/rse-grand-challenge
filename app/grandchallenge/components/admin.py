@@ -2,6 +2,7 @@ import humanize
 from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.module_loading import import_string
 
 from grandchallenge.components.models import (
     ComponentImage,
@@ -20,8 +21,20 @@ class ExternalAdminLinkMixin:
         return (first, "external_admin", *rest)
 
     def external_admin(self, obj):
-        executor = obj.get_external_admin_executor(
-            backend=settings.COMPONENTS_DEFAULT_BACKEND
+        # Build the executor directly rather than via obj.get_executor so that
+        # the (expensive) inference task definitions are not built just to
+        # resolve the admin link.
+        Executor = import_string(  # noqa: N806
+            settings.COMPONENTS_DEFAULT_BACKEND
+        )
+        executor = Executor(
+            job_id=obj.executor_job_id,
+            exec_image_repo_tag=obj.container.shimmed_repo_tag,
+            requires_gpu_type=obj.requires_gpu_type,
+            memory_limit=obj.requires_memory_gb,
+            use_warm_pool=obj.use_warm_pool,
+            signing_key=obj.signing_key,
+            api_method=obj.container.api_method,
         )
         return format_html(
             "<a target=_blank href='{url}'>🔗</a>",
