@@ -2552,6 +2552,11 @@ class BatchJob(ComponentJob):
             for task in self.tasks.all()
         ]
 
+    def schedule_output_parsing(self):
+        from grandchallenge.components.tasks import parse_outputs_for_batch_job
+
+        parse_outputs_for_batch_job.execute_on_commit(batch_job_pk=self.pk)
+
     def get_absolute_url(self):
         return reverse(
             "evaluation:batch-job-detail",
