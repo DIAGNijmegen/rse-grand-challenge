@@ -1242,7 +1242,7 @@ def test_handle_event_task_for_batchjob(mocker):
         )
 
     schedule_parse_output = mocker.patch(
-        "grandchallenge.components.tasks.parse_job_output.execute_on_commit",
+        "grandchallenge.components.tasks.parse_outputs_for_batch_job.execute_on_commit",
     )
 
     handle_event(
@@ -1267,11 +1267,11 @@ def test_handle_event_task_for_batchjob(mocker):
     assert second_task.exec_duration == timedelta(seconds=30)
     assert second_task.invoke_duration == timedelta(seconds=40)
 
-    assert schedule_parse_output.call_count == 2
-    scheduled_task_pks = {
-        call.kwargs["task_pk"] for call in schedule_parse_output.call_args_list
-    }
-    assert scheduled_task_pks == {str(first_task.pk), str(second_task.pk)}
+    # A batch job schedules a single parse task for all of its outputs
+    assert schedule_parse_output.call_count == 1
+    assert (
+        schedule_parse_output.call_args.kwargs["batch_job_pk"] == batch_job.pk
+    )
 
 
 @pytest.mark.django_db
@@ -1313,7 +1313,7 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
     )
 
     schedule_parse_output = mocker.patch(
-        "grandchallenge.components.tasks.parse_job_output.execute_on_commit",
+        "grandchallenge.components.tasks.parse_outputs_for_batch_job.execute_on_commit",
     )
 
     handle_event(

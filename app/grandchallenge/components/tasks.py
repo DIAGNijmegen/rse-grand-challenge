@@ -1158,6 +1158,60 @@ def parse_job_output(
     return {"status": f"Value created for {interface_slug}"}
 
 
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
+)
+def parse_outputs_for_batch_job(*, batch_job_pk: str | UUID):
+    """Parse the outputs for all tasks of a batch job.
+
+    A batch job produces far too many outputs to parse in parallel without
+    overwhelming the database. Instead all outputs are parsed sequentially
+    here, on the AWS Batch queue.
+    """
+    model = apps.get_model(app_label="evaluation", model_name="batchjob")
+
+    with check_lock_acquired():
+        job = model.objects.select_for_update(nowait=True, no_key=True).get(
+            pk=batch_job_pk
+        )
+
+    if job.status != job.PARSING:
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
+
+    executor = job.get_executor(backend=settings.COMPONENTS_DEFAULT_BACKEND)
+
+    for subtask in job.output_subtasks:
+        for interface in subtask.output_interfaces.all():
+            try:
+                value = executor.create_value_for_output(
+                    interface=interface, task_pk=subtask.task_pk
+                )
+                job.add_output_value(value=value, task_pk=subtask.task_pk)
+            except ComponentException as error:
+                job.update_status(
+                    status=job.FAILURE,
+                    error_message=str(error),
+                    detailed_error_message=error.message_details,
+                )
+                return {"status": f"Handled exception: {error}"}
+            except Exception as error:
+                job.update_status(
+                    status=job.FAILURE,
+                    error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+                )
+                task_logger.error(str(error), exc_info=True)
+                return {"status": f"Unexpected error: {error}"}
+
+    job.update_status(status=job.SUCCESS)
+
+    return {"status": "Outputs parsed for batch job"}
+
+
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def mark_job_as_failed(
     *,
