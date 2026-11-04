@@ -102,6 +102,9 @@ node_modules/
 app/algorithm.tar.gz
 app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 
+# Old vendored js
+app/grandchallenge/core/static/vendored/
+
 # Users environment file
 *.env
 
