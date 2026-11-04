@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+{% extends "datatables/list_base.html" %}
 {% load naturaldelta %}
 {% load url %}
 {% load copy_button %}
 
 {% block title %}
-    {{ object.pk }} - Batch Jobs - {{ object.submission.phase.title }} - {{ block.super }}
+    {{ batch_job.pk }} - Batch Jobs - {{ batch_job.submission.phase.title }} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -15,10 +15,10 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item"><a
-                href="{{ object.submission.get_absolute_url }}">Submission {{ object.submission.pk }}</a></li>
+                href="{{ batch_job.submission.get_absolute_url }}">Submission {{ batch_job.submission.pk }}</a></li>
         <li class="breadcrumb-item"><a
-                href="{% url 'evaluation:batch-job-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk %}">Batch Jobs</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ object.pk }}</li>
+                href="{% url 'evaluation:batch-job-list' challenge_short_name=challenge.short_name slug=batch_job.submission.phase.slug submission_pk=batch_job.submission.pk %}">Batch Jobs</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ batch_job.pk }}</li>
     </ol>
 {% endblock %}
 
@@ -27,56 +27,53 @@
 
     <dl class="row">
         <dt class="col-sm-3">Batch Job ID</dt>
-        <dd class="col-sm-9">{{ object.pk }}{% copy_button_only object.pk %}</dd>
+        <dd class="col-sm-9">{{ batch_job.pk }}{% copy_button_only batch_job.pk %}</dd>
 
         <dt class="col-sm-3">Phase</dt>
         <dd class="col-sm-9"><a
-                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }}</a>
+                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=batch_job.submission.phase.slug %}">{{ batch_job.submission.phase.title }}</a>
         </dd>
 
         <dt class="col-sm-3">Submission</dt>
         <dd class="col-sm-9"><a
-                href="{{ object.submission.get_absolute_url }}">{{ object.submission.pk }}</a>{% copy_button_only object.submission.pk %}</dd>
+                href="{{ batch_job.submission.get_absolute_url }}">{{ batch_job.submission.pk }}</a>{% copy_button_only batch_job.submission.pk %}</dd>
 
         <dt class="col-sm-3">Algorithm</dt>
         <dd class="col-sm-9"><a
-                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm }}</a>
+                href="{{ batch_job.algorithm_image.algorithm.get_absolute_url }}">{{ batch_job.algorithm_image.algorithm }}</a>
         </dd>
 
         <dt class="col-sm-3">Algorithm Version</dt>
-        <dd class="col-sm-9">{{ object.algorithm_image.pk }}</dd>
+        <dd class="col-sm-9">{{ batch_job.algorithm_image.pk }}</dd>
 
         <dt class="col-sm-3">Model Version</dt>
-        <dd class="col-sm-9">{% if object.algorithm_model %}{{ object.algorithm_model.pk }}{% else %}None{% endif %}</dd>
+        <dd class="col-sm-9">{% if batch_job.algorithm_model %}{{ batch_job.algorithm_model.pk }}{% else %}None{% endif %}</dd>
 
         <dt class="col-sm-3">Created</dt>
-        <dd class="col-sm-9">{{ object.created }}</dd>
+        <dd class="col-sm-9">{{ batch_job.created }}</dd>
 
         <dt class="col-sm-3">Status</dt>
         <dd class="col-sm-9">
-            {% include "evaluation/batchjob_status_detail.html" %}
+            {% include "evaluation/batchjob_status_detail.html" with object=batch_job %}
         </dd>
 
-        {% if object.error_message %}
+        {% if batch_job.error_message %}
             <dt class="col-sm-3">Error Message</dt>
-            <dd class="col-sm-9">{{ object.error_message }}</dd>
+            <dd class="col-sm-9">{{ batch_job.error_message }}</dd>
         {% endif %}
 
-        {% if object.utilization.duration %}
+        {% if batch_job.utilization.duration %}
             <dt class="col-sm-3">Duration</dt>
-            <dd class="col-sm-9">{{ object.utilization.duration|naturaldelta }}</dd>
+            <dd class="col-sm-9">{{ batch_job.utilization.duration|naturaldelta }}</dd>
         {% endif %}
     </dl>
 
     <a class="btn btn-primary mb-3"
-       href="{% url 'evaluation:batch-job-logs-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk pk=object.pk %}">
+       href="{% url 'evaluation:batch-job-logs-detail' challenge_short_name=challenge.short_name slug=batch_job.submission.phase.slug submission_pk=batch_job.submission.pk pk=batch_job.pk %}">
         <i class="fas fa-terminal fa-fw"></i>&nbsp;Logs
     </a>
 
     <h3>Tasks</h3>
 
-    <a class="btn btn-primary mb-3"
-       href="{% url 'evaluation:batch-job-task-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk pk=object.pk %}">
-        <i class="fas fa-list fa-fw"></i>&nbsp;View tasks
-    </a>
+    {{ block.super }}
 {% endblock %}

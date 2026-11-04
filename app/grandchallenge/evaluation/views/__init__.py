@@ -850,20 +850,12 @@ class BatchJobList(
         return context
 
 
-class BatchJobDetail(ObjectPermissionRequiredMixin, DetailView):
-    permission_required = "view_batchjob"
-    raise_exception = True
-    queryset = BatchJob.objects.select_related(
-        "submission__phase__challenge",
-        "algorithm_image__algorithm",
-    )
-
-
-class BatchJobTaskList(
+class BatchJobDetail(
     ObjectPermissionRequiredMixin,
     PaginatedTableListView,
 ):
     model = BatchJobTask
+    template_name = "evaluation/batchjob_detail.html"
     permission_required = "view_batchjob"
     raise_exception = True
     row_template = "evaluation/batchjobtask_list_row.html"
@@ -879,7 +871,10 @@ class BatchJobTaskList(
     @cached_property
     def batch_job(self):
         return get_object_or_404(
-            BatchJob,
+            BatchJob.objects.select_related(
+                "submission__phase__challenge",
+                "algorithm_image__algorithm",
+            ),
             pk=self.kwargs["pk"],
             submission__pk=self.kwargs["submission_pk"],
             submission__phase__slug=self.kwargs["slug"],

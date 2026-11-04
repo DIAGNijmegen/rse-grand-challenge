@@ -3402,7 +3402,6 @@ def test_phase_starter_kit_download(client):
     (
         "batch-job-detail",
         "batch-job-status-detail",
-        "batch-job-task-list",
     ),
 )
 def test_batch_job_detail_views_require_view_permission(client, viewname):
