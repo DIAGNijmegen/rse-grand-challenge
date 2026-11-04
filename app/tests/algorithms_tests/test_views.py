@@ -2644,9 +2644,21 @@ def test_algorithm_implementation_interfaces_locked(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_detail_shows_pending_submissions_warning(client):
+@pytest.mark.parametrize(
+    "view_name",
+    [
+        "algorithms:detail",
+        "algorithms:image-create",
+        "algorithms:image-activate",
+        "algorithms:model-create",
+        "algorithms:model-activate",
+        "algorithms:model-deactivate",
+    ],
+)
+def test_algorithm_detail_shows_pending_submissions_warning(client, view_name):
     algorithm_image = AlgorithmImageFactory()
     editor = UserFactory()
+    VerificationFactory(user=editor, is_verified=True)
     algorithm_image.algorithm.add_editor(editor)
     submission = SubmissionFactory(
         algorithm_image=algorithm_image,
@@ -2654,7 +2666,7 @@ def test_algorithm_detail_shows_pending_submissions_warning(client):
     )
 
     response = get_view_for_user(
-        viewname="algorithms:detail",
+        viewname=view_name,
         reverse_kwargs={"slug": algorithm_image.algorithm.slug},
         client=client,
         user=editor,
@@ -2671,7 +2683,7 @@ def test_algorithm_detail_shows_pending_submissions_warning(client):
     submission.save()
 
     response = get_view_for_user(
-        viewname="algorithms:detail",
+        viewname=view_name,
         reverse_kwargs={"slug": algorithm_image.algorithm.slug},
         client=client,
         user=editor,
