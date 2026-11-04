@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.timezone import now
 from guardian.shortcuts import get_group_perms
 
@@ -40,6 +41,8 @@ from grandchallenge.evaluation.tasks import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentTypeChoices
+from grandchallenge.notifications.models import Notification
+from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
@@ -3964,3 +3967,92 @@ def test_batch_job_task_creation_query_count_is_constant(
             requires_memory_gb=4,
             requires_gpu_type=GPUTypeChoices.NO_GPU,
         )
+
+
+@pytest.mark.django_db
+class TestSubmissionNotifications:
+    def test_admins_and_creator_receive_pending_review_notification(self):
+        phase = PhaseFactory(
+            auto_evaluate_new_submissions=False,
+        )
+        submission = SubmissionFactory(
+            phase=phase,
+            status=SubmissionStatusChoices.VALIDATING_INPUTS,
+        )
+        recipients = {phase.challenge.creator, submission.creator}
+
+        Notification.objects.all().delete()
+        submission.status = SubmissionStatusChoices.PENDING_REVIEW
+        submission.save()
+
+        assert Notification.objects.count() == len(recipients)
+        assert recipients == {n.user for n in Notification.objects.all()}
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        user_profile = user_profile_link(submission.creator)
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+
+        assert f"The {submission_string} from {user_profile} to {challenge_string} is pending review." in Notification.objects.filter(
+            user=phase.challenge.creator
+        ).get().print_notification(
+            user=phase.challenge.creator
+        )
+        assert f"Your {submission_string}  to {challenge_string} is pending review." in Notification.objects.filter(
+            user=submission.creator
+        ).get().print_notification(
+            user=submission.creator
+        )
+
+    @pytest.mark.parametrize(
+        "status, message, status_message",
+        [
+            (SubmissionStatusChoices.FAILED, "failed", "Validation failed"),
+            (SubmissionStatusChoices.ACCEPTED, "was accepted", ""),
+            (
+                SubmissionStatusChoices.REJECTED,
+                "was rejected",
+                "Not good enough",
+            ),
+        ],
+    )
+    def test_creator_receives_status_notifications(
+        self, status, message, status_message
+    ):
+        phase = PhaseFactory(
+            auto_evaluate_new_submissions=False,
+        )
+        submission = SubmissionFactory(
+            phase=phase,
+            status=SubmissionStatusChoices.PENDING_REVIEW,
+        )
+
+        Notification.objects.all().delete()
+        submission.status = status
+        submission.status_message = status_message
+        submission.save()
+
+        assert Notification.objects.count() == 1
+        notification = Notification.objects.get()
+        assert submission.creator == notification.user
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+
+        notification_print = notification.print_notification(
+            user=submission.creator
+        )
+        assert (
+            f"Your {submission_string}  to {challenge_string} {message}."
+            in notification_print
+        )
+        assert status_message in notification_print
