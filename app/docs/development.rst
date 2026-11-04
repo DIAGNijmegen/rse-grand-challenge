@@ -230,23 +230,27 @@ does not shadow them). Rebuild the image (``make build``) after changing the
 ``[tool.amass]`` dependencies.
 
 When running the app natively (Python directly on your machine) install the
-assets yourself. Set ``VENDORED_STATIC_ROOT`` to a writable directory and
-install into the same directory:
+assets yourself. ``amass`` reads ``amass.lock`` and ``pyproject.toml`` from the
+current directory, so **run it from the repository root**, not from ``app/``
+(running it from ``app/`` fails with ``FileNotFoundError: amass.lock``). Point
+it at a directory outside the source tree with ``--output``:
 
 .. code-block:: console
 
-    $ export VENDORED_STATIC_ROOT=../.vendored
-    $ uv run amass install --output "$VENDORED_STATIC_ROOT"
+    $ cd <repository root>
+    $ uv run amass install --output .vendored
 
-``VENDORED_STATIC_ROOT`` is read by Django (it is added to
-``STATICFILES_DIRS`` under the ``vendored`` prefix and passed to sass as a
-load path for ``base.scss``) and, via the ``--output`` flag, tells amass where
-to install. The sample ``.env`` sets ``VENDORED_STATIC_ROOT=../.vendored/`` to
-match ``STATIC_ROOT``, keeping the assets out of the source tree.
+Django reads the install location from the ``VENDORED_STATIC_ROOT`` environment
+variable: it is added to ``STATICFILES_DIRS`` under the ``vendored`` prefix and
+passed to sass as a load path for ``base.scss``. The sample ``.env`` sets
+``VENDORED_STATIC_ROOT=../.vendored/`` — a path relative to ``app/`` (where
+``manage.py`` runs) that points at the same ``.vendored`` directory created by
+the command above. If you install the assets elsewhere, set
+``VENDORED_STATIC_ROOT`` to match.
 
 To change the pinned asset versions, edit ``[tool.amass.dependencies]`` in
-``pyproject.toml``, regenerate the lock with ``uv run amass lock``, and commit
-the updated ``amass.lock``.
+``pyproject.toml``, regenerate the lock from the repository root with
+``uv run amass lock``, and commit the updated ``amass.lock``.
 
 .. _amass: https://pypi.org/project/amass/
 
