@@ -54,8 +54,9 @@ def validate_submission(*, submission_pk: str | uuid.UUID):
         submission.user_upload = None
 
     if submission.algorithm_image or submission.predictions_file:
-        submission.status = submission.StatusChoices.PENDING_REVIEW
-        submission.save()
+        submission.update_status(
+            status=submission.StatusChoices.PENDING_REVIEW,
+        )
     else:
         submission.update_status(
             status=submission.StatusChoices.FAILED,
