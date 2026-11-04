@@ -270,6 +270,7 @@ class EvaluationAdmin(ExternalAdminLinkMixin, admin.ModelAdmin):
 
 @admin.register(BatchJob)
 class BatchJobAdmin(ExternalAdminLinkMixin, admin.ModelAdmin):
+    ordering = ("-created",)
     list_display = (
         "pk",
         "created",
@@ -289,7 +290,7 @@ class BatchJobAdmin(ExternalAdminLinkMixin, admin.ModelAdmin):
     )
     list_select_related = (
         "submission__phase__challenge",
-        "algorithm_image",
+        "algorithm_image__algorithm",
     )
     search_fields = (
         "submission__pk",
@@ -319,6 +320,7 @@ class BatchJobAdmin(ExternalAdminLinkMixin, admin.ModelAdmin):
 
 @admin.register(BatchJobTask)
 class BatchJobTaskAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
     list_display = (
         "pk",
         "created",

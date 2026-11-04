@@ -20,7 +20,7 @@ class ExternalAdminLinkMixin:
         return (first, "external_admin", *rest)
 
     def external_admin(self, obj):
-        executor = obj.get_executor(
+        executor = obj.get_external_admin_executor(
             backend=settings.COMPONENTS_DEFAULT_BACKEND
         )
         return format_html(
