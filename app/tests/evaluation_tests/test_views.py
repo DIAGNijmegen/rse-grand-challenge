@@ -3902,7 +3902,7 @@ class TestSubmissionStatusUpdateViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-reject",
+            viewname="evaluation:submission-cancel",
             client=client,
             reverse_kwargs={
                 "challenge_short_name": phase.challenge.short_name,
@@ -3923,7 +3923,7 @@ class TestSubmissionStatusUpdateViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-reject",
+            viewname="evaluation:submission-cancel",
             client=client,
             reverse_kwargs={
                 "challenge_short_name": phase.challenge.short_name,
