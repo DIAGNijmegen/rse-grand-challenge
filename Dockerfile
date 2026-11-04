@@ -137,15 +137,12 @@ WORKDIR /opt/grand-challenge
 # Install the vendored frontend assets (js/css/fonts) with amass. These are
 # not committed to the repository, so they are fetched here at build time.
 # Running this in the base stage means both the test and dist stages inherit
-# the assets. They are installed to /opt/vendored, outside /app, so that the
-# development bind mount of ./app over /app does not shadow them: the same
-# baked-in assets are used in development, test and production. amass is a
-# main dependency, so its CLI is present in the venv copied above, and it
-# reads its [tool.amass] dependency list from the root pyproject.toml.
-# VENDORED_STATIC_ROOT in the Django settings must match this path.
+# the assets. They are installed to /opt/vendored/static, outside /app, so
+# that the development bind mount of ./app over /app does not shadow them: the
+# same baked-in assets are used in development, test and production.
 RUN --mount=type=bind,source=pyproject.toml,target=/opt/grand-challenge/pyproject.toml \
     --mount=type=bind,source=amass.lock,target=/opt/grand-challenge/amass.lock \
-    amass install --output /opt/vendored
+    amass install --output /opt/vendored/static
 
 ##################
 # TEST CONTAINER #

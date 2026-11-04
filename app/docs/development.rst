@@ -225,9 +225,9 @@ root ``pyproject.toml`` and installed by amass_.
 
 When developing through docker compose (``make runserver``) you do not need to
 do anything: the assets are baked into the container image at build time (into
-``/opt/vendored``, outside ``/app`` so the development bind mount of ``./app``
-does not shadow them). Rebuild the image (``make build``) after changing the
-``[tool.amass]`` dependencies.
+``/opt/vendored/static``, outside ``/app`` so the development bind mount of
+``./app`` does not shadow them). Rebuild the image (``make build``) after
+changing the ``[tool.amass]`` dependencies.
 
 When running the app natively (Python directly on your machine) install the
 assets yourself. ``amass`` reads ``amass.lock`` and ``pyproject.toml`` from the

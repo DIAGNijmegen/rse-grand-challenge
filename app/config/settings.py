@@ -390,11 +390,13 @@ STATICFILES_FINDERS = (
 # Vendored frontend assets (js/css/fonts) are installed outside the app
 # source tree by amass (see [tool.amass] in the root pyproject.toml). They are
 # kept out of the repository and out of app/ so that the production image can
-# bake them into a fixed location that is not shadowed by the development
-# bind mount of ./app. They are exposed to Django under the "vendored" static
-# prefix via the FileSystemFinder, preserving the existing
+# bake them into a fixed location (/opt/vendored/static) that is not shadowed
+# by the development bind mount of ./app. They are exposed to Django under the
+# "vendored" static prefix via the FileSystemFinder, preserving the existing
 # {% static 'vendored/...' %} references.
-VENDORED_STATIC_ROOT = os.environ.get("VENDORED_STATIC_ROOT", "/opt/vendored")
+VENDORED_STATIC_ROOT = os.environ.get(
+    "VENDORED_STATIC_ROOT", "/opt/vendored/static"
+)
 STATICFILES_DIRS = [
     ("vendored", VENDORED_STATIC_ROOT),
 ]
