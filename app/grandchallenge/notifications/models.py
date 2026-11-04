@@ -444,7 +444,10 @@ class Notification(UUIDModel):
                     self.description,
                 ),
             )
-        elif self.type == NotificationTypeChoices.SUBMISSION_STATUS:
+        elif self.type in {
+            NotificationTypeChoices.SUBMISSION_STATUS,
+            NotificationTypeChoices.SUBMISSION_PENDING,
+        }:
             if self.actor != user:
                 the_or_your = "The"
                 addition = format_html(
@@ -478,21 +481,6 @@ class Notification(UUIDModel):
                 ),
                 message=self.message,
                 description=description,
-            )
-        elif self.type == NotificationTypeChoices.SUBMISSION_PENDING:
-            return format_html(
-                "The {action_object} from {user_profile} to {target} is pending review.",
-                action_object=format_html(
-                    '<a href="{}">{}</a>',
-                    self.action_object.get_absolute_url(),
-                    "submission",
-                ),
-                user_profile=user_profile_link(self.action_object.creator),
-                target=format_html(
-                    '<a href="{}">{}</a>',
-                    self.target.challenge.get_absolute_url(),
-                    self.target.challenge.short_name,
-                ),
             )
         elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
             return format_html(

@@ -1884,6 +1884,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             Notification.send(
                 kind=NotificationTypeChoices.SUBMISSION_PENDING,
                 actor=self.creator,
+                message="is pending review",
                 action_object=self,
                 target=self.phase,
             )
