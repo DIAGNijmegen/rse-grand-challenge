@@ -1824,9 +1824,16 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         raise NotImplementedError
 
     @property
+    def executor_job_id(self):
+        return (
+            f"{self._meta.app_label}-{self._meta.model_name}-"
+            f"{self.pk}-{self.attempt:02}"
+        )
+
+    @property
     def executor_kwargs(self):
         return {
-            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}-{self.attempt:02}",
+            "job_id": self.executor_job_id,
             "exec_image_repo_tag": self.container.shimmed_repo_tag,
             "requires_gpu_type": self.requires_gpu_type,
             "memory_limit": self.requires_memory_gb,
