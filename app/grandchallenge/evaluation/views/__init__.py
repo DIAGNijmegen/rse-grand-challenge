@@ -549,6 +549,9 @@ class SubmissionCancel(
     raise_exception = True
     login_url = reverse_lazy("account_login")
     form_class = SubmissionCancelForm
+    object_permission_denied_message = (
+        "Only the submission creator can cancel the submission."
+    )
 
     def get_success_url(self):
         return self.object.get_absolute_url()

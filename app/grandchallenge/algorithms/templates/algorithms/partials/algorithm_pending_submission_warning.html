@@ -1,0 +1,13 @@
+{% if object.pending_submissions %}
+    <div class="alert alert-warning" role="alert">
+        This algorithm has pending submissions. Please note that changing the active algorithm image or model will
+        lead to a failed evaluation. If you wish to update the image or model, please (ask the creator to) cancel the
+        submission, update the image or model and create a new submission.
+    </div>
+
+    {% for submission in object.pending_submissions %}
+            <a href="{{ submission.cancel_url }}" class="btn btn-danger inline-block">
+                Cancel submission {{ submission.pk }}
+            </a>
+    {% endfor %}
+{% endif %}
