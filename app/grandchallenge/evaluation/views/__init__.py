@@ -73,6 +73,7 @@ from grandchallenge.evaluation.forms import (
 )
 from grandchallenge.evaluation.models import (
     BatchJob,
+    BatchJobTask,
     Evaluation,
     EvaluationGroundTruth,
     Method,
@@ -848,18 +849,53 @@ class BatchJobList(
         return context
 
 
-class BatchJobDetail(ObjectPermissionRequiredMixin, DetailView):
+class BatchJobDetail(
+    ObjectPermissionRequiredMixin,
+    PaginatedTableListView,
+):
+    model = BatchJobTask
+    template_name = "evaluation/batchjob_detail.html"
     permission_required = "view_batchjob"
     raise_exception = True
-    queryset = BatchJob.objects.select_related(
-        "submission__phase__challenge",
-        "algorithm_image__algorithm",
-    ).prefetch_related(
-        "tasks__inputs__interface",
-        "tasks__inputs__image__files",
-        "tasks__outputs__interface",
-        "tasks__outputs__image__files",
-    )
+    row_template = "evaluation/batchjobtask_list_row.html"
+    search_fields = ["pk"]
+    columns = [
+        Column(title="Task ID"),
+        Column(title="Inputs"),
+        Column(title="Outputs"),
+        Column(title="Exec Duration"),
+        Column(title="Invoke Duration"),
+    ]
+
+    @cached_property
+    def batch_job(self):
+        return get_object_or_404(
+            BatchJob.objects.select_related(
+                "submission__phase__challenge",
+                "algorithm_image__algorithm",
+            ),
+            pk=self.kwargs["pk"],
+            submission__pk=self.kwargs["submission_pk"],
+            submission__phase__slug=self.kwargs["slug"],
+            submission__phase__challenge=self.request.challenge,
+        )
+
+    def get_permission_object(self):
+        return self.batch_job
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(batch_job=self.batch_job).prefetch_related(
+            "inputs__interface",
+            "inputs__image__files",
+            "outputs__interface",
+            "outputs__image__files",
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"batch_job": self.batch_job})
+        return context
 
 
 class BatchJobStatusDetail(ObjectPermissionRequiredMixin, DetailView):
