@@ -1103,6 +1103,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aioboto3" },
+    { name = "amass" },
     { name = "aws-xray-sdk" },
     { name = "black" },
     { name = "boto3" },
@@ -1161,7 +1162,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "amass" },
     { name = "boto3-stubs", extra = ["cloudwatch", "codebuild", "ecr", "lambda", "logs", "medical-imaging", "rds", "s3", "sagemaker", "ses"] },
     { name = "django-debug-toolbar" },
     { name = "factory-boy" },
@@ -1188,6 +1188,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aioboto3" },
+    { name = "amass" },
     { name = "aws-xray-sdk" },
     { name = "black" },
     { name = "boto3", specifier = ">1.18.8" },
@@ -1246,7 +1247,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "amass" },
     { name = "boto3-stubs", extras = ["cloudwatch", "codebuild", "ecr", "lambda", "logs", "medical-imaging", "rds", "s3", "sagemaker", "ses"] },
     { name = "django-debug-toolbar" },
     { name = "factory-boy" },

@@ -215,6 +215,41 @@ and commit the updated ``uv.lock``.
 
 The containers will need to be rebuilt after running these steps, so stop the ``make runserver`` process with ``CTRL+C`` and restart.
 
+Vendored frontend assets
+------------------------
+
+The frontend depends on a set of vendored JavaScript, CSS and font assets
+(bootstrap, jQuery, DataTables, vega, and so on). These are **not** committed
+to the repository. They are described in the ``[tool.amass]`` section of the
+root ``pyproject.toml`` and installed by amass_.
+
+When developing through docker compose (``make runserver``) you do not need to
+do anything: the assets are baked into the container image at build time (into
+``/opt/vendored``, outside ``/app`` so the development bind mount of ``./app``
+does not shadow them). Rebuild the image (``make build``) after changing the
+``[tool.amass]`` dependencies.
+
+When running the app natively (Python directly on your machine) install the
+assets yourself. Set ``VENDORED_STATIC_ROOT`` to a writable directory and
+install into the same directory:
+
+.. code-block:: console
+
+    $ export VENDORED_STATIC_ROOT=../.vendored
+    $ uv run amass install --output "$VENDORED_STATIC_ROOT"
+
+``VENDORED_STATIC_ROOT`` is read by Django (it is added to
+``STATICFILES_DIRS`` under the ``vendored`` prefix and passed to sass as a
+load path for ``base.scss``) and, via the ``--output`` flag, tells amass where
+to install. The sample ``.env`` sets ``VENDORED_STATIC_ROOT=../.vendored/`` to
+match ``STATIC_ROOT``, keeping the assets out of the source tree.
+
+To change the pinned asset versions, edit ``[tool.amass.dependencies]`` in
+``pyproject.toml``, regenerate the lock with ``uv run amass lock``, and commit
+the updated ``amass.lock``.
+
+.. _amass: https://pypi.org/project/amass/
+
 Going to Production
 -------------------
 

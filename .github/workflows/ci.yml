@@ -68,6 +68,18 @@ jobs:
               with:
                   node-version: "20"
                   cache: "npm"
+            - name: Set up Python ${{ env.PYTHON_VERSION }}
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+              with:
+                  python-version: ${{ env.PYTHON_VERSION }}
+            - name: Install the vendored frontend assets
+              # The JS tests import the vendored uppy bundle (the same UMD
+              # bundle the browser loads). These assets are not committed, so
+              # fetch them with amass. VENDORED_STATIC_ROOT is read by the jest
+              # config to resolve `vendored/...` imports and must match here.
+              env:
+                  VENDORED_STATIC_ROOT: .vendored
+              run: uv run amass install --output "$VENDORED_STATIC_ROOT"
             - name: Install dependencies
               run: npm ci
             - name: Run tests

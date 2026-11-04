@@ -61,6 +61,10 @@ dependencies = [
     "psutil",
     "django-lambda-tasks",
     "justhtml",
+    # Installs the vendored frontend assets (see [tool.amass]). A main
+    # dependency so the `amass` CLI is available in the production venv and
+    # the vendored assets can be fetched during the Docker build.
+    "amass",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
@@ -87,7 +91,6 @@ dev = [
     "sphinxcontrib-plantuml",
     "pytest-randomly",
     "sphinxcontrib-django",
-    "amass",
     "watchfiles",
     "playwright",
     "pytest-rerunfailures",
@@ -121,7 +124,13 @@ no_autofocus = true
 tabindex_no_positive = true
 
 [tool.amass]
-output = "app/grandchallenge/core/static/vendored"
+# Fallback install directory used only when `amass install` is run without the
+# `--output` flag. The canonical invocations (Dockerfile, Makefile, native
+# dev) always pass `--output` to install the assets outside the app source
+# tree; see the "Vendored frontend assets" docs. This value is kept so that a
+# bare `amass install` from the repo root still produces a usable, git-ignored
+# tree for quick local experiments.
+output = ".vendored"
 
 [tool.amass.dependencies]
 htmx = { version = "==1.7.0", include = ["htmx(.min)?.js(.map)?"] }

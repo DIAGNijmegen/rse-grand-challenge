@@ -18,9 +18,9 @@ $pagination-bg: $blue !default;
 $pagination-hover-bg: darken($blue, 15%) !default;
 $pagination-disabled-bg: lighten($blue, 15%) !default;
 
-@import "../vendored/bootswatch/dist/flatly/variables";
-@import "../vendored/bootstrap/scss/bootstrap";
-@import "../vendored/bootswatch/dist/flatly/bootswatch";
+@import "bootswatch/dist/flatly/variables";
+@import "bootstrap/scss/bootstrap";
+@import "bootswatch/dist/flatly/bootswatch";
 @import "datatables";
 
 // Fix https://github.com/DIAGNijmegen/rse-grand-challenge/issues/1201
