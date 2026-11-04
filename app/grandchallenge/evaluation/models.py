@@ -1741,6 +1741,28 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             # No active image, so nothing to do to evaluate with it
             return True
 
+    @property
+    def is_illegal_review_transition(self):
+        return (
+            self.has_changed("status")
+            and self.status
+            in {
+                SubmissionStatusChoices.ACCEPTED,
+                SubmissionStatusChoices.REJECTED,
+            }
+            and self.initial_value("status")
+            != SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+    def clean(self):
+        super().clean()
+
+        if self.is_illegal_review_transition:
+            raise ValidationError(
+                "A submission can only be accepted or rejected while it is "
+                "pending review."
+            )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -1751,6 +1773,12 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             ):
                 if self.has_changed(field):
                     raise ValueError(f"{field} cannot be changed")
+
+            if self.is_illegal_review_transition:
+                raise ValueError(
+                    "Submission can only be accepted or rejected from "
+                    "pending review."
+                )
 
         if (
             self.has_changed("status")
@@ -1988,9 +2016,9 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         )
 
     @property
-    def status_update_url(self) -> str:
+    def accept_url(self) -> str:
         return reverse(
-            "evaluation:submission-status-update",
+            "evaluation:submission-accept",
             kwargs={
                 "pk": self.pk,
                 "challenge_short_name": self.phase.challenge.short_name,

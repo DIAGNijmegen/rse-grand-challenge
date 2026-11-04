@@ -1,4 +1,4 @@
-<form hx-post="{{ object.status_update_url }}"
+<form hx-post="{{ object.accept_url }}"
       hx-target="#status-{{ object.pk }}"
       hx-select="#status-{{ object.pk }}"
       hx-swap="outerHTML"
@@ -13,9 +13,9 @@
 </form>
 <button hx-get="{{ object.reject_url }}"
         hx-target="#status-{{ object.pk }}"
-        hx-swap="innerHTML"
+        hx-select="#status-{{ object.pk }}"
+        hx-swap="outerHTML"
         class="btn btn-danger ml-0"
-        title="Reject"
->
+        title="Reject">
     <i class="fas fa-fw fa-times-circle mr-1"></i>Reject
 </button>

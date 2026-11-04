@@ -3575,8 +3575,8 @@ def test_batch_job_list_scoped_to_submission(client):
 
 
 @pytest.mark.django_db
-class TestSubmissionStatusViews:
-    def test_status_update_reject_sets_status_and_message(self, client):
+class TestSubmissionStatusUpdateViews:
+    def test_reject_sets_status_and_message(self, client):
         admin = UserFactory()
         phase = PhaseFactory()
         phase.challenge.add_admin(admin)
@@ -3585,7 +3585,7 @@ class TestSubmissionStatusViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-status-update",
+            viewname="evaluation:submission-reject",
             client=client,
             method=client.post,
             reverse_kwargs={
@@ -3605,7 +3605,7 @@ class TestSubmissionStatusViews:
         assert submission.status == SubmissionStatusChoices.REJECTED
         assert submission.status_message == "Not good enough"
 
-    def test_status_update_accept_sets_status_and_creates_evaluation(
+    def test_accept_sets_status_and_creates_evaluation(
         self, client, django_capture_on_commit_callbacks
     ):
         admin = UserFactory()
@@ -3620,7 +3620,7 @@ class TestSubmissionStatusViews:
         ) as mocked_create_evaluation:
             with django_capture_on_commit_callbacks(execute=True):
                 response = get_view_for_user(
-                    viewname="evaluation:submission-status-update",
+                    viewname="evaluation:submission-accept",
                     client=client,
                     method=client.post,
                     reverse_kwargs={
@@ -3631,7 +3631,6 @@ class TestSubmissionStatusViews:
                     user=admin,
                     data={
                         "status": SubmissionStatusChoices.ACCEPTED,
-                        "status_message": "",
                     },
                 )
 
@@ -3648,7 +3647,7 @@ class TestSubmissionStatusViews:
             [SubmissionStatusChoices.PENDING_REVIEW]
         ),
     )
-    def test_status_update_not_pending_returns_404(
+    def test_accept_view_not_pending_returns_404(
         self, client, django_capture_on_commit_callbacks, status
     ):
         admin = UserFactory()
@@ -3658,7 +3657,7 @@ class TestSubmissionStatusViews:
 
         with django_capture_on_commit_callbacks(execute=True):
             response = get_view_for_user(
-                viewname="evaluation:submission-status-update",
+                viewname="evaluation:submission-accept",
                 client=client,
                 method=client.post,
                 reverse_kwargs={
@@ -3677,7 +3676,42 @@ class TestSubmissionStatusViews:
         submission.refresh_from_db()
         assert submission.status == status
 
-    def test_status_update_forbidden_for_participant(self, client):
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [
+                SubmissionStatusChoices.ACCEPTED,
+            ]
+        ),
+    )
+    def test_accept_view_status_validation(self, client, status):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-accept",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": status,
+            },
+        )
+
+        assert response.status_code == 200
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+
+    def test_accept_view_forbidden_for_participant(self, client):
         participant = UserFactory()
         phase = PhaseFactory()
         phase.challenge.add_participant(participant)
@@ -3688,7 +3722,7 @@ class TestSubmissionStatusViews:
         )
 
         response = get_view_for_user(
-            viewname="evaluation:submission-status-update",
+            viewname="evaluation:submission-accept",
             client=client,
             method=client.post,
             reverse_kwargs={
@@ -3698,15 +3732,13 @@ class TestSubmissionStatusViews:
             },
             user=participant,
             data={
-                "status": SubmissionStatusChoices.REJECTED,
-                "status_message": "nope",
+                "status": SubmissionStatusChoices.ACCEPTED,
             },
         )
 
         assert response.status_code == 403
         submission.refresh_from_db()
         assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
-        assert submission.status_message == ""
 
     def test_reject_view_renders_for_admin(self, client):
         admin = UserFactory()
@@ -3728,7 +3760,7 @@ class TestSubmissionStatusViews:
         )
 
         assert response.status_code == 200
-        assert submission.status_update_url in str(response.content)
+        assert submission.reject_url in str(response.content)
         assert "status_message" in str(response.content)
 
     @pytest.mark.parametrize(
@@ -3778,3 +3810,39 @@ class TestSubmissionStatusViews:
         )
 
         assert response.status_code == 403
+
+    @pytest.mark.parametrize(
+        "status",
+        set(SubmissionStatusChoices).difference(
+            [
+                SubmissionStatusChoices.REJECTED,
+            ]
+        ),
+    )
+    def test_reject_view_status_validation(self, client, status):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        response = get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": status,
+                "status_message": "some message",
+            },
+        )
+
+        assert response.status_code == 200
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW

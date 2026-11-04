@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
-from crispy_forms.bootstrap import Tab, TabHolder
+from crispy_forms.bootstrap import StrictButton, Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, ButtonHolder, Layout, Submit
 from django import forms
@@ -682,6 +682,95 @@ class SubmissionForm(
             "algorithm_model",
         )
         widgets = {"creator": forms.HiddenInput, "phase": forms.HiddenInput}
+
+
+class SubmissionAcceptForm(SaveFormInitMixin, forms.ModelForm):
+    class Meta:
+        model = Submission
+        fields = ("status",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        status = self.Meta.model.StatusChoices.ACCEPTED
+
+        self.fields["status"].choices = [(status.value, status.label)]
+        self.initial["status"] = status.value
+        self.fields["status"].widget = HiddenInput()
+
+        self.helper = FormHelper(self)
+        self.helper.include_media = False
+        self.helper.form_tag = True
+        self.helper.attrs = {
+            "hx-post": self.instance.accept_url,
+            "hx-target": f"#status-{self.instance.pk}",
+            "hx-select": f"#status-{self.instance.pk}",
+            "hx-swap": "outerHTML",
+        }
+        self.helper.layout.append(
+            StrictButton(
+                "Cancel",
+                type="button",
+                css_class="btn btn-secondary ml-0 d-inline",
+                hx_get=self.instance.status_url,
+                hx_target=f"#status-{self.instance.pk}",
+                hx_select=f"#status-{self.instance.pk}",
+                hx_swap="outerHTML",
+            )
+        )
+        self.helper.layout.append(
+            StrictButton(
+                '<i class="fas fa-fw fa-check-circle mr-1"></i>Accept',
+                type="submit",
+                css_class="btn btn-success ml-0",
+            )
+        )
+
+
+class SubmissionRejectForm(SaveFormInitMixin, forms.ModelForm):
+    class Meta:
+        model = Submission
+        fields = ("status", "status_message")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        status = self.Meta.model.StatusChoices.REJECTED
+
+        self.fields["status"].choices = [(status.value, status.label)]
+        self.initial["status"] = status.value
+        self.fields["status"].widget = HiddenInput()
+
+        self.fields["status_message"].required = True
+        self.fields["status_message"].label = "Reason for rejection"
+
+        self.helper = FormHelper(self)
+        self.helper.include_media = False
+        self.helper.form_tag = True
+        self.helper.attrs = {
+            "hx-post": self.instance.reject_url,
+            "hx-target": f"#status-{self.instance.pk}",
+            "hx-select": f"#status-{self.instance.pk}",
+            "hx-swap": "outerHTML",
+        }
+        self.helper.layout.append(
+            StrictButton(
+                "Cancel",
+                type="button",
+                css_class="btn btn-secondary ml-0 d-inline",
+                hx_get=self.instance.status_url,
+                hx_target=f"#status-{self.instance.pk}",
+                hx_select=f"#status-{self.instance.pk}",
+                hx_swap="outerHTML",
+            )
+        )
+        self.helper.layout.append(
+            StrictButton(
+                '<i class="fas fa-fw fa-times-circle mr-1"></i>Reject',
+                type="submit",
+                css_class="btn btn-danger ml-0",
+            )
+        )
 
 
 class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):

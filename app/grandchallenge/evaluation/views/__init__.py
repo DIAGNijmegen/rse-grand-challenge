@@ -15,7 +15,10 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Prefetch
-from django.http import FileResponse, Http404
+from django.http import (
+    FileResponse,
+    Http404,
+)
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -64,7 +67,9 @@ from grandchallenge.evaluation.forms import (
     PhaseAlgorithmInterfaceDeleteForm,
     PhaseCreateForm,
     PhaseUpdateForm,
+    SubmissionAcceptForm,
     SubmissionForm,
+    SubmissionRejectForm,
 )
 from grandchallenge.evaluation.models import (
     BatchJob,
@@ -485,17 +490,7 @@ class SubmissionStatusDetail(ObjectPermissionRequiredMixin, DetailView):
     raise_exception = True
 
 
-class SubmissionStatusUpdate(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    UpdateView,
-):
-    model = Submission
-    fields = ("status", "status_message")
-    permission_required = "change_challenge"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
+class SubmissionPendingReviewMixin:
     def get_object(self, queryset=None):
         return get_object_or_404(
             self.model,
@@ -505,8 +500,19 @@ class SubmissionStatusUpdate(
             status=self.model.StatusChoices.PENDING_REVIEW,
         )
 
-    def get_permission_object(self):
-        return self.request.challenge
+
+class SubmissionAccept(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SubmissionPendingReviewMixin,
+    UpdateView,
+):
+    model = Submission
+    template_name_suffix = "_status_update_form"
+    permission_required = "review_submission"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+    form_class = SubmissionAcceptForm
 
     def get_success_url(self):
         return self.object.status_url
@@ -515,25 +521,18 @@ class SubmissionStatusUpdate(
 class SubmissionReject(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    DetailView,
+    SubmissionPendingReviewMixin,
+    UpdateView,
 ):
     model = Submission
-    template_name_suffix = "_confirm_reject"
-    permission_required = "change_challenge"
+    template_name_suffix = "_status_update_form"
+    permission_required = "review_submission"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+    form_class = SubmissionRejectForm
 
-    def get_object(self, queryset=None):
-        return get_object_or_404(
-            self.model,
-            phase__challenge=self.request.challenge,
-            phase__slug=self.kwargs["slug"],
-            pk=self.kwargs["pk"],
-            status=self.model.StatusChoices.PENDING_REVIEW,
-        )
-
-    def get_permission_object(self):
-        return self.request.challenge
+    def get_success_url(self):
+        return self.object.status_url
 
 
 class TeamContextMixin:
