@@ -10,6 +10,7 @@ import pytest
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from django.utils.html import format_html
 from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
@@ -35,6 +36,7 @@ from grandchallenge.invoices.models import (
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
+from grandchallenge.notifications.models import Notification
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import (
@@ -2743,6 +2745,79 @@ class TestSubmissionCreationWithExtraInputs:
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
+    def test_creator_is_notified_when_submission_fails_input_validation(
+        self,
+        client,
+        settings,
+        django_capture_on_commit_callbacks,
+        algorithm_phase_with_multiple_inputs,
+    ):
+        settings.LAMBDA_TASKS_EAGER = True
+
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
+            [
+                algorithm_phase_with_multiple_inputs.ci_json_file,
+            ]
+        )
+
+        file_upload = UserUploadFactory(
+            filename="file.json",
+            creator=algorithm_phase_with_multiple_inputs.admin,
+        )
+        presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
+        response = put(presigned_urls["1"], data=b'{"Foo": "bar"}')
+        file_upload.complete_multipart_upload(
+            parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+        )
+        file_upload.save()
+        creator = algorithm_phase_with_multiple_inputs.admin
+
+        Notification.objects.all().delete()
+
+        response = self.create_submission(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_phase_with_multiple_inputs.algorithm,
+            user=creator,
+            phase=algorithm_phase_with_multiple_inputs.phase,
+            extra_inputs={
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_json_file.slug,
+                    data=file_upload.pk,
+                ),
+            },
+        )
+        assert response.status_code == 200
+
+        submission = Submission.objects.get()
+        assert submission.status == submission.StatusChoices.FAILED
+        assert (
+            submission.status_message
+            == "One or more of the inputs failed validation."
+        )
+
+        notification = Notification.objects.get()
+        assert notification.user == creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
+
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+
+        rendered = notification.print_notification(user=creator)
+        assert (
+            f"Your {submission_string}  to {challenge_string} failed."
+            in rendered
+        )
+        assert "One or more of the inputs failed validation." in rendered
+
 
 @pytest.mark.django_db
 def test_parent_phase_algorithm_interfaces_locked(client):
@@ -3641,6 +3716,52 @@ class TestSubmissionStatusUpdateViews:
             submission_pk=submission.pk
         )
 
+    def test_accept_sends_notification(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+        expected_message = "was accepted"
+        Notification.objects.all().delete()
+
+        get_view_for_user(
+            viewname="evaluation:submission-accept",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": SubmissionStatusChoices.ACCEPTED,
+            },
+        )
+
+        assert Notification.objects.count() == 1
+        notification = Notification.objects.get()
+        assert notification.user == submission.creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+
+        rendered = notification.print_notification(user=submission.creator)
+        assert (
+            f"Your {submission_string}  to {challenge_string} {expected_message}."
+            in rendered
+        )
+
     @pytest.mark.parametrize(
         "status",
         set(SubmissionStatusChoices).difference(
@@ -3739,6 +3860,54 @@ class TestSubmissionStatusUpdateViews:
         assert response.status_code == 403
         submission.refresh_from_db()
         assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+
+    def test_reject_sends_notification(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+        expected_message = "was rejected"
+        Notification.objects.all().delete()
+
+        get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": SubmissionStatusChoices.REJECTED,
+                "status_message": "Not good enough",
+            },
+        )
+
+        assert Notification.objects.count() == 1
+        notification = Notification.objects.get()
+        assert notification.user == submission.creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+
+        rendered = notification.print_notification(user=submission.creator)
+        assert (
+            f"Your {submission_string}  to {challenge_string} {expected_message}."
+            in rendered
+        )
+        assert "Not good enough" in rendered
 
     def test_reject_view_renders_for_admin(self, client):
         admin = UserFactory()

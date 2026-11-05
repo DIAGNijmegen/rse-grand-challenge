@@ -45,6 +45,8 @@ class NotificationTypeChoices(models.TextChoices):
     REQUEST_UPDATE = "REQUEST-UPDATE", _("Request update")
     NEW_ADMIN = "NEW-ADMIN", _("New admin")
     EVALUATION_STATUS = "EVALUATION-STATUS", _("Evaluation status update")
+    SUBMISSION_STATUS = "SUBMISSION-STATUS", _("Submission status update")
+    SUBMISSION_PENDING = "SUBMISSION_PENDING", _("Submission pending review")
     MISSING_METHOD = "MISSING-METHOD", _("Missing method")
     JOB_STATUS = "JOB-STATUS", _("Job status update")
     IMAGE_IMPORT_STATUS = "IMAGE-IMPORT", _("Image import status update")
@@ -218,6 +220,20 @@ class Notification(UUIDModel):
             if actor and is_following(actor, target):
                 receivers.add(actor)
             return receivers
+        elif kind == NotificationTypeChoices.SUBMISSION_PENDING:
+            receivers = {
+                admin
+                for admin in target.challenge.get_admins()
+                if is_following(admin, target)
+            }
+            if actor and is_following(actor, target):
+                receivers.add(actor)
+            return receivers
+        elif kind == NotificationTypeChoices.SUBMISSION_STATUS:
+            if actor and is_following(actor, target):
+                return {actor}
+            else:
+                return set()
         elif kind == NotificationTypeChoices.MISSING_METHOD:
             return {
                 admin
@@ -427,6 +443,44 @@ class Notification(UUIDModel):
                     "here</a>.</span>",
                     self.description,
                 ),
+            )
+        elif self.type in {
+            NotificationTypeChoices.SUBMISSION_STATUS,
+            NotificationTypeChoices.SUBMISSION_PENDING,
+        }:
+            if self.actor != user:
+                the_or_your = "The"
+                addition = format_html(
+                    "from {user_profile}",
+                    user_profile=user_profile_link(self.action_object.creator),
+                )
+            else:
+                the_or_your = "Your"
+                addition = ""
+            if self.description:
+                description = format_html(
+                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    'mx-2">| {}</span>',
+                    self.description,
+                )
+            else:
+                description = ""
+            return format_html(
+                "{the_or_your} {action_object} {addition} to {target} {message}. {description}",
+                the_or_your=the_or_your,
+                action_object=format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.get_absolute_url(),
+                    "submission",
+                ),
+                addition=addition,
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.challenge.get_absolute_url(),
+                    self.target.challenge.short_name,
+                ),
+                message=self.message,
+                description=description,
             )
         elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
             return format_html(

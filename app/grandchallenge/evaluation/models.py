@@ -1800,11 +1800,11 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                     send_action=False,
                 )
 
-        if (
-            self.has_changed("status")
-            and self.status == SubmissionStatusChoices.ACCEPTED
-        ):
-            create_evaluation.execute_on_commit(submission_pk=self.pk)
+        if self.has_changed("status"):
+            self.send_notification()
+
+            if self.status == SubmissionStatusChoices.ACCEPTED:
+                create_evaluation.execute_on_commit(submission_pk=self.pk)
 
     @property
     def is_editable(self):
@@ -1877,9 +1877,45 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         if status_message:
             self.status_message = status_message
 
-        # TODO [submission_gate] send notification to participant or organizer
-
         self.save()
+
+    def send_notification(self):
+        if self.status == self.StatusChoices.PENDING_REVIEW:
+            Notification.send(
+                kind=NotificationTypeChoices.SUBMISSION_PENDING,
+                actor=self.creator,
+                message="is pending review",
+                action_object=self,
+                target=self.phase,
+            )
+        elif self.status == self.StatusChoices.FAILED:
+            message = self.get_status_display().lower()
+            Notification.send(
+                kind=NotificationTypeChoices.SUBMISSION_STATUS,
+                actor=self.creator,
+                message=message,
+                action_object=self,
+                target=self.phase,
+                description=self.status_message,
+            )
+        elif (
+            self.status
+            in {
+                self.StatusChoices.ACCEPTED,
+                self.StatusChoices.REJECTED,
+            }
+            and self.initial_value("status")
+            == self.StatusChoices.PENDING_REVIEW
+        ):
+            message = f"was {self.get_status_display().lower()}"
+            Notification.send(
+                kind=NotificationTypeChoices.SUBMISSION_STATUS,
+                actor=self.creator,
+                message=message,
+                action_object=self,
+                target=self.phase,
+                description=self.status_message,
+            )
 
     def create_evaluation(self):
         if not self.additional_inputs_complete:
