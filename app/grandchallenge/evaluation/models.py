@@ -2543,12 +2543,14 @@ class BatchJob(ComponentJob):
 
     @property
     def output_parsing_complete(self):
-        unparsed_statuses = [
+        incomplete_statuses = [
             status
-            for status in BatchJobTaskStatusChoices.values
-            if status != BatchJobTaskStatusChoices.PARSED
+            for status in BatchJobTaskParsingStatusChoices.values
+            if status != BatchJobTaskParsingStatusChoices.COMPLETED
         ]
-        return not self.tasks.filter(status__in=unparsed_statuses).exists()
+        return not self.tasks.filter(
+            parsing_status__in=incomplete_statuses
+        ).exists()
 
     def schedule_output_parsing(self):
         from grandchallenge.components.tasks import (
@@ -2603,20 +2605,21 @@ class BatchJobGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(BatchJob, on_delete=models.CASCADE)
 
 
-class BatchJobTaskStatusChoices(models.TextChoices):
+class BatchJobTaskParsingStatusChoices(models.TextChoices):
     PENDING = "PENDING", "Pending"
-    PARSED = "PARSED", "Parsed"
+    COMPLETED = "COMPLETED", "Completed"
     FAILED = "FAILED", "Failed"
+    SKIPPED = "SKIPPED", "Skipped"
 
 
 class BatchJobTask(UUIDModel):
     batch_job = models.ForeignKey(
         BatchJob, on_delete=models.CASCADE, related_name="tasks"
     )
-    status = models.CharField(
-        max_length=7,
-        choices=BatchJobTaskStatusChoices,
-        default=BatchJobTaskStatusChoices.PENDING,
+    parsing_status = models.CharField(
+        max_length=9,
+        choices=BatchJobTaskParsingStatusChoices,
+        default=BatchJobTaskParsingStatusChoices.PENDING,
     )
     algorithm_interface = models.ForeignKey(
         AlgorithmInterface, on_delete=models.PROTECT
@@ -2662,16 +2665,15 @@ class BatchJobTask(UUIDModel):
         ordering = ("created",)
         indexes = [
             models.Index(
-                fields=["batch_job", "status"],
-                name="bjtask_batch_job_status_idx",
+                fields=["batch_job", "parsing_status"],
             ),
         ]
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(
-                    status__in=BatchJobTaskStatusChoices.values
+                    parsing_status__in=BatchJobTaskParsingStatusChoices.values
                 ),
-                name="%(app_label)s_%(class)s_status_valid",
+                name="%(app_label)s_%(class)s_parsing_status_valid",
             ),
         ]
 

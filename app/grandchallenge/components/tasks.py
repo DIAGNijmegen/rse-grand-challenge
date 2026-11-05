@@ -1173,7 +1173,7 @@ def parse_outputs_for_batch_job_task(*, batch_job_task_pk: str | UUID):
     """
     from grandchallenge.evaluation.models import (
         BatchJobTask,
-        BatchJobTaskStatusChoices,
+        BatchJobTaskParsingStatusChoices,
     )
 
     with check_lock_acquired():
@@ -1186,13 +1186,15 @@ def parse_outputs_for_batch_job_task(*, batch_job_task_pk: str | UUID):
             .get(pk=batch_job_task_pk)
         )
 
-    if task.status != BatchJobTaskStatusChoices.PENDING:
+    if task.parsing_status != BatchJobTaskParsingStatusChoices.PENDING:
         return {
-            "status": f"Skipping due to task status {task.get_status_display()}"
+            "status": f"Skipping due to task parsing status {task.get_parsing_status_display()}"
         }
 
     job = task.batch_job
     if job.status != job.PARSING:
+        task.parsing_status = BatchJobTaskParsingStatusChoices.SKIPPED
+        task.save(update_fields=["parsing_status"])
         return {
             "status": f"Skipping due to job status {job.get_status_display()}"
         }
@@ -1206,8 +1208,8 @@ def parse_outputs_for_batch_job_task(*, batch_job_task_pk: str | UUID):
             )
             task.outputs.add(value)
         except ComponentException as error:
-            task.status = BatchJobTaskStatusChoices.FAILED
-            task.save(update_fields=["status"])
+            task.parsing_status = BatchJobTaskParsingStatusChoices.FAILED
+            task.save(update_fields=["parsing_status"])
             # Marking the job as failed requires a lock on the job, which
             # we do not want to take in this task, so delegate it.
             mark_job_as_failed.execute_on_commit(
@@ -1217,8 +1219,8 @@ def parse_outputs_for_batch_job_task(*, batch_job_task_pk: str | UUID):
             )
             return {"status": f"Handled exception: {error}"}
         except Exception as error:
-            task.status = BatchJobTaskStatusChoices.FAILED
-            task.save(update_fields=["status"])
+            task.parsing_status = BatchJobTaskParsingStatusChoices.FAILED
+            task.save(update_fields=["parsing_status"])
             mark_job_as_failed.execute_on_commit(
                 **job.task_kwargs,
                 error_message=SystemErrorMessages.UNEXPECTED_ERROR,
@@ -1226,8 +1228,8 @@ def parse_outputs_for_batch_job_task(*, batch_job_task_pk: str | UUID):
             task_logger.error(str(error), exc_info=True)
             return {"status": f"Unexpected error: {error}"}
 
-    task.status = BatchJobTaskStatusChoices.PARSED
-    task.save(update_fields=["status"])
+    task.parsing_status = BatchJobTaskParsingStatusChoices.COMPLETED
+    task.save(update_fields=["parsing_status"])
 
     return {"status": "Task outputs parsed"}
 
@@ -1247,20 +1249,24 @@ def finalize_batch_job_parsing(*, batch_job_pk: str | UUID):
     from grandchallenge.evaluation.models import (
         BatchJob,
         BatchJobTask,
-        BatchJobTaskStatusChoices,
+        BatchJobTaskParsingStatusChoices,
     )
 
     tasks = BatchJobTask.objects.filter(batch_job_id=batch_job_pk)
 
-    if tasks.filter(status=BatchJobTaskStatusChoices.FAILED).exists():
+    if tasks.filter(
+        parsing_status__in=[
+            BatchJobTaskParsingStatusChoices.FAILED,
+            BatchJobTaskParsingStatusChoices.SKIPPED,
+        ]
+    ).exists():
         return {
-            "status": "A batch job task failed parsing"
+            "status": "A batch job task failed parsing or was skipped. No need to continue."
         }  # stop, don't retry
 
     if tasks.filter(
-        status=BatchJobTaskStatusChoices.PENDING,
+        parsing_status=BatchJobTaskParsingStatusChoices.PENDING,
     ).exists():
-        # no tasks have failed and there are still tasks to parse
         raise RetryStep("Not all batch job tasks have been parsed")
 
     with check_lock_acquired():
