@@ -1918,11 +1918,6 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             )
 
     def create_evaluation(self):
-        if not self.additional_inputs_complete:
-            raise RuntimeError(
-                "Additional inputs are required to create an evaluation for this phase"
-            )
-
         if self.phase.external_evaluation:
             evaluation, created = Evaluation.objects.get_or_create(
                 submission=self,
