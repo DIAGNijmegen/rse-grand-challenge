@@ -10,6 +10,7 @@ import pytest
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from django.utils.html import format_html
 from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
@@ -35,6 +36,7 @@ from grandchallenge.invoices.models import (
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
+from grandchallenge.notifications.models import Notification
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import (
@@ -3641,6 +3643,51 @@ class TestSubmissionStatusUpdateViews:
             submission_pk=submission.pk
         )
 
+    def test_accept_sends_notification(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+        expected_message = "was accepted"
+        Notification.objects.all().delete()
+
+        get_view_for_user(
+            viewname="evaluation:submission-accept",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": SubmissionStatusChoices.ACCEPTED,
+            },
+        )
+
+        assert Notification.objects.count() == 1
+        notification = Notification.objects.get()
+        assert submission.creator == notification.user
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+
+        notification_print = notification.print_notification(
+            user=submission.creator
+        )
+        assert (
+            f"Your {submission_string}  to {challenge_string} {expected_message}."
+            in notification_print
+        )
+
     @pytest.mark.parametrize(
         "status",
         set(SubmissionStatusChoices).difference(
@@ -3739,6 +3786,53 @@ class TestSubmissionStatusUpdateViews:
         assert response.status_code == 403
         submission.refresh_from_db()
         assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+
+    def test_reject_sends_notification(self, client):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+        expected_message = "was rejected"
+        Notification.objects.all().delete()
+
+        get_view_for_user(
+            viewname="evaluation:submission-reject",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            user=admin,
+            data={
+                "status": SubmissionStatusChoices.REJECTED,
+                "status_message": "Not good enough",
+            },
+        )
+
+        assert Notification.objects.count() == 1
+        notification = Notification.objects.get()
+        assert submission.creator == notification.user
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+
+        notification_print = notification.print_notification(
+            user=submission.creator
+        )
+        assert (
+            f"Your {submission_string}  to {challenge_string} {expected_message}."
+            in notification_print
+        )
+        assert "Not good enough" in notification_print
 
     def test_reject_view_renders_for_admin(self, client):
         admin = UserFactory()
