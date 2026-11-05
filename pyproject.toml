@@ -61,7 +61,7 @@ dependencies = [
     "justhtml",
     # Django Lambda Tasks with OpenTelemetry tracing
     "django-lambda-tasks[otel]",
-    "opentelemetry-instrumentation-django",
+    "opentelemetry-instrumentation-django[asgi]",
     # Installs the vendored frontend assets (see [tool.amass]). A main
     # dependency so the `amass` CLI is available in the production venv and
     # the vendored assets can be fetched during the Docker build. >=0.5.0 for
@@ -108,10 +108,10 @@ exclude-newer = "7 days"
 # amass 0.5.0 (the first release with `amass install --output`) was published
 # more recently than the global 7-day cutoff above; override the cutoff for
 # this package only so it can be resolved.
-# django-lambda-tasks 0.9.0 (the first release with the `otel` extra and the
-# OpenTelemetry tracing setup) was likewise published inside the 7-day window;
-# override the cutoff for it too.
-exclude-newer-package = { amass = "2026-11-05T00:00:00Z", django-lambda-tasks = "2026-11-05T13:00:00Z" }
+# django-lambda-tasks 0.9.1 (library span instrumentation for psycopg,
+# botocore, requests, httpx and redis in the `otel` extra) was likewise
+# published inside the 7-day window; override the cutoff for it too.
+exclude-newer-package = { amass = "2026-11-05T00:00:00Z", django-lambda-tasks = "2026-11-05T15:00:00Z" }
 
 [tool.isort]
 profile = "black"
