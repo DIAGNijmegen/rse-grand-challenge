@@ -26,7 +26,7 @@ from django.db import models
 from django.db.models import IntegerChoices, QuerySet, TextChoices
 from django.forms import ModelChoiceField
 from django.template.defaultfilters import truncatewords
-from django.utils.functional import cached_property
+from django.utils.functional import SimpleLazyObject, cached_property
 from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
@@ -1856,7 +1856,11 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "use_warm_pool": self.use_warm_pool,
             "signing_key": self.signing_key,
             "api_method": self.container.api_method,
-            "task_definitions": self.inference_task_definitions,
+            # Evaluated lazily so that consumers which do not use the task
+            # definitions (e.g. output parsing) do not pay to build them
+            "task_definitions": SimpleLazyObject(
+                lambda: self.inference_task_definitions
+            ),
         }
 
     def get_executor(self, *, backend):
