@@ -37,7 +37,6 @@ dependencies = [
     "Pillow",
     "django-activity-stream",
     "django-permissions-policy",
-    "aws-xray-sdk",
     "django-deprecate-fields",
     "django-add-default-value",
     "Pygments",
