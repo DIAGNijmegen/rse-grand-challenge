@@ -2606,6 +2606,7 @@ class BatchJobGroupObjectPermission(GroupObjectPermissionBase):
 class BatchJobTaskStatusChoices(models.TextChoices):
     PENDING = "PENDING", "Pending"
     PARSED = "PARSED", "Parsed"
+    FAILED = "FAILED", "Failed"
 
 
 class BatchJobTask(UUIDModel):

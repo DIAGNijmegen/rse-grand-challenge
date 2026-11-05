@@ -1206,6 +1206,8 @@ def parse_outputs_for_batch_job_task(*, batch_job_task_pk: str | UUID):
             )
             task.outputs.add(value)
         except ComponentException as error:
+            task.status = BatchJobTaskStatusChoices.FAILED
+            task.save(update_fields=["status"])
             # Marking the job as failed requires a lock on the job, which
             # we do not want to take in this task, so delegate it.
             mark_job_as_failed.execute_on_commit(
@@ -1215,6 +1217,8 @@ def parse_outputs_for_batch_job_task(*, batch_job_task_pk: str | UUID):
             )
             return {"status": f"Handled exception: {error}"}
         except Exception as error:
+            task.status = BatchJobTaskStatusChoices.FAILED
+            task.save(update_fields=["status"])
             mark_job_as_failed.execute_on_commit(
                 **job.task_kwargs,
                 error_message=SystemErrorMessages.UNEXPECTED_ERROR,
@@ -1237,24 +1241,30 @@ def finalize_batch_job_parsing(*, batch_job_pk: str | UUID):
     """Mark a batch job as successful once all of its tasks are parsed.
 
     Scheduled once alongside the per-task parse tasks. Reschedules itself
-    until every task has been parsed, then verifies and sets the status.
+    while any task is still pending, then locks the job to verify and set
+    the status.
     """
-    model = apps.get_model(app_label="evaluation", model_name="batchjob")
+    from grandchallenge.evaluation.models import (
+        BatchJob,
+        BatchJobTask,
+        BatchJobTaskStatusChoices,
+    )
 
-    # Cheap, unlocked checks first so that we only take the lock once all
-    # tasks have actually been parsed.
-    job = model.objects.get(pk=batch_job_pk)
+    tasks = BatchJobTask.objects.filter(batch_job_id=batch_job_pk)
 
-    if job.status != job.PARSING:
+    if tasks.filter(status=BatchJobTaskStatusChoices.FAILED).exists():
         return {
-            "status": f"Skipping due to job status {job.get_status_display()}"
-        }
+            "status": "A batch job task failed parsing"
+        }  # stop, don't retry
 
-    if not job.output_parsing_complete:
+    if tasks.filter(
+        status=BatchJobTaskStatusChoices.PENDING,
+    ).exists():
+        # no tasks have failed and there are still tasks to parse
         raise RetryStep("Not all batch job tasks have been parsed")
 
     with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True, no_key=True).get(
+        job = BatchJob.objects.select_for_update(nowait=True, no_key=True).get(
             pk=batch_job_pk
         )
 
