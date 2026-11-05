@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+{% load humanize %}
+{% load static %}
+{% load evaluation_extras %}
+{% load copy_button %}
+{% load guardian_tags %}
+{% load user_profile_link from profiles %}
+
+{% block title %}
+    Cancel {{ object.pk }} - Submissions - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Submissions</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ object.get_absolute_url }}">{{ object.pk }}</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Cancel submission
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    {% if not object.phase.public %}
+        <div class="alert alert-danger">The phase that this submission belongs to, is no longer active. </div>
+    {% endif %}
+
+    <h2>Cancel Submission {{ object.pk }}</h2>
+
+    <dl>
+        <dt>Challenge</dt>
+        <dd>
+            <a href="{{ object.phase.challenge.get_absolute_url }}">{{ object.phase.challenge.short_name }}</a>
+        </dd>
+
+        <dt>Phase</dt>
+        <dd>{{ object.phase.title }}</dd>
+
+        <dt>Creator</dt>
+        <dd>
+            {{ object.creator|user_profile_link }}
+        </dd>
+
+        {% if object.status_message %}
+            <dt>Status Message</dt>
+            <dd>
+                {{ object.status_message }}
+            </dd>
+        {% endif %}
+
+        {% if object.algorithm_image %}
+            <dt>Algorithm</dt>
+            <dd>
+                <a href="{{ object.algorithm_image.get_absolute_url }}">
+                    Container for {{ object.algorithm_image.algorithm }} uploaded
+                    by {{ object.algorithm_image.creator }} {{ object.algorithm_image.created|naturaltime }}
+                </a>
+            </dd>
+        {% endif %}
+
+        {% if object.comment %}
+            <dt>Comment</dt>
+            <dd>
+                {{ object.comment }}
+            </dd>
+        {% endif %}
+
+        {% if object.phase.show_supplementary_url or "change_challenge" in challenge_perms %}
+            {% if object.supplementary_url %}
+                <dt>Supplementary URL ({{ object.phase.supplementary_url_label }})</dt>
+                <dd>
+                    <a href="{{ object.supplementary_url }}" target="_blank">
+                        <i class="fas fa-link"></i> {{ object.supplementary_url }}
+                    </a>
+                </dd>
+            {% endif %}
+        {% endif %}
+
+        {% if object.phase.show_supplementary_file_link or "change_challenge" in challenge_perms %}
+            {% if object.supplementary_file %}
+                <dt>Supplementary File ({{ object.phase.supplementary_file_label }})</dt>
+                <dd>
+                    <a href="{{ object.supplementary_file.url }}"><i class="fa fa-file"></i> {{ object.supplementary_file.name }}</a>
+                </dd>
+            {% endif %}
+        {% endif %}
+
+        {% if object.predictions_file %}
+            <dt>Submission File</dt>
+            <dd>
+                <a href="{{ object.predictions_file.url }}"><i class="fa fa-download"></i> {{ object.predictions_file.name }}</a>
+            </dd>
+        {% endif %}
+
+        <div class="mt-4">
+            <p>
+                This submission is pending review. Until the challenge organizer has reviewed the submission and
+                either accepted or rejected it, the submission can be cancelled. A pending submission needs to be
+                cancelled if you wish to update the algorithm image or model for a new submission. Please note that
+                cancelling a submission cannot be undone. A cancelled submission cannot be re-submitted and you
+                cannot create a new submission with the same algorithm image and model. Only cancel a submission when
+                you would like to update your algorithm image or model.
+            </p>
+
+            {% crispy form %}
+        </div>
+
+    </dl>
+
+{% endblock %}

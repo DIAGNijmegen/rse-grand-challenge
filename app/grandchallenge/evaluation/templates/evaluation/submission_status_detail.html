@@ -12,6 +12,16 @@
 >
     {% if "review_submission" in obj_perms and object.status == object.StatusChoices.PENDING_REVIEW %}
         {% include "evaluation/partials/submission_accept_reject.html" with object=object csrf_token=csrf_token only %}
+    {% elif "cancel_submission" in obj_perms and object.status == object.StatusChoices.PENDING_REVIEW %}
+        <span class="badge badge-{{ object.status_context }} mr-1">
+            {{ object.get_status_display }}
+        </span>
+        <a href="{{ object.cancel_url }}"
+           class="btn btn-danger"
+           title="Cancel submission"
+        >
+            <i class="fas fa-fw fa-times-circle mr-1"></i>Cancel
+        </a>
     {% else %}
         <span class="badge badge-{{ object.status_context }} mr-1">
             {% if object.animate %}

@@ -773,6 +773,25 @@ class SubmissionRejectForm(SaveFormInitMixin, forms.ModelForm):
         )
 
 
+class SubmissionCancelForm(SaveFormInitMixin, forms.ModelForm):
+    save_button_text = "I understand. Cancel this submission."
+
+    class Meta:
+        model = Submission
+        fields = ("status", "status_message")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        status = self.Meta.model.StatusChoices.CANCELLED
+
+        self.fields["status"].choices = [(status.value, status.label)]
+        self.initial["status"] = status.value
+        self.fields["status"].widget = HiddenInput()
+        self.initial["status_message"] = "Cancelled by user"
+        self.fields["status_message"].widget = HiddenInput()
+
+
 class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()

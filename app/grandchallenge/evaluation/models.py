@@ -1748,6 +1748,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             and self.status
             in {
                 SubmissionStatusChoices.ACCEPTED,
+                SubmissionStatusChoices.CANCELLED,
                 SubmissionStatusChoices.REJECTED,
             }
             and self.initial_value("status")
@@ -1759,8 +1760,8 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
 
         if self.is_illegal_review_transition:
             raise ValidationError(
-                "A submission can only be accepted or rejected while it is "
-                "pending review."
+                "A submission can only be accepted, rejected or cancelled "
+                "while it is pending review."
             )
 
     def save(self, *args, **kwargs):
@@ -1776,8 +1777,8 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
 
             if self.is_illegal_review_transition:
                 raise ValueError(
-                    "Submission can only be accepted or rejected from "
-                    "pending review."
+                    "Submission can only be accepted, rejected or cancelled "
+                    "from pending review."
                 )
 
         if (
@@ -2030,6 +2031,17 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
     def reject_url(self) -> str:
         return reverse(
             "evaluation:submission-reject",
+            kwargs={
+                "pk": self.pk,
+                "challenge_short_name": self.phase.challenge.short_name,
+                "slug": self.phase.slug,
+            },
+        )
+
+    @property
+    def cancel_url(self) -> str:
+        return reverse(
+            "evaluation:submission-cancel",
             kwargs={
                 "pk": self.pk,
                 "challenge_short_name": self.phase.challenge.short_name,
