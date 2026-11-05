@@ -24,6 +24,7 @@ from sentry_sdk.integrations.logging import ignore_logger
 from config.denylist import USERNAME_DENYLIST
 from config.lambda_tasks import LambdaTaskQueueChoices
 from config.sentry import sentry_before_send
+from config.tracing import configure_tracing
 from grandchallenge.core.utils import strtobool
 
 MEGABYTE = 1024 * 1024
@@ -455,7 +456,6 @@ TEMPLATES = [
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
-    "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
     "grandchallenge.broken_links.middleware.BrokenLinkMiddleware",
@@ -502,7 +502,6 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "aws_xray_sdk.ext.django",  # tracing
     "guardian",  # per object permissions
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
@@ -711,16 +710,6 @@ LOGGING = {
         "level": os.environ.get("GRAND_CHALLENGE_LOG_LEVEL", "INFO"),
         "handlers": ["console"],
     },
-    "loggers": {
-        # As AWS_XRAY_CONTEXT_MISSING can only be set to LOG_ERROR,
-        # silence errors from this sdk as they flood the logs in
-        # RedirectFallbackMiddleware
-        "aws_xray_sdk": {
-            "handlers": ["console"],
-            "level": "CRITICAL",
-            "propagate": False,
-        },
-    },
 }
 
 ###############################################################################
@@ -748,16 +737,11 @@ if SENTRY_DSN:
         ignore_errors=[asyncio.CancelledError, Resolver404, Http404],
     )
     ignore_logger("django.security.DisallowedHost")
-    ignore_logger("aws_xray_sdk")
 
 ###############################################################################
-# XRAY
+# OPENTELEMETRY TRACING
 ###############################################################################
-XRAY_RECORDER = {
-    "AWS_XRAY_CONTEXT_MISSING": "LOG_ERROR",
-    "PLUGINS": ("ECSPlugin",),
-    "AWS_XRAY_TRACING_NAME": SESSION_COOKIE_DOMAIN.lstrip("."),
-}
+configure_tracing(service_name=SESSION_COOKIE_DOMAIN.lstrip("."))
 
 ###############################################################################
 #

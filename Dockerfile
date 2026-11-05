@@ -112,7 +112,6 @@ COPY --from=builder /opt/crane/crane /usr/local/bin/crane
 # read by the app at runtime to locate and version-check it.
 ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=0.8.3\
     PYTHONUNBUFFERED=1\
-    AWS_XRAY_SDK_ENABLED=false\
     PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
 
 RUN mkdir -p /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs /opt/vendored \
