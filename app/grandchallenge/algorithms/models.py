@@ -1,5 +1,6 @@
 import logging
 import secrets
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import NamedTuple
 
@@ -1276,14 +1277,12 @@ class Job(CIVForObjectMixin, ComponentJob):
         return self.algorithm_interface.outputs.all()
 
     @property
-    def output_subtasks(self):
-        return [
-            OutputSubtask(
-                task_pk=None,
-                outputs=self.outputs,
-                output_interfaces=self.output_interfaces,
-            )
-        ]
+    def task_pk(self) -> str | None:
+        return None
+
+    @property
+    def output_subtasks(self) -> Iterable[OutputSubtask]:
+        return [self]
 
     @cached_property
     def inputs_complete(self):

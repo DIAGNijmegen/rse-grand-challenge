@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterable
 from datetime import timedelta
 from math import ceil
 from statistics import mean, median
@@ -2542,15 +2543,8 @@ class BatchJob(ComponentJob):
         return self.batch_job_utilization
 
     @property
-    def output_subtasks(self):
-        return [
-            OutputSubtask(
-                task_pk=str(task.pk),
-                outputs=task.outputs,
-                output_interfaces=task.output_interfaces,
-            )
-            for task in self.tasks.all()
-        ]
+    def output_subtasks(self) -> Iterable[OutputSubtask]:
+        return self.tasks.prefetch_related("algorithm_interface__outputs")
 
     def schedule_output_parsing(self):
         from grandchallenge.components.tasks import parse_outputs_for_batch_job
@@ -2643,6 +2637,10 @@ class BatchJobTask(UUIDModel):
 
     class Meta(UUIDModel.Meta):
         ordering = ("created",)
+
+    @property
+    def task_pk(self) -> str:
+        return str(self.pk)
 
     @property
     def output_interfaces(self):
@@ -3116,14 +3114,12 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         return self.submission.phase.evaluation_outputs
 
     @property
-    def output_subtasks(self):
-        return [
-            OutputSubtask(
-                task_pk=None,
-                outputs=self.outputs,
-                output_interfaces=self.output_interfaces,
-            )
-        ]
+    def task_pk(self) -> str | None:
+        return None
+
+    @property
+    def output_subtasks(self) -> Iterable[OutputSubtask]:
+        return [self]
 
     @property
     def additional_outputs(self):

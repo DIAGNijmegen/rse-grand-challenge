@@ -2,11 +2,12 @@ import json
 import logging
 import re
 import secrets
+from collections.abc import Iterable
 from enum import Enum, StrEnum
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import NamedTuple
+from typing import Protocol
 from urllib.parse import quote
 
 from django import forms
@@ -109,12 +110,17 @@ RESERVED_SOCKET_SLUGS = {
 }
 
 
-class OutputSubtask(NamedTuple):
-    """A single unit of work that produces outputs for a component job."""
+class OutputSubtask(Protocol):
+    """A unit of work that produces outputs for a component job."""
 
-    task_pk: str | None
-    outputs: models.Manager
-    output_interfaces: QuerySet
+    @property
+    def task_pk(self) -> str | None: ...
+
+    @property
+    def outputs(self) -> models.Manager: ...
+
+    @property
+    def output_interfaces(self) -> QuerySet: ...
 
 
 class SourceChoices(StrEnum):
@@ -1880,7 +1886,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         }
 
     @property
-    def output_subtasks(self):
+    def output_subtasks(self) -> Iterable[OutputSubtask]:
         """The subtasks that produce outputs for this job."""
         raise NotImplementedError
 
