@@ -1191,7 +1191,7 @@ def parse_outputs_for_batch_job(*, batch_job_pk: str | UUID):
                 value = executor.create_value_for_output(
                     interface=interface, task_pk=subtask.task_pk
                 )
-                job.add_output_value(value=value, task_pk=subtask.task_pk)
+                subtask.outputs.add(value)
             except ComponentException as error:
                 job.update_status(
                     status=job.FAILURE,
