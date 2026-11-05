@@ -18,7 +18,10 @@ def test_submission_civ_error_handler_messages():
     )
     s1.refresh_from_db()
     assert s1.status == SubmissionStatusChoices.FAILED
-    assert s1.status_message == "One or more of the inputs failed validation."
+    assert (
+        s1.status_message
+        == f"One or more of the inputs failed validation. Validation for socket {interface.title} failed with error: Some message for interface validation."
+    )
 
     s2 = SubmissionFactory(status=SubmissionStatusChoices.VALIDATING_INPUTS)
     SubmissionCIVErrorHandler(submission=s2).handle_error(

@@ -2656,7 +2656,7 @@ class TestSubmissionCreationWithExtraInputs:
         # but in failed state and with an error message
         assert submission.status == submission.StatusChoices.FAILED
         assert (
-            "One or more of the inputs failed validation."
+            f"One or more of the inputs failed validation. Validation for socket {algorithm_phase_with_multiple_inputs.ci_json_file.title} failed with error: JSON does not fulfill schema: instance is not of type 'array'."
             == submission.status_message
         )
         # and no CIVs should have been created
@@ -2739,7 +2739,7 @@ class TestSubmissionCreationWithExtraInputs:
         # but in failed state and with an error message
         assert submission.status == submission.StatusChoices.FAILED
         assert (
-            "One or more of the inputs failed validation."
+            f"One or more of the inputs failed validation. Validation for socket {algorithm_phase_with_multiple_inputs.ci_img_upload.title} failed with error: 1 file could not be imported."
             == submission.status_message
         )
         # and no CIVs should have been created
@@ -2793,7 +2793,7 @@ class TestSubmissionCreationWithExtraInputs:
         assert submission.status == submission.StatusChoices.FAILED
         assert (
             submission.status_message
-            == "One or more of the inputs failed validation."
+            == f"One or more of the inputs failed validation. Validation for socket {algorithm_phase_with_multiple_inputs.ci_json_file.title} failed with error: JSON does not fulfill schema: instance is not of type 'array'."
         )
 
         notification = Notification.objects.get()
