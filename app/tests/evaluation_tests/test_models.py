@@ -3620,6 +3620,26 @@ def test_batch_job_executor_kwargs():
 
 
 @pytest.mark.django_db
+def test_batch_job_executor_kwargs_task_definitions_are_lazy(mocker):
+    batch_job = BatchJobFactory(time_limit=10)
+
+    inference_task_definitions = mocker.patch(
+        "grandchallenge.evaluation.models.BatchJob.inference_task_definitions",
+        new_callable=mocker.PropertyMock,
+        return_value=[],
+    )
+
+    task_definitions = batch_job.executor_kwargs["task_definitions"]
+
+    # Building the kwargs must not evaluate the (expensive) task definitions
+    inference_task_definitions.assert_not_called()
+
+    # They are only built when actually used
+    list(task_definitions)
+    inference_task_definitions.assert_called_once()
+
+
+@pytest.mark.django_db
 def test_batch_job_view_permission_assigned_to_challenge_admins():
     batch_job = BatchJobFactory(time_limit=10)
     admins_group = batch_job.submission.phase.challenge.admins_group
