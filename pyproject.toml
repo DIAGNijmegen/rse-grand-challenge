@@ -65,6 +65,12 @@ dependencies = [
     # the vendored assets can be fetched during the Docker build. >=0.5.0 for
     # the `amass install --output` flag used to install outside the app tree.
     "amass>=0.5.0",
+    # Tracing
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp-proto-http",
+    "opentelemetry-sdk-extension-aws",
+    "opentelemetry-propagator-aws-xray",
+    "opentelemetry-instrumentation-django",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
