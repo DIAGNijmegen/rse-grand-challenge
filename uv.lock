@@ -8,6 +8,7 @@ exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
 amass = "2026-11-05T00:00:00Z"
+django-lambda-tasks = "2026-11-05T13:00:00Z"
 
 [[package]]
 name = "aioboto3"
@@ -832,7 +833,7 @@ wheels = [
 
 [[package]]
 name = "django-lambda-tasks"
-version = "0.8.1"
+version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "awslambdaric" },
@@ -841,9 +842,19 @@ dependencies = [
     { name = "pydantic" },
     { name = "redis" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/44/b1/57d628293863e249495f5e7ce3babf6e29a304d642f3d9add24697f2a1cd/django_lambda_tasks-0.8.1.tar.gz", hash = "sha256:30c5cececd0564dde3621a2c92db7cab5b1378b10cb079d267fe89b065f88157", size = 175106, upload-time = "2026-08-18T10:03:09.1Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/24/343f9f644a22870e2f96a4cb67514500e31990a47e3a5ddffd0fa22847e3/django_lambda_tasks-0.9.0.tar.gz", hash = "sha256:f333c24c61e6e888316b8696170f73f0fd71f556bcc4aefd62516d584e8b8148", size = 181205, upload-time = "2026-11-05T12:14:50.496Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1f/6b/6635abd66c76e5350814218923a46214de7767ee11b7d8cee8f51e017f7a/django_lambda_tasks-0.8.1-py3-none-any.whl", hash = "sha256:f798acf1c1c15ea4d7fb60fa9b310a094540eccaf6b85db41e125ac5f3927053", size = 37991, upload-time = "2026-08-18T10:03:07.581Z" },
+    { url = "https://files.pythonhosted.org/packages/38/7e/8bbd4a98bbd96811f16227e6a1c786ba921baf6b5412128e96a03c375696/django_lambda_tasks-0.9.0-py3-none-any.whl", hash = "sha256:f87796e0bdbb3dbc28a412f656a5c14d5c3d1dd1d4bf393e86ad544f5f245761", size = 41247, upload-time = "2026-11-05T12:14:48.971Z" },
+]
+
+[package.optional-dependencies]
+otel = [
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-instrumentation-aws-lambda" },
+    { name = "opentelemetry-propagator-aws-xray" },
+    { name = "opentelemetry-sdk" },
+    { name = "opentelemetry-sdk-extension-aws" },
+    { name = "requests" },
 ]
 
 [[package]]
@@ -1127,7 +1138,7 @@ dependencies = [
     { name = "django-filter" },
     { name = "django-forms-dynamic" },
     { name = "django-guardian" },
-    { name = "django-lambda-tasks" },
+    { name = "django-lambda-tasks", extra = ["otel"] },
     { name = "django-markdownx" },
     { name = "django-permissions-policy" },
     { name = "django-pictures" },
@@ -1144,11 +1155,7 @@ dependencies = [
     { name = "isort" },
     { name = "jsonschema" },
     { name = "justhtml" },
-    { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-instrumentation-django" },
-    { name = "opentelemetry-propagator-aws-xray" },
-    { name = "opentelemetry-sdk" },
-    { name = "opentelemetry-sdk-extension-aws" },
     { name = "panimg-models" },
     { name = "pillow" },
     { name = "psutil" },
@@ -1216,7 +1223,7 @@ requires-dist = [
     { name = "django-filter" },
     { name = "django-forms-dynamic" },
     { name = "django-guardian", specifier = "!=2.2.0" },
-    { name = "django-lambda-tasks" },
+    { name = "django-lambda-tasks", extras = ["otel"] },
     { name = "django-markdownx" },
     { name = "django-permissions-policy" },
     { name = "django-pictures" },
@@ -1233,11 +1240,7 @@ requires-dist = [
     { name = "isort" },
     { name = "jsonschema" },
     { name = "justhtml" },
-    { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-instrumentation-django" },
-    { name = "opentelemetry-propagator-aws-xray" },
-    { name = "opentelemetry-sdk" },
-    { name = "opentelemetry-sdk-extension-aws" },
     { name = "panimg-models" },
     { name = "pillow" },
     { name = "psutil" },
@@ -1843,6 +1846,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a5/03/89e47ff8d52a4f83b343e6eb9ef1698ff45357216e5b6b2b21e0da5c5c7d/opentelemetry_instrumentation-0.66b1.tar.gz", hash = "sha256:e79a510f7d87c72d95e964ddb42193a0d9a75668c027d980eab032ea1322a5ce", size = 43308, upload-time = "2026-10-06T17:36:10.703Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/da/b2/d1413681ff43e13ac9860df27e1226d3199ab0b97b352ceea41abcc660a5/opentelemetry_instrumentation-0.66b1-py3-none-any.whl", hash = "sha256:4c4aa14dc9a24a02325a9d4c42c4d0208dbb1374c2b1b8fe6c9392d59f3e1008", size = 36904, upload-time = "2026-10-06T17:35:11.663Z" },
+]
+
+[[package]]
+name = "opentelemetry-instrumentation-aws-lambda"
+version = "0.66b1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-propagator-aws-xray" },
+    { name = "opentelemetry-semantic-conventions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e9/a2/69e585e4d6d43649908d9fdfc92073499102f16a2487cd5a3709ad50e6bf/opentelemetry_instrumentation_aws_lambda-0.66b1.tar.gz", hash = "sha256:a270279181f7759a417535c6a90a92f22c6b6c6c551940e37e2cd5b50556b7d1", size = 22730, upload-time = "2026-10-06T17:36:17.541Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/45/01d5303d03660b9d395b00da7c9c973605afda21883e6d05acbe92e98916/opentelemetry_instrumentation_aws_lambda-0.66b1-py3-none-any.whl", hash = "sha256:48a237c5418f5a00d366822f17bd271514be7e2cec18e28cbd4b0dfed88183a8", size = 13925, upload-time = "2026-10-06T17:35:22.017Z" },
 ]
 
 [[package]]
