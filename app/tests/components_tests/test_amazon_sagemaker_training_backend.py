@@ -1241,8 +1241,11 @@ def test_handle_event_task_for_batchjob(mocker):
             invoke_duration=timedelta(seconds=invoke_seconds),
         )
 
-    schedule_parse_output = mocker.patch(
-        "grandchallenge.components.tasks.parse_outputs_for_batch_job.execute_on_commit",
+    schedule_parse_task = mocker.patch(
+        "grandchallenge.components.tasks.parse_outputs_for_batch_task.execute_on_commit",
+    )
+    schedule_finalize = mocker.patch(
+        "grandchallenge.components.tasks.finalize_batch_job_parsing.execute_on_commit",
     )
 
     handle_event(
@@ -1267,11 +1270,16 @@ def test_handle_event_task_for_batchjob(mocker):
     assert second_task.exec_duration == timedelta(seconds=30)
     assert second_task.invoke_duration == timedelta(seconds=40)
 
-    # A batch job schedules a single parse task for all of its outputs
-    assert schedule_parse_output.call_count == 1
-    assert (
-        schedule_parse_output.call_args.kwargs["batch_job_pk"] == batch_job.pk
-    )
+    # A parse task is scheduled per batch job task, plus a single finalize
+    assert schedule_parse_task.call_count == 2
+    scheduled_task_pks = {
+        call.kwargs["batch_job_task_pk"]
+        for call in schedule_parse_task.call_args_list
+    }
+    assert scheduled_task_pks == {first_task.pk, second_task.pk}
+
+    assert schedule_finalize.call_count == 1
+    assert schedule_finalize.call_args.kwargs["batch_job_pk"] == batch_job.pk
 
 
 @pytest.mark.django_db
@@ -1312,8 +1320,11 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
         user_safe_error_message="Something went wrong",
     )
 
-    schedule_parse_output = mocker.patch(
-        "grandchallenge.components.tasks.parse_outputs_for_batch_job.execute_on_commit",
+    schedule_parse_task = mocker.patch(
+        "grandchallenge.components.tasks.parse_outputs_for_batch_task.execute_on_commit",
+    )
+    schedule_finalize = mocker.patch(
+        "grandchallenge.components.tasks.finalize_batch_job_parsing.execute_on_commit",
     )
 
     handle_event(
@@ -1341,7 +1352,8 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
     assert second_task.invoke_duration == timedelta(seconds=40)
 
     # no output parsing is scheduled.
-    schedule_parse_output.assert_not_called()
+    schedule_parse_task.assert_not_called()
+    schedule_finalize.assert_not_called()
 
 
 @pytest.mark.django_db

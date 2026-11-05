@@ -1159,19 +1159,94 @@ def parse_job_output(
 
 
 @lambda_task(
-    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),
-    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
-    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
-def parse_outputs_for_batch_job(*, batch_job_pk: str | UUID):
-    """Parse the outputs for all tasks of a batch job.
+def parse_outputs_for_batch_task(*, batch_job_task_pk: str | UUID):
+    """Parse the outputs for a single task of a batch job.
 
-    A batch job produces far too many outputs to parse in parallel without
-    overwhelming the database. Instead all outputs are parsed sequentially
-    here, on the AWS Batch queue.
+    One of these is scheduled per batch job task so that the outputs are
+    parsed in parallel. Completion is detected separately by
+    finalize_batch_job_parsing.
     """
+    from grandchallenge.evaluation.models import BatchJobTaskStatusChoices
+
+    model = apps.get_model(app_label="evaluation", model_name="batchjobtask")
+
+    with check_lock_acquired():
+        task = model.objects.select_for_update(nowait=True, no_key=True).get(
+            pk=batch_job_task_pk
+        )
+
+    if task.status == BatchJobTaskStatusChoices.PARSED:
+        return {"status": "Task outputs already parsed"}
+
+    job = task.batch_job
+
+    if job.status != job.PARSING:
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
+
+    executor = job.get_executor(backend=settings.COMPONENTS_DEFAULT_BACKEND)
+
+    for interface in task.output_interfaces.all():
+        try:
+            value = executor.create_value_for_output(
+                interface=interface, task_pk=task.task_pk
+            )
+            task.outputs.add(value)
+        except ComponentException as error:
+            # Marking the job as failed requires a lock on the job, which
+            # we do not want to take in this task, so delegate it.
+            mark_job_as_failed.execute_on_commit(
+                **job.task_kwargs,
+                error_message=str(error),
+                detailed_error_message=error.message_details,
+            )
+            return {"status": f"Handled exception: {error}"}
+        except Exception as error:
+            mark_job_as_failed.execute_on_commit(
+                **job.task_kwargs,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            )
+            task_logger.error(str(error), exc_info=True)
+            return {"status": f"Unexpected error: {error}"}
+
+    task.status = BatchJobTaskStatusChoices.PARSED
+    task.save(update_fields=["status"])
+
+    return {"status": "Task outputs parsed"}
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException, RetryStep),
+    retry_delay=10,
+)
+def finalize_batch_job_parsing(*, batch_job_pk: str | UUID):
+    """Mark a batch job as successful once all of its tasks are parsed.
+
+    Scheduled once alongside the per-task parse tasks. Reschedules itself
+    until every task has been parsed, then verifies and sets the status.
+    """
+    from grandchallenge.evaluation.models import BatchJobTaskStatusChoices
+
     model = apps.get_model(app_label="evaluation", model_name="batchjob")
+
+    # Cheap, unlocked checks first so that we only take the lock once all
+    # tasks have actually been parsed.
+    job = model.objects.get(pk=batch_job_pk)
+
+    if job.status != job.PARSING:
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
+
+    if job.tasks.exclude(status=BatchJobTaskStatusChoices.PARSED).exists():
+        raise RetryStep("Not all batch job tasks have been parsed")
 
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True, no_key=True).get(
@@ -1183,33 +1258,11 @@ def parse_outputs_for_batch_job(*, batch_job_pk: str | UUID):
             "status": f"Skipping due to job status {job.get_status_display()}"
         }
 
-    executor = job.get_executor(backend=settings.COMPONENTS_DEFAULT_BACKEND)
-
-    for subtask in job.output_subtasks:
-        for interface in subtask.output_interfaces.all():
-            try:
-                value = executor.create_value_for_output(
-                    interface=interface, task_pk=subtask.task_pk
-                )
-                subtask.outputs.add(value)
-            except ComponentException as error:
-                job.update_status(
-                    status=job.FAILURE,
-                    error_message=str(error),
-                    detailed_error_message=error.message_details,
-                )
-                return {"status": f"Handled exception: {error}"}
-            except Exception as error:
-                job.update_status(
-                    status=job.FAILURE,
-                    error_message=SystemErrorMessages.UNEXPECTED_ERROR,
-                )
-                task_logger.error(str(error), exc_info=True)
-                return {"status": f"Unexpected error: {error}"}
-
-    job.update_status(status=job.SUCCESS)
-
-    return {"status": "Outputs parsed for batch job"}
+    if job.output_parsing_complete:
+        job.update_status(status=job.SUCCESS)
+        return {"status": "Parsing complete"}
+    else:
+        raise RetryStep("Batch job output parsing is not complete")
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))

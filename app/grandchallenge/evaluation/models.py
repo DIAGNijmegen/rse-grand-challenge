@@ -2547,9 +2547,17 @@ class BatchJob(ComponentJob):
         return self.tasks.prefetch_related("algorithm_interface__outputs")
 
     def schedule_output_parsing(self):
-        from grandchallenge.components.tasks import parse_outputs_for_batch_job
+        from grandchallenge.components.tasks import (
+            finalize_batch_job_parsing,
+            parse_outputs_for_batch_task,
+        )
 
-        parse_outputs_for_batch_job.execute_on_commit(batch_job_pk=self.pk)
+        for task_pk in self.tasks.values_list("pk", flat=True):
+            parse_outputs_for_batch_task.execute_on_commit(
+                batch_job_task_pk=task_pk
+            )
+
+        finalize_batch_job_parsing.execute_on_commit(batch_job_pk=self.pk)
 
     def get_absolute_url(self):
         return reverse(
@@ -2591,9 +2599,19 @@ class BatchJobGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(BatchJob, on_delete=models.CASCADE)
 
 
+class BatchJobTaskStatusChoices(models.TextChoices):
+    PENDING = "PENDING", "Pending"
+    PARSED = "PARSED", "Parsed"
+
+
 class BatchJobTask(UUIDModel):
     batch_job = models.ForeignKey(
         BatchJob, on_delete=models.CASCADE, related_name="tasks"
+    )
+    status = models.CharField(
+        max_length=7,
+        choices=BatchJobTaskStatusChoices,
+        default=BatchJobTaskStatusChoices.PENDING,
     )
     algorithm_interface = models.ForeignKey(
         AlgorithmInterface, on_delete=models.PROTECT
@@ -2637,6 +2655,17 @@ class BatchJobTask(UUIDModel):
 
     class Meta(UUIDModel.Meta):
         ordering = ("created",)
+        indexes = [
+            models.Index(fields=["status"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    status__in=BatchJobTaskStatusChoices.values
+                ),
+                name="%(app_label)s_%(class)s_status_valid",
+            ),
+        ]
 
     @property
     def task_pk(self) -> str:
