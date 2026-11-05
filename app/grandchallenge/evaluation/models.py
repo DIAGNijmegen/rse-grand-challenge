@@ -2543,18 +2543,21 @@ class BatchJob(ComponentJob):
 
     @property
     def output_parsing_complete(self):
-        return not self.tasks.filter(
-            status=BatchJobTaskStatusChoices.PENDING
-        ).exists()
+        unparsed_statuses = [
+            status
+            for status in BatchJobTaskStatusChoices.values
+            if status != BatchJobTaskStatusChoices.PARSED
+        ]
+        return not self.tasks.filter(status__in=unparsed_statuses).exists()
 
     def schedule_output_parsing(self):
         from grandchallenge.components.tasks import (
             finalize_batch_job_parsing,
-            parse_outputs_for_batch_task,
+            parse_outputs_for_batch_job_task,
         )
 
         for task_pk in self.tasks.values_list("pk", flat=True):
-            parse_outputs_for_batch_task.execute_on_commit(
+            parse_outputs_for_batch_job_task.execute_on_commit(
                 batch_job_task_pk=task_pk
             )
 

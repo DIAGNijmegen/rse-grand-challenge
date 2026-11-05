@@ -1164,27 +1164,34 @@ def parse_job_output(
     soft_timeout=LONG_TASK_SOFT_TIMEOUT,
     hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
-def parse_outputs_for_batch_task(*, batch_job_task_pk: str | UUID):
+def parse_outputs_for_batch_job_task(*, batch_job_task_pk: str | UUID):
     """Parse the outputs for a single task of a batch job.
 
     One of these is scheduled per batch job task so that the outputs are
     parsed in parallel. Completion is detected separately by
     finalize_batch_job_parsing.
     """
-    from grandchallenge.evaluation.models import BatchJobTaskStatusChoices
-
-    model = apps.get_model(app_label="evaluation", model_name="batchjobtask")
+    from grandchallenge.evaluation.models import (
+        BatchJobTask,
+        BatchJobTaskStatusChoices,
+    )
 
     with check_lock_acquired():
-        task = model.objects.select_for_update(nowait=True, no_key=True).get(
-            pk=batch_job_task_pk
+        task = (
+            BatchJobTask.objects.select_for_update(
+                nowait=True, no_key=True, of=("self",)
+            )
+            .select_related("batch_job")
+            .prefetch_related("algorithm_interface__outputs")
+            .get(pk=batch_job_task_pk)
         )
 
-    if task.status == BatchJobTaskStatusChoices.PARSED:
-        return {"status": "Task outputs already parsed"}
+    if task.status != BatchJobTaskStatusChoices.PENDING:
+        return {
+            "status": f"Skipping due to task status {task.get_status_display()}"
+        }
 
     job = task.batch_job
-
     if job.status != job.PARSING:
         return {
             "status": f"Skipping due to job status {job.get_status_display()}"
@@ -1232,8 +1239,6 @@ def finalize_batch_job_parsing(*, batch_job_pk: str | UUID):
     Scheduled once alongside the per-task parse tasks. Reschedules itself
     until every task has been parsed, then verifies and sets the status.
     """
-    from grandchallenge.evaluation.models import BatchJobTaskStatusChoices
-
     model = apps.get_model(app_label="evaluation", model_name="batchjob")
 
     # Cheap, unlocked checks first so that we only take the lock once all
@@ -1245,7 +1250,7 @@ def finalize_batch_job_parsing(*, batch_job_pk: str | UUID):
             "status": f"Skipping due to job status {job.get_status_display()}"
         }
 
-    if job.tasks.filter(status=BatchJobTaskStatusChoices.PENDING).exists():
+    if not job.output_parsing_complete:
         raise RetryStep("Not all batch job tasks have been parsed")
 
     with check_lock_acquired():

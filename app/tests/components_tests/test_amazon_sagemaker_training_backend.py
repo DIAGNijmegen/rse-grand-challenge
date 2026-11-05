@@ -1242,7 +1242,7 @@ def test_handle_event_task_for_batchjob(mocker):
         )
 
     schedule_parse_task = mocker.patch(
-        "grandchallenge.components.tasks.parse_outputs_for_batch_task.execute_on_commit",
+        "grandchallenge.components.tasks.parse_outputs_for_batch_job_task.execute_on_commit",
     )
     schedule_finalize = mocker.patch(
         "grandchallenge.components.tasks.finalize_batch_job_parsing.execute_on_commit",
@@ -1321,7 +1321,7 @@ def test_handle_event_task_for_batchjob_task_failure(mocker):
     )
 
     schedule_parse_task = mocker.patch(
-        "grandchallenge.components.tasks.parse_outputs_for_batch_task.execute_on_commit",
+        "grandchallenge.components.tasks.parse_outputs_for_batch_job_task.execute_on_commit",
     )
     schedule_finalize = mocker.patch(
         "grandchallenge.components.tasks.finalize_batch_job_parsing.execute_on_commit",
