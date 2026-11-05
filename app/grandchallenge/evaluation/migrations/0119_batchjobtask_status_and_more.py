@@ -30,7 +30,8 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="batchjobtask",
             index=models.Index(
-                fields=["status"], name="evaluation__status_c47a2e_idx"
+                fields=["batch_job", "status"],
+                name="batchjobtask_batch_job_status_idx",
             ),
         ),
         migrations.AddConstraint(

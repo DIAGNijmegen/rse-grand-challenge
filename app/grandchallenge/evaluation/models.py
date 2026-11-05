@@ -2657,7 +2657,10 @@ class BatchJobTask(UUIDModel):
     class Meta(UUIDModel.Meta):
         ordering = ("created",)
         indexes = [
-            models.Index(fields=["status"]),
+            models.Index(
+                fields=["batch_job", "status"],
+                name="batchjobtask_batch_job_status_idx",
+            ),
         ]
         constraints = [
             models.CheckConstraint(
