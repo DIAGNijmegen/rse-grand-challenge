@@ -2745,6 +2745,79 @@ class TestSubmissionCreationWithExtraInputs:
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
+    def test_creator_is_notified_when_submission_fails_input_validation(
+        self,
+        client,
+        settings,
+        django_capture_on_commit_callbacks,
+        algorithm_phase_with_multiple_inputs,
+    ):
+        settings.LAMBDA_TASKS_EAGER = True
+
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
+            [
+                algorithm_phase_with_multiple_inputs.ci_json_file,
+            ]
+        )
+
+        file_upload = UserUploadFactory(
+            filename="file.json",
+            creator=algorithm_phase_with_multiple_inputs.admin,
+        )
+        presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
+        response = put(presigned_urls["1"], data=b'{"Foo": "bar"}')
+        file_upload.complete_multipart_upload(
+            parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+        )
+        file_upload.save()
+        creator = algorithm_phase_with_multiple_inputs.admin
+
+        Notification.objects.all().delete()
+
+        response = self.create_submission(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_phase_with_multiple_inputs.algorithm,
+            user=creator,
+            phase=algorithm_phase_with_multiple_inputs.phase,
+            extra_inputs={
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_json_file.slug,
+                    data=file_upload.pk,
+                ),
+            },
+        )
+        assert response.status_code == 200
+
+        submission = Submission.objects.get()
+        assert submission.status == submission.StatusChoices.FAILED
+        assert (
+            submission.status_message
+            == "One or more of the inputs failed validation."
+        )
+
+        notification = Notification.objects.get()
+        assert notification.user == creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
+
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+
+        rendered = notification.print_notification(user=creator)
+        assert (
+            f"Your {submission_string}  to {challenge_string} failed."
+            in rendered
+        )
+        assert "One or more of the inputs failed validation." in rendered
+
 
 @pytest.mark.django_db
 def test_parent_phase_algorithm_interfaces_locked(client):
@@ -3670,7 +3743,10 @@ class TestSubmissionStatusUpdateViews:
 
         assert Notification.objects.count() == 1
         notification = Notification.objects.get()
-        assert submission.creator == notification.user
+        assert notification.user == submission.creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
         submission_string = format_html(
             '<a href="{}">submission</a>', submission.get_absolute_url()
         )
@@ -3680,12 +3756,10 @@ class TestSubmissionStatusUpdateViews:
             submission.phase.challenge.short_name,
         )
 
-        notification_print = notification.print_notification(
-            user=submission.creator
-        )
+        rendered = notification.print_notification(user=submission.creator)
         assert (
             f"Your {submission_string}  to {challenge_string} {expected_message}."
-            in notification_print
+            in rendered
         )
 
     @pytest.mark.parametrize(
@@ -3815,7 +3889,10 @@ class TestSubmissionStatusUpdateViews:
 
         assert Notification.objects.count() == 1
         notification = Notification.objects.get()
-        assert submission.creator == notification.user
+        assert notification.user == submission.creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
         submission_string = format_html(
             '<a href="{}">submission</a>', submission.get_absolute_url()
         )
@@ -3825,14 +3902,12 @@ class TestSubmissionStatusUpdateViews:
             submission.phase.challenge.short_name,
         )
 
-        notification_print = notification.print_notification(
-            user=submission.creator
-        )
+        rendered = notification.print_notification(user=submission.creator)
         assert (
             f"Your {submission_string}  to {challenge_string} {expected_message}."
-            in notification_print
+            in rendered
         )
-        assert "Not good enough" in notification_print
+        assert "Not good enough" in rendered
 
     def test_reject_view_renders_for_admin(self, client):
         admin = UserFactory()

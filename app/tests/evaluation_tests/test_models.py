@@ -4038,7 +4038,10 @@ class TestSubmissionNotifications:
 
         assert Notification.objects.count() == 1
         notification = Notification.objects.get()
-        assert submission.creator == notification.user
+        assert notification.user == submission.creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
         submission_string = format_html(
             '<a href="{}">submission</a>', submission.get_absolute_url()
         )
@@ -4048,14 +4051,12 @@ class TestSubmissionNotifications:
             submission.phase.challenge.short_name,
         )
 
-        notification_print = notification.print_notification(
-            user=submission.creator
-        )
+        rendered = notification.print_notification(user=submission.creator)
         assert (
             f"Your {submission_string}  to {challenge_string} {message}."
-            in notification_print
+            in rendered
         )
-        assert status_message in notification_print
+        assert status_message in rendered
 
     def test_no_notification_for_auto_evaluate(self):
         phase = PhaseFactory(
