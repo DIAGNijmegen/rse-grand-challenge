@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Iterable
 from datetime import timedelta
 from math import ceil
 from statistics import mean, median
@@ -43,7 +42,7 @@ from grandchallenge.components.models import (
     ComponentJob,
     ComponentJobManager,
     ImportStatusChoices,
-    OutputSubtask,
+    SingleSubtaskOutputParsingMixin,
     Tarball,
 )
 from grandchallenge.components.schemas import (
@@ -2543,8 +2542,10 @@ class BatchJob(ComponentJob):
         return self.batch_job_utilization
 
     @property
-    def output_subtasks(self) -> Iterable[OutputSubtask]:
-        return self.tasks.prefetch_related("algorithm_interface__outputs")
+    def output_parsing_complete(self):
+        return not self.tasks.exclude(
+            status=BatchJobTaskStatusChoices.PARSED
+        ).exists()
 
     def schedule_output_parsing(self):
         from grandchallenge.components.tasks import (
@@ -2991,7 +2992,9 @@ class EvaluationActionMessageBuilder:
             )
 
 
-class Evaluation(CIVForObjectMixin, ComponentJob):
+class Evaluation(
+    SingleSubtaskOutputParsingMixin, CIVForObjectMixin, ComponentJob
+):
     """Stores information about an evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
@@ -3141,14 +3144,6 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.evaluation_outputs
-
-    @property
-    def task_pk(self) -> str | None:
-        return None
-
-    @property
-    def output_subtasks(self) -> Iterable[OutputSubtask]:
-        return [self]
 
     @property
     def additional_outputs(self):

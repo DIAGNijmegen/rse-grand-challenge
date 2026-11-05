@@ -1,6 +1,5 @@
 import logging
 import secrets
-from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import NamedTuple
 
@@ -46,7 +45,7 @@ from grandchallenge.components.models import (  # noqa: F401
     ComponentJob,
     ComponentJobManager,
     ImportStatusChoices,
-    OutputSubtask,
+    SingleSubtaskOutputParsingMixin,
     Tarball,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -1165,7 +1164,7 @@ class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Job(CIVForObjectMixin, ComponentJob):
+class Job(SingleSubtaskOutputParsingMixin, CIVForObjectMixin, ComponentJob):
     objects = JobManager.as_manager()
 
     algorithm_image = models.ForeignKey(
@@ -1275,14 +1274,6 @@ class Job(CIVForObjectMixin, ComponentJob):
     @property
     def output_interfaces(self):
         return self.algorithm_interface.outputs.all()
-
-    @property
-    def task_pk(self) -> str | None:
-        return None
-
-    @property
-    def output_subtasks(self) -> Iterable[OutputSubtask]:
-        return [self]
 
     @cached_property
     def inputs_complete(self):

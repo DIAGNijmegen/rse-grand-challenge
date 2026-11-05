@@ -1127,7 +1127,7 @@ def parse_job_output(
             "status": f"Unexpected error: Multiple interfaces with slug {interface_slug} exist"
         }
 
-    if job.output_value_exists(interface=interface, task_pk=task_pk):
+    if job.outputs.filter(interface=interface).exists():
         task_logger.error("Interface already exists for job")
         return {"status": f"{interface_slug} already exists for job"}
 
@@ -1137,7 +1137,7 @@ def parse_job_output(
         val = executor.create_value_for_output(
             interface=interface, task_pk=task_pk
         )
-        job.add_output_value(value=val, task_pk=task_pk)
+        job.outputs.add(val)
     except ComponentException as error:
         mark_job_as_failed.execute_on_commit(
             **job.task_kwargs,
