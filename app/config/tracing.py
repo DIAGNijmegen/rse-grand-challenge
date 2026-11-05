@@ -23,10 +23,26 @@ This module adds what is specific to the API worker:
   middleware) makes the injection stick.
 """
 
+import logging
 import os
 
 from lambda_tasks import tracing as lambda_tasks_tracing
 from opentelemetry.instrumentation.django import DjangoInstrumentor
+
+
+class SuppressContextDetachError(logging.Filter):
+    """Drop OpenTelemetry's benign "Failed to detach context" log records.
+
+    Under ASGI (uvicorn worker), Django adapts the sync OTel request
+    middleware with ``sync_to_async``, so the context ``attach`` and ``detach``
+    can straddle two ``contextvars`` contexts. ``opentelemetry.context.detach``
+    catches the resulting ``ValueError`` and logs it via ``logger.exception`` —
+    the span is still recorded and exported; only the cleanup logs noise. This
+    filter suppresses that one message.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "Failed to detach context" not in record.getMessage()
 
 
 def configure_tracing(*, service_name: str) -> None:
