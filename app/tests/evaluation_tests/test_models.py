@@ -4056,3 +4056,20 @@ class TestSubmissionNotifications:
             in notification_print
         )
         assert status_message in notification_print
+
+    def test_no_notification_for_auto_evaluate(self):
+        phase = PhaseFactory(
+            auto_evaluate_new_submissions=True,
+        )
+        submission = SubmissionFactory(
+            phase=phase,
+            status=SubmissionStatusChoices.VALIDATING_INPUTS,
+        )
+
+        Notification.objects.all().delete()
+        submission.status = SubmissionStatusChoices.PENDING_REVIEW
+        submission.save()
+
+        assert Notification.objects.count() == 0
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.ACCEPTED

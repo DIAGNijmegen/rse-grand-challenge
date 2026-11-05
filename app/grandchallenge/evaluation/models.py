@@ -1888,19 +1888,26 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 action_object=self,
                 target=self.phase,
             )
-        elif self.status in {
-            self.StatusChoices.FAILED,
-            self.StatusChoices.ACCEPTED,
-            self.StatusChoices.REJECTED,
-        }:
+        elif self.status == self.StatusChoices.FAILED:
             message = self.get_status_display().lower()
-
-            if self.status in {
+            Notification.send(
+                kind=NotificationTypeChoices.SUBMISSION_STATUS,
+                actor=self.creator,
+                message=message,
+                action_object=self,
+                target=self.phase,
+                description=self.status_message,
+            )
+        elif (
+            self.status
+            in {
                 self.StatusChoices.ACCEPTED,
                 self.StatusChoices.REJECTED,
-            }:
-                message = f"was {message}"
-
+            }
+            and self.initial_value("status")
+            == self.StatusChoices.PENDING_REVIEW
+        ):
+            message = f"was {self.get_status_display().lower()}"
             Notification.send(
                 kind=NotificationTypeChoices.SUBMISSION_STATUS,
                 actor=self.creator,
