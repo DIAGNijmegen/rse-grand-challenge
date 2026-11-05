@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             model_name="batchjobtask",
             index=models.Index(
                 fields=["batch_job", "status"],
-                name="batchjobtask_batch_job_status_idx",
+                name="bjtask_batch_job_status_idx",
             ),
         ),
         migrations.AddConstraint(
