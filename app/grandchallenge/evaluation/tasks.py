@@ -166,6 +166,13 @@ def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
             .get(pk=evaluation_pk)
         )
 
+        if not evaluation.additional_inputs_complete:
+            evaluation.update_status(
+                status=Evaluation.FAILURE,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            )
+            return
+
     if evaluation.status != evaluation.VALIDATING_INPUTS:
         # this task can be called multiple times with complete inputs,
         # and might have been queued for execution already, so ignore
