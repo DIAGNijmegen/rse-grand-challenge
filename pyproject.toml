@@ -111,7 +111,7 @@ exclude-newer = "7 days"
 # django-lambda-tasks 0.9.1 (library span instrumentation for psycopg,
 # botocore, requests, httpx and redis in the `otel` extra) was likewise
 # published inside the 7-day window; override the cutoff for it too.
-exclude-newer-package = { amass = "2026-11-05T00:00:00Z", django-lambda-tasks = "2026-11-05T15:00:00Z" }
+exclude-newer-package = { amass = "2026-11-05T00:00:00Z", django-lambda-tasks = "2026-11-05T20:00:00Z" }
 
 [tool.isort]
 profile = "black"
