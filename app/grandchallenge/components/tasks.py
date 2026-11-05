@@ -1245,7 +1245,7 @@ def finalize_batch_job_parsing(*, batch_job_pk: str | UUID):
             "status": f"Skipping due to job status {job.get_status_display()}"
         }
 
-    if job.tasks.exclude(status=BatchJobTaskStatusChoices.PARSED).exists():
+    if job.tasks.filter(status=BatchJobTaskStatusChoices.PENDING).exists():
         raise RetryStep("Not all batch job tasks have been parsed")
 
     with check_lock_acquired():

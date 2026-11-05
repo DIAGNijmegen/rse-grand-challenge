@@ -2543,8 +2543,8 @@ class BatchJob(ComponentJob):
 
     @property
     def output_parsing_complete(self):
-        return not self.tasks.exclude(
-            status=BatchJobTaskStatusChoices.PARSED
+        return not self.tasks.filter(
+            status=BatchJobTaskStatusChoices.PENDING
         ).exists()
 
     def schedule_output_parsing(self):
