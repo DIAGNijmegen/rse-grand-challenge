@@ -244,7 +244,9 @@ class RedirectPath(View):
 def handler403(request, exception):
     request.challenge = None
     content = loader.render_to_string(
-        template_name="403.html", request=request
+        template_name="403.html",
+        context={"reason": str(exception) if exception else ""},
+        request=request,
     )
     return HttpResponseForbidden(content)
 

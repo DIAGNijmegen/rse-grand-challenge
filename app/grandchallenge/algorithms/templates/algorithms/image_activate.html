@@ -23,6 +23,8 @@
 {% block content %}
     <h2>Activate Algorithm Image</h2>
 
+    {% include "algorithms/partials/algorithm_pending_submission_warning.html" %}
+
     <div class="mb-2">Activating an image will result in this image being used for all subsequent algorithm runs.</div>
 
     {% crispy form %}

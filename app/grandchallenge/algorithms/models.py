@@ -539,6 +539,15 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             )
         ).exists()
 
+    @cached_property
+    def pending_submissions(self):
+        from grandchallenge.evaluation.models import Submission
+
+        return Submission.objects.filter(
+            algorithm_image__algorithm=self,
+            status=Submission.StatusChoices.PENDING_REVIEW,
+        )
+
     @property
     def model_upload_in_progress(self):
         return self.algorithm_models.filter(
