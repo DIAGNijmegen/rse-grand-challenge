@@ -1795,7 +1795,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
             for use_batch_mode, time_limit_seconds in zip(
                 self.use_batch_mode_for_phases,
-                self.algorithm_time_limit_seconds_for_phases,
+                self.inference_time_average_seconds_for_phases,
                 strict=True,
             )
         ]
