@@ -529,6 +529,12 @@ class SubmissionForm(
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]
 
+        if algorithm.pending_submissions.filter(phase=self._phase):
+            raise ValidationError(
+                "A submission for this algorithm is already pending review. "
+                "Please wait for the submission to be reviewed or cancel it."
+            )
+
         if algorithm.active_model:
             extra_submission_filter = {
                 "algorithm_model__checksum": algorithm.active_model.checksum
