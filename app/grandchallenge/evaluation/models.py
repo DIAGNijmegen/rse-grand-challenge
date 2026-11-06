@@ -1095,6 +1095,9 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             evals_in_period = (
                 self.submission_set.filter(**filter_kwargs)
                 .exclude(evaluation__status=Evaluation.FAILURE)
+                .exclude(
+                    status__in=SubmissionStatusChoices.get_choices_excluded_for_count()
+                )
                 .distinct()
                 .order_by("-created")
             )
@@ -1619,6 +1622,14 @@ class SubmissionStatusChoices(models.TextChoices):
     ACCEPTED = "ACCEPTED", "Accepted"
     REJECTED = "REJECTED", "Rejected"
     CANCELLED = "CANCELLED", "Cancelled"
+
+    @classmethod
+    def get_choices_excluded_for_count(cls):
+        return {
+            cls.FAILED,
+            cls.REJECTED,
+            cls.CANCELLED,
+        }
 
 
 class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
