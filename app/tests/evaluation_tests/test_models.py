@@ -792,18 +792,6 @@ def test_create_evaluation_cancelled_on_insufficient_budget(
 
 
 @pytest.mark.django_db
-def test_create_evaluation_raises_when_inputs_incomplete():
-    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
-    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
-    phase.additional_evaluation_inputs.set([ci])
-
-    submission = SubmissionFactory(phase=phase)
-
-    with pytest.raises(RuntimeError, match="Additional inputs are required"):
-        submission.create_evaluation()
-
-
-@pytest.mark.django_db
 def test_create_evaluation_attaches_additional_inputs_to_evaluation(
     django_capture_on_commit_callbacks,
     settings,

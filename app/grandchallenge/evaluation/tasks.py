@@ -75,6 +75,18 @@ def create_evaluation(*, submission_pk: str | uuid.UUID):
         task_logger.error("Create evaluation called with unexpected status")
         return
 
+    if not submission.additional_inputs_complete:
+        submission.update_status(
+            status=submission.StatusChoices.FAILED,
+            status_message=(
+                "The submission was accepted, but additional inputs are "
+                "required to create an evaluation for this phase. Please "
+                "contact the challenge organizer to evaluate this submission "
+                "with additional inputs."
+            ),
+        )
+        return
+
     submission.create_evaluation()
 
 
@@ -154,9 +166,12 @@ def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
             .get(pk=evaluation_pk)
         )
 
-    if not evaluation.additional_inputs_complete:
-        task_logger.info("Nothing to do, inputs are still being validated.")
-        return
+        if not evaluation.additional_inputs_complete:
+            evaluation.update_status(
+                status=Evaluation.FAILURE,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            )
+            return
 
     if evaluation.status != evaluation.VALIDATING_INPUTS:
         # this task can be called multiple times with complete inputs,

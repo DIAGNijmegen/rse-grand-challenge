@@ -2818,6 +2818,125 @@ class TestSubmissionCreationWithExtraInputs:
         )
         assert "One or more of the inputs failed validation." in rendered
 
+    def test_submission_fails_when_additional_inputs_change_before_accept(
+        self,
+        client,
+        settings,
+        django_capture_on_commit_callbacks,
+        algorithm_phase_with_multiple_inputs,
+    ):
+        settings.LAMBDA_TASKS_EAGER = True
+
+        phase = algorithm_phase_with_multiple_inputs.phase
+        creator = algorithm_phase_with_multiple_inputs.admin
+
+        # Submissions must stop at PENDING_REVIEW so an admin can accept them,
+        # rather than being auto-accepted straight after validation.
+        phase.auto_evaluate_new_submissions = False
+        phase.save()
+
+        # At submission time the phase requires a single, satisfiable input.
+        phase.additional_evaluation_inputs.set(
+            [algorithm_phase_with_multiple_inputs.ci_str]
+        )
+
+        # 1. The creator makes a submission through the create view.
+        response = self.create_submission(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_phase_with_multiple_inputs.algorithm,
+            user=creator,
+            phase=phase,
+            extra_inputs={
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_str.slug,
+                    data="Foo",
+                ),
+            },
+        )
+        assert response.status_code == 200
+
+        # 2. Validation succeeds and the submission is awaiting review
+        submission = Submission.objects.get()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+        assert submission.additional_inputs.count() == 1
+        assert submission.additional_inputs_complete
+        assert Evaluation.objects.count() == 0
+
+        # 3. The phase's additional inputs change before the submission is
+        #    reviewed: a second interface is now required that the submission
+        #    cannot satisfy.
+        phase.additional_evaluation_inputs.add(
+            algorithm_phase_with_multiple_inputs.ci_bool
+        )
+
+        Notification.objects.all().delete()
+
+        # 4. A challenge admin accepts the submission, which queues the
+        #    create_evaluation task on commit.
+        with django_capture_on_commit_callbacks(execute=True):
+            accept_response = get_view_for_user(
+                viewname="evaluation:submission-accept",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "challenge_short_name": phase.challenge.short_name,
+                    "slug": phase.slug,
+                    "pk": submission.pk,
+                },
+                user=creator,
+                data={"status": SubmissionStatusChoices.ACCEPTED},
+            )
+        assert accept_response.status_code == 302
+
+        # 5. The create_evaluation task finds the inputs no longer complete and
+        #    marks the submission failed without creating an evaluation.
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.FAILED
+        assert submission.status_message == (
+            "The submission was accepted, but additional inputs are "
+            "required to create an evaluation for this phase. Please "
+            "contact the challenge organizer to evaluate this submission "
+            "with additional inputs."
+        )
+        assert Evaluation.objects.count() == 0
+
+        # 6. The creator is notified twice, first accepted, then failed.
+        assert Notification.objects.count() == 2
+        submission_string = format_html(
+            '<a href="{}">submission</a>', submission.get_absolute_url()
+        )
+        challenge_string = format_html(
+            '<a href="{}">{}</a>',
+            submission.phase.challenge.get_absolute_url(),
+            submission.phase.challenge.short_name,
+        )
+        notification = Notification.objects.get(message="was accepted")
+        assert notification.user == submission.creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
+
+        rendered = notification.print_notification(user=submission.creator)
+        assert (
+            f"Your {submission_string}  to {challenge_string} was accepted."
+            in rendered
+        )
+        assert submission.status_message not in rendered
+
+        notification = Notification.objects.get(message="failed")
+        assert notification.user == submission.creator
+        assert notification.type == Notification.Type.SUBMISSION_STATUS
+        assert notification.action_object == submission
+        assert notification.target == submission.phase
+
+        rendered = notification.print_notification(user=submission.creator)
+        assert (
+            f"Your {submission_string}  to {challenge_string} failed."
+            in rendered
+        )
+        assert submission.status_message in rendered
+
 
 @pytest.mark.django_db
 def test_parent_phase_algorithm_interfaces_locked(client):

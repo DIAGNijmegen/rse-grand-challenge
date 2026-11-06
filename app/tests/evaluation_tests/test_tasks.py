@@ -232,6 +232,42 @@ def test_create_evaluation_task_creates_evaluation_when_accepted(
 
 
 @pytest.mark.django_db
+def test_create_evaluation_task_fails_when_additional_inputs_incomplete(
+    django_capture_on_commit_callbacks,
+    settings,
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    method = MethodFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+    phase = method.phase
+    InvoiceFactory(challenge=phase.challenge)
+
+    submission = SubmissionFactory(
+        phase=phase, status=SubmissionStatusChoices.ACCEPTED
+    )
+    assert submission.additional_inputs_complete
+
+    # change interface for additional inputs before the create_evaluation task runs
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    phase.additional_evaluation_inputs.set([ci])
+
+    with django_capture_on_commit_callbacks(execute=True):
+        create_evaluation(submission_pk=submission.pk)
+
+    assert Evaluation.objects.count() == 0
+    submission.refresh_from_db()
+    assert submission.status == SubmissionStatusChoices.FAILED
+    assert submission.status_message == (
+        "The submission was accepted, but additional inputs are "
+        "required to create an evaluation for this phase. Please "
+        "contact the challenge organizer to evaluate this submission "
+        "with additional inputs."
+    )
+
+
+@pytest.mark.django_db
 def test_submission_evaluation(
     submission_file,
     settings,
