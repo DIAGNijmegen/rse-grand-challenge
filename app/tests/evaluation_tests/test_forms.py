@@ -1464,6 +1464,86 @@ def test_phase_update_form_gpu_type_with_additional_selectable_gpu_types():
 
 
 @pytest.mark.django_db
+def test_phase_update_form_cannot_enable_auto_evaluate_with_pending_submissions():
+    phase = PhaseFactory(auto_evaluate_new_submissions=False)
+    SubmissionFactory(
+        phase=phase, status=Submission.StatusChoices.PENDING_REVIEW
+    )
+
+    form = PhaseUpdateForm(
+        instance=phase,
+        challenge=phase.challenge,
+        user=UserFactory(),
+        data={"auto_evaluate_new_submissions": True},
+    )
+
+    assert not form.is_valid()
+    assert "auto_evaluate_new_submissions" in form.errors
+    assert "pending review" in str(
+        form.errors["auto_evaluate_new_submissions"]
+    )
+
+
+@pytest.mark.django_db
+def test_phase_update_form_can_enable_auto_evaluate_without_pending_submissions():
+    phase = PhaseFactory(auto_evaluate_new_submissions=False)
+    # A submission that is not pending review does not block the change.
+    SubmissionFactory(phase=phase, status=Submission.StatusChoices.ACCEPTED)
+
+    form = PhaseUpdateForm(
+        instance=phase,
+        challenge=phase.challenge,
+        user=UserFactory(),
+        data={"auto_evaluate_new_submissions": True},
+    )
+
+    form.is_valid()
+    assert "auto_evaluate_new_submissions" not in form.errors
+
+
+@pytest.mark.django_db
+def test_phase_update_form_pending_submission_on_other_phase_does_not_block():
+    phase = PhaseFactory(auto_evaluate_new_submissions=False)
+    other_phase = PhaseFactory(
+        challenge=phase.challenge, auto_evaluate_new_submissions=False
+    )
+    # Pending submission belongs to a different phase.
+    SubmissionFactory(
+        phase=other_phase, status=Submission.StatusChoices.PENDING_REVIEW
+    )
+
+    form = PhaseUpdateForm(
+        instance=phase,
+        challenge=phase.challenge,
+        user=UserFactory(),
+        data={"auto_evaluate_new_submissions": True},
+    )
+
+    form.is_valid()
+    assert "auto_evaluate_new_submissions" not in form.errors
+
+
+@pytest.mark.django_db
+def test_phase_update_form_already_enabled_not_blocked_by_pending_submissions():
+    # The setting is already on, so saving the form is not a transition to
+    # True and must not be blocked even if pending submissions exist.
+    phase = PhaseFactory(auto_evaluate_new_submissions=True)
+    SubmissionFactory(
+        phase=phase, status=Submission.StatusChoices.PENDING_REVIEW
+    )
+
+    form = PhaseUpdateForm(
+        instance=phase,
+        challenge=phase.challenge,
+        user=UserFactory(),
+        data={"auto_evaluate_new_submissions": True},
+    )
+
+    form.is_valid()
+    assert "auto_evaluate_new_submissions" not in form.errors
+
+
+@pytest.mark.django_db
 def test_additional_inputs_on_submission_form():
     phase = PhaseFactory()
     ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)

@@ -68,6 +68,7 @@ submission_options = (
     "submission_page_markdown",
     "submissions_limit_per_user_per_period",
     "submission_limit_period",
+    "auto_evaluate_new_submissions",
     "allow_submission_comments",
     "supplementary_file_choice",
     "supplementary_file_label",
@@ -194,6 +195,38 @@ class PhaseUpdateForm(
                     *algorithm_setting_options,
                 )
             )
+
+    def clean_auto_evaluate_new_submissions(self):
+        auto_evaluate = self.cleaned_data["auto_evaluate_new_submissions"]
+
+        turning_on = (
+            auto_evaluate and not self.instance.auto_evaluate_new_submissions
+        )
+
+        if (
+            turning_on
+            and self.instance.submission_set.filter(
+                status=Submission.StatusChoices.PENDING_REVIEW
+            ).exists()
+        ):
+            submission_list_url = reverse(
+                "evaluation:submission-list",
+                kwargs={
+                    "challenge_short_name": self.instance.challenge.short_name
+                },
+            )
+            raise ValidationError(
+                format_html(
+                    "This phase has submissions that are pending review. These "
+                    "must be accepted or rejected before this setting can be "
+                    "enabled. You can find them in <a href={url}>{label}</a> "
+                    "after sorting by phase.",
+                    url=submission_list_url,
+                    label="All submissions",
+                )
+            )
+
+        return auto_evaluate
 
     class Meta:
         model = Phase
