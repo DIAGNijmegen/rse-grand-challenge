@@ -33,6 +33,7 @@ from grandchallenge.evaluation.models import (
     Method,
     Phase,
     PhaseAdditionalEvaluationInput,
+    SubmissionAlreadyReviewed,
     SubmissionStatusChoices,
     get_archive_items_for_interfaces,
 )
@@ -4080,5 +4081,40 @@ class TestSubmissionNotifications:
         submission.save()
 
         assert Notification.objects.count() == 0
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.ACCEPTED
+
+
+@pytest.mark.django_db
+class TestSubmissionReview:
+    def test_review_sets_status_and_message(self):
+        submission = SubmissionFactory(
+            status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        reviewed = submission.review(
+            status=SubmissionStatusChoices.REJECTED,
+            status_message="Not good enough",
+        )
+
+        assert reviewed.status == SubmissionStatusChoices.REJECTED
+        assert reviewed.status_message == "Not good enough"
+
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.REJECTED
+        assert submission.status_message == "Not good enough"
+
+    def test_review_of_already_reviewed_submission_is_rejected(self):
+        submission = SubmissionFactory(
+            status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        # First decision wins.
+        submission.review(status=SubmissionStatusChoices.ACCEPTED)
+
+        # Review on stale submission raises.
+        with pytest.raises(SubmissionAlreadyReviewed):
+            submission.review(status=SubmissionStatusChoices.CANCELLED)
+
         submission.refresh_from_db()
         assert submission.status == SubmissionStatusChoices.ACCEPTED
