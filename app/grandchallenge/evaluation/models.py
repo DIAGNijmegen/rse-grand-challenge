@@ -10,7 +10,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import mail_managers
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -72,6 +72,7 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
 )
 from grandchallenge.emails.emails import send_standard_email_batch
+from grandchallenge.evaluation.exceptions import SubmissionAlreadyReviewed
 from grandchallenge.evaluation.tasks import (
     assign_evaluation_permissions,
     assign_submission_permissions,
@@ -1763,6 +1764,19 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 "A submission can only be accepted, rejected or cancelled "
                 "while it is pending review."
             )
+
+    def review(self, *, status, status_message=""):
+        with transaction.atomic():
+            submission = Submission.objects.select_for_update().get(pk=self.pk)
+
+            if submission.status != SubmissionStatusChoices.PENDING_REVIEW:
+                raise SubmissionAlreadyReviewed
+
+            submission.status = status
+            submission.status_message = status_message
+            submission.save()
+
+        return submission
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
