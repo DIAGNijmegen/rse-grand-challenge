@@ -181,15 +181,6 @@ def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
         )
         return
 
-    if (
-        not evaluation.submission.predictions_file
-        and evaluation.submission.user_upload
-    ):
-        evaluation.submission.user_upload.copy_object(
-            to_field=evaluation.submission.predictions_file
-        )
-        evaluation.submission.user_upload.delete()
-
     if evaluation.submission.algorithm_image:
         evaluation.status = Evaluation.PENDING
         evaluation.save()
