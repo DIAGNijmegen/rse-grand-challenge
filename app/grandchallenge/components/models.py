@@ -6,7 +6,6 @@ from enum import Enum, StrEnum
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import NamedTuple
 from urllib.parse import quote
 
 from django import forms
@@ -27,7 +26,7 @@ from django.db import models
 from django.db.models import IntegerChoices, QuerySet, TextChoices
 from django.forms import ModelChoiceField
 from django.template.defaultfilters import truncatewords
-from django.utils.functional import cached_property
+from django.utils.functional import SimpleLazyObject, cached_property
 from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
@@ -107,14 +106,6 @@ RESERVED_SOCKET_SLUGS = {
     "metrics-json-file",
     "results-json-file",
 }
-
-
-class OutputSubtask(NamedTuple):
-    """A single unit of work that produces outputs for a component job."""
-
-    task_pk: str | None
-    outputs: models.Manager
-    output_interfaces: QuerySet
 
 
 class SourceChoices(StrEnum):
@@ -1663,6 +1654,31 @@ class ComponentJobManager(models.QuerySet):
         return existing_civs
 
 
+class SingleSubtaskOutputParsingMixin:
+    """Output parsing for component jobs that produce a single set of outputs.
+
+    The job itself holds the outputs, so parsing is scheduled per output
+    interface and completion compares the expected interfaces against those
+    that have produced a value.
+    """
+
+    def schedule_output_parsing(self):
+        # Local import to avoid a circular dependency
+        from grandchallenge.components.tasks import parse_job_output
+
+        for interface in self.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **self.task_kwargs,
+                interface_slug=interface.slug,
+            )
+
+    @property
+    def output_parsing_complete(self):
+        expected_interfaces = {*self.output_interfaces.all()}
+        parsed_interfaces = {output.interface for output in self.outputs.all()}
+        return not (expected_interfaces - parsed_interfaces)
+
+
 class ComponentJob(FieldChangeMixin, UUIDModel):
     # The job statuses come directly from celery.result.AsyncResult.status:
     # http://docs.celeryproject.org/en/latest/reference/celery.result.html
@@ -1840,7 +1856,11 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "use_warm_pool": self.use_warm_pool,
             "signing_key": self.signing_key,
             "api_method": self.container.api_method,
-            "task_definitions": self.inference_task_definitions,
+            # Evaluated lazily so that consumers which do not use the task
+            # definitions (e.g. output parsing) do not pay to build them
+            "task_definitions": SimpleLazyObject(
+                lambda: self.inference_task_definitions
+            ),
         }
 
     def get_executor(self, *, backend):
@@ -1879,51 +1899,12 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "backend": settings.COMPONENTS_DEFAULT_BACKEND,
         }
 
-    @property
-    def output_subtasks(self):
-        """The subtasks that produce outputs for this job."""
-        raise NotImplementedError
-
-    def get_output_subtask(self, *, task_pk=None):
-        for subtask in self.output_subtasks:
-            if subtask.task_pk == task_pk:
-                return subtask
-        raise ValueError(f"No subtask found for task_pk {task_pk}")
-
     def schedule_output_parsing(self):
-        # Local import to avoid a circular dependency
-        from grandchallenge.components.tasks import parse_job_output
-
-        for subtask in self.output_subtasks:
-            task_kwargs = {}
-            if subtask.task_pk is not None:
-                task_kwargs["task_pk"] = subtask.task_pk
-
-            for interface in subtask.output_interfaces.all():
-                parse_job_output.execute_on_commit(
-                    **self.task_kwargs,
-                    interface_slug=interface.slug,
-                    **task_kwargs,
-                )
-
-    def output_value_exists(self, *, interface, task_pk=None):
-        subtask = self.get_output_subtask(task_pk=task_pk)
-        return subtask.outputs.filter(interface=interface).exists()
-
-    def add_output_value(self, *, value, task_pk=None):
-        subtask = self.get_output_subtask(task_pk=task_pk)
-        subtask.outputs.add(value)
+        raise NotImplementedError
 
     @property
     def output_parsing_complete(self):
-        for subtask in self.output_subtasks:
-            expected_interfaces = {*subtask.output_interfaces.all()}
-            parsed_interfaces = {
-                output.interface for output in subtask.outputs.all()
-            }
-            if expected_interfaces - parsed_interfaces:
-                return False
-        return True
+        raise NotImplementedError
 
     def execute(self):
         provision_job.execute_on_commit(**self.task_kwargs)

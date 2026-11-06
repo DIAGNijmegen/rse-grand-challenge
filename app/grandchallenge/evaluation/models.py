@@ -42,7 +42,7 @@ from grandchallenge.components.models import (
     ComponentJob,
     ComponentJobManager,
     ImportStatusChoices,
-    OutputSubtask,
+    SingleSubtaskOutputParsingMixin,
     Tarball,
 )
 from grandchallenge.components.schemas import (
@@ -2590,20 +2590,28 @@ class BatchJob(ComponentJob):
         return self.batch_job_utilization
 
     @property
-    def output_subtasks(self):
-        return [
-            OutputSubtask(
-                task_pk=str(task.pk),
-                outputs=task.outputs,
-                output_interfaces=task.output_interfaces,
-            )
-            for task in self.tasks.all()
+    def output_parsing_complete(self):
+        incomplete_statuses = [
+            status
+            for status in BatchJobTaskParsingStatusChoices.values
+            if status != BatchJobTaskParsingStatusChoices.COMPLETED
         ]
+        return not self.tasks.filter(
+            parsing_status__in=incomplete_statuses
+        ).exists()
 
     def schedule_output_parsing(self):
-        from grandchallenge.components.tasks import parse_outputs_for_batch_job
+        from grandchallenge.components.tasks import (
+            finalize_batch_job_parsing,
+            parse_outputs_for_batch_job_task,
+        )
 
-        parse_outputs_for_batch_job.execute_on_commit(batch_job_pk=self.pk)
+        for task_pk in self.tasks.values_list("pk", flat=True):
+            parse_outputs_for_batch_job_task.execute_on_commit(
+                batch_job_task_pk=task_pk
+            )
+
+        finalize_batch_job_parsing.execute_on_commit(batch_job_pk=self.pk)
 
     def get_absolute_url(self):
         return reverse(
@@ -2645,9 +2653,21 @@ class BatchJobGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(BatchJob, on_delete=models.CASCADE)
 
 
+class BatchJobTaskParsingStatusChoices(models.TextChoices):
+    PENDING = "PENDING", "Pending"
+    COMPLETED = "COMPLETED", "Completed"
+    FAILED = "FAILED", "Failed"
+    SKIPPED = "SKIPPED", "Skipped"
+
+
 class BatchJobTask(UUIDModel):
     batch_job = models.ForeignKey(
         BatchJob, on_delete=models.CASCADE, related_name="tasks"
+    )
+    parsing_status = models.CharField(
+        max_length=9,
+        choices=BatchJobTaskParsingStatusChoices,
+        default=BatchJobTaskParsingStatusChoices.PENDING,
     )
     algorithm_interface = models.ForeignKey(
         AlgorithmInterface, on_delete=models.PROTECT
@@ -2691,6 +2711,23 @@ class BatchJobTask(UUIDModel):
 
     class Meta(UUIDModel.Meta):
         ordering = ("created",)
+        indexes = [
+            models.Index(
+                fields=["batch_job", "parsing_status"],
+            ),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    parsing_status__in=BatchJobTaskParsingStatusChoices.values
+                ),
+                name="%(app_label)s_%(class)s_parsing_status_valid",
+            ),
+        ]
+
+    @property
+    def task_pk(self) -> str:
+        return str(self.pk)
 
     @property
     def output_interfaces(self):
@@ -3012,7 +3049,9 @@ class EvaluationActionMessageBuilder:
             )
 
 
-class Evaluation(CIVForObjectMixin, ComponentJob):
+class Evaluation(
+    SingleSubtaskOutputParsingMixin, CIVForObjectMixin, ComponentJob
+):
     """Stores information about an evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
@@ -3162,16 +3201,6 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.evaluation_outputs
-
-    @property
-    def output_subtasks(self):
-        return [
-            OutputSubtask(
-                task_pk=None,
-                outputs=self.outputs,
-                output_interfaces=self.output_interfaces,
-            )
-        ]
 
     @property
     def additional_outputs(self):
