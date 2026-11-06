@@ -380,12 +380,6 @@ ComponentImage</p>
 <dd><p>Returns an unevaluated QuerySet for the output interfaces</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentJob.output_subtasks">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">output_subtasks</span></span><a class="headerlink" href="#grandchallenge.components.models.ComponentJob.output_subtasks" title="Link to this definition">¶</a></dt>
-<dd><p>The subtasks that produce outputs for this job.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.components.models.ComponentJob.save">
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentJob.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentJob.save" title="Link to this definition">¶</a></dt>
@@ -446,27 +440,6 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd></dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="grandchallenge.components.models.OutputSubtask">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">OutputSubtask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_pk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_interfaces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#OutputSubtask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.OutputSubtask" title="Link to this definition">¶</a></dt>
-<dd><p>A single unit of work that produces outputs for a component job.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="grandchallenge.components.models.OutputSubtask.output_interfaces">
-<span class="sig-name descname"><span class="pre">output_interfaces</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/querysets/#django.db.models.query.QuerySet" title="(in Django v6.1)"><span class="pre">QuerySet</span></a></span><a class="headerlink" href="#grandchallenge.components.models.OutputSubtask.output_interfaces" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="grandchallenge.components.models.OutputSubtask.outputs">
-<span class="sig-name descname"><span class="pre">outputs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.djangoproject.com/en/stable/topics/db/managers/#django.db.models.Manager" title="(in Django v6.1)"><span class="pre">Manager</span></a></span><a class="headerlink" href="#grandchallenge.components.models.OutputSubtask.outputs" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="grandchallenge.components.models.OutputSubtask.task_pk">
-<span class="sig-name descname"><span class="pre">task_pk</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#grandchallenge.components.models.OutputSubtask.task_pk" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.components.models.OverlaySegmentsMixin">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">OverlaySegmentsMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#OverlaySegmentsMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.OverlaySegmentsMixin" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -480,6 +453,15 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd class="field-odd"><p><strong>look_up_table</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v6.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">LookUpTable</span></code>) – Look up table. The look-up table that is applied when an overlay image is first shown</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.components.models.SingleSubtaskOutputParsingMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">SingleSubtaskOutputParsingMixin</span></span><a class="reference internal" href="_modules/grandchallenge/components/models.html#SingleSubtaskOutputParsingMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.SingleSubtaskOutputParsingMixin" title="Link to this definition">¶</a></dt>
+<dd><p>Output parsing for component jobs that produce a single set of outputs.</p>
+<p>The job itself holds the outputs, so parsing is scheduled per output
+interface and completion compares the expected interfaces against those
+that have produced a value.</p>
 </dd></dl>
 
 <dl class="py class">
