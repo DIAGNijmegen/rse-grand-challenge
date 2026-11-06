@@ -1969,11 +1969,6 @@
             <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs_complete</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">"Additional inputs are required to create an evaluation for this phase"</span>
-            <span class="p">)</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">external_evaluation</span><span class="p">:</span>
             <span class="n">evaluation</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
                 <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
