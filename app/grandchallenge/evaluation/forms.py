@@ -32,6 +32,7 @@ from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.error_messages import EvaluationErrorMessages
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.forms import (
     PhaseMixin,
     SaveFormInitMixin,
@@ -39,6 +40,7 @@ from grandchallenge.core.forms import (
 )
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.templatetags.bleach import clean
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
@@ -723,7 +725,26 @@ class SubmissionForm(
         widgets = {"creator": forms.HiddenInput, "phase": forms.HiddenInput}
 
 
-class SubmissionAcceptForm(SaveFormInitMixin, forms.ModelForm):
+class SubmissionReviewMixin:
+    def clean(self):
+        cleaned_data = super().clean()
+
+        try:
+            with check_lock_acquired():
+                Submission.objects.select_for_update(nowait=True).get(
+                    pk=self.instance.pk
+                )
+        except LockNotAcquiredException:
+            raise ValidationError(
+                "This submission is currently being updated. Please refresh to see the latest status."
+            ) from None
+
+        return cleaned_data
+
+
+class SubmissionAcceptForm(
+    SaveFormInitMixin, SubmissionReviewMixin, forms.ModelForm
+):
     class Meta:
         model = Submission
         fields = ("status",)
@@ -784,7 +805,9 @@ class SubmissionAcceptForm(SaveFormInitMixin, forms.ModelForm):
         return cleaned_data
 
 
-class SubmissionRejectForm(SaveFormInitMixin, forms.ModelForm):
+class SubmissionRejectForm(
+    SaveFormInitMixin, SubmissionReviewMixin, forms.ModelForm
+):
     class Meta:
         model = Submission
         fields = ("status", "status_message")
@@ -830,7 +853,9 @@ class SubmissionRejectForm(SaveFormInitMixin, forms.ModelForm):
         )
 
 
-class SubmissionCancelForm(SaveFormInitMixin, forms.ModelForm):
+class SubmissionCancelForm(
+    SaveFormInitMixin, SubmissionReviewMixin, forms.ModelForm
+):
     save_button_text = "I understand. Cancel this submission."
 
     class Meta:
