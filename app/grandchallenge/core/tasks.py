@@ -18,6 +18,7 @@ from grandchallenge.evaluation.models import (
     BatchJobTaskParsingStatusChoices,
     Evaluation,
     Method,
+    Submission,
 )
 from grandchallenge.workstations.models import Session
 
@@ -77,6 +78,7 @@ def _get_metrics():
 
     models_and_status_fields = [
         (Job, "status"),
+        (Submission, "status"),
         (Evaluation, "status"),
         (BatchJob, "status"),
         (BatchJobTask, "parsing_status"),
@@ -125,6 +127,9 @@ def _get_metrics():
                 Method.ImportStatusChoices.QUEUED,
                 Method.ImportStatusChoices.STARTED,
             ]
+        ),
+        Submission.objects.filter(
+            status=Submission.StatusChoices.VALIDATING_INPUTS,
         ),
         Evaluation.objects.active(),
         BatchJob.objects.active(),

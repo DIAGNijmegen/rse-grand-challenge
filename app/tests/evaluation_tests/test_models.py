@@ -33,6 +33,7 @@ from grandchallenge.evaluation.models import (
     Method,
     Phase,
     PhaseAdditionalEvaluationInput,
+    SubmissionAlreadyReviewed,
     SubmissionStatusChoices,
     get_archive_items_for_interfaces,
 )
@@ -914,6 +915,50 @@ class TestPhaseLimits:
             assert i["next_submission_at"] is not None
         else:
             assert i["next_submission_at"] is None
+
+    def test_failed_rejected_cancelled_submissions_do_not_count(self):
+        user = UserFactory()
+        self.phase.submissions_limit_per_user_per_period = 4
+        self.phase.submission_limit_period = None
+
+        choices_counting_towards_limit = {
+            SubmissionStatusChoices.VALIDATING_INPUTS,
+            SubmissionStatusChoices.PENDING_REVIEW,
+            SubmissionStatusChoices.ACCEPTED,
+        }
+        choices_not_counting_towards_limit = {
+            SubmissionStatusChoices.FAILED,
+            SubmissionStatusChoices.REJECTED,
+            SubmissionStatusChoices.CANCELLED,
+        }
+
+        assert set(SubmissionStatusChoices) == (
+            choices_counting_towards_limit | choices_not_counting_towards_limit
+        )
+
+        for status in choices_counting_towards_limit:
+            SubmissionFactory(
+                creator=user,
+                phase=self.phase,
+                status=status,
+            )
+
+        i = self.phase.get_next_submission(user=user)
+
+        assert i["remaining_submissions"] == 1
+        assert i["next_submission_at"] is not None
+
+        for status in choices_not_counting_towards_limit:
+            SubmissionFactory(
+                creator=user,
+                phase=self.phase,
+                status=status,
+            )
+
+        i = self.phase.get_next_submission(user=user)
+
+        assert i["remaining_submissions"] == 1
+        assert i["next_submission_at"] is not None
 
 
 @pytest.mark.django_db
@@ -4080,5 +4125,40 @@ class TestSubmissionNotifications:
         submission.save()
 
         assert Notification.objects.count() == 0
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.ACCEPTED
+
+
+@pytest.mark.django_db
+class TestSubmissionReview:
+    def test_review_sets_status_and_message(self):
+        submission = SubmissionFactory(
+            status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        reviewed = submission.review(
+            status=SubmissionStatusChoices.REJECTED,
+            status_message="Not good enough",
+        )
+
+        assert reviewed.status == SubmissionStatusChoices.REJECTED
+        assert reviewed.status_message == "Not good enough"
+
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.REJECTED
+        assert submission.status_message == "Not good enough"
+
+    def test_review_of_already_reviewed_submission_is_rejected(self):
+        submission = SubmissionFactory(
+            status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        # First decision wins.
+        submission.review(status=SubmissionStatusChoices.ACCEPTED)
+
+        # Review on stale submission raises.
+        with pytest.raises(SubmissionAlreadyReviewed):
+            submission.review(status=SubmissionStatusChoices.CANCELLED)
+
         submission.refresh_from_db()
         assert submission.status == SubmissionStatusChoices.ACCEPTED

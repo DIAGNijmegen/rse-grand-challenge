@@ -3808,6 +3808,13 @@ class TestSubmissionStatusUpdateViews:
         submission = SubmissionFactory(
             phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
         )
+        InvoiceFactory(
+            challenge=phase.challenge,
+            support_costs_euros=0,
+            compute_costs_euros=10,
+            storage_costs_euros=0,
+            payment_status=PaymentStatusChoices.PAID,
+        )
 
         with patch(
             "grandchallenge.evaluation.models.create_evaluation"
@@ -3835,12 +3842,51 @@ class TestSubmissionStatusUpdateViews:
             submission_pk=submission.pk
         )
 
+    def test_accept_blocked_when_insufficient_budget(
+        self, client, django_capture_on_commit_callbacks
+    ):
+        admin = UserFactory()
+        phase = PhaseFactory()
+        phase.challenge.add_admin(admin)
+        submission = SubmissionFactory(
+            phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="evaluation:submission-accept",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "challenge_short_name": phase.challenge.short_name,
+                    "slug": phase.slug,
+                    "pk": submission.pk,
+                },
+                user=admin,
+                data={
+                    "status": SubmissionStatusChoices.ACCEPTED,
+                },
+            )
+
+        assert response.status_code == 200
+        assert "Challenge has insufficient budget." in str(response.content)
+
+        submission.refresh_from_db()
+        assert submission.status == SubmissionStatusChoices.PENDING_REVIEW
+
     def test_accept_sends_notification(self, client):
         admin = UserFactory()
         phase = PhaseFactory()
         phase.challenge.add_admin(admin)
         submission = SubmissionFactory(
             phase=phase, status=SubmissionStatusChoices.PENDING_REVIEW
+        )
+        InvoiceFactory(
+            challenge=phase.challenge,
+            support_costs_euros=0,
+            compute_costs_euros=10,
+            storage_costs_euros=0,
+            payment_status=PaymentStatusChoices.PAID,
         )
         expected_message = "was accepted"
         Notification.objects.all().delete()

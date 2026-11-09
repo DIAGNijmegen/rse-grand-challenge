@@ -529,6 +529,12 @@ class SubmissionForm(
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]
 
+        if algorithm.pending_submissions.filter(phase=self._phase):
+            raise ValidationError(
+                "A submission for this algorithm is already pending review. "
+                "Please wait for the submission to be reviewed or cancel it."
+            )
+
         if algorithm.active_model:
             extra_submission_filter = {
                 "algorithm_model__checksum": algorithm.active_model.checksum
@@ -758,6 +764,24 @@ class SubmissionAcceptForm(SaveFormInitMixin, forms.ModelForm):
                 css_class="btn btn-success ml-0",
             )
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        challenge = (
+            Challenge.objects.with_invoices_with_budget_authorization().get(
+                pk=self.instance.phase.challenge.pk
+            )
+        )
+
+        try:
+            challenge.utilization_invoice
+        except InsufficientBudgetError:
+            raise ValidationError(
+                "Challenge has insufficient budget. Please contact support to add more funds."
+            )
+
+        return cleaned_data
 
 
 class SubmissionRejectForm(SaveFormInitMixin, forms.ModelForm):

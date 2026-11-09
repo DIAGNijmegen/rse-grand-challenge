@@ -5,7 +5,7 @@ from grandchallenge.algorithms.models import (
     EndpointStatusChoices,
 )
 from grandchallenge.core.tasks import _get_metrics, _get_metrics_sagemaker
-from grandchallenge.evaluation.models import Method
+from grandchallenge.evaluation.models import Method, Submission
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -29,7 +29,11 @@ def test_get_metrics():
 
     m = MethodFactory(import_status=Method.ImportStatusChoices.COMPLETED)
 
-    e = EvaluationFactory(method=m, time_limit=m.phase.evaluation_time_limit)
+    e = EvaluationFactory(
+        method=m,
+        time_limit=m.phase.evaluation_time_limit,
+        submission__status=Submission.StatusChoices.ACCEPTED,
+    )
     e.status = e.SUCCESS
     e.save()
 
@@ -127,6 +131,42 @@ def test_get_metrics():
         {
             "MetricName": "JobsValidatinginputs",
             "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SubmissionsValidatinginputs",
+            "Dimensions": [{"Name": "Model", "Value": "Submission"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SubmissionsFailed",
+            "Dimensions": [{"Name": "Model", "Value": "Submission"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SubmissionsPendingreview",
+            "Dimensions": [{"Name": "Model", "Value": "Submission"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SubmissionsAccepted",
+            "Dimensions": [{"Name": "Model", "Value": "Submission"}],
+            "Value": 1,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SubmissionsRejected",
+            "Dimensions": [{"Name": "Model", "Value": "Submission"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SubmissionsCancelled",
+            "Dimensions": [{"Name": "Model", "Value": "Submission"}],
             "Value": 0,
             "Unit": "Count",
         },
@@ -466,6 +506,11 @@ def test_get_metrics():
             "Unit": "Seconds",
         },
         {"MetricName": "OldestActiveMethod", "Value": 0, "Unit": "Seconds"},
+        {
+            "MetricName": "OldestActiveSubmission",
+            "Value": 0,
+            "Unit": "Seconds",
+        },
         {
             "MetricName": "OldestActiveEvaluation",
             "Value": 0,
