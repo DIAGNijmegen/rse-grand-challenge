@@ -49,7 +49,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.mail</span><span class="w"> </span><span class="kn">import</span> <span class="n">mail_managers</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span><span class="p">,</span> <span class="n">transaction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Case</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">IntegerField</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Value</span><span class="p">,</span> <span class="n">When</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coalesce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
@@ -111,6 +111,7 @@
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.emails.emails</span><span class="w"> </span><span class="kn">import</span> <span class="n">send_standard_email_batch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubmissionAlreadyReviewed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">assign_evaluation_permissions</span><span class="p">,</span>
     <span class="n">assign_submission_permissions</span><span class="p">,</span>
@@ -1144,6 +1145,9 @@
             <span class="n">evals_in_period</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">filter_kwargs</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">evaluation__status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                    <span class="n">status__in</span><span class="o">=</span><span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">get_choices_excluded_for_count</span><span class="p">()</span>
+                <span class="p">)</span>
                 <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
                 <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"-created"</span><span class="p">)</span>
             <span class="p">)</span>
@@ -1671,6 +1675,14 @@
     <span class="n">REJECTED</span> <span class="o">=</span> <span class="s2">"REJECTED"</span><span class="p">,</span> <span class="s2">"Rejected"</span>
     <span class="n">CANCELLED</span> <span class="o">=</span> <span class="s2">"CANCELLED"</span><span class="p">,</span> <span class="s2">"Cancelled"</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_choices_excluded_for_count</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">REJECTED</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+        <span class="p">}</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Submission</span><span class="p">(</span><span class="n">CIVForObjectMixin</span><span class="p">,</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Store files for evaluation."""</span>
@@ -1814,6 +1826,19 @@
                 <span class="s2">"A submission can only be accepted, rejected or cancelled "</span>
                 <span class="s2">"while it is pending review."</span>
             <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">review</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">status_message</span><span class="o">=</span><span class="s2">""</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">transaction</span><span class="o">.</span><span class="n">atomic</span><span class="p">():</span>
+            <span class="n">submission</span> <span class="o">=</span> <span class="n">Submission</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_for_update</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">submission</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">PENDING_REVIEW</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SubmissionAlreadyReviewed</span>
+
+            <span class="n">submission</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+            <span class="n">submission</span><span class="o">.</span><span class="n">status_message</span> <span class="o">=</span> <span class="n">status_message</span>
+            <span class="n">submission</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">submission</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
