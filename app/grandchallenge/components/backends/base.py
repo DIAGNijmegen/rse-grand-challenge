@@ -14,7 +14,6 @@ from datetime import timedelta
 from json import JSONDecodeError
 from math import ceil
 from pathlib import Path
-from subprocess import CalledProcessError
 from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from typing import NamedTuple
 from uuid import UUID
@@ -31,7 +30,7 @@ from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
-from panimg_models import ImageBuilderOptions
+from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from pydantic import BaseModel, ConfigDict
 from pydantic_core import to_json
 
@@ -1010,19 +1009,17 @@ class Executor(ABC):
                 importer_result = import_images(
                     input_directory=input_directory,
                     builders=[
-                        ImageBuilderOptions.MHD,
-                        ImageBuilderOptions.TIFF,
+                        image_builder_mhd,
+                        image_builder_tiff,
                     ],
                 )
-            except CalledProcessError as error:
+            except RuntimeError as error:
                 too_big_messages = {
                     "std::bad_alloc",
                     "No space left on device",
                 }
 
-                if error.returncode == 137 or any(
-                    message in error.stderr for message in too_big_messages
-                ):
+                if any(message in str(error) for message in too_big_messages):
                     raise ComponentException(
                         "The output image was too large to process, "
                         "please try again with smaller images"

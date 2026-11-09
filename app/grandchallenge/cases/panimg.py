@@ -1,48 +1,38 @@
-import shlex
-import subprocess
 from pathlib import Path
 
 from django.utils._os import safe_join
-from panimg_models import (
-    PanImgFile,
-    PanImgResult,
-    PostProcessorOptions,
-    PostProcessorResult,
+from panimg import convert as panimg_convert
+from panimg import post_process as panimg_post_process
+from panimg.image_builders import (
+    image_builder_dicom,
+    image_builder_fallback,
+    image_builder_mhd,
+    image_builder_nifti,
+    image_builder_nrrd,
+    image_builder_oct,
+    image_builder_tiff,
 )
-from pydantic import TypeAdapter
+from panimg.post_processors import tiff_to_dzi
+from panimg_models import PanImgFile
 
 
 def convert(*, input_directory, output_directory, builders):
-    builders_command = []
-    for builder in builders:
-        builders_command.extend(["--image-builder", builder])
-
-    panimg_command = shlex.join(
-        [
-            "panimg",
-            "convert",
-            "--input-dir",
-            str(input_directory.resolve()),
-            "--output-dir",
-            str(output_directory.resolve()),
-            *builders_command,
-            "--no-post-processing",
+    if not builders:
+        builders = [
+            image_builder_mhd,
+            image_builder_nifti,
+            image_builder_nrrd,
+            image_builder_dicom,
+            image_builder_tiff,
+            image_builder_oct,
+            image_builder_fallback,
         ]
-    )
 
-    cli_result = subprocess.run(
-        [
-            "bash",
-            "-c",
-            f"source /opt/virtualenvs/panimg/bin/activate && {panimg_command}",
-        ],
-        text=True,
-        check=True,
-        capture_output=True,
-    )
-
-    panimg_result: PanImgResult = TypeAdapter(PanImgResult).validate_json(
-        cli_result.stdout.splitlines()[-1]
+    panimg_result = panimg_convert(
+        input_directory=input_directory.resolve(),
+        output_directory=output_directory.resolve(),
+        builders=builders,
+        post_processors=[],  # Do the post-processing later
     )
 
     return panimg_result
@@ -53,35 +43,12 @@ def post_process(*, image_file, output_directory):
         image_file=image_file, output_directory=output_directory
     )
 
-    panimg_command = shlex.join(
-        [
-            "panimg",
-            "post-process",
-            "--image-id",
-            str(panimg_file.image_id),
-            "--image-type",
-            panimg_file.image_type,
-            "--input-file",
-            str(panimg_file.file),
-            "--post-processor",
-            PostProcessorOptions.DZI,
-        ]
-    )
-
-    cli_result = subprocess.run(
-        [
-            "bash",
-            "-c",
-            f"source /opt/virtualenvs/panimg/bin/activate && {panimg_command}",
+    post_processor_result = panimg_post_process(
+        image_files={panimg_file},
+        post_processors=[
+            tiff_to_dzi,
         ],
-        text=True,
-        check=True,
-        capture_output=True,
     )
-
-    post_processor_result: PostProcessorResult = TypeAdapter(
-        PostProcessorResult
-    ).validate_json(cli_result.stdout.splitlines()[-1])
 
     return post_processor_result
 
