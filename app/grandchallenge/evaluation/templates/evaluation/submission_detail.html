@@ -142,9 +142,9 @@
                     <td>
                         <span title="{% if "view_evaluation" in evaluation_perms %}View evaluation details{% else %}You cannot view the details of this evaluation.{% endif %}">
                             <a {% if "view_evaluation" in evaluation_perms %}href="{{ evaluation.get_absolute_url }}"{% endif %}
-                                class="btn p-0 m-0 text-info {% if not "view_evaluation" in evaluation_perms %}disabled{% endif %}"
+                                class="btn btn-primary btn-sm {% if not "view_evaluation" in evaluation_perms %}disabled{% endif %}"
                             >
-                                <i class="fas fa-info-circle mr-1"></i>
+                                <i class="fas fa-info-circle"></i>
                             </a>
                         </span>
                     </td>

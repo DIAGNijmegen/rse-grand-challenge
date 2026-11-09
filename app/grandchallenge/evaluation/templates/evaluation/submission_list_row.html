@@ -1,6 +1,10 @@
 {% load profiles %}
 
-<a href="{{ object.get_absolute_url }}" title="View submission details"><i class="fas fa-info-circle"></i></a>
+<a class="btn btn-primary btn-sm"
+   href="{{ object.get_absolute_url }}"
+   title="View submission details">
+    <i class="fas fa-info-circle"></i>
+</a>
 
 <split></split>
 
