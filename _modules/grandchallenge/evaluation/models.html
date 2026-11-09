@@ -1144,6 +1144,9 @@
             <span class="n">evals_in_period</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">filter_kwargs</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">evaluation__status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                    <span class="n">status__in</span><span class="o">=</span><span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">get_choices_excluded_for_count</span><span class="p">()</span>
+                <span class="p">)</span>
                 <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
                 <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"-created"</span><span class="p">)</span>
             <span class="p">)</span>
@@ -1670,6 +1673,14 @@
     <span class="n">ACCEPTED</span> <span class="o">=</span> <span class="s2">"ACCEPTED"</span><span class="p">,</span> <span class="s2">"Accepted"</span>
     <span class="n">REJECTED</span> <span class="o">=</span> <span class="s2">"REJECTED"</span><span class="p">,</span> <span class="s2">"Rejected"</span>
     <span class="n">CANCELLED</span> <span class="o">=</span> <span class="s2">"CANCELLED"</span><span class="p">,</span> <span class="s2">"Cancelled"</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_choices_excluded_for_count</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">REJECTED</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+        <span class="p">}</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Submission</span><span class="p">(</span><span class="n">CIVForObjectMixin</span><span class="p">,</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
