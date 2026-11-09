@@ -1773,7 +1773,8 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         if self.is_illegal_review_transition:
             raise ValidationError(
                 "A submission can only be accepted, rejected or cancelled "
-                "while it is pending review."
+                "while it is pending review. Please refresh to see the latest "
+                "status."
             )
 
     def save(self, *args, **kwargs):
