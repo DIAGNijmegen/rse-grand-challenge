@@ -3,7 +3,11 @@ from random import choice
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    ImproperlyConfigured,
+    PermissionDenied,
+    ValidationError,
+)
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.forms.utils import ErrorList
 from django.http import (
@@ -243,9 +247,10 @@ class RedirectPath(View):
 
 def handler403(request, exception):
     request.challenge = None
+    reason = str(exception) if isinstance(exception, PermissionDenied) else ""
     content = loader.render_to_string(
         template_name="403.html",
-        context={"reason": str(exception) if exception else ""},
+        context={"reason": reason},
         request=request,
     )
     return HttpResponseForbidden(content)
