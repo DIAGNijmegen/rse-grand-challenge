@@ -215,7 +215,9 @@ class SubmissionAdmin(admin.ModelAdmin):
         "algorithm_image",
         "user_upload",
         "algorithm_model",
+        "comment",
         "status",
+        "status_message",
         "additional_inputs",
     )
     actions = (reevaluate_submissions,)
