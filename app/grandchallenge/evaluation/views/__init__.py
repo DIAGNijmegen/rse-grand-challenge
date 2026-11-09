@@ -18,7 +18,6 @@ from django.db.models import Prefetch
 from django.http import (
     FileResponse,
     Http404,
-    HttpResponseRedirect,
 )
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -56,7 +55,6 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
-from grandchallenge.evaluation.exceptions import SubmissionAlreadyReviewed
 from grandchallenge.evaluation.forms import (
     AlgorithmInterfaceForPhaseCopyForm,
     ConfigureAlgorithmPhasesForm,
@@ -503,18 +501,6 @@ class SubmissionPendingReviewMixin:
             pk=self.kwargs["pk"],
             status=self.model.StatusChoices.PENDING_REVIEW,
         )
-
-    def form_valid(self, form):
-        try:
-            self.object = self.object.review(
-                status=form.cleaned_data["status"],
-                status_message=form.cleaned_data.get("status_message", ""),
-            )
-        except SubmissionAlreadyReviewed:
-            # Pass silently. The actual status is shown after redirect.
-            pass
-
-        return HttpResponseRedirect(self.get_success_url())
 
 
 class SubmissionAccept(
