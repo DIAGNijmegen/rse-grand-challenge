@@ -2787,6 +2787,9 @@
             <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span>
                 <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"batch_job"</span><span class="p">,</span> <span class="s2">"parsing_status"</span><span class="p">],</span>
             <span class="p">),</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"parsing_status"</span><span class="p">,</span> <span class="s2">"created"</span><span class="p">],</span>
+            <span class="p">),</span>
         <span class="p">]</span>
         <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">models</span><span class="o">.</span><span class="n">CheckConstraint</span><span class="p">(</span>
