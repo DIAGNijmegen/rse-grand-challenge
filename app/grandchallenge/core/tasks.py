@@ -91,9 +91,7 @@ def _get_metrics():
     for model, field in models_and_status_fields:
         choice_to_display = dict(getattr(model, field).field.choices)
 
-        def choice_to_name(
-            choice, *, model=model, choice_to_display=choice_to_display
-        ):
+        def choice_to_name(choice):
             return f"{model.__name__}s{choice_to_display[choice]}".translate(
                 {ord(c): None for c in " -."}
             )
