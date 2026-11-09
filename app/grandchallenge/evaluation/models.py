@@ -1727,6 +1727,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         )
         indexes = [
             models.Index(fields=["created"]),
+            models.Index(fields=["status", "created"]),
         ]
         constraints = [
             models.CheckConstraint(

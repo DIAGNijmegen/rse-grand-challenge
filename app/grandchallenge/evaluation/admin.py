@@ -200,8 +200,13 @@ class SubmissionAdmin(admin.ModelAdmin):
         "algorithm_image",
         "algorithm_requires_gpu_type",
         "algorithm_requires_memory_gb",
+        "status",
     )
-    list_filter = ("phase__submission_kind", "phase__challenge__short_name")
+    list_filter = (
+        "status",
+        "phase__submission_kind",
+        "phase__challenge__short_name",
+    )
     search_fields = ("pk", "creator__username", "phase__slug")
     readonly_fields = (
         "creator",
