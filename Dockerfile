@@ -61,12 +61,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/biom \
     uv sync --frozen --no-install-project --project /tmp/biom
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=virtualenvs/panimg/pyproject.toml,target=/tmp/panimg/pyproject.toml \
-    --mount=type=bind,source=virtualenvs/panimg/uv.lock,target=/tmp/panimg/uv.lock \
-    UV_PROJECT_ENVIRONMENT=/opt/virtualenvs/panimg \
-    uv sync --frozen --no-install-project --project /tmp/panimg
-
 WORKDIR /opt/grand-challenge
 
 # Install base python packages

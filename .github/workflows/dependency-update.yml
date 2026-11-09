@@ -39,7 +39,6 @@ jobs:
                   LOCK_OUTPUT=$(
                     uv lock --upgrade --no-progress 2>&1
                     uv lock --upgrade --no-progress --project virtualenvs/biom 2>&1
-                    uv lock --upgrade --no-progress --project virtualenvs/panimg 2>&1
                   )
                   echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
                   echo "$LOCK_OUTPUT" >> $GITHUB_ENV

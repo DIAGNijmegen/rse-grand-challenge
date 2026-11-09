@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from shutil import rmtree
-from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 from uuid import UUID
 
@@ -23,7 +22,8 @@ from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
 from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
-from panimg_models import ImageBuilderOptions, PanImgResult
+from panimg.types import ImageBuilder
+from panimg_models import PanImgResult
 
 from config.lambda_tasks import (
     BATCH_LONG_TASK_HARD_TIMEOUT,
@@ -284,12 +284,10 @@ def _build_images(  # noqa:C901
                 base_directory=tmp_dir,
                 upload_session=upload_session,
             )
-    except CalledProcessError as error:
+    except RuntimeError as error:
         too_big_messages = {"std::bad_alloc", "No space left on device"}
 
-        if error.returncode == 137 or any(
-            message in error.stderr for message in too_big_messages
-        ):
+        if any(message in str(error) for message in too_big_messages):
             _handle_error(
                 error_message=(
                     "The uploaded images were too large to process, "
@@ -395,7 +393,7 @@ def import_images(
     *,
     input_directory: Path,
     origin: RawImageUploadSession | None = None,
-    builders: Sequence[str] | None = None,
+    builders: Sequence[ImageBuilder] | None = None,
 ) -> ImporterResult:
     """
     Creates Image objects from a set of files.
@@ -415,17 +413,6 @@ def import_images(
         any file errors
 
     """
-    if builders is None:
-        builders = [
-            ImageBuilderOptions.MHD,
-            ImageBuilderOptions.NIFTI,
-            ImageBuilderOptions.NRRD,
-            ImageBuilderOptions.DICOM,
-            ImageBuilderOptions.TIFF,
-            ImageBuilderOptions.OCT,
-            ImageBuilderOptions.FALLBACK,
-        ]
-
     with TemporaryDirectory() as output_directory:
         panimg_output_dir = Path(output_directory) / "output"
 
@@ -553,6 +540,9 @@ def _handle_raw_files(
 
 
 @lambda_task(
+    # This task should be kept in batch to ensure a fresh environment
+    # each time. This is due to memory leaks in the VIPS library.
+    # See https://github.com/DIAGNijmegen/rse-cloud-infrastructure/issues/212
     queue=LambdaTaskQueueChoices.BATCH_MEM8G,
     retry_on=(LockNotAcquiredException,),
     soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,

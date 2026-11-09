@@ -56,7 +56,7 @@ dependencies = [
     # Requirements for forge
     "black",
     "isort",
-    "panimg-models",
+    "panimg",
     "psutil",
     "justhtml",
     # Django Lambda Tasks with OpenTelemetry tracing
