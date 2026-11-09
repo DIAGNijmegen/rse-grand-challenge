@@ -339,6 +339,30 @@ def test_get_metrics():
             "Unit": "Count",
         },
         {
+            "MetricName": "BatchJobTasksPending",
+            "Dimensions": [{"Name": "Model", "Value": "BatchJobTask"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "BatchJobTasksCompleted",
+            "Dimensions": [{"Name": "Model", "Value": "BatchJobTask"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "BatchJobTasksFailed",
+            "Dimensions": [{"Name": "Model", "Value": "BatchJobTask"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "BatchJobTasksSkipped",
+            "Dimensions": [{"Name": "Model", "Value": "BatchJobTask"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
             "MetricName": "SessionsQueued",
             "Dimensions": [{"Name": "Model", "Value": "Session"}],
             "Value": 0,
@@ -494,6 +518,11 @@ def test_get_metrics():
         },
         {
             "MetricName": "OldestActiveBatchJob",
+            "Value": 0,
+            "Unit": "Seconds",
+        },
+        {
+            "MetricName": "OldestActiveBatchJobTask",
             "Value": 0,
             "Unit": "Seconds",
         },
