@@ -765,6 +765,24 @@ class SubmissionAcceptForm(SaveFormInitMixin, forms.ModelForm):
             )
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        challenge = (
+            Challenge.objects.with_invoices_with_budget_authorization().get(
+                pk=self.instance.phase.challenge.pk
+            )
+        )
+
+        try:
+            challenge.utilization_invoice
+        except InsufficientBudgetError:
+            raise ValidationError(
+                "Challenge has insufficient budget. Please contact support to add more funds."
+            )
+
+        return cleaned_data
+
 
 class SubmissionRejectForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
