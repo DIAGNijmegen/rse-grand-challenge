@@ -2710,6 +2710,9 @@ class BatchJobTask(UUIDModel):
             models.Index(
                 fields=["batch_job", "parsing_status"],
             ),
+            models.Index(
+                fields=["parsing_status", "created"],
+            ),
         ]
         constraints = [
             models.CheckConstraint(

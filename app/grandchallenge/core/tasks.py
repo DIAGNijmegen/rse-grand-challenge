@@ -12,7 +12,13 @@ from grandchallenge.cases.models import (
     PostProcessImageTask,
     RawImageUploadSession,
 )
-from grandchallenge.evaluation.models import BatchJob, Evaluation, Method
+from grandchallenge.evaluation.models import (
+    BatchJob,
+    BatchJobTask,
+    BatchJobTaskParsingStatusChoices,
+    Evaluation,
+    Method,
+)
 from grandchallenge.workstations.models import Session
 
 CLOUDWATCH_METRICS_LIMIT = 1000
@@ -69,21 +75,23 @@ def put_cloudwatch_metrics_sagemaker():
 def _get_metrics():
     metric_data = []
 
-    models = [
-        Job,
-        Evaluation,
-        BatchJob,
-        Session,
-        RawImageUploadSession,
-        PostProcessImageTask,
-        Endpoint,
+    models_and_status_fields = [
+        (Job, "status"),
+        (Evaluation, "status"),
+        (BatchJob, "status"),
+        (BatchJobTask, "parsing_status"),
+        (Session, "status"),
+        (RawImageUploadSession, "status"),
+        (PostProcessImageTask, "status"),
+        (Endpoint, "status"),
     ]
-    field = "status"
 
-    for model in models:
+    for model, field in models_and_status_fields:
         choice_to_display = dict(getattr(model, field).field.choices)
 
-        def choice_to_name(choice):
+        def choice_to_name(
+            choice, *, model=model, choice_to_display=choice_to_display
+        ):
             return f"{model.__name__}s{choice_to_display[choice]}".translate(
                 {ord(c): None for c in " -."}
             )
@@ -120,6 +128,9 @@ def _get_metrics():
         ),
         Evaluation.objects.active(),
         BatchJob.objects.active(),
+        BatchJobTask.objects.filter(
+            parsing_status=BatchJobTaskParsingStatusChoices.PENDING
+        ),
         Job.objects.active(),
         RawImageUploadSession.objects.filter(
             status__in=[

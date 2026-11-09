@@ -325,11 +325,15 @@ class BatchJobTaskAdmin(admin.ModelAdmin):
         "pk",
         "created",
         "batch_job",
+        "parsing_status",
         "exec_duration",
         "invoke_duration",
     )
     list_select_related = ("batch_job__submission__phase__challenge",)
-    list_filter = ("batch_job__submission__phase__challenge__short_name",)
+    list_filter = (
+        "parsing_status",
+        "batch_job__submission__phase__challenge__short_name",
+    )
     search_fields = ("pk", "batch_job__pk", "batch_job__submission__pk")
     readonly_fields = (
         "batch_job",
