@@ -8,19 +8,9 @@ extra). That shared setup also instruments the libraries the tasks use
 (psycopg, botocore, requests, httpx, redis), so those are covered on every
 runtime.
 
-This module adds what is specific to the API worker:
-
-* ``configure_tracing`` — the ``service.name`` (from ``SESSION_COOKIE_DOMAIN``)
-  and the shared provider setup. Called at settings-import time.
-* ``instrument_django_requests`` — the ``DjangoInstrumentor`` request tracing
-  that replaces the old ``XRayMiddleware``. This **must** be called from an
-  ``AppConfig.ready()``, not at settings-import time: ``DjangoInstrumentor``
-  injects its middleware into ``settings.MIDDLEWARE``, and a mutation made
-  while the settings module is still importing does not survive into the
-  finalised ``LazySettings`` — so the request span would never be created and
-  every DB/AWS/HTTP span would be orphaned into its own trace. Running it in
-  ``ready()`` (after settings are configured, before the handler loads
-  middleware) makes the injection stick.
+This module only adds what is specific to the API worker: the ``service.name``
+(from ``SESSION_COOKIE_DOMAIN``) and the ``DjangoInstrumentor`` request tracing
+that replaces the old ``XRayMiddleware``.
 """
 
 import os
@@ -30,28 +20,21 @@ from opentelemetry.instrumentation.django import DjangoInstrumentor
 
 
 def configure_tracing(*, service_name: str) -> None:
-    """Configure the tracer provider for the Django API worker.
+    """Configure tracing for the Django API worker.
 
-    No-op unless an OTLP endpoint is set. Delegates the provider setup and the
-    shared library instrumentation to ``lambda_tasks.tracing``. Does **not**
-    install the Django request instrumentation — see
-    ``instrument_django_requests``.
+    No-op unless an OTLP endpoint is set. Delegates the tracer-provider setup
+    and the shared library instrumentation to ``lambda_tasks.tracing`` (which
+    returns ``None`` when tracing is disabled or already configured), then adds
+    the Django request instrumentation.
 
-    :param service_name: Value for the ``service.name`` resource attribute.
-        Passed to the shared setup via ``OTEL_SERVICE_NAME``; an explicitly
-        configured value still wins.
+    :param service_name: Value for the ``service.name`` resource attribute,
+        shown as the service name in the X-Ray service map. Passed to the
+        shared setup via ``OTEL_SERVICE_NAME``; an explicitly configured value
+        still wins.
     """
     os.environ.setdefault("OTEL_SERVICE_NAME", service_name)
-    lambda_tasks_tracing.configure_tracing()
 
-
-def instrument_django_requests() -> None:
-    """Install Django request instrumentation. Call from ``AppConfig.ready()``.
-
-    No-op unless tracing is enabled. Creates the per-request SERVER span that
-    the DB / AWS / HTTP spans attach to; without it those spans are orphaned.
-    """
-    if not lambda_tasks_tracing.tracing_is_enabled():
+    if lambda_tasks_tracing.configure_tracing() is None:
         return
     else:
         DjangoInstrumentor().instrument()

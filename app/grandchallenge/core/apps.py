@@ -3,8 +3,6 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_migrate
 
-from config.tracing import instrument_django_requests
-
 
 def init_users_groups(sender, **kwargs):
     from django.contrib.auth.models import Group
@@ -50,8 +48,6 @@ class CoreConfig(AppConfig):
     def ready(self):
         post_migrate.connect(init_users_groups, sender=self)
         post_migrate.connect(rename_site, sender=self)
-
-        instrument_django_requests()
 
         # noinspection PyUnresolvedReferences
         import grandchallenge.core.signals  # noqa: F401
