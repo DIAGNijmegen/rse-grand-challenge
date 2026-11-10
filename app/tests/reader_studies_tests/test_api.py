@@ -1293,7 +1293,30 @@ def test_ground_truth(client, django_assert_max_num_queries):
         display_set=ds,
     )
 
-    with django_assert_max_num_queries(33):
+    # The reader has answered every answerable question for this display set
+    AnswerFactory(
+        question=q1,
+        answer=op1.pk,
+        is_ground_truth=False,
+        display_set=ds,
+        creator=reader,
+    )
+    AnswerFactory(
+        question=q2,
+        answer=[op2.pk, op3.pk],
+        is_ground_truth=False,
+        display_set=ds,
+        creator=reader,
+    )
+    AnswerFactory(
+        question=q3,
+        answer=[op4.pk, op5.pk],
+        is_ground_truth=False,
+        display_set=ds,
+        creator=reader,
+    )
+
+    with django_assert_max_num_queries(35):
         response = get_view_for_user(
             viewname="api:reader-study-ground-truth",
             reverse_kwargs={"pk": rs.pk, "case_pk": ds.pk},
@@ -1307,25 +1330,130 @@ def test_ground_truth(client, django_assert_max_num_queries):
     response = response.json()
     assert response[str(q1.pk)] == {
         "answer": op1.pk,
-        "answer_text": op1.title,
-        "question_text": q1.question_text,
-        "options": {str(op1.pk): op1.title},
         "explanation": "",
     }
     assert response[str(q2.pk)] == {
         "answer": [op2.pk, op3.pk],
-        "answer_text": f"{op2.title}, {op3.title}",
-        "question_text": q2.question_text,
-        "options": {str(op2.pk): op2.title, str(op3.pk): op3.title},
         "explanation": "",
     }
     assert response[str(q3.pk)] == {
         "answer": [op4.pk, op5.pk],
-        "answer_text": f"{op4.title}, {op5.title}",
-        "question_text": q3.question_text,
-        "options": {str(op4.pk): op4.title, str(op5.pk): op5.title},
         "explanation": "",
     }
+
+
+@pytest.mark.django_db
+def test_ground_truth_denied_when_no_answers(client):
+    rs = ReaderStudyFactory(
+        is_educational=True,
+    )
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    q1 = QuestionFactory(
+        answer_type=Question.AnswerType.CHOICE, reader_study=rs
+    )
+    op1 = CategoricalOptionFactory(question=q1, title="option1")
+
+    ds = DisplaySetFactory(reader_study=rs)
+
+    AnswerFactory(
+        question=q1, answer=op1.pk, is_ground_truth=True, display_set=ds
+    )
+
+    # The reader has not answered any question for this display set
+    response = get_view_for_user(
+        viewname="api:reader-study-ground-truth",
+        reverse_kwargs={"pk": rs.pk, "case_pk": ds.pk},
+        user=reader,
+        client=client,
+        content_type="application/json",
+        follow=True,
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_ground_truth_denied_when_partially_answered(client):
+    rs = ReaderStudyFactory(
+        is_educational=True,
+    )
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    q1 = QuestionFactory(
+        answer_type=Question.AnswerType.CHOICE, reader_study=rs
+    )
+    q2 = QuestionFactory(
+        answer_type=Question.AnswerType.CHOICE, reader_study=rs
+    )
+    QuestionFactory(answer_type=Question.AnswerType.HEADING, reader_study=rs)
+
+    op1 = CategoricalOptionFactory(question=q1, title="option1")
+    op2 = CategoricalOptionFactory(question=q2, title="option2")
+
+    ds1 = DisplaySetFactory(reader_study=rs)
+    ds2 = DisplaySetFactory(reader_study=rs)
+
+    # Add ground truth
+    AnswerFactory(
+        question=q1, answer=op1.pk, is_ground_truth=True, display_set=ds1
+    )
+    AnswerFactory(
+        question=q2, answer=op2.pk, is_ground_truth=True, display_set=ds1
+    )
+
+    # The reader has only answered one of the two questions
+    AnswerFactory(
+        question=q1,
+        answer=op1.pk,
+        is_ground_truth=False,
+        display_set=ds1,
+        creator=reader,
+    )
+
+    response = get_view_for_user(
+        viewname="api:reader-study-ground-truth",
+        reverse_kwargs={"pk": rs.pk, "case_pk": ds1.pk},
+        user=reader,
+        client=client,
+        content_type="application/json",
+        follow=True,
+    )
+    assert response.status_code == 404
+
+    # Answer the missing question
+    AnswerFactory(
+        question=q2,
+        answer=op2.pk,
+        is_ground_truth=False,
+        display_set=ds1,
+        creator=reader,
+    )
+
+    # The ground truth should now be accessible since all questions have been answered
+    response = get_view_for_user(
+        viewname="api:reader-study-ground-truth",
+        reverse_kwargs={"pk": rs.pk, "case_pk": ds1.pk},
+        user=reader,
+        client=client,
+        content_type="application/json",
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert {str(q1.pk), str(q2.pk)} == set(response.json().keys())
+
+    # Display set 2 has no answer and should still be inaccessible
+    response = get_view_for_user(
+        viewname="api:reader-study-ground-truth",
+        reverse_kwargs={"pk": rs.pk, "case_pk": ds2.pk},
+        user=reader,
+        client=client,
+        content_type="application/json",
+        follow=True,
+    )
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

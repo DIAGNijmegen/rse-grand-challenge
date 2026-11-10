@@ -14,6 +14,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import (
     Count,
+    Exists,
     F,
     IntegerField,
     OuterRef,
@@ -1193,29 +1194,32 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         reader_study = self.get_object()
         if not (reader_study.is_educational and reader_study.has_ground_truth):
             raise Http404()
-        answers = (
-            Answer.objects.filter(
-                display_set_id=case_pk,
-                question__reader_study=reader_study,
-                is_ground_truth=True,
-            )
-            .prefetch_related("question__options")
-            .select_related("question")
+
+        user_answers = Answer.objects.filter(
+            question=OuterRef("pk"),
+            display_set=case_pk,
+            creator=request.user,
+            is_ground_truth=False,
+        )
+
+        if reader_study.answerable_questions.exclude(
+            Exists(user_answers)
+        ).exists():
+            raise Http404()
+
+        ground_truths = Answer.objects.filter(
+            display_set=case_pk,
+            question__reader_study=reader_study,
+            is_ground_truth=True,
         )
 
         return JsonResponse(
             {
-                str(answer.question_id): {
-                    "answer": answer.answer,
-                    "answer_text": answer.answer_text,
-                    "question_text": answer.question.question_text,
-                    "options": {
-                        option.id: option.title
-                        for option in answer.question.options.all()
-                    },
-                    "explanation": answer.explanation,
+                str(ground_truth.question_id): {
+                    "answer": ground_truth.answer,
+                    "explanation": ground_truth.explanation,
                 }
-                for answer in answers
+                for ground_truth in ground_truths
             }
         )
 
