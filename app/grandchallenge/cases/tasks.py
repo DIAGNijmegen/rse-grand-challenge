@@ -285,6 +285,8 @@ def _build_images(  # noqa:C901
                 upload_session=upload_session,
             )
     except RuntimeError as error:
+        task_logger.info(f"Could not import images: {error}")
+
         too_big_messages = {"std::bad_alloc", "No space left on device"}
 
         if any(message in str(error) for message in too_big_messages):
