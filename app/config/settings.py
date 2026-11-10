@@ -24,7 +24,6 @@ from sentry_sdk.integrations.logging import ignore_logger
 from config.denylist import USERNAME_DENYLIST
 from config.lambda_tasks import LambdaTaskQueueChoices
 from config.sentry import sentry_before_send
-from config.tracing import configure_tracing
 from grandchallenge.core.utils import strtobool
 
 MEGABYTE = 1024 * 1024
@@ -705,25 +704,10 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "filters": {
-        "suppress_context_detach_error": {
-            "()": "config.tracing.SuppressContextDetachError",
-        },
-    },
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {
         "level": os.environ.get("GRAND_CHALLENGE_LOG_LEVEL", "INFO"),
         "handlers": ["console"],
-    },
-    "loggers": {
-        # Benign "Failed to detach context" noise from the sync OTel request
-        # middleware under ASGI. See config.tracing.SuppressContextDetachError.
-        "opentelemetry.context": {
-            "handlers": ["console"],
-            "filters": ["suppress_context_detach_error"],
-            "level": "INFO",
-            "propagate": False,
-        },
     },
 }
 
@@ -745,18 +729,15 @@ if SENTRY_DSN:
             AwsLambdaIntegration(),
         ],
         release=COMMIT_ID,
-        traces_sample_rate=float(
-            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
+        traces_sample_rate=(
+            float(os.environ["SENTRY_TRACES_SAMPLE_RATE"])
+            if "SENTRY_TRACES_SAMPLE_RATE" in os.environ
+            else None
         ),
         before_send=sentry_before_send,
         ignore_errors=[asyncio.CancelledError, Resolver404, Http404],
     )
     ignore_logger("django.security.DisallowedHost")
-
-###############################################################################
-# OPENTELEMETRY TRACING
-###############################################################################
-configure_tracing(service_name=SESSION_COOKIE_DOMAIN.lstrip("."))
 
 ###############################################################################
 #
