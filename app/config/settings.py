@@ -24,7 +24,6 @@ from sentry_sdk.integrations.logging import ignore_logger
 from config.denylist import USERNAME_DENYLIST
 from config.lambda_tasks import LambdaTaskQueueChoices
 from config.sentry import sentry_before_send
-from config.tracing import configure_tracing
 from grandchallenge.core.utils import strtobool
 
 MEGABYTE = 1024 * 1024
@@ -737,11 +736,6 @@ if SENTRY_DSN:
         ignore_errors=[asyncio.CancelledError, Resolver404, Http404],
     )
     ignore_logger("django.security.DisallowedHost")
-
-###############################################################################
-# OPENTELEMETRY TRACING
-###############################################################################
-configure_tracing(service_name=SESSION_COOKIE_DOMAIN.lstrip("."))
 
 ###############################################################################
 #
