@@ -705,25 +705,10 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "filters": {
-        "suppress_context_detach_error": {
-            "()": "config.tracing.SuppressContextDetachError",
-        },
-    },
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {
         "level": os.environ.get("GRAND_CHALLENGE_LOG_LEVEL", "INFO"),
         "handlers": ["console"],
-    },
-    "loggers": {
-        # Benign "Failed to detach context" noise from the sync OTel request
-        # middleware under ASGI. See config.tracing.SuppressContextDetachError.
-        "opentelemetry.context": {
-            "handlers": ["console"],
-            "filters": ["suppress_context_detach_error"],
-            "level": "INFO",
-            "propagate": False,
-        },
     },
 }
 
