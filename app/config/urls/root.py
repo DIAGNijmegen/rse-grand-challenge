@@ -9,6 +9,14 @@ from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
 from grandchallenge.archives.sitemaps import ArchivesSitemap
 from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
+from grandchallenge.core.sentry import (
+    sentry_hard_error_lamba_batch_task_view,
+    sentry_hard_error_lamba_task_view,
+    sentry_hard_error_view,
+    sentry_soft_error_lamba_batch_task_view,
+    sentry_soft_error_lamba_task_view,
+    sentry_soft_error_view,
+)
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
 from grandchallenge.core.views import (
     ChallengeSuspendedView,
@@ -192,6 +200,12 @@ urlpatterns = [
         "contact-us/",
         include("grandchallenge.contact.urls", namespace="contact"),
     ),
+    path("sentry/soft/", sentry_soft_error_view),
+    path("sentry/hard/", sentry_hard_error_view),
+    path("sentry/soft-task/", sentry_soft_error_lamba_task_view),
+    path("sentry/hard-task/", sentry_hard_error_lamba_task_view),
+    path("sentry/soft-batch-task/", sentry_soft_error_lamba_batch_task_view),
+    path("sentry/hard-batch-task/", sentry_hard_error_lamba_batch_task_view),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
