@@ -730,8 +730,8 @@ if SENTRY_DSN:
         ],
         release=COMMIT_ID,
         traces_sample_rate=(
-            float(rate)
-            if (rate := os.environ.get("SENTRY_TRACES_SAMPLE_RATE"))
+            float(os.environ["SENTRY_TRACES_SAMPLE_RATE"])
+            if "SENTRY_TRACES_SAMPLE_RATE" in os.environ
             else None
         ),
         before_send=sentry_before_send,
