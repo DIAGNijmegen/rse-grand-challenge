@@ -729,8 +729,10 @@ if SENTRY_DSN:
             AwsLambdaIntegration(),
         ],
         release=COMMIT_ID,
-        traces_sample_rate=float(
-            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
+        traces_sample_rate=(
+            float(rate)
+            if (rate := os.environ.get("SENTRY_TRACES_SAMPLE_RATE"))
+            else None
         ),
         before_send=sentry_before_send,
         ignore_errors=[asyncio.CancelledError, Resolver404, Http404],
