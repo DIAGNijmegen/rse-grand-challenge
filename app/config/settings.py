@@ -727,8 +727,12 @@ if SENTRY_DSN:
         dsn=SENTRY_DSN,
         integrations=[
             DjangoIntegration(),
-            AwsLambdaIntegration(),
             LoggingIntegration(event_level=logging.ERROR),
+        ],
+        disabled_integrations=[
+            # Disable lambda integration for correct naming of
+            # transactions from lambda_tasks
+            AwsLambdaIntegration(),
         ],
         release=COMMIT_ID,
         traces_sample_rate=(
