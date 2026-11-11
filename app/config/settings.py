@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import re
 import socket
@@ -19,7 +20,7 @@ from django.utils._os import safe_join
 from django.utils.timezone import now
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.logging import ignore_logger
+from sentry_sdk.integrations.logging import LoggingIntegration, ignore_logger
 
 from config.denylist import USERNAME_DENYLIST
 from config.lambda_tasks import LambdaTaskQueueChoices
@@ -727,6 +728,7 @@ if SENTRY_DSN:
         integrations=[
             DjangoIntegration(),
             AwsLambdaIntegration(),
+            LoggingIntegration(event_level=logging.ERROR),
         ],
         release=COMMIT_ID,
         traces_sample_rate=(
