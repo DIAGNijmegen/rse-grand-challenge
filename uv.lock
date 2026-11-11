@@ -8,7 +8,7 @@ exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
 amass = "2026-11-05T00:00:00Z"
-django-lambda-tasks = "2026-11-10T20:00:00Z"
+django-lambda-tasks = "2026-11-11T20:00:00Z"
 
 [[package]]
 name = "aioboto3"
@@ -858,7 +858,7 @@ wheels = [
 
 [[package]]
 name = "django-lambda-tasks"
-version = "0.10.0"
+version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "awslambdaric" },
@@ -867,9 +867,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "redis" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4c/c6/07712934e6f63926c2ec0193fc1c5e49a20082e35c80cbb0afa4efec034d/django_lambda_tasks-0.10.0.tar.gz", hash = "sha256:85e77ec0a00c64f048f8593a517d83598380513ed18b2b9a7f61ce09a3ae3a38", size = 175487, upload-time = "2026-11-10T15:02:16.657Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/1d/4a750f0be2299632034c7532a89838e1650ba2f60c2ca628d2ac1824e834/django_lambda_tasks-0.11.0.tar.gz", hash = "sha256:363573265af09529e24b7a2cf150c042b972158286eeabdee80133d1c55ad760", size = 186022, upload-time = "2026-11-11T11:44:34.887Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/a6/8f1d8ee4035b90b73c40c4e0a51db927eb748e2bdba63ef062f85527d047/django_lambda_tasks-0.10.0-py3-none-any.whl", hash = "sha256:76a037218e5c4ffb7ceffd60f8a547cd8cd9c6e9ae9c919945b9bb3edccfe703", size = 38074, upload-time = "2026-11-10T15:02:15.098Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/c7/659a35fdc10087e603a22fddd50799051f7fda33d99a2be146e8d14d7e03/django_lambda_tasks-0.11.0-py3-none-any.whl", hash = "sha256:408e8972cb4211b3757881caa21a1448631e032463e0178c52080033528bcc98", size = 41546, upload-time = "2026-11-11T11:44:33.475Z" },
 ]
 
 [[package]]

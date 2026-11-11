@@ -108,7 +108,7 @@ exclude-newer = "7 days"
 # this package only so it can be resolved.
 # django-lambda-tasks 0.10.0 (open telemetry removal) was likewise
 # published inside the 7-day window; override the cutoff for it too.
-exclude-newer-package = { amass = "2026-11-05T00:00:00Z", django-lambda-tasks = "2026-11-10T20:00:00Z" }
+exclude-newer-package = { amass = "2026-11-05T00:00:00Z", django-lambda-tasks = "2026-11-11T20:00:00Z" }
 
 [tool.isort]
 profile = "black"
