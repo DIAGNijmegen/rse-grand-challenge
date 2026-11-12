@@ -1,5 +1,7 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import Permission
-from django.db.models import Sum
+from django.db.models import Avg, Sum
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -22,88 +24,115 @@ from grandchallenge.utilization.models import (
 )
 
 
-def annotate_invoice_compute_costs(*, invoice):
-    algorithm_job_utilizations = JobUtilization.objects.filter(
-        invoice=invoice,
-    )
-    job_warm_pool_utilizations = JobWarmPoolUtilization.objects.filter(
-        invoice=invoice,
-    )
-    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
-        invoice=invoice,
-    )
-    batch_job_utilizations = BatchJobUtilization.objects.filter(
-        invoice=invoice,
-    )
-
-    update_compute_cost_euro_millicents(
-        obj=invoice,
-        algorithm_job_utilizations=algorithm_job_utilizations,
-        job_warm_pool_utilizations=job_warm_pool_utilizations,
-        evaluation_job_utilizations=evaluation_job_utilizations,
-        batch_job_utilizations=batch_job_utilizations,
-    )
+def _sum_compute_cost_by_key(*, queryset, key):
+    """Sum compute cost grouped by ``key``, returning a {key_value: sum} map."""
+    return {
+        row[key]: row["compute_cost_euro_millicents__sum"] or 0
+        for row in queryset.values(key)
+        .order_by()
+        .annotate(Sum("compute_cost_euro_millicents"))
+    }
 
 
-def annotate_job_duration_and_compute_costs(*, phase):
-    algorithm_job_utilizations = JobUtilization.objects.filter(phase=phase)
-    job_warm_pool_utilizations = JobWarmPoolUtilization.objects.filter(
-        phase=phase
-    )
-    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
-        phase=phase, external_evaluation=False
-    )
-    batch_job_utilizations = BatchJobUtilization.objects.filter(
-        phase=phase,
-    )
+def _average_duration_by_key(*, queryset, key):
+    """Average duration of completed jobs grouped by ``key``.
 
-    phase.average_algorithm_job_duration = algorithm_job_utilizations.filter(
-        job__status=Job.SUCCESS
-    ).average_duration()
-    phase.average_batch_job_duration = batch_job_utilizations.filter(
-        batch_job__status=BatchJob.SUCCESS
-    ).average_duration()
-
-    update_compute_cost_euro_millicents(
-        obj=phase,
-        algorithm_job_utilizations=algorithm_job_utilizations,
-        job_warm_pool_utilizations=job_warm_pool_utilizations,
-        evaluation_job_utilizations=evaluation_job_utilizations,
-        batch_job_utilizations=batch_job_utilizations,
-    )
+    Mirrors ``ComponentJobUtilizationManager.average_duration`` by only
+    considering utilizations with a duration greater than zero. Returns a
+    {key_value: average_duration} map.
+    """
+    return {
+        row[key]: row["duration__avg"]
+        for row in queryset.filter(duration__gt=timedelta(seconds=0))
+        .values(key)
+        .order_by()
+        .annotate(Avg("duration"))
+    }
 
 
-def update_compute_cost_euro_millicents(
-    *,
-    obj,
-    algorithm_job_utilizations,
-    job_warm_pool_utilizations,
-    evaluation_job_utilizations,
-    batch_job_utilizations,
-):
-    algorithm_job_costs = algorithm_job_utilizations.aggregate(
-        Sum("compute_cost_euro_millicents")
+def annotate_invoice_compute_costs(*, invoices):
+    invoice_ids = [invoice.pk for invoice in invoices]
+
+    algorithm_job_costs = _sum_compute_cost_by_key(
+        queryset=JobUtilization.objects.filter(invoice_id__in=invoice_ids),
+        key="invoice_id",
     )
-    job_warm_pool_costs = job_warm_pool_utilizations.aggregate(
-        Sum("compute_cost_euro_millicents")
+    job_warm_pool_costs = _sum_compute_cost_by_key(
+        queryset=JobWarmPoolUtilization.objects.filter(
+            invoice_id__in=invoice_ids
+        ),
+        key="invoice_id",
     )
-    evaluation_costs = evaluation_job_utilizations.aggregate(
-        Sum("compute_cost_euro_millicents")
+    evaluation_costs = _sum_compute_cost_by_key(
+        queryset=EvaluationUtilization.objects.filter(
+            invoice_id__in=invoice_ids
+        ),
+        key="invoice_id",
     )
-    batch_job_costs = batch_job_utilizations.aggregate(
-        Sum("compute_cost_euro_millicents")
+    batch_job_costs = _sum_compute_cost_by_key(
+        queryset=BatchJobUtilization.objects.filter(
+            invoice_id__in=invoice_ids
+        ),
+        key="invoice_id",
     )
 
-    items = [
-        algorithm_job_costs,
-        job_warm_pool_costs,
-        evaluation_costs,
-        batch_job_costs,
-    ]
+    for invoice in invoices:
+        invoice.compute_cost_euro_millicents = (
+            algorithm_job_costs.get(invoice.pk, 0)
+            + job_warm_pool_costs.get(invoice.pk, 0)
+            + evaluation_costs.get(invoice.pk, 0)
+            + batch_job_costs.get(invoice.pk, 0)
+        )
 
-    obj.compute_cost_euro_millicents = sum(
-        item["compute_cost_euro_millicents__sum"] or 0 for item in items
+
+def annotate_job_duration_and_compute_costs(*, phases):
+    phase_ids = [phase.pk for phase in phases]
+
+    algorithm_job_costs = _sum_compute_cost_by_key(
+        queryset=JobUtilization.objects.filter(phase_id__in=phase_ids),
+        key="phase_id",
     )
+    job_warm_pool_costs = _sum_compute_cost_by_key(
+        queryset=JobWarmPoolUtilization.objects.filter(phase_id__in=phase_ids),
+        key="phase_id",
+    )
+    evaluation_costs = _sum_compute_cost_by_key(
+        queryset=EvaluationUtilization.objects.filter(
+            phase_id__in=phase_ids, external_evaluation=False
+        ),
+        key="phase_id",
+    )
+    batch_job_costs = _sum_compute_cost_by_key(
+        queryset=BatchJobUtilization.objects.filter(phase_id__in=phase_ids),
+        key="phase_id",
+    )
+
+    average_algorithm_job_durations = _average_duration_by_key(
+        queryset=JobUtilization.objects.filter(
+            phase_id__in=phase_ids, job__status=Job.SUCCESS
+        ),
+        key="phase_id",
+    )
+    average_batch_job_durations = _average_duration_by_key(
+        queryset=BatchJobUtilization.objects.filter(
+            phase_id__in=phase_ids, batch_job__status=BatchJob.SUCCESS
+        ),
+        key="phase_id",
+    )
+
+    for phase in phases:
+        phase.average_algorithm_job_duration = (
+            average_algorithm_job_durations.get(phase.pk)
+        )
+        phase.average_batch_job_duration = average_batch_job_durations.get(
+            phase.pk
+        )
+        phase.compute_cost_euro_millicents = (
+            algorithm_job_costs.get(phase.pk, 0)
+            + job_warm_pool_costs.get(phase.pk, 0)
+            + evaluation_costs.get(phase.pk, 0)
+            + batch_job_costs.get(phase.pk, 0)
+        )
 
 
 def annotate_storage_size(*, challenge):
