@@ -492,17 +492,6 @@ class SubmissionStatusDetail(ObjectPermissionRequiredMixin, DetailView):
     raise_exception = True
 
 
-class SubmissionPendingReviewMixin:
-    def get_object(self, queryset=None):
-        return get_object_or_404(
-            self.model,
-            phase__challenge=self.request.challenge,
-            phase__slug=self.kwargs["slug"],
-            pk=self.kwargs["pk"],
-            status=self.model.StatusChoices.PENDING_REVIEW,
-        )
-
-
 class SubmissionAccept(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
