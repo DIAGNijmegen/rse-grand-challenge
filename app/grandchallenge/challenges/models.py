@@ -1783,6 +1783,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @cached_property
     def archive_items_per_job_for_phases(self):
+        # For BatchJobs, the number of subtasks depends on the maximum inference
+        # time, not the average inference time
         maximum_batch_inference_duration = (
             settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
             - settings.COMPONENTS_JOB_SETUP_DURATION
