@@ -3933,7 +3933,7 @@ class TestSubmissionStatusUpdateViews:
             [SubmissionStatusChoices.PENDING_REVIEW]
         ),
     )
-    def test_accept_view_not_pending_returns_404(
+    def test_accept_view_not_pending_raises_validation_error(
         self, client, django_capture_on_commit_callbacks, status
     ):
         admin = UserFactory()
@@ -3954,13 +3954,20 @@ class TestSubmissionStatusUpdateViews:
                 user=admin,
                 data={
                     "status": SubmissionStatusChoices.ACCEPTED,
-                    "status_message": "",
                 },
             )
 
-        assert response.status_code == 404
-        submission.refresh_from_db()
-        assert submission.status == status
+        assert response.status_code == 200
+        assert not response.context["form"].is_valid()
+        expected_error_message = (
+            "A submission can only be accepted, rejected or cancelled "
+            "while it is pending review. Please refresh to see the latest "
+            "status."
+        )
+        assert response.context["form"].errors == {
+            "__all__": [expected_error_message]
+        }
+        assert expected_error_message in response.rendered_content
 
     @pytest.mark.parametrize(
         "status",
@@ -4103,7 +4110,9 @@ class TestSubmissionStatusUpdateViews:
             [SubmissionStatusChoices.PENDING_REVIEW]
         ),
     )
-    def test_reject_view_not_pending_returns_404(self, client, status):
+    def test_reject_view_not_pending_raises_validation_error(
+        self, client, status
+    ):
         admin = UserFactory()
         phase = PhaseFactory()
         phase.challenge.add_admin(admin)
@@ -4112,15 +4121,30 @@ class TestSubmissionStatusUpdateViews:
         response = get_view_for_user(
             viewname="evaluation:submission-reject",
             client=client,
+            method=client.post,
             reverse_kwargs={
                 "challenge_short_name": phase.challenge.short_name,
                 "slug": phase.slug,
                 "pk": submission.pk,
             },
             user=admin,
+            data={
+                "status": SubmissionStatusChoices.REJECTED,
+                "status_message": "Not good enough",
+            },
         )
 
-        assert response.status_code == 404
+        assert response.status_code == 200
+        assert not response.context["form"].is_valid()
+        expected_error_message = (
+            "A submission can only be accepted, rejected or cancelled "
+            "while it is pending review. Please refresh to see the latest "
+            "status."
+        )
+        assert response.context["form"].errors == {
+            "__all__": [expected_error_message]
+        }
+        assert expected_error_message in response.rendered_content
 
     def test_reject_view_forbidden_for_participant(self, client):
         participant = UserFactory()
@@ -4281,21 +4305,38 @@ class TestSubmissionStatusUpdateViews:
             [SubmissionStatusChoices.PENDING_REVIEW]
         ),
     )
-    def test_cancel_view_not_pending_returns_404(self, client, status):
+    def test_cancel_view_not_pending_raises_validation_error(
+        self, client, status
+    ):
         submission = SubmissionFactory(status=status)
 
         response = get_view_for_user(
             viewname="evaluation:submission-cancel",
             client=client,
+            method=client.post,
             reverse_kwargs={
                 "challenge_short_name": submission.phase.challenge.short_name,
                 "slug": submission.phase.slug,
                 "pk": submission.pk,
             },
             user=submission.creator,
+            data={
+                "status": SubmissionStatusChoices.CANCELLED,
+                "status_message": "Cancelled by user",
+            },
         )
 
-        assert response.status_code == 404
+        assert response.status_code == 200
+        assert not response.context["form"].is_valid()
+        expected_error_message = (
+            "A submission can only be accepted, rejected or cancelled "
+            "while it is pending review. Please refresh to see the latest "
+            "status."
+        )
+        assert response.context["form"].errors == {
+            "__all__": [expected_error_message]
+        }
+        assert expected_error_message in response.rendered_content
 
     @pytest.mark.parametrize(
         "status",

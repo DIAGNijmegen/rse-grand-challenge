@@ -1767,16 +1767,6 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             != SubmissionStatusChoices.PENDING_REVIEW
         )
 
-    def clean(self):
-        super().clean()
-
-        if self.is_illegal_review_transition:
-            raise ValidationError(
-                "A submission can only be accepted, rejected or cancelled "
-                "while it is pending review. Please refresh to see the latest "
-                "status."
-            )
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 

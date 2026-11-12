@@ -729,6 +729,13 @@ class SubmissionReviewMixin:
     def clean(self):
         cleaned_data = super().clean()
 
+        if not self.instance.status == Submission.StatusChoices.PENDING_REVIEW:
+            raise ValidationError(
+                "A submission can only be accepted, rejected or cancelled "
+                "while it is pending review. Please refresh to see the latest "
+                "status."
+            )
+
         try:
             with check_lock_acquired():
                 Submission.objects.select_for_update(nowait=True).get(
