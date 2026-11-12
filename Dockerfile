@@ -1,3 +1,5 @@
+ARG COMPONENTS_SAGEMAKER_SHIM_VERSION=0.9.0
+
 ######################
 #  Builder Container #
 ######################
@@ -26,7 +28,7 @@ RUN apt-get update \
 # Selects the sagemaker-shim release downloaded below. Must stay in sync with
 # the COMPONENTS_SAGEMAKER_SHIM_VERSION declared in the base stage, which the
 # app reads at runtime to locate and version-check the shim binary.
-ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=0.9.0
+ARG COMPONENTS_SAGEMAKER_SHIM_VERSION
 
 # Fetch and unpack dart-sass for compiling scss
 RUN mkdir -p /opt/dart-sass \
@@ -104,7 +106,8 @@ COPY --from=builder /opt/crane/crane /usr/local/bin/crane
 # Must stay in sync with the COMPONENTS_SAGEMAKER_SHIM_VERSION in the
 # builder stage: that value selects the downloaded shim binary, this one is
 # read by the app at runtime to locate and version-check it.
-ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=0.8.3\
+ARG COMPONENTS_SAGEMAKER_SHIM_VERSION
+ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=${COMPONENTS_SAGEMAKER_SHIM_VERSION}\
     PYTHONUNBUFFERED=1\
     PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
 
