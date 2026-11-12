@@ -405,8 +405,8 @@ def test_batch_mode_archive_items_per_job(settings):
 
     challenge_request = ChallengeRequestFactory(
         task_ids=[1, 2],
-        # 300s average inference time. The usable batch window is
-        # 3600 - 300 = 3300s, so 3300 // 300 = 11 cases fit per batch job.
+        # 300s average -> 600s phase time limit (2x). The usable batch window
+        # is 3600 - 300 = 3300s, so 3300 // 600 = 5 cases fit per batch job.
         inference_time_average_seconds_for_tasks=[300, 300],
         task_id_for_phases=[1, 2],
         phase_ids=[1, 2],
@@ -416,8 +416,8 @@ def test_batch_mode_archive_items_per_job(settings):
         use_batch_mode_for_phases=[True, False],
     )
 
-    # Batch phase packs 11 cases per job; non-batch phase is one case per job.
-    assert challenge_request.archive_items_per_job_for_phases == [11, 1]
+    # Batch phase packs 5 cases per job; non-batch phase is one case per job.
+    assert challenge_request.archive_items_per_job_for_phases == [5, 1]
 
 
 @pytest.mark.django_db
@@ -436,10 +436,10 @@ def test_batch_mode_reduces_number_of_jobs(settings):
         use_batch_mode_for_phases=[True, False],
     )
 
-    # 6 submissions per phase. Batch: ceil(100 / 11) = 10 jobs per submission.
+    # 6 submissions per phase. Batch: ceil(100 / 5) = 20 jobs per submission.
     # Non-batch: 100 jobs per submission.
     assert challenge_request.number_of_algorithm_jobs_for_phases == [
-        6 * 10,
+        6 * 20,
         6 * 100,
     ]
     # Each case still produces an output regardless of batching.
@@ -465,9 +465,9 @@ def test_batch_mode_compute_seconds_per_job(settings):
         use_batch_mode_for_phases=[True, False],
     )
 
-    # Batch: 300s per case * 11 cases + 300s set-up = 3600s.
+    # Batch: 300s per case * 5 cases + 300s set-up = 1800s.
     # Non-batch: 300s per case * 1 case + 300s set-up = 600s.
-    assert challenge_request.compute_seconds_per_job_for_phases == [3600, 600]
+    assert challenge_request.compute_seconds_per_job_for_phases == [1800, 600]
 
 
 @pytest.mark.django_db
