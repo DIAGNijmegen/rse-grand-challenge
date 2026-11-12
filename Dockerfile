@@ -1,3 +1,5 @@
+ARG COMPONENTS_SAGEMAKER_SHIM_VERSION=0.9.0
+
 ######################
 #  Builder Container #
 ######################
@@ -26,7 +28,7 @@ RUN apt-get update \
 # Selects the sagemaker-shim release downloaded below. Must stay in sync with
 # the COMPONENTS_SAGEMAKER_SHIM_VERSION declared in the base stage, which the
 # app reads at runtime to locate and version-check the shim binary.
-ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=0.8.3
+ARG COMPONENTS_SAGEMAKER_SHIM_VERSION
 
 # Fetch and unpack dart-sass for compiling scss
 RUN mkdir -p /opt/dart-sass \
@@ -45,7 +47,7 @@ RUN mkdir -p /opt/crane \
 # Fetch and unpack sagemaker shim for shimming containers
 RUN mkdir -p /opt/sagemaker-shim \
     && wget "https://github.com/DIAGNijmegen/rse-sagemaker-shim/releases/download/v${COMPONENTS_SAGEMAKER_SHIM_VERSION}/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" -P /opt/sagemaker-shim/ \
-    && echo "779f50797ef74c8b1d524ee32cd303680130621a324fbbf1059558b7d0ca93bc  /opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
+    && echo "03bd0e80fee4e7c800cb697da4f4af5e1448a2db3eec2b8ef9b1376aafdd7fb5  /opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
     && chmod -R a+rX /opt/sagemaker-shim
@@ -104,7 +106,8 @@ COPY --from=builder /opt/crane/crane /usr/local/bin/crane
 # Must stay in sync with the COMPONENTS_SAGEMAKER_SHIM_VERSION in the
 # builder stage: that value selects the downloaded shim binary, this one is
 # read by the app at runtime to locate and version-check it.
-ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=0.8.3\
+ARG COMPONENTS_SAGEMAKER_SHIM_VERSION
+ENV COMPONENTS_SAGEMAKER_SHIM_VERSION=${COMPONENTS_SAGEMAKER_SHIM_VERSION}\
     PYTHONUNBUFFERED=1\
     PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
 
