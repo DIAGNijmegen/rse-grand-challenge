@@ -654,11 +654,8 @@ class Image(UUIDModel):
         groups_missing_perms = expected_groups - current_groups
         groups_with_extra_perms = current_groups - expected_groups
 
-        for g in groups_missing_perms:
-            assign_perm("view_image", g, self)
-
-        for g in groups_with_extra_perms:
-            remove_perm("view_image", g, self)
+        assign_perm("view_image", [*groups_missing_perms], self)
+        remove_perm("view_image", [*groups_with_extra_perms], self)
 
     def _get_expected_job_viewer_groups(self, exclude_jobs):
         from grandchallenge.algorithms.models import Job
