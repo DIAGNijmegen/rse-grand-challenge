@@ -506,7 +506,6 @@ class SubmissionPendingReviewMixin:
 class SubmissionAccept(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    SubmissionPendingReviewMixin,
     UpdateView,
 ):
     model = Submission
@@ -523,7 +522,6 @@ class SubmissionAccept(
 class SubmissionReject(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    SubmissionPendingReviewMixin,
     UpdateView,
 ):
     model = Submission
@@ -540,7 +538,6 @@ class SubmissionReject(
 class SubmissionCancel(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    SubmissionPendingReviewMixin,
     UpdateView,
 ):
     model = Submission
