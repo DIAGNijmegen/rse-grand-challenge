@@ -100,12 +100,12 @@ def update_challenge_compute_cost(*, pk: int):
             )
         )
 
+    annotate_invoice_compute_costs(invoices=invoices)
     for invoice in invoices:
-        annotate_invoice_compute_costs(invoice=invoice)
         invoice.save(update_fields=("compute_cost_euro_millicents",))
 
+    annotate_job_duration_and_compute_costs(phases=phases)
     for phase in phases:
-        annotate_job_duration_and_compute_costs(phase=phase)
         phase.save(
             skip_calculate_ranks=True,
             update_fields=(
