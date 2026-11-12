@@ -22,7 +22,8 @@ def consolidate_unclaimed_sessions():
 
     unclaimed_sessions = (
         Session.objects.active()
-        .select_for_update(skip_locked=True)
+        .select_for_update(skip_locked=True, of=("self",))
+        .select_related("workstation_image")
         .filter(claimed_at=None)
     )
 
