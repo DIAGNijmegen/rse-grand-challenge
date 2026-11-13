@@ -468,6 +468,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             task_id_for_phases = cleaned_data.get("task_id_for_phases")
 
             self._clean_task_lists_equal_length(cleaned_data)
+            self._clean_inference_time_limit_not_below_average(cleaned_data)
             self._clean_task_id_for_phases(task_ids, task_id_for_phases)
             self._clean_phases_lists_equal_length(
                 task_id_for_phases, cleaned_data
@@ -492,6 +493,31 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
                 self.add_error(
                     field_name, "Must be of equal length as number of tasks."
                 )
+
+    def _clean_inference_time_limit_not_below_average(self, cleaned_data):
+        average_seconds = cleaned_data.get(
+            "inference_time_average_seconds_for_tasks"
+        )
+        limit_seconds = cleaned_data.get(
+            "inference_time_limit_seconds_for_tasks"
+        )
+
+        if average_seconds is None or limit_seconds is None:
+            # A missing value means the field already has an error.
+            return
+
+        if len(average_seconds) != len(limit_seconds):
+            # Length mismatch is reported by the equal-length check.
+            return
+
+        for average, limit in zip(average_seconds, limit_seconds, strict=True):
+            if limit < average:
+                self.add_error(
+                    "inference_time_limit_seconds_for_tasks",
+                    "The inference time limit may not be lower than the "
+                    "average inference time, for any task.",
+                )
+                break
 
     def _clean_task_id_for_phases(self, task_ids, task_id_for_phases):
         if not set(task_id_for_phases).issubset(task_ids):

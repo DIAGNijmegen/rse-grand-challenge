@@ -184,6 +184,10 @@ def test_budget_update_form():
             "not all tasks defined",
         ),
         (
+            {"inference_time_limit_seconds_for_tasks": "[299, 1200]"},
+            "time limit lower than average inference time",
+        ),
+        (
             {"number_of_teams_for_phases": "[1, 10, 10, 10]"},
             "later phase has more teams",
         ),
@@ -223,6 +227,57 @@ def test_budget_update_form_invalid(invalid_data, reason_invalid):
     )
 
     assert not form.is_valid(), reason_invalid
+
+
+@pytest.mark.django_db
+def test_budget_update_form_inference_time_limit_equal_to_average_is_valid():
+    challenge_request = ChallengeRequestFactory()
+    form = ChallengeRequestBudgetUpdateForm(
+        data={
+            "task_ids": "[1, 2]",
+            "algorithm_maximum_settable_memory_gb": 32,
+            "algorithm_selectable_gpu_type_choices": '["", "T4"]',
+            "average_size_test_case_mb_for_tasks": "[10, 100]",
+            "average_size_job_output_mb_for_tasks": "[1, 1]",
+            "inference_time_average_seconds_for_tasks": "[300, 600]",
+            "inference_time_limit_seconds_for_tasks": "[300, 600]",
+            "task_id_for_phases": "[1, 1, 2, 2]",
+            "phase_ids": "[1, 2, 3, 4]",
+            "number_of_teams_for_phases": "[10, 10, 10, 10]",
+            "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
+            "number_of_test_cases_for_phases": "[3, 100, 3, 100]",
+            "use_batch_mode_for_phases": "[false, false, false, false]",
+        },
+        instance=challenge_request,
+    )
+
+    assert form.is_valid(), form.errors
+
+
+@pytest.mark.django_db
+def test_budget_update_form_inference_time_limit_below_average_is_invalid():
+    challenge_request = ChallengeRequestFactory()
+    form = ChallengeRequestBudgetUpdateForm(
+        data={
+            "task_ids": "[1, 2]",
+            "algorithm_maximum_settable_memory_gb": 32,
+            "algorithm_selectable_gpu_type_choices": '["", "T4"]',
+            "average_size_test_case_mb_for_tasks": "[10, 100]",
+            "average_size_job_output_mb_for_tasks": "[1, 1]",
+            "inference_time_average_seconds_for_tasks": "[300, 600]",
+            "inference_time_limit_seconds_for_tasks": "[300, 599]",
+            "task_id_for_phases": "[1, 1, 2, 2]",
+            "phase_ids": "[1, 2, 3, 4]",
+            "number_of_teams_for_phases": "[10, 10, 10, 10]",
+            "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
+            "number_of_test_cases_for_phases": "[3, 100, 3, 100]",
+            "use_batch_mode_for_phases": "[false, false, false, false]",
+        },
+        instance=challenge_request,
+    )
+
+    assert not form.is_valid()
+    assert "inference_time_limit_seconds_for_tasks" in form.errors
 
 
 @pytest.mark.django_db
