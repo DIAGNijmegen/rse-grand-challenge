@@ -311,14 +311,20 @@ collect_output() {
 
     mkdir -p -m o+rwX "$destination"
 
-    # Fix permissions so the host user can read the output files.
-    # The container may have written them as a different UID on Linux.
-    docker exec --user root "$CONTAINER_NAME" \
-        /bin/sh -c "chmod -R -f o+rX /output/*"
+    local output_listing
+    output_listing=$(docker exec --user root "$CONTAINER_NAME" /bin/sh -c 'ls -A /output')
+    if [ -z "$output_listing" ]; then
+        log "No output files found in /output for ${interface_dir}" error
+    else
+        # Fix permissions so the host user can read the output files.
+        # The container may have written them as a different UID on Linux.
+        docker exec --user root "$CONTAINER_NAME" \
+            /bin/sh -c "chmod -R -f o+rX /output"
 
-    # Copy from the staging directory to the host output directory
-    cp -r "$STAGING_OUTPUT_DIR/." "${destination}/"
-    log "Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
+        # Copy from the staging directory to the host output directory
+        cp -r "$STAGING_OUTPUT_DIR/." "${destination}/"
+        log "Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
+    fi
 }
 
 # ---------------------------------------------------------------------------
