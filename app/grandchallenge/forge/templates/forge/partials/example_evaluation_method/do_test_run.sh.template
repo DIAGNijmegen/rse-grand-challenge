@@ -164,7 +164,7 @@ cleanup() {
         --volume "$STAGING_OUTPUT_DIR":/output \
         --entrypoint /bin/sh \
         $DOCKER_IMAGE_TAG \
-        -c "rm -rf /output/* || true" 2>/dev/null || true
+        -c "find /output -mindepth 1 -delete" 2>/dev/null || true
     rm -rf "$STAGING_OUTPUT_DIR"
 
     # Remove volumes and network

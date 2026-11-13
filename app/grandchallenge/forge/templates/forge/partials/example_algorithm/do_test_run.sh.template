@@ -168,7 +168,7 @@ cleanup() {
         --volume "$STAGING_OUTPUT_DIR":/output \
         --entrypoint /bin/sh \
         $DOCKER_IMAGE_TAG \
-        -c "rm -rf /output/* || true" 2>/dev/null || true
+        -c "find /output -mindepth 1 -delete" 2>/dev/null || true
     rm -rf "$STAGING_OUTPUT_DIR"
 
     # Remove volumes and network
@@ -282,10 +282,10 @@ provision() {
     log "Provisioning input for ${interface_dir}"
 
     # Clear /output inside the container (host can't due to UID mismatch on Linux)
-    docker exec --user root "$CONTAINER_NAME" /bin/sh -c "rm -rf /output/*"
+    docker exec --user root "$CONTAINER_NAME" /bin/sh -c "find /output -mindepth 1 -delete"
 
     # Clear the input staging dir, then hard-link this interface's input files in
-    rm -rf "${STAGING_INPUT_DIR:?}"/*
+    find "${STAGING_INPUT_DIR:?}" -mindepth 1 -delete
     cp -rl "${INPUT_DIR}/${interface_dir}/." "$STAGING_INPUT_DIR/"
 }
 
