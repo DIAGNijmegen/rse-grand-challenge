@@ -1074,6 +1074,7 @@ budget_field_names = (
     "average_size_test_case_mb_for_tasks",
     "average_size_job_output_mb_for_tasks",
     "inference_time_average_seconds_for_tasks",
+    "inference_time_limit_seconds_for_tasks",
     "task_id_for_phases",
     "phase_ids",
     "number_of_teams_for_phases",
@@ -1255,6 +1256,27 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     inference_time_average_seconds_for_tasks = models.JSONField(
         help_text="Average run time per algorithm job in seconds, for each task.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 60 * 60,
+                    },
+                }
+            )
+        ],
+    )
+    inference_time_limit_seconds_for_tasks = models.JSONField(
+        help_text=(
+            "Algorithm job time limit in seconds, for each task. This "
+            "also determines how many archive items a single batch job can process, "
+            "if batch mode is used."
+        ),
         default=list,
         validators=[
             JSONValidator(
@@ -1721,6 +1743,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @cached_property
+    def inference_time_limit_seconds_for_phases(self):
+        return [
+            self.inference_time_limit_seconds_for_tasks[task_index]
+            for task_index in self.task_index_for_phases
+        ]
+
+    @cached_property
     def average_size_test_case_mb_for_phases(self):
         return [
             self.average_size_test_case_mb_for_tasks[task_index]
@@ -1772,16 +1801,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return sum(self.number_of_submissions_for_phases)
 
     @cached_property
-    def algorithm_time_limit_seconds_for_phases(self):
-        # The phase is configured with a time limit of twice the average
-        # inference time, and that also determines how many archvive items
-        # can be processed by one BatchJob
-        return [
-            2 * average_seconds
-            for average_seconds in self.inference_time_average_seconds_for_phases
-        ]
-
-    @cached_property
     def archive_items_per_job_for_phases(self):
         # For BatchJobs, the number of subtasks depends on the maximum inference
         # time, not the average inference time
@@ -1797,7 +1816,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
             for use_batch_mode, time_limit_seconds in zip(
                 self.use_batch_mode_for_phases,
-                self.algorithm_time_limit_seconds_for_phases,
+                self.inference_time_limit_seconds_for_phases,
                 strict=True,
             )
         ]

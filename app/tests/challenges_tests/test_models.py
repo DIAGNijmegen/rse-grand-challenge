@@ -291,6 +291,7 @@ def test_challenge_request_budget_calculation(settings):
         average_size_test_case_mb_for_tasks=[100],
         average_size_job_output_mb_for_tasks=[10],
         inference_time_average_seconds_for_tasks=[600],
+        inference_time_limit_seconds_for_tasks=[1200],
         task_id_for_phases=[1, 1],
         phase_ids=[1, 2],
         use_batch_mode_for_phases=[False, False],
@@ -405,9 +406,10 @@ def test_batch_mode_archive_items_per_job(settings):
 
     challenge_request = ChallengeRequestFactory(
         task_ids=[1, 2],
-        # 300s average -> 600s phase time limit (2x). The usable batch window
-        # is 3600 - 300 = 3300s, so 3300 // 600 = 5 cases fit per batch job.
         inference_time_average_seconds_for_tasks=[300, 300],
+        # 600s time limit, usable batch window is 3600 - 300 = 3300s,
+        # so 3300 // 600 = 5 cases fit per batch job.
+        inference_time_limit_seconds_for_tasks=[600, 600],
         task_id_for_phases=[1, 2],
         phase_ids=[1, 2],
         number_of_teams_for_phases=[1, 1],
@@ -428,6 +430,7 @@ def test_batch_mode_reduces_number_of_jobs(settings):
     challenge_request = ChallengeRequestFactory(
         task_ids=[1, 2],
         inference_time_average_seconds_for_tasks=[300, 300],
+        inference_time_limit_seconds_for_tasks=[600, 600],
         task_id_for_phases=[1, 2],
         phase_ids=[1, 2],
         number_of_teams_for_phases=[2, 2],
@@ -457,6 +460,7 @@ def test_batch_mode_compute_seconds_per_job(settings):
     challenge_request = ChallengeRequestFactory(
         task_ids=[1, 2],
         inference_time_average_seconds_for_tasks=[300, 300],
+        inference_time_limit_seconds_for_tasks=[600, 600],
         task_id_for_phases=[1, 2],
         phase_ids=[1, 2],
         number_of_teams_for_phases=[1, 1],
@@ -501,9 +505,10 @@ def test_batch_mode_without_benefit(settings):
         task_ids=[1],
         average_size_test_case_mb_for_tasks=[10],
         average_size_job_output_mb_for_tasks=[1],
-        # 1800s average -> 3600s phase time limit (2x), which exceeds the
-        # 3300s usable batch window, so only one case fits per job.
         inference_time_average_seconds_for_tasks=[1800],
+        # A 3600s time limit exceeds the 3300s usable batch window
+        # (3600 - 300 set-up), so only one case fits per job.
+        inference_time_limit_seconds_for_tasks=[3600],
         task_id_for_phases=[1],
         phase_ids=[1],
         number_of_teams_for_phases=[1],
@@ -826,6 +831,7 @@ def test_challenge_request_submission_cleaning(data, expected_error):
                 "average_size_test_case_mb_for_tasks": [10, 100],
                 "average_size_job_output_mb_for_tasks": [1, 1],
                 "inference_time_average_seconds_for_tasks": [300, 600],
+                "inference_time_limit_seconds_for_tasks": [600, 1200],
                 "task_id_for_phases": [1, 1, 2, 2],
                 "phase_ids": [1, 2, 3, 4],
                 "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
@@ -842,6 +848,7 @@ def test_challenge_request_submission_cleaning(data, expected_error):
                 "average_size_test_case_mb_for_tasks": [10, 100],
                 "average_size_job_output_mb_for_tasks": [1, 1],
                 "inference_time_average_seconds_for_tasks": [300, 600],
+                "inference_time_limit_seconds_for_tasks": [600, 1200],
                 "task_id_for_phases": [1, 1, 2, 2],
                 "phase_ids": [1, 2, 3, 4],
                 "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],

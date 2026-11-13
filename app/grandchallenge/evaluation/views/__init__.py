@@ -1335,7 +1335,7 @@ class ConfigureAlgorithmPhasesView(
                 phase_index = None
 
             if phase_index is not None:
-                phase.algorithm_time_limit = self.challenge_request.algorithm_time_limit_seconds_for_phases[
+                phase.algorithm_time_limit = self.challenge_request.inference_time_limit_seconds_for_phases[
                     phase_index
                 ]
                 phase.use_batch_mode = (
