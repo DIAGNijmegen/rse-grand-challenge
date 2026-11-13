@@ -146,6 +146,8 @@ setup() {
 }
 
 cleanup() {
+    flush_docker_log
+
     log "Cleanup ..."
 
     docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
@@ -248,16 +250,15 @@ check_health() {
     for ((i = 1; i <= HEALTH_CHECK_MAX_ATTEMPTS; i++)); do
         status=$(http_status "GET" "$HEALTH_CHECK_TIMEOUT_SECONDS" "${BASE_URL}/health")
         log "Health check attempt $i/${HEALTH_CHECK_MAX_ATTEMPTS} returned $status"
+        flush_docker_log
 
         if [[ "$status" == "200" ]]; then
             log "API healthy"
-            flush_docker_log
             return 0
         fi
 
         if [[ "$status" == "302" ]]; then
             log "Health endpoint returned HTTP 302 — failing" error
-            flush_docker_log
             return 1
         fi
 
