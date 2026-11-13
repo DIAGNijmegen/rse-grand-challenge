@@ -37,8 +37,8 @@ urlpatterns = [
         UserProfileUpdate.as_view(),
         name="profile-update",
     ),
-    re_path(
-        r"^(?P<username>[\@\.\+\w-]+)/$",
+    path(
+        "<str:username>/",
         UserProfileDetail.as_view(),
         name="profile-detail",
     ),
