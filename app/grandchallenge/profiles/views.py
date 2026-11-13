@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, UpdateView
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin
+from guardian.utils import get_anonymous_user
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
@@ -53,27 +54,31 @@ def profile(request):
     return redirect(url)
 
 
-class UserProfileObjectMixin:
-    def get_object(self, queryset=None):
-        try:
-            return (
-                UserProfile.objects.select_related("user__verification")
-                .exclude(user__username__iexact=settings.ANONYMOUS_USER_NAME)
-                .get(user__username__iexact=self.kwargs["username"])
-            )
-        except ObjectDoesNotExist:
-            raise Http404("User not found.")
-
-
-class UserProfileDetail(UserProfileObjectMixin, DetailView):
+class UserProfileDetail(DetailView):
     model = UserProfile
     context_object_name = "profile"
+    queryset = UserProfile.objects.select_related("user__verification")
+    slug_field = "user__username"
+    slug_url_kwarg = "username"
+
+    def get_object(self, *args, **kwargs):
+        user_profile = super().get_object(*args, **kwargs)
+
+        if user_profile.user.username == settings.ANONYMOUS_USER_NAME:
+            raise Http404("User not found")
+
+        return user_profile
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         profile_user = context["object"].user
         profile_groups = profile_user.groups.all()
+
+        request_user = self.request.user
+        if request_user.is_anonymous:
+            # This avoids lookups in repeated calls to filter_by_permission
+            request_user = get_anonymous_user()
 
         organizations = Organization.objects.filter(
             Q(members_group__in=profile_groups)
@@ -86,7 +91,7 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
                 | Q(uploaders_group__in=profile_groups)
                 | Q(users_group__in=profile_groups)
             ).distinct(),
-            user=self.request.user,
+            user=request_user,
             codename="view_archive",
         )
         reader_studies = filter_by_permission(
@@ -94,7 +99,7 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
                 Q(editors_group__in=profile_groups)
                 | Q(readers_group__in=profile_groups)
             ).distinct(),
-            user=self.request.user,
+            user=request_user,
             codename="view_readerstudy",
         )
         challenges = Challenge.objects.filter(
@@ -107,7 +112,7 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
                 Q(editors_group__in=profile_groups)
                 | Q(users_group__in=profile_groups)
             ).distinct(),
-            user=self.request.user,
+            user=request_user,
             codename="view_algorithm",
         )
 
