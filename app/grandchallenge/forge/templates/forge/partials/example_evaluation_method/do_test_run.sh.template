@@ -118,6 +118,9 @@ setup() {
         log "No NVIDIA runtime detected — running on CPU (this is fine for testing)" warning
     fi
 
+    # Clean up any earlier collected output
+    rm -rf "$OUTPUT_DIR"
+
     # Create empty staging directories for the /input and /output bind mounts
     rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
     mkdir -m o+rwX "$STAGING_INPUT_DIR"
@@ -296,17 +299,7 @@ invoke() {
 collect_output() {
     log "Collecting output"
 
-    if [ -d "$OUTPUT_DIR" ]; then
-        # Clean up any earlier collected output using a container (handles
-        # files owned by the container's UID on Linux)
-        docker run --rm --platform=linux/amd64 --quiet --user root \
-            --volume "$OUTPUT_DIR":/output \
-            --entrypoint /bin/sh \
-            $DOCKER_IMAGE_TAG \
-            -c "rm -rf /output/* || true"
-    else
-        mkdir -p -m o+rwX "$OUTPUT_DIR"
-    fi
+    mkdir -p -m o+rwX "$OUTPUT_DIR"
 
     # Fix permissions so the host user can read the output files.
     # The container may have written them as a different UID on Linux.
