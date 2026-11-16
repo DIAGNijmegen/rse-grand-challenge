@@ -537,6 +537,16 @@ class SubmissionForm(
                 "Please wait for the submission to be reviewed or cancel it."
             )
 
+        if Submission.objects.filter(
+            algorithm_image__algorithm=algorithm,
+            phase=self._phase,
+            status=Submission.StatusChoices.VALIDATING_INPUTS,
+        ):
+            raise ValidationError(
+                "A submission for this algorithm is currently being validated. "
+                "Please wait for the submission to be processed."
+            )
+
         if algorithm.active_model:
             extra_submission_filter = {
                 "algorithm_model__checksum": algorithm.active_model.checksum

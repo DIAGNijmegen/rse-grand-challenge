@@ -1035,6 +1035,67 @@ class TestSubmissionForm:
             in form.errors["algorithm"]
         )
 
+    def test_algorithm_with_submission_validating_inputs_is_rejected(self):
+        user = UserFactory()
+        VerificationFactory(user=user, is_verified=True)
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
+        archive = ArchiveFactory()
+        p = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+            archive=archive,
+        )
+        p.algorithm_interfaces.set([interface])
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p.archive)
+        i.values.add(civ)
+
+        InvoiceFactory(
+            challenge=p.challenge,
+            compute_costs_euros=10,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        p = Phase.objects.get(pk=p.pk)
+
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        MethodFactory(
+            phase=p,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+
+        SubmissionFactory(
+            phase=p,
+            algorithm_image=ai,
+            status=Submission.StatusChoices.VALIDATING_INPUTS,
+        )
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm": alg, "creator": user, "phase": p},
+        )
+
+        assert not form.is_valid()
+        assert (
+            "A submission for this algorithm is currently being validated. "
+            "Please wait for the submission to be processed."
+            in form.errors["algorithm"]
+        )
+
     def test_pending_submission_in_other_phase_does_not_block(self):
         user = UserFactory()
         VerificationFactory(user=user, is_verified=True)
