@@ -272,12 +272,6 @@ class ReaderStudyQuerySet(models.QuerySet):
             ),
         )
 
-    def with_has_budget(self):
-        return self.annotate(
-            has_budget=Q(max_credits__isnull=True)
-            | Q(credits_consumed__lt=F("max_credits")),
-        )
-
 
 class ReaderStudy(
     UUIDModel,
@@ -479,6 +473,12 @@ class ReaderStudy(
         default=0,
         editable=False,
         help_text="The number of credits consumed by this reader study, updated periodically by a background task.",
+    )
+    has_budget = models.GeneratedField(
+        expression=Q(max_credits__isnull=True)
+        | Q(credits_consumed__lt=F("max_credits")),
+        output_field=models.BooleanField(),
+        db_persist=True,
     )
 
     objects = ReaderStudyQuerySet.as_manager()

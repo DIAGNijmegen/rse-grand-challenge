@@ -1360,11 +1360,7 @@ def test_reader_study_launch_disabled_when_out_of_budget(client):
     reader_study.add_editor(editor)
     reader_study.add_reader(reader)
 
-    assert (
-        ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
+    assert ReaderStudy.objects.get(pk=reader_study.pk).has_budget
 
     for usr in [reader, editor]:
         response = get_view_for_user(
@@ -1380,11 +1376,7 @@ def test_reader_study_launch_disabled_when_out_of_budget(client):
     reader_study.max_credits = 0
     reader_study.save()
 
-    assert (
-        not ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
+    assert not ReaderStudy.objects.get(pk=reader_study.pk).has_budget
 
     for usr in [reader, editor]:
         response = get_view_for_user(

@@ -1244,11 +1244,7 @@ def test_answer_score_calculation():
 def test_reader_study_out_of_budget_when_max_credits_consumed():
     reader_study = ReaderStudyFactory(max_credits=100)
 
-    assert (
-        ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
+    assert ReaderStudy.objects.get(pk=reader_study.pk).has_budget
 
     session_utilization = SessionUtilizationFactory(
         duration=timedelta(hours=1)
@@ -1264,19 +1260,11 @@ def test_reader_study_out_of_budget_when_max_credits_consumed():
     )
 
     # The stored value only changes once the task has run
-    assert (
-        ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
+    assert ReaderStudy.objects.get(pk=reader_study.pk).has_budget
 
     update_reader_study_credits_consumed(pk=reader_study.pk)
 
-    assert (
-        not ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
+    assert not ReaderStudy.objects.get(pk=reader_study.pk).has_budget
 
 
 @pytest.mark.django_db
