@@ -21,6 +21,9 @@ from grandchallenge.reader_studies.models import (
     QuestionWidgetKindChoices,
     ReaderStudy,
 )
+from grandchallenge.reader_studies.tasks import (
+    update_reader_study_credits_consumed,
+)
 from tests.algorithms_tests.factories import EndpointFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -1254,11 +1257,21 @@ def test_reader_study_out_of_budget_when_max_credits_consumed():
 
     assert reader_study.session_utilizations.count() == 1
     assert (
-        ReaderStudy.objects.with_has_budget()
+        ReaderStudy.objects.with_calculated_credits_consumed()
         .get(pk=reader_study.pk)
-        .credits_consumed
+        .calculated_credits_consumed
         == 500
     )
+
+    # The stored value only changes once the task has run
+    assert (
+        ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
+
+    update_reader_study_credits_consumed(pk=reader_study.pk)
+
     assert (
         not ReaderStudy.objects.with_has_budget()
         .get(pk=reader_study.pk)
@@ -1286,8 +1299,8 @@ def test_reader_study_session_credits_consumed_divided():
     assert other_session_utilization.credits_consumed == 1000
 
     credits_consumed = {
-        rs.pk: rs.credits_consumed
-        for rs in ReaderStudy.objects.with_has_budget()
+        rs.pk: rs.calculated_credits_consumed
+        for rs in ReaderStudy.objects.with_calculated_credits_consumed()
     }
 
     assert credits_consumed[reader_studies[0].pk] == 1000
@@ -1317,8 +1330,8 @@ def test_reader_study_endpoint_credits_consumed_divided():
     assert other_endpoint_utilization.credits_consumed == 4
 
     credits_consumed = {
-        rs.pk: rs.credits_consumed
-        for rs in ReaderStudy.objects.with_has_budget()
+        rs.pk: rs.calculated_credits_consumed
+        for rs in ReaderStudy.objects.with_calculated_credits_consumed()
     }
 
     assert credits_consumed[reader_studies[0].pk] == 4

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -6,6 +8,8 @@ from grandchallenge.reader_studies.models import Answer, Question
 from grandchallenge.reader_studies.tasks import (
     answers_from_ground_truth,
     create_display_sets_for_upload_session,
+    update_reader_studies_credits_consumed,
+    update_reader_study_credits_consumed,
 )
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
@@ -14,6 +18,7 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.utilization_tests.factories import SessionUtilizationFactory
 
 
 @pytest.mark.django_db
@@ -78,3 +83,45 @@ def test_answers_from_ground_truth_with_existing_answers():
         answers_from_ground_truth(
             reader_study_pk=rs.pk, target_user_pk=user.pk
         )
+
+
+@pytest.mark.django_db
+def test_update_reader_study_credits_consumed():
+    reader_study = ReaderStudyFactory()
+    other_reader_study = ReaderStudyFactory()
+
+    session_utilization = SessionUtilizationFactory(
+        duration=timedelta(hours=2)
+    )
+    session_utilization.reader_studies.set([reader_study, other_reader_study])
+
+    reader_study.refresh_from_db()
+    assert reader_study.credits_consumed == 0
+
+    update_reader_study_credits_consumed(pk=reader_study.pk)
+
+    reader_study.refresh_from_db()
+    other_reader_study.refresh_from_db()
+    assert reader_study.credits_consumed == 500
+    assert other_reader_study.credits_consumed == 0
+
+
+@pytest.mark.django_db
+def test_update_reader_studies_credits_consumed(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    reader_studies = ReaderStudyFactory.create_batch(2)
+
+    session_utilization = SessionUtilizationFactory(
+        duration=timedelta(hours=2)
+    )
+    session_utilization.reader_studies.set(reader_studies)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_reader_studies_credits_consumed()
+
+    for reader_study in reader_studies:
+        reader_study.refresh_from_db()
+        assert reader_study.credits_consumed == 500

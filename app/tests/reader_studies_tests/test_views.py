@@ -1670,13 +1670,15 @@ def test_usage_view_total_credits_matches_per_user_sum(client):
     assert response.status_code == 200
 
     # Get the reader study with budget annotation
-    rs1_with_budget = ReaderStudy.objects.with_has_budget().get(pk=rs1.pk)
+    rs1_with_credits = (
+        ReaderStudy.objects.with_calculated_credits_consumed().get(pk=rs1.pk)
+    )
 
     # Get per-user credits from the view context
     user_usage = response.context["user_usage"]
     per_user_total = sum(u.total_credits for u in user_usage)
 
-    assert per_user_total == rs1_with_budget.credits_consumed
+    assert per_user_total == rs1_with_credits.calculated_credits_consumed
     assert len(user_usage) == 2
 
 
