@@ -16,6 +16,9 @@ from grandchallenge.core.sentry import (
     sentry_soft_error_lamba_batch_task_view,
     sentry_soft_error_lamba_task_view,
     sentry_soft_error_view,
+    sentry_soft_task_logger_error_lamba_batch_task_view,
+    sentry_soft_task_logger_error_lamba_large_task_view,
+    sentry_soft_task_logger_error_lamba_task_view,
 )
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
 from grandchallenge.core.views import (
@@ -203,8 +206,20 @@ urlpatterns = [
     path("sentry/soft/", sentry_soft_error_view),
     path("sentry/hard/", sentry_hard_error_view),
     path("sentry/soft-task/", sentry_soft_error_lamba_task_view),
+    path(
+        "sentry/soft-logger-task",
+        sentry_soft_task_logger_error_lamba_task_view,
+    ),
     path("sentry/hard-task/", sentry_hard_error_lamba_task_view),
+    path(
+        "sentry/soft-logger-large-task/",
+        sentry_soft_task_logger_error_lamba_large_task_view,
+    ),
     path("sentry/soft-batch-task/", sentry_soft_error_lamba_batch_task_view),
+    path(
+        "sentry/soft-logger-batch-task/",
+        sentry_soft_task_logger_error_lamba_batch_task_view,
+    ),
     path("sentry/hard-batch-task/", sentry_hard_error_lamba_batch_task_view),
 ]
 
