@@ -122,6 +122,9 @@ setup() {
         log "No NVIDIA runtime detected — running on CPU (this is fine for testing)" warning
     fi
 
+    # Clean up any earlier collected output
+    rm -rf "$OUTPUT_DIR"
+
     # Create empty staging directories for the /input and /output bind mounts
     rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
     mkdir -m o+rwX "$STAGING_INPUT_DIR"
@@ -150,6 +153,8 @@ setup() {
 }
 
 cleanup() {
+    flush_docker_log
+
     log "Cleanup ..."
 
     docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
@@ -163,7 +168,7 @@ cleanup() {
         --volume "$STAGING_OUTPUT_DIR":/output \
         --entrypoint /bin/sh \
         $DOCKER_IMAGE_TAG \
-        -c "rm -rf /output/* || true" 2>/dev/null || true
+        -c "find /output -mindepth 1 -delete" 2>/dev/null || true
     rm -rf "$STAGING_OUTPUT_DIR"
 
     # Remove volumes and network
@@ -251,16 +256,15 @@ check_health() {
     for ((i = 1; i <= HEALTH_CHECK_MAX_ATTEMPTS; i++)); do
         status=$(http_status "GET" "$HEALTH_CHECK_TIMEOUT_SECONDS" "${BASE_URL}/health")
         log "Health check attempt $i/${HEALTH_CHECK_MAX_ATTEMPTS} returned $status"
+        flush_docker_log
 
         if [[ "$status" == "200" ]]; then
             log "API healthy"
-            flush_docker_log
             return 0
         fi
 
         if [[ "$status" == "302" ]]; then
             log "Health endpoint returned HTTP 302 — failing" error
-            flush_docker_log
             return 1
         fi
 
@@ -278,10 +282,10 @@ provision() {
     log "Provisioning input for ${interface_dir}"
 
     # Clear /output inside the container (host can't due to UID mismatch on Linux)
-    docker exec --user root "$CONTAINER_NAME" /bin/sh -c "rm -rf /output/*"
+    docker exec --user root "$CONTAINER_NAME" /bin/sh -c "find /output -mindepth 1 -delete"
 
     # Clear the input staging dir, then hard-link this interface's input files in
-    rm -rf "${STAGING_INPUT_DIR:?}"/*
+    find "${STAGING_INPUT_DIR:?}" -mindepth 1 -delete
     cp -rl "${INPUT_DIR}/${interface_dir}/." "$STAGING_INPUT_DIR/"
 }
 
@@ -305,26 +309,22 @@ collect_output() {
     local destination="${OUTPUT_DIR}/${interface_dir}"
     log "Collecting output for ${interface_dir}"
 
-    if [ -d "$destination" ]; then
-        # Clean up any earlier collected output using a container (handles
-        # files owned by the container's UID on Linux)
-        docker run --rm --platform=linux/amd64 --quiet --user root \
-            --volume "$destination":/output \
-            --entrypoint /bin/sh \
-            $DOCKER_IMAGE_TAG \
-            -c "rm -rf /output/* || true"
+    mkdir -p -m o+rwX "$destination"
+
+    local output_listing
+    output_listing=$(docker exec --user root "$CONTAINER_NAME" /bin/sh -c 'ls -A /output')
+    if [ -z "$output_listing" ]; then
+        log "No output files found in /output for ${interface_dir}" error
     else
-        mkdir -p -m o+rwX "$destination"
+        # Fix permissions so the host user can read the output files.
+        # The container may have written them as a different UID on Linux.
+        docker exec --user root "$CONTAINER_NAME" \
+            /bin/sh -c "chmod -R -f o+rX /output"
+
+        # Copy from the staging directory to the host output directory
+        cp -r "$STAGING_OUTPUT_DIR/." "${destination}/"
+        log "Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
     fi
-
-    # Fix permissions so the host user can read the output files.
-    # The container may have written them as a different UID on Linux.
-    docker exec --user root "$CONTAINER_NAME" \
-        /bin/sh -c "chmod -R -f o+rX /output/*"
-
-    # Copy from the staging directory to the host output directory
-    cp -r "$STAGING_OUTPUT_DIR/." "${destination}/"
-    log "Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
 }
 
 # ---------------------------------------------------------------------------
