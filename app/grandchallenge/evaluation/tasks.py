@@ -40,11 +40,13 @@ def validate_submission(*, submission_pk: str | uuid.UUID):
         ).get(pk=submission_pk)
 
     if submission.status != submission.StatusChoices.VALIDATING_INPUTS:
-        return
+        return {
+            "status": f"Skipping due to submission status {submission.get_status_display()}"
+        }
 
     if not submission.additional_inputs_complete:
         task_logger.info("Nothing to do, inputs are still being validated.")
-        return
+        return {"status": "Skipping due to inputs still being validated."}
 
     if not submission.predictions_file and submission.user_upload:
         submission.user_upload.copy_object(
@@ -57,12 +59,16 @@ def validate_submission(*, submission_pk: str | uuid.UUID):
         submission.update_status(
             status=submission.StatusChoices.PENDING_REVIEW,
         )
+        return {"status": "Submission successfully validated"}
     else:
         submission.update_status(
             status=submission.StatusChoices.FAILED,
             status_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         task_logger.error("No algorithm or predictions file found")
+        return {
+            "status": "Submission validation failed: no algorithm or predictions file found"
+        }
 
 
 @lambda_task()
