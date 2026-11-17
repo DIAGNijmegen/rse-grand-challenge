@@ -94,9 +94,7 @@ def rank_results(*, evaluation_metrics, score_method) -> Positions:
     }
 
     return Positions(
-        ranks=_scores_to_ranks(
-            evaluation_metric_score=rank_scores, reverse=False
-        ),
+        ranks=_scores_to_ranks(rank_scores=rank_scores, reverse=False),
         rank_scores=rank_scores,
         rank_per_metric=rank_per_metric,
     )
@@ -110,10 +108,17 @@ def _get_rank_per_metric(*, evaluation_metrics):
     values is another dictionary where the key is the path of the metric and
     the value is the rank of this result for this metric
     """
+    try:
+        # All of the evaluation metrics will have the same metrics extracted
+        metrics = evaluation_metrics[0].metric_scores.keys()
+    except IndexError:
+        # No valid results
+        return {}
+
     metric_rank = {}
 
-    for metric in evaluation_metrics[0].metric_scores.keys():
-        evaluation_metric_score = {
+    for metric in metrics:
+        rank_scores = {
             evaluation_metric.evaluation_pk: evaluation_metric.metric_scores[
                 metric
             ]
@@ -121,7 +126,7 @@ def _get_rank_per_metric(*, evaluation_metrics):
         }
 
         metric_rank[metric.path] = _scores_to_ranks(
-            evaluation_metric_score=evaluation_metric_score,
+            rank_scores=rank_scores,
             reverse=metric.reverse,
         )
 
@@ -134,7 +139,7 @@ def _get_rank_per_metric(*, evaluation_metrics):
     }
 
 
-def _scores_to_ranks(*, evaluation_metric_score, reverse):
+def _scores_to_ranks(*, rank_scores, reverse):
     """
     Go from a score (a scalar) to a rank (integer). If two scalars are the
     same then they will have the same rank.
@@ -147,7 +152,7 @@ def _scores_to_ranks(*, evaluation_metric_score, reverse):
     """
     scores = OrderedDict(
         sorted(
-            evaluation_metric_score.items(),
+            rank_scores.items(),
             key=lambda t: t[1],
             reverse=reverse,
         )
