@@ -58,7 +58,7 @@
                 {% elif not object.is_editable %}
                     title="Cannot delete: answers for display set exist"
                 {% endif %}
-                class="float-right"
+                class="float-end"
                 >
                 <a class="btn btn-danger {% if not object.is_editable %}disabled{% endif %}"
                 href="{{ object.delete_url }}"
