@@ -69,7 +69,7 @@ class ImageSearchMultiWidget(MultiWidget):
         widgets = {
             SearchWidgetSuffixes.INPUT.value: ImageSearchInputWidget(),
             SearchWidgetSuffixes.CHOICE.value: SearchSelect(
-                attrs={"class": "custom-select"}
+                attrs={"class": "form-select"}
             ),
         }
         super().__init__(widgets, attrs)

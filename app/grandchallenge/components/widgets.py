@@ -51,7 +51,7 @@ class FileSearchMultiWidget(MultiWidget):
         widgets = {
             SearchWidgetSuffixes.INPUT.value: FileSearchInputWidget(),
             SearchWidgetSuffixes.CHOICE.value: SearchSelect(
-                attrs={"class": "custom-select"}
+                attrs={"class": "form-select"}
             ),
         }
         super().__init__(widgets, attrs)
