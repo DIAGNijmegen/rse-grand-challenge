@@ -27,7 +27,7 @@ from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import (
     SubmissionKindChoices,
-    get_evaluation_metrics,
+    get_valid_evaluation_metrics,
     rank_results,
 )
 
@@ -539,12 +539,12 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
             )
             .select_for_update(nowait=True, of=("self",))
             .order_by("-created")
-            .only("pk", "rank", "rank_score", "rank_per_metric")
+            .only("pk", "rank", "rank_score", "rank_per_metric", "published")
         )
 
     # Extract the filter the evaluation metrics for each evaluation.
     # Do this separately to reduce memory usage.
-    evaluation_metrics = get_evaluation_metrics(
+    evaluation_metrics = get_valid_evaluation_metrics(
         evaluations=evaluations,
         metric_lookups=phase.valid_metrics,
     )

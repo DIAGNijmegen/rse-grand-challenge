@@ -39,19 +39,18 @@ def get(inputs):
         raise MultipleObjectsReturned
 
 
-def get_evaluation_metrics(*, evaluations, metric_lookups):
+def get_valid_evaluation_metrics(*, evaluations, metric_lookups):
     from grandchallenge.components.models import ComponentInterfaceValue
 
     evaluation_metric_civs = ComponentInterfaceValue.objects.filter(
         interface__slug="metrics-json-file",
         evaluation_evaluations_as_output__in={
-            evaluation.pk for evaluation in evaluations
+            evaluation.pk for evaluation in evaluations if evaluation.published
         },
     ).annotate(
         evaluation_pk=F("evaluation_evaluations_as_output"),
         creator=F("evaluation_evaluations_as_output__submission__creator"),
         created=F("evaluation_evaluations_as_output__submission__created"),
-        published=F("evaluation_evaluations_as_output__published"),
     )
 
     evaluation_metrics = []
@@ -59,9 +58,6 @@ def get_evaluation_metrics(*, evaluations, metric_lookups):
     for evaluation_metric_civ in evaluation_metric_civs.iterator(
         chunk_size=100
     ):
-        if not evaluation_metric_civ.published:
-            continue
-
         evaluation_metric_scores = {}
 
         for metric_lookup in metric_lookups:
