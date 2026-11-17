@@ -29,10 +29,6 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
     -moz-appearance: none;
 }
 
-.custom-select-sm {
-    padding-left: $form-select-padding-x;
-}
-
 // Show heading permalinks only on hover
 :is(h1, h2, h3, h4, h5, h6) > .headerlink {
     visibility: hidden;
