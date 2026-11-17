@@ -1578,6 +1578,7 @@ class DisplaySetDetailView(CIVSetDetail):
                     answer__is_ground_truth=False,
                 )
                 .distinct()
+                .select_related("user_profile", "verification")
                 .order_by("username")
             )
         else:
