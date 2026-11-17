@@ -533,18 +533,10 @@ class SubmissionForm(
 
         if algorithm.pending_submissions.filter(phase=self._phase):
             raise ValidationError(
-                "A submission for this algorithm is already pending review. "
-                "Please wait for the submission to be reviewed or cancel it."
-            )
-
-        if Submission.objects.filter(
-            algorithm_image__algorithm=algorithm,
-            phase=self._phase,
-            status=Submission.StatusChoices.VALIDATING_INPUTS,
-        ):
-            raise ValidationError(
-                "A submission for this algorithm is currently being validated. "
-                "Please wait for the submission to be processed."
+                "A submission for this algorithm is already pending. "
+                "Please wait for the submission to be processed. "
+                "If the submission is pending review, but you would like to "
+                "replace it, please cancel it first."
             )
 
         if algorithm.active_model:

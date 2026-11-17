@@ -545,7 +545,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
         return Submission.objects.filter(
             algorithm_image__algorithm=self,
-            status=Submission.StatusChoices.PENDING_REVIEW,
+            status__in=(
+                Submission.StatusChoices.VALIDATING_INPUTS,
+                Submission.StatusChoices.PENDING_REVIEW,
+            ),
         )
 
     @property
