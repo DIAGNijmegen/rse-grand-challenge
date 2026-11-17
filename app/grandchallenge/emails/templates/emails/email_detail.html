@@ -21,12 +21,12 @@
     {% endif %}
     <hr>
 
-    <div class="alert alert-warning ml-3" role="alert">
+    <div class="alert alert-warning ms-3" role="alert">
         The body preview does not accurately represent how the result will be rendered in email applications!
         Always send out a test version to check the formatting.
     </div>
 
-    <div class="row ml-1">
+    <div class="row ms-1">
 
         <div class="col">
             <iframe id="emailBodyFrame" sandbox="" class="w-100 vh-100" src="{% url "emails:rendered-detail" pk=object.pk %}"></iframe>
@@ -34,7 +34,7 @@
 
         <div class="col-4">
             {% if not object.sent_at and "emails.change_email" in perms %}
-                <div class="alert alert-warning ml-3" role="alert">
+                <div class="alert alert-warning ms-3" role="alert">
                         This email has not been sent yet.
                         You can come back and edit it. When it's ready to be sent,
                         please contact support to send it for you.

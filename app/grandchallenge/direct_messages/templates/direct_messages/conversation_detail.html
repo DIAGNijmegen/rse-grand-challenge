@@ -19,7 +19,7 @@
                         <small>{{ participant.verification.verification_badge }} {{ participant.user_profile.department }}, {{ participant.user_profile.institution }}, {{ participant.user_profile.country.name }}.</small>
                 </div>
 
-                <div class="ml-auto">
+                <div class="ms-auto">
                     <div class="dropdown">
                         <button class="btn btn-link dropdown-toggle btn-sm"
                                 type="button"
@@ -98,7 +98,7 @@
                 {% include "direct_messages/partials/directmessage_detail.html" with preview=False %}
             </div>
 
-            <div class="ml-auto">
+            <div class="ms-auto">
                 {% if direct_message.sender == request.user and not direct_message.is_deleted %}
                     <div class="dropdown">
                         <button class="btn btn-link dropdown-toggle btn-sm"

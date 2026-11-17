@@ -40,7 +40,7 @@
                                         <a href="{% url 'discussion-forums:topic-post-list' slug=topic.slug %}"
                                         >{{ topic.subject }}</a>
                                         {% if topic.locked %}
-                                            <i class="fas fa-lock text-info ml-1" title="This topic is locked"></i>
+                                            <i class="fas fa-lock text-info ms-1" title="This topic is locked"></i>
                                         {% endif %}
                                         <div>
                                             By {{ topic.creator|user_profile_link }} {{ topic.last_post.created }}
@@ -49,7 +49,7 @@
                                     <div class="col-md-1 d-none d-md-block">{{ topic.num_replies }}</div>
                                     <div class="col-md-3 d-none d-md-block">
                                         By {{ topic.last_post.creator|user_profile_link }}
-                                        <a href=""><i class="fas fa-arrow-circle-right ml-1"></i></a>
+                                        <a href=""><i class="fas fa-arrow-circle-right ms-1"></i></a>
                                         <br/>
                                         <small>{{ topic.last_post.created }}</small>
                                     </div>

@@ -32,11 +32,11 @@
     {% include "datatables/partials/datatable.html" with columns=columns %}
 
     {% if phase.result_display_choice == phase.BEST %}
-        <p class="small ml-3">
+        <p class="small ms-3">
             Only the best published result for each participant is listed.
         </p>
     {% elif phase.result_display_choice == phase.MOST_RECENT %}
-        <p class="small ml-3">
+        <p class="small ms-3">
             Only the most recent published result for each participant is listed.
         </p>
     {% else %}

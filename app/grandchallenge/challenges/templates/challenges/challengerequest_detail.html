@@ -21,7 +21,7 @@
 
 {% block content %}
     {% get_obj_perms request.user for object as "user_perms" %}
-    <div class="row d-flex align-items-center ml-2">
+    <div class="row d-flex align-items-center ms-2">
         {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
             <div class="badge badge-success h-50 p-2 me-1">Accepted</div>
         {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
@@ -34,14 +34,14 @@
         <h3>[{{ object.short_name }}] {{ object.title }}</h3>
     </div>
     <br>
-    <div class="container-fluid row mb-4 ml-1 bg-light rounded p-3">
+    <div class="container-fluid row mb-4 ms-1 bg-light rounded p-3">
         <div class="col-lg-6">
             <i class="fa fa-user text-primary pr-3"></i> Challenge request from {{ object.creator|user_profile_link }}<br>
             <i class="fa fa-envelope text-primary pr-3"></i> <a target="_blank" href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
             <i class="fa fa-calendar text-primary pr-3"></i> Created on {{ object.created|date:'F j, Y' }}<br>
             {% if object.submitted_on %}
                 {% if object.status == object.ChallengeRequestStatusChoices.PENDING %}
-                    <i class="fa fa-rocket text-primary pr-3"></i> Submitted on<span class="badge ml-1 px-2 {% if object.submitted_on|timedifference < 8 %} badge-success {% elif object.submitted_on|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted_on|date:'F j, Y'}}</span><br>
+                    <i class="fa fa-rocket text-primary pr-3"></i> Submitted on<span class="badge ms-1 px-2 {% if object.submitted_on|timedifference < 8 %} badge-success {% elif object.submitted_on|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted_on|date:'F j, Y'}}</span><br>
                 {% else %}
                      <i class="fa fa-calendar text-primary pr-3"></i> Submitted on {{ object.submitted_on|date:'F j, Y' }}<br>
                 {% endif %}
@@ -129,7 +129,7 @@
         {% if object.data_license %}
             <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-check-circle text-success pr-2"></i> The organizers agree to publish their public data set under a CC-BY license.</td></tr>
         {% elif object.data_license != None %}
-            <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-exclamation-circle text-danger pr-2"></i> The organizers do not agree to publish their public data set under a CC-BY license for the following reason: <br> <span class="ml-4">{{ object.data_license_extra }}</span></td></tr>
+            <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-exclamation-circle text-danger pr-2"></i> The organizers do not agree to publish their public data set under a CC-BY license for the following reason: <br> <span class="ms-4">{{ object.data_license_extra }}</span></td></tr>
         {% endif %}
         {% if object.comments %}
             <tr><td class="font-weight-bold">Comments from organizers</td> <td><div class="bg-warning rounded p-3">{{ object.comments|linebreaks }}</div></td></tr>
