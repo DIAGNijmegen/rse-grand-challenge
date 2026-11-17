@@ -86,12 +86,14 @@ def test_answers_from_ground_truth_with_existing_answers():
 
 
 @pytest.mark.django_db
-def test_update_reader_study_credits_consumed():
+def test_update_single_reader_study_credits_consumed():
     reader_study = ReaderStudyFactory()
     other_reader_study = ReaderStudyFactory()
 
     session_utilization = SessionUtilizationFactory(
-        duration=timedelta(hours=2)
+        duration=timedelta(
+            hours=2
+        )  # 2 hours * 500 credits/hour = 1000 credits
     )
     session_utilization.reader_studies.set([reader_study, other_reader_study])
 
@@ -102,20 +104,24 @@ def test_update_reader_study_credits_consumed():
 
     reader_study.refresh_from_db()
     other_reader_study.refresh_from_db()
-    assert reader_study.credits_consumed == 500
+    assert (
+        reader_study.credits_consumed == 500
+    )  # half of the session utilization is attributed to this reader study
+
+    # The other one should not be updated (yet)
     assert other_reader_study.credits_consumed == 0
 
 
 @pytest.mark.django_db
-def test_update_reader_studies_credits_consumed(
+def test_update_multiple_reader_studies_credits_consumed(
     settings, django_capture_on_commit_callbacks
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    reader_studies = ReaderStudyFactory.create_batch(2)
+    reader_studies = ReaderStudyFactory.create_batch(3)
 
     session_utilization = SessionUtilizationFactory(
-        duration=timedelta(hours=2)
+        duration=timedelta(hours=3)
     )
     session_utilization.reader_studies.set(reader_studies)
 
