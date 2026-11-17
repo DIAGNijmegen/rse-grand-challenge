@@ -11,10 +11,10 @@
         {{ phase.inference_job_count }} job{{ phase.inference_job_count|pluralize }}.
         Each job processes up to {{ phase.archive_items_per_job }} item{{ phase.archive_items_per_job|pluralize }}
         with a time limit of {{ phase.algorithm_time_limit|naturaldelta }} for processing a single archive item. <br><br>
-        <i class="fa fa-exclamation-triangle mr-1" aria-hidden="true"></i> Be aware that running in batch-mode means that
+        <i class="fa fa-exclamation-triangle me-1" aria-hidden="true"></i> Be aware that running in batch-mode means that
         archive items are not processed independently from one another: individual inference runs share the same
         process and any state carried over from earlier items. <br><br>
-        <i class="fa fa-exclamation-triangle mr-1" aria-hidden="true"></i> Algorithms submitted to this phase should
+        <i class="fa fa-exclamation-triangle me-1" aria-hidden="true"></i> Algorithms submitted to this phase should
         make use of the invoke API to reap the full timing benefits of batch-mode. Download the latest
         <a href="{% url 'evaluation:phase-starter-kit-detail' challenge_short_name=phase.challenge.short_name slug=phase.slug %}">
             starter kit</a> for this phase for an example.

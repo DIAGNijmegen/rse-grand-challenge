@@ -17,7 +17,7 @@
     <div class="mb-4"><h1>{{ flatpage.title }}</h1></div>
     <div>
         {% if 'flatpages.add_flatpage' in perms %}
-            <a class="btn btn-md btn-dark mr-2 mt-2" href="{% url 'flatpages:create' %}">Add flatpage</a>
+            <a class="btn btn-md btn-dark me-2 mt-2" href="{% url 'flatpages:create' %}">Add flatpage</a>
         {% endif %}
         {% if 'flatpages.change_flatpage' in perms %}
             <a class="btn btn-md btn-dark mt-2" href="{% url 'flatpages:update' pk=flatpage.pk %}">Edit flatpage</a>

@@ -41,10 +41,10 @@
                 <li class="list-group-item {% if object.context_class %}list-group-item-{{ object.context_class }}{% endif %} p-0">
                     <div class="d-flex justify-content-between">
                         <div class="py-2 pl-3">
-                            <input class="checkbox pr-1 mr-1" name="checkbox" type="checkbox" id="{{ object.id }}"
+                            <input class="checkbox pr-1 me-1" name="checkbox" type="checkbox" id="{{ object.id }}"
                                    value="{{ object.id }}" data-url="{% url 'api:notification-detail' pk=object.pk %}">
                             {% if not object.read %}
-                                <span class="text-danger align-middle mr-1"><i class="fa fa-circle pl-1"></i></span>
+                                <span class="text-danger align-middle me-1"><i class="fa fa-circle pl-1"></i></span>
                             {% endif %}
                             {% print_notification notification=object user=request.user as current_notification %}
                             {{ current_notification }}

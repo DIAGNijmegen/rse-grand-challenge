@@ -76,7 +76,7 @@ function disable(form) {
         spinner.setAttribute(spinnerAttributeName, "");
         spinner.setAttribute("role", "status");
         spinner.setAttribute("aria-hidden", "true");
-        spinner.className = "spinner-border spinner-border-sm mr-1";
+        spinner.className = "spinner-border spinner-border-sm me-1";
 
         btn.prepend(spinner);
     }

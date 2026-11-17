@@ -31,7 +31,7 @@
     <h2>{{ object|yesno:"Update,Create" }} Ground Truth</h2>
 
     {% if object %}
-        <span class="badge p-2 my-2 {% if object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active ground truth for this phase{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
+        <span class="badge p-2 my-2 {% if object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.is_desired_version %}<i class="fa fa-check-circle me-1"></i> Active ground truth for this phase{% else %} <i class="fa fa-times-circle me-1"></i> Inactive {% endif %}</span>
     {% endif %}
 
     <dl class="inline">

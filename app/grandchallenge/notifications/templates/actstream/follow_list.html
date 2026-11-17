@@ -35,7 +35,7 @@
             <li class="list-group-item p-1 pl-3">
                 <div class="d-flex justify-content-between">
                     <div class="mt-1 pt-2 p-0">
-                        <input class="checkbox mr-2" name="checkbox" type="checkbox" id="{{ follow.pk }}"
+                        <input class="checkbox me-2" name="checkbox" type="checkbox" id="{{ follow.pk }}"
                                value="{{ follow.pk }}"
                                data-flag={% if follow.flag == 'job-active' %}"job-follow"{% else %}"standard-follow"{% endif %}
                                data-url="{% url 'api:follow-detail' pk=follow.pk %}"

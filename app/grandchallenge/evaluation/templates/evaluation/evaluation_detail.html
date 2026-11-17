@@ -177,7 +177,7 @@
                 <a href="data:text/plain;charset=utf-8,{{ metrics|json_dumps|urlencode }}"
                     download="metrics.json"
                     class="btn btn-primary">
-                    <i class="fa fa-download mr-1"></i>
+                    <i class="fa fa-download me-1"></i>
                     Download the metrics.json file for this evaluation
                 </a>
             </p>
@@ -214,7 +214,7 @@
                  {% if object.submission.predictions_file %}
                      <a href="{{ object.submission.predictions_file.url }}"
                         class="btn btn-primary">
-                         <i class="fas fa-download mr-1"></i>
+                         <i class="fas fa-download me-1"></i>
                          Download the submission file for this evaluation
                      </a>
                 {% endif %}
@@ -223,7 +223,7 @@
                     <a href="data:text/plain;charset=utf-8,{{ predictions|json_dumps|urlencode }}"
                         download="predictions.json"
                         class="btn btn-primary">
-                        <i class="fa fa-download mr-1"></i>
+                        <i class="fa fa-download me-1"></i>
                         Download the predictions.json file for this evaluation
                     </a>
                 {% endif %}
@@ -232,13 +232,13 @@
                     {% if object.submission.phase.use_batch_mode %}
                         <a class="btn btn-primary"
                            href="{% url 'evaluation:batch-job-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk %}">
-                            <i class="fas fa-angle-double-right mr-1"></i>
+                            <i class="fas fa-angle-double-right me-1"></i>
                             Go to the batch jobs for this submission
                         </a>
                     {% else %}
                         <a class="btn btn-primary"
                            href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
-                            <i class="fas fa-angle-double-right mr-1"></i>
+                            <i class="fas fa-angle-double-right me-1"></i>
                             Go to the results of {{ object.submission.algorithm_image.algorithm.title|truncatechars:30 }}
                         </a>
                     {% endif %}
@@ -252,7 +252,7 @@
                     <a href="data:text/plain;charset=utf-8,{{ metrics|json_dumps|urlencode }}"
                         download="metrics.json"
                         class="btn btn-primary">
-                        <i class="fa fa-download mr-1"></i>
+                        <i class="fa fa-download me-1"></i>
                         Download the metrics.json file for this evaluation
                     </a>
                 </div>
@@ -278,7 +278,7 @@
                             <input type="hidden" name="published"
                                 value="false">
                             <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-eye-slash mr-1"></i>
+                                <i class="fas fa-eye-slash me-1"></i>
                                     Exclude this result from the leaderboard(s)
                             </button>
                         </form>
@@ -292,7 +292,7 @@
                             <input type="hidden" name="published"
                                 value="true">
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-eye mr-1"></i>
+                                <i class="fas fa-eye me-1"></i>
                                 Publish this result on the leaderboard(s)
                             </button>
                         </form>
@@ -304,7 +304,7 @@
                 <h3 class="card-title" id="logs">Logs</h3>
                     <a class="btn btn-primary"
                        href="{% url 'evaluation:evaluation-logs-detail' challenge_short_name=challenge.short_name pk=object.pk %}">
-                        <i class="fas fa-terminal mr-1"></i>
+                        <i class="fas fa-terminal me-1"></i>
                         View the logs for this evaluation
                     </a>
             </div>
