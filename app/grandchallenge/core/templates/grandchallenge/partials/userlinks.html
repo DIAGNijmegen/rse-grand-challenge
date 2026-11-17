@@ -9,7 +9,7 @@
        aria-expanded="false">
         Help
     </a>
-    <div class="dropdown-menu dropdown-menu-right">
+    <div class="dropdown-menu dropdown-menu-end">
         {% if challenge %}
             <h6 class="dropdown-header">{% firstof challenge.title challenge.short_name %} Support</h6>
             {% if challenge.display_forum_link %}
@@ -75,7 +75,7 @@
             <img class="rounded-circle" src="{{ user.user_profile.get_mugshot_url }}"
                  alt="User Mugshot" style="height: 1.5em"/>
         </a>
-        <div class="dropdown-menu dropdown-menu-right">
+        <div class="dropdown-menu dropdown-menu-end">
             <a class="dropdown-item"
                href="{% url 'profile-detail' user.username %}">
                 Signed in as <b>{{ user.username }}</b></a>
