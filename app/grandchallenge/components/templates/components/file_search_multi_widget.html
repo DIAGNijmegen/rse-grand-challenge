@@ -1,7 +1,7 @@
 {% load url %}
 {% load static %}
 
-<div class="form-group mb-1"
+<div class="mb-1"
      id="search-{{ widget.name }}"
      hx-get="{% url 'components:file-search' %}"
      hx-trigger="load once, input delay:500ms from:#id_{{ widget.name }}_0"
