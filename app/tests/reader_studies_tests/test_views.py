@@ -471,25 +471,52 @@ def test_display_set_detail_permissions(client):
 
 @pytest.mark.django_db
 def test_display_set_detail_without_answers(client):
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(max_credits=0)  # out of budget
     editor = UserFactory()
     rs.add_editor(editor)
+    reader = UserFactory()
+    rs.add_reader(reader)
 
     ds = DisplaySetFactory(reader_study=rs)
 
-    response = get_view_for_user(
+    editor_response = get_view_for_user(
         viewname="reader-studies:display-set-detail",
         client=client,
         reverse_kwargs={"slug": rs.slug, "pk": ds.pk},
         user=editor,
     )
 
-    assert response.status_code == 200
-    assert list(response.context["answering_users"]) == []
-    content = response.rendered_content
-    assert "View User's Answers" not in content
+    assert editor_response.status_code == 200
+    assert list(editor_response.context["answering_users"]) == []
+    assert editor_response.context[
+        "user_can_launch_viewer"
+    ], "Editor should be able to launch viewer even when out of budget"
+
+    editor_content = editor_response.rendered_content
+    assert "View User's Answers" not in editor_content
     assert (
-        "No user has answered any question for this display set yet" in content
+        "No user has answered any question for this display set yet"
+        in editor_content
+    )
+
+    reader_response = get_view_for_user(
+        viewname="reader-studies:display-set-detail",
+        client=client,
+        reverse_kwargs={"slug": rs.slug, "pk": ds.pk},
+        user=reader,
+    )
+
+    assert reader_response.status_code == 200
+    assert list(reader_response.context["answering_users"]) == []
+    assert not reader_response.context[
+        "user_can_launch_viewer"
+    ], "Reader should not be able to launch viewer when out of budget"
+
+    reader_content = reader_response.rendered_content
+    assert "View User's Answers" not in reader_content
+    assert (
+        "No user has answered any question for this display set yet"
+        in reader_content
     )
 
 
