@@ -3,38 +3,36 @@
 {% load workstations %}
 
 {% block additional_content %}
+    <hr/>
     {% if answering_users %}
-        <hr/>
         <h3>Answers by Users</h3>
-        {% if answering_users %}
-            <div class="table-responsive table-sm">
-                <table class="table table-hover">
-                    <thead class="thead-light">
-                        <th>User</th>
-                        <th>Action</th>
-                    </thead>
-                    <tbody>
-                        {% for answering_user in answering_users %}
-                            <tr>
-                                <td class="py-3 align-middle w-100">{{ answering_user|user_profile_link }}</td>
-                                <td class="py-3 align-middle text-nowrap">
-                                    <button class="btn btn-primary"
-                                        {% if user_can_launch_viewer %}
-                                            {% workstation_session_control_data workstation=object.reader_study.workstation context_object=object display_set=object reader_study=object.reader_study user=answering_user config=object.reader_study.workstation_config %}
-                                        {% else %}
-                                            disabled title="Reader study is out of budget and cannot be launched"
-                                        {% endif %}
-                                    >
-                                        <i class="fas fa-eye"></i> View User's Answers
-                                    </button>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <span class="text-muted">No user has answered any question for this display set yet.</span>
-        {% endif %}
+        <div class="table-responsive table-sm">
+            <table class="table table-hover">
+                <thead class="thead-light">
+                    <th>User</th>
+                    <th>Action</th>
+                </thead>
+                <tbody>
+                    {% for answering_user in answering_users %}
+                        <tr>
+                            <td class="py-3 align-middle w-100">{{ answering_user|user_profile_link }}</td>
+                            <td class="py-3 align-middle text-nowrap">
+                                <button class="btn btn-primary"
+                                    {% if user_can_launch_viewer %}
+                                        {% workstation_session_control_data workstation=object.reader_study.workstation context_object=object display_set=object reader_study=object.reader_study user=answering_user config=object.reader_study.workstation_config %}
+                                    {% else %}
+                                        disabled title="Reader study is out of budget and cannot be launched"
+                                    {% endif %}
+                                >
+                                    <i class="fas fa-eye"></i> View User's Answers
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <span class="text-muted">No user has answered any question for this display set yet</span>
     {% endif %}
 {% endblock %}
