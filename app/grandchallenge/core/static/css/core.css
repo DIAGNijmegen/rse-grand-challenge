@@ -14,11 +14,11 @@ p {
     margin-bottom: 0;
 }
 
-.jumbotron {
+.text-shadow {
     text-shadow: 0.1rem 0.1rem 0.2rem #000000;
 }
 
-.jumbotron-image {
+.image-shadow {
     filter: drop-shadow(0.1rem 0.1rem 0.2rem #000000);
 }
 
