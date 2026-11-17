@@ -546,6 +546,7 @@ class ArchiveItemViewSet(
 class ArchiveItemDetailView(CIVSetDetail):
     model = ArchiveItem
     permission_required = "archives.view_archiveitem"
+    template_name = "archives/archive_item_detail.html"
 
 
 class ArchiveItemCreateView(
