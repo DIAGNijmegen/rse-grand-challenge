@@ -15,8 +15,15 @@
 
 {% block additional_content %}
     <hr/>
+    <h3>Answers by Users</h3>
     {% if answering_users %}
-        <h3>Answers by Users</h3>
+        <div class="pb-3">
+            {% with count=answering_users|length %}
+                There {{ count|pluralize:"is,are" }} <strong>{{ count }} user{{ count|pluralize }}</strong>
+                that {{ count|pluralize:"has,have" }} answered a question for this display set.
+            {% endwith %}
+        </div>
+
         <div class="table-responsive table-sm">
             <table class="table table-hover">
                 <thead class="thead-light">
