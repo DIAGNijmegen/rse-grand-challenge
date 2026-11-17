@@ -123,8 +123,8 @@
 {% endblock %}
 
 {% block content %}
-        <div class="row mt-3">
-            <div class="col-12 col-sm-6 col-md-7 d-inline-block text-start">
+        <div class="row">
+            <div class="col-12 col-sm-8 mt-3 d-inline-block text-start">
                 {% if 'documentation.change_docpage' in perms %}
                     <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:list' %}">Page overview</a>
                     <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:create' %}">Add</a>
@@ -136,9 +136,9 @@
                     </a>
                 {% endif %}
             </div>
-            <div class="col-12 col-sm-6 col-md-5 justify-content-start justify-content-sm-end d-flex align-items-center flex-row flex-wrap">
+            <div class="col-12 col-sm-4 mt-3 justify-content-start justify-content-sm-end d-flex align-items-center flex-row flex-wrap">
                 <form>
-                    <input class="form-control mb-1" type="text" name="query" placeholder="Search...">
+                    <input class="form-control ms-1" type="text" name="query" placeholder="Search...">
                 </form>
             </div>
         </div>
