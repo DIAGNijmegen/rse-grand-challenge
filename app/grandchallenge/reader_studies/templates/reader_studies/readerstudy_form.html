@@ -26,7 +26,7 @@
     {% crispy form %}
 
     {% if object %}
-        <p class="float-right">
+        <p class="float-end">
             <a href="{% url 'reader-studies:delete' slug=object.slug %}"
                class="btn btn-danger">
                 <i class="fa fa-times"></i> Delete this reader study
