@@ -3,7 +3,7 @@
         {% if page.previous %}
             <a href="{% url 'documentation:detail' slug=page.previous.slug %}">
                 <div class="row">
-                    <div class="col-auto my-auto pr-2">←</div>
+                    <div class="col-auto my-auto pe-2">←</div>
                     <div class="col pl-0">{{ page.previous.title }}</div>
                 </div>
             </a>
@@ -13,7 +13,7 @@
         {% if page.next %}
             <a href="{% url 'documentation:detail' slug=page.next.slug %}">
                 <div class="row">
-                    <div class="col pr-0">{{ page.next.title }}</div>
+                    <div class="col pe-0">{{ page.next.title }}</div>
                     <div class="col-auto my-auto pl-2">→</div>
                 </div>
             </a>

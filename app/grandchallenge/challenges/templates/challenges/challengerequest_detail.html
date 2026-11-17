@@ -36,26 +36,26 @@
     <br>
     <div class="container-fluid row mb-4 ms-1 bg-light rounded p-3">
         <div class="col-lg-6">
-            <i class="fa fa-user text-primary pr-3"></i> Challenge request from {{ object.creator|user_profile_link }}<br>
-            <i class="fa fa-envelope text-primary pr-3"></i> <a target="_blank" href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
-            <i class="fa fa-calendar text-primary pr-3"></i> Created on {{ object.created|date:'F j, Y' }}<br>
+            <i class="fa fa-user text-primary pe-3"></i> Challenge request from {{ object.creator|user_profile_link }}<br>
+            <i class="fa fa-envelope text-primary pe-3"></i> <a target="_blank" href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
+            <i class="fa fa-calendar text-primary pe-3"></i> Created on {{ object.created|date:'F j, Y' }}<br>
             {% if object.submitted_on %}
                 {% if object.status == object.ChallengeRequestStatusChoices.PENDING %}
-                    <i class="fa fa-rocket text-primary pr-3"></i> Submitted on<span class="badge ms-1 px-2 {% if object.submitted_on|timedifference < 8 %} badge-success {% elif object.submitted_on|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted_on|date:'F j, Y'}}</span><br>
+                    <i class="fa fa-rocket text-primary pe-3"></i> Submitted on<span class="badge ms-1 px-2 {% if object.submitted_on|timedifference < 8 %} badge-success {% elif object.submitted_on|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted_on|date:'F j, Y'}}</span><br>
                 {% else %}
-                     <i class="fa fa-calendar text-primary pr-3"></i> Submitted on {{ object.submitted_on|date:'F j, Y' }}<br>
+                     <i class="fa fa-calendar text-primary pe-3"></i> Submitted on {{ object.submitted_on|date:'F j, Y' }}<br>
                 {% endif %}
             {% endif %}
         </div>
         <div class="col-lg-6">
             {% if object.structured_challenge_submission_doi %}
-                <i class="fa fa-paperclip text-primary pr-3"></i> Challenge submission form available at <a href="{{ object.structured_challenge_submission_doi.url }}">{{ object.structured_challenge_submission_doi.url }}</a><br>
+                <i class="fa fa-paperclip text-primary pe-3"></i> Challenge submission form available at <a href="{{ object.structured_challenge_submission_doi.url }}">{{ object.structured_challenge_submission_doi.url }}</a><br>
             {% endif %}
             {% if object.structured_challenge_submission_form %}
-                <i class="fa fa-file text-primary pr-3"></i> <a href="{{ object.structured_challenge_submission_form.url }}">Challenge submission form PDF</a>
+                <i class="fa fa-file text-primary pe-3"></i> <a href="{{ object.structured_challenge_submission_form.url }}">Challenge submission form PDF</a>
             {% endif %}
             {% if not object.structured_challenge_submission_form and not object.structured_challenge_submission_doi %}
-                <i class="fa fa-paperclip text-primary pr-3"></i> No challenge submission form available
+                <i class="fa fa-paperclip text-primary pe-3"></i> No challenge submission form available
             {% endif %}
 
             <div class="pt-3"
@@ -127,9 +127,9 @@
             <tr><td class="font-weight-bold">{{ label|title }}</td> <td>{{ value|linebreaks }}</td></tr>
         {% endfor %}
         {% if object.data_license %}
-            <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-check-circle text-success pr-2"></i> The organizers agree to publish their public data set under a CC-BY license.</td></tr>
+            <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-check-circle text-success pe-2"></i> The organizers agree to publish their public data set under a CC-BY license.</td></tr>
         {% elif object.data_license != None %}
-            <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-exclamation-circle text-danger pr-2"></i> The organizers do not agree to publish their public data set under a CC-BY license for the following reason: <br> <span class="ms-4">{{ object.data_license_extra }}</span></td></tr>
+            <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-exclamation-circle text-danger pe-2"></i> The organizers do not agree to publish their public data set under a CC-BY license for the following reason: <br> <span class="ms-4">{{ object.data_license_extra }}</span></td></tr>
         {% endif %}
         {% if object.comments %}
             <tr><td class="font-weight-bold">Comments from organizers</td> <td><div class="bg-warning rounded p-3">{{ object.comments|linebreaks }}</div></td></tr>
