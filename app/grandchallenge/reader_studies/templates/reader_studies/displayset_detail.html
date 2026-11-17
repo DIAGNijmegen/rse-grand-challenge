@@ -3,23 +3,21 @@
 {% load workstations %}
 
 {% block additional_content %}
-    {% if answering_users is not None %}
+    {% if answering_users %}
         <hr/>
-        <h4>Answers by user</h4>
+        <h3>Answers by Users</h3>
         {% if answering_users %}
             <div class="table-responsive table-sm">
                 <table class="table table-hover">
                     <thead class="thead-light">
-                        <th></th>
                         <th>User</th>
-                        <th></th>
+                        <th>Action</th>
                     </thead>
                     <tbody>
                         {% for answering_user in answering_users %}
                             <tr>
-                                <td class="align-middle text-center p-1">{{ forloop.counter }}</td>
-                                <td class="align-middle px-1">{{ answering_user|user_profile_link }}</td>
-                                <td class="align-middle text-right">
+                                <td class="py-3 align-middle w-100">{{ answering_user|user_profile_link }}</td>
+                                <td class="py-3 align-middle text-nowrap">
                                     <button class="btn btn-primary"
                                         {% workstation_session_control_data workstation=object.reader_study.workstation context_object=object display_set=object reader_study=object.reader_study user=answering_user config=object.reader_study.workstation_config %}
                                     >
