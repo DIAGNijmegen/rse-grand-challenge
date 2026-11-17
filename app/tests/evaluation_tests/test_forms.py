@@ -849,6 +849,7 @@ class TestSubmissionForm:
             phase=p,
             algorithm_image=ai,
             algorithm_model=am if submission_with_model_present else None,
+            status=Submission.StatusChoices.ACCEPTED,
         )
         MethodFactory(
             phase=p,
