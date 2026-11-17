@@ -756,6 +756,7 @@ class TestSubmissionForm:
         SubmissionFactory(
             phase=p,
             algorithm_image=ai,
+            status=Submission.StatusChoices.ACCEPTED,
         )
         MethodFactory(
             phase=p,
