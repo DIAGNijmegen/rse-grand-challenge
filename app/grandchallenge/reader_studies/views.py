@@ -432,7 +432,6 @@ class ReaderStudyStatistics(
     permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     template_name = "reader_studies/readerstudy_statistics.html"
-    queryset = ReaderStudy.objects.all()
     # TODO: this view also contains the ground truth answer values.
     # If the permission is changed to 'read', we need to filter these values out.
 
@@ -444,7 +443,6 @@ class ReaderStudyUsage(
     permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     template_name = "reader_studies/readerstudy_usage.html"
-    queryset = ReaderStudy.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -965,7 +963,6 @@ class UsersProgress(
     template_name = "reader_studies/readerstudy_progress.html"
     permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
-    queryset = ReaderStudy.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
