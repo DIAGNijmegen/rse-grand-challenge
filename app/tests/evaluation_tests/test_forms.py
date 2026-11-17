@@ -756,6 +756,7 @@ class TestSubmissionForm:
         SubmissionFactory(
             phase=p,
             algorithm_image=ai,
+            status=Submission.StatusChoices.ACCEPTED,
         )
         MethodFactory(
             phase=p,
@@ -849,6 +850,7 @@ class TestSubmissionForm:
             phase=p,
             algorithm_image=ai,
             algorithm_model=am if submission_with_model_present else None,
+            status=Submission.StatusChoices.ACCEPTED,
         )
         MethodFactory(
             phase=p,
@@ -974,7 +976,14 @@ class TestSubmissionForm:
             in str(form.errors)
         )
 
-    def test_algorithm_with_pending_submission_is_rejected(self):
+    @pytest.mark.parametrize(
+        "status",
+        [
+            Submission.StatusChoices.VALIDATING_INPUTS,
+            Submission.StatusChoices.PENDING_REVIEW,
+        ],
+    )
+    def test_algorithm_with_pending_submission_is_rejected(self, status):
         user = UserFactory()
         VerificationFactory(user=user, is_verified=True)
         alg = AlgorithmFactory()
@@ -1019,7 +1028,7 @@ class TestSubmissionForm:
         SubmissionFactory(
             phase=p,
             algorithm_image=ai,
-            status=Submission.StatusChoices.PENDING_REVIEW,
+            status=status,
         )
 
         form = SubmissionForm(
@@ -1030,9 +1039,10 @@ class TestSubmissionForm:
 
         assert not form.is_valid()
         assert (
-            "A submission for this algorithm is already pending review. "
-            "Please wait for the submission to be reviewed or cancel it."
-            in form.errors["algorithm"]
+            "A submission for this algorithm is already pending. "
+            "Please wait for the submission to be processed. "
+            "If the submission is pending review, but you would like to "
+            "replace it, please cancel it first." in form.errors["algorithm"]
         )
 
     def test_pending_submission_in_other_phase_does_not_block(self):

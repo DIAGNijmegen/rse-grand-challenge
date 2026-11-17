@@ -543,9 +543,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     def pending_submissions(self):
         from grandchallenge.evaluation.models import Submission
 
-        return Submission.objects.filter(
+        return Submission.objects.pending().filter(
             algorithm_image__algorithm=self,
-            status=Submission.StatusChoices.PENDING_REVIEW,
         )
 
     @property

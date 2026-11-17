@@ -7,9 +7,10 @@
         </p>
 
             {% for submission in object.pending_submissions %}
-                <a href="{{ submission.cancel_url }}" class="btn btn-primary d-table text-decoration-none">
-                    Cancel submission {{ submission.pk }}
-                </a>
+                Submission {{ submission.pk }}
+                <div class="d-inline-block ml-3">
+                    {% include 'evaluation/submission_status_detail.html' with object=submission %}
+                </div>
             {% endfor %}
     </div>
 

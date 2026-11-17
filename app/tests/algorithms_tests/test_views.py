@@ -2661,6 +2661,7 @@ def test_algorithm_detail_shows_pending_submissions_warning(client, view_name):
     VerificationFactory(user=editor, is_verified=True)
     algorithm_image.algorithm.add_editor(editor)
     submission = SubmissionFactory(
+        creator=editor,
         algorithm_image=algorithm_image,
         status=SubmissionStatusChoices.PENDING_REVIEW,
     )
@@ -2678,6 +2679,23 @@ def test_algorithm_detail_shows_pending_submissions_warning(client, view_name):
         in response.rendered_content
     )
     assert submission.cancel_url in response.rendered_content
+
+    submission.status = SubmissionStatusChoices.VALIDATING_INPUTS
+    submission.save()
+
+    response = get_view_for_user(
+        viewname=view_name,
+        reverse_kwargs={"slug": algorithm_image.algorithm.slug},
+        client=client,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "This algorithm has pending submissions. Please note that changing the active"
+        in response.rendered_content
+    )
+    assert submission.cancel_url not in response.rendered_content
 
     submission.status = SubmissionStatusChoices.CANCELLED
     submission.save()
