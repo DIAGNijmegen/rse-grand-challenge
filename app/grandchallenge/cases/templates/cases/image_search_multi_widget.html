@@ -11,7 +11,7 @@
      hx-include="[id='image-input-group-{{ widget.name }}']"
 >
     <div class="input-group" id="image-input-group-{{ widget.name }}">
-        <div class="input-group-prepend"><span class="input-group-text">Select an image</span></div>
+        <span class="input-group-text">Select an image</span>
         {% include "django/forms/widgets/multiwidget.html" %}
         <input type="hidden" name="prefixed-interface-slug" value="{{ prefixed_interface_slug }}">
     </div>

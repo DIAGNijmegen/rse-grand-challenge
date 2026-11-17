@@ -11,7 +11,7 @@
      hx-include="[id='input-group-{{ widget.name }}']"
 >
     <div class="input-group" id="input-group-{{ widget.name }}">
-        <div class="input-group-prepend"><span class="input-group-text">Select a file</span></div>
+        <span class="input-group-text">Select a file</span>
         {% include "django/forms/widgets/multiwidget.html" %}
         <input type="hidden" name="prefixed-interface-slug" value="{{ prefixed_interface_slug }}">
     </div>
