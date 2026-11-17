@@ -86,6 +86,7 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
+    filter_by_permission,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.bleach import clean
@@ -1554,27 +1555,41 @@ class DisplaySetDetailView(CIVSetDetail):
     permission_required = "reader_studies.view_displayset"
     template_name = "reader_studies/displayset_detail.html"
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                Prefetch(
+                    "reader_study",
+                    queryset=ReaderStudy.objects.with_has_budget(),
+                )
+            )
+        )
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        # Only editors may view the answers of other users
-
-        if self.request.user.has_perm(
-            "reader_studies.change_readerstudy",
-            self.object.reader_study,
-        ):
-            context["answering_users"] = (
-                get_user_model()
-                .objects.filter(
-                    answer__display_set=self.object,
-                    answer__is_ground_truth=False,
-                )
-                .distinct()
-                .select_related("user_profile", "verification")
-                .order_by("username")
+        viewable_answers = filter_by_permission(
+            queryset=self.object.answers.filter(is_ground_truth=False),
+            user=self.request.user,
+            codename="view_answer",
+        )
+        context["answering_users"] = (
+            get_user_model()
+            .objects.filter(
+                Exists(viewable_answers.filter(creator=OuterRef("pk")))
             )
-        else:
-            context["answering_users"] = None
+            .select_related("user_profile", "verification")
+            .order_by("username")
+        )
+
+        context["user_can_launch_viewer"] = (
+            self.object.reader_study.has_budget
+            or self.request.user.has_perm(
+                "reader_studies.change_readerstudy", self.object.reader_study
+            )
+        )
 
         return context
 

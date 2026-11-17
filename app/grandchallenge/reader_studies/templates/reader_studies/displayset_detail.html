@@ -19,7 +19,11 @@
                                 <td class="py-3 align-middle w-100">{{ answering_user|user_profile_link }}</td>
                                 <td class="py-3 align-middle text-nowrap">
                                     <button class="btn btn-primary"
-                                        {% workstation_session_control_data workstation=object.reader_study.workstation context_object=object display_set=object reader_study=object.reader_study user=answering_user config=object.reader_study.workstation_config %}
+                                        {% if user_can_launch_viewer %}
+                                            {% workstation_session_control_data workstation=object.reader_study.workstation context_object=object display_set=object reader_study=object.reader_study user=answering_user config=object.reader_study.workstation_config %}
+                                        {% else %}
+                                            disabled title="Reader study is out of budget and cannot be launched"
+                                        {% endif %}
                                     >
                                         <i class="fas fa-eye"></i> View User's Answers
                                     </button>
