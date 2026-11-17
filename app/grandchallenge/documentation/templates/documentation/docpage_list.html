@@ -17,7 +17,7 @@
             <h2>Documentation Pages</h2>
         </div>
         {% if 'documentation.add_docpage' in perms %}
-            <div class="col-6 d-inline-block text-right">
+            <div class="col-6 d-inline-block text-end">
                 <a class="btn btn-md btn-dark mt-2" href="{% url 'documentation:create' %}">Add page</a>
             </div>
         {% endif %}

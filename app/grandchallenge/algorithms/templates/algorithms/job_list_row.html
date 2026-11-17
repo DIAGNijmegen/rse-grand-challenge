@@ -52,7 +52,7 @@
 
 <split></split>
 
-<ul class="list-unstyled mb-0 text-left">
+<ul class="list-unstyled mb-0 text-start">
     {% for civ in object.outputs.all|sort_civs %}
         <li>
             {% include "components/partials/civ.html" with object=civ display_inline=True only %}

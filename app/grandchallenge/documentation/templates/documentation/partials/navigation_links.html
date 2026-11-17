@@ -1,5 +1,5 @@
 <div class="row mt-3">
-    <div class="d-inline-block col-6 text-left">
+    <div class="d-inline-block col-6 text-start">
         {% if page.previous %}
             <a href="{% url 'documentation:detail' slug=page.previous.slug %}">
                 <div class="row">
@@ -9,7 +9,7 @@
             </a>
         {% endif %}
     </div>
-    <div class="d-inline col-6 text-right">
+    <div class="d-inline col-6 text-end">
         {% if page.next %}
             <a href="{% url 'documentation:detail' slug=page.next.slug %}">
                 <div class="row">
