@@ -29,7 +29,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 <p>Quote Me</p>
                 </blockquote>
                 <table class="table table-hover table-borderless">
-                <thead class="thead-light">
+                <thead class="table-light">
                 <tr>
                 <th>Markdown</th>
                 <th>Less</th>
@@ -128,7 +128,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 </blockquote>
 
                 <table class="table table-hover table-borderless">
-                <thead class="thead-light">
+                <thead class="table-light">
                 <tr>
                 <th>Markdown</th>
                 <th>Less</th>
@@ -149,7 +149,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 </tbody>
                 </table>
                 <table class="table table-hover table-borderless">
-                <thead class="thead-light">
+                <thead class="table-light">
                 <tr>
                 <th>no class</th>
                 </tr>
@@ -159,7 +159,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 </table>
 
                 <table class="ml-3 table table-hover table-borderless">
-                <thead class="ml-3 thead-light">
+                <thead class="ml-3 table-light">
                 <tr>
                 <th>existing class</th>
                 </tr>

@@ -112,7 +112,7 @@ def clean(html: str, *, no_tags=False, link_blank_target=False):
                 "table",
                 EnsureClasses(["table", "table-hover", "table-borderless"]),
             ),
-            EditAttrs("thead", EnsureClasses(["thead-light"])),
+            EditAttrs("thead", EnsureClasses(["table-light"])),
             EditAttrs("code", EnsureClasses(["codehilite"])),
         ],
     ).to_html(pretty=False)
