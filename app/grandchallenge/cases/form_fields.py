@@ -34,7 +34,7 @@ class ImageSourceChoices(TextChoices):
 
 
 class ImageSourceChoiceField(ChoiceField):
-    widget = ImageSourceSelect(attrs={"class": "custom-select"})
+    widget = ImageSourceSelect(attrs={"class": "form-select"})
 
     def __init__(
         self,

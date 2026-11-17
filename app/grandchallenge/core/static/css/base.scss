@@ -24,7 +24,7 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 @import "datatables";
 
 // Fix https://github.com/DIAGNijmegen/rse-grand-challenge/issues/1201
-.custom-select {
+.form-select {
     -webkit-appearance: none;
     -moz-appearance: none;
 }
