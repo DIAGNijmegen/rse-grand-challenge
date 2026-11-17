@@ -1682,6 +1682,20 @@
             <span class="bp">cls</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
         <span class="p">}</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_pending_choices</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">PENDING_REVIEW</span><span class="p">,</span>
+        <span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SubmissionManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pending</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">status__in</span><span class="o">=</span><span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">get_pending_choices</span><span class="p">()</span>
+        <span class="p">)</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Submission</span><span class="p">(</span><span class="n">CIVForObjectMixin</span><span class="p">,</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Store files for evaluation."""</span>
@@ -1765,6 +1779,8 @@
         <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterfaceValue</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">"</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">s_as_additional_input"</span><span class="p">,</span>
     <span class="p">)</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">SubmissionManager</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span>
