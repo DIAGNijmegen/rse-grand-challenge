@@ -124,7 +124,7 @@
 
 {% block content %}
         <div class="row">
-            <div class="col-12 col-sm-8 mt-3 d-inline-block text-left">
+            <div class="col-12 col-sm-8 mt-3 d-inline-block text-start">
                 {% if 'documentation.change_docpage' in perms %}
                     <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:list' %}">Page overview</a>
                     <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:create' %}">Add</a>

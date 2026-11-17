@@ -11,7 +11,7 @@
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
-        <dd class="text-left modal-body">
+        <dd class="text-start modal-body">
             <div class="row px-3">
                 <form action="{% url 'discussion-forums:post-delete' challenge_short_name=object.topic.forum.linked_challenge.short_name slug=object.topic.slug pk=object.pk %}"
                       method="post">
