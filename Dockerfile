@@ -39,7 +39,7 @@ RUN mkdir -p /opt/dart-sass \
 
 # Fetch and unpack crane for pushing containers
 RUN mkdir -p /opt/crane \
-    && wget https://github.com/google/go-containerregistry/releases/download/v0.21.1/go-containerregistry_Linux_arm64.tar.gz -O /opt/crane/src.tar.gz \
+    && wget https://github.com/google/go-containerregistry/releases/download/v0.22.1/go-containerregistry_Linux_arm64.tar.gz -O /opt/crane/src.tar.gz \
     && echo "898c0cff975f898a33e8c4580bdafb0e7c02c7faa33374e946762f97c4ab7110  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/crane/ -xzvf /opt/crane/src.tar.gz crane \
     && chmod a+x /opt/crane/crane
