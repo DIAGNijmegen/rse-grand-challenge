@@ -1547,6 +1547,43 @@ class QuestionInteractiveAlgorithmsView(
 class DisplaySetDetailView(CIVSetDetail):
     model = DisplaySet
     permission_required = "reader_studies.view_displayset"
+    template_name = "reader_studies/displayset_detail.html"
+
+    def get_queryset(self):
+        # has_budget is a queryset annotation required by the viewer buttons
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                Prefetch(
+                    "reader_study",
+                    queryset=ReaderStudy.objects.with_has_budget(),
+                )
+            )
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        # Only editors may view the answers of other users
+
+        if self.request.user.has_perm(
+            "reader_studies.change_readerstudy",
+            self.object.reader_study,
+        ):
+            context["answering_users"] = (
+                get_user_model()
+                .objects.filter(
+                    answer__display_set=self.object,
+                    answer__is_ground_truth=False,
+                )
+                .distinct()
+                .order_by("username")
+            )
+        else:
+            context["answering_users"] = None
+
+        return context
 
 
 class DisplaySetUpdateView(
