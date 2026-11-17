@@ -494,10 +494,6 @@ def test_display_set_detail_without_answers(client):
 
     editor_content = editor_response.rendered_content
     assert "View User's Answers" not in editor_content
-    assert (
-        "No user has answered any question for this display set yet"
-        in editor_content
-    )
 
     reader_response = get_view_for_user(
         viewname="reader-studies:display-set-detail",
@@ -514,10 +510,6 @@ def test_display_set_detail_without_answers(client):
 
     reader_content = reader_response.rendered_content
     assert "View User's Answers" not in reader_content
-    assert (
-        "No user has answered any question for this display set yet"
-        in reader_content
-    )
 
 
 @pytest.mark.django_db

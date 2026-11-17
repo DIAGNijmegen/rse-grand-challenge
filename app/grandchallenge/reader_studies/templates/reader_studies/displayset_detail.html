@@ -16,14 +16,14 @@
 {% block additional_content %}
     <hr/>
     <h3>Answers by Users</h3>
-    {% if answering_users %}
-        <div class="pb-3">
-            {% with count=answering_users|length %}
-                There {{ count|pluralize:"is,are" }} <strong>{{ count }} user{{ count|pluralize }}</strong>
-                that {{ count|pluralize:"has,have" }} answered a question for this display set.
-            {% endwith %}
-        </div>
+    <div class="pb-3">
+        {% with count=answering_users|length %}
+            There {{ count|pluralize:"is,are" }} <strong>{{ count }} user{{ count|pluralize }}</strong>
+            that {{ count|pluralize:"has,have" }} answered a question for this display set.
+        {% endwith %}
+    </div>
 
+    {% if answering_users %}
         <div class="table-responsive table-sm">
             <table class="table table-hover">
                 <thead class="thead-light">
@@ -50,7 +50,5 @@
                 </tbody>
             </table>
         </div>
-    {% else %}
-        <span class="text-muted">No user has answered any question for this display set yet</span>
     {% endif %}
 {% endblock %}
