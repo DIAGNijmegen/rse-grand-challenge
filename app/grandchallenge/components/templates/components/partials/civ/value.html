@@ -6,7 +6,7 @@
 
 {% block preview %}
      {% if display_inline and civ.interface.is_previewable %}
-          <div class="badge badge-light">
+          <div class="badge bg-light">
                {{ civ.value | json_dumps:0 | truncatechars:30 }}
           </div>
      {% endif %}

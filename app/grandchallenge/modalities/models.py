@@ -17,7 +17,7 @@ class ImagingModality(models.Model):
     def badge(self):
         return format_html(
             (
-                '<span class="badge badge-secondary above-stretched-link" '
+                '<span class="badge bg-secondary above-stretched-link" '
                 'title="Uses {0} data"><i class="fas fa-microscope fa-fw">'
                 "</i> {0}</span>"
             ),

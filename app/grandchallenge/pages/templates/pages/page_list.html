@@ -67,11 +67,11 @@
                                title="Page is listed in the challenge menu"></i>
                         {% endif %}
                         {% if page.permission_level == page.ADMIN_ONLY %}
-                            <span class="badge badge-danger">Admins Only</span>
+                            <span class="badge bg-danger">Admins Only</span>
                         {% elif page.permission_level == page.REGISTERED_ONLY %}
-                            <span class="badge badge-warning">Participants Only</span>
+                            <span class="badge bg-warning">Participants Only</span>
                         {% elif page.permission_level == page.ALL %}
-                            <span class="badge badge-success">Everyone</span>
+                            <span class="badge bg-success">Everyone</span>
                         {% endif %}
                     </td>
                     <td>

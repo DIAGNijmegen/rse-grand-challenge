@@ -32,7 +32,7 @@ class BodyStructure(models.Model):
     def badge(self):
         return format_html(
             (
-                '<span class="badge badge-dark above-stretched-link" '
+                '<span class="badge bg-dark above-stretched-link" '
                 'title="Uses {0} data"><i class="fas fa-child fa-fw">'
                 "</i> {0}</span>"
             ),

@@ -332,32 +332,32 @@ def test_follow_up_on_required_for_initialized_postpaid():
             dict(
                 payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
             ),
-            '<span class="badge badge-info">Initialized</span>',
+            '<span class="badge bg-info">Initialized</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.REQUESTED,
             ),
-            '<span class="badge badge-info">Initialized</span>',
+            '<span class="badge bg-info">Initialized</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.ISSUED,
                 issued_on=now() + timedelta(days=1),
             ),
-            '<span class="badge badge-info">Invoice Issued</span>',
+            '<span class="badge bg-info">Invoice Issued</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.CANCELLED,
             ),
-            '<span class="badge badge-danger">Cancelled</span>',
+            '<span class="badge bg-danger">Cancelled</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.PAID,
             ),
-            '<span class="badge badge-success">Paid</span>',
+            '<span class="badge bg-success">Paid</span>',
         ),
     ),
 )
@@ -376,32 +376,32 @@ def test_prepaid_invoice_status_badge(invoice_kwargs, badge):
             dict(
                 payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
             ),
-            '<span class="badge badge-success">Reserved</span>',
+            '<span class="badge bg-success">Reserved</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.REQUESTED,
             ),
-            '<span class="badge badge-success">Reserved</span>',
+            '<span class="badge bg-success">Reserved</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.ISSUED,
                 issued_on=now() + timedelta(days=1),
             ),
-            '<span class="badge badge-success">Invoice Issued</span>',
+            '<span class="badge bg-success">Invoice Issued</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.CANCELLED,
             ),
-            '<span class="badge badge-danger">Cancelled</span>',
+            '<span class="badge bg-danger">Cancelled</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.PAID,
             ),
-            '<span class="badge badge-success">Paid</span>',
+            '<span class="badge bg-success">Paid</span>',
         ),
     ),
 )
@@ -420,13 +420,13 @@ def test_postpaid_invoice_status_badge(invoice_kwargs, badge):
             dict(
                 payment_status=Invoice.PaymentStatusChoices.CANCELLED,
             ),
-            '<span class="badge badge-danger">Cancelled</span>',
+            '<span class="badge bg-danger">Cancelled</span>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.PAID,
             ),
-            '<span class="badge badge-success">Paid</span>',
+            '<span class="badge bg-success">Paid</span>',
         ),
     ),
 )
