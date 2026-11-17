@@ -50,7 +50,7 @@ dependencies = [
     "grand-challenge-dicom-de-identifier",
     "pydantic",
     "aioboto3",
-    "httpx",
+    "aiohttp",
     "django-pictures",
     "tzdata",
     # Requirements for forge
