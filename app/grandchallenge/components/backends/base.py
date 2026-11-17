@@ -19,9 +19,9 @@ from typing import NamedTuple
 from uuid import UUID
 
 import aioboto3
+import aiohttp
 import boto3
 import botocore
-import httpx
 import pydantic
 from asgiref.sync import async_to_sync
 from botocore.auth import SigV4Auth
@@ -111,7 +111,7 @@ def euro_millicents_to_duration(*, euro_millicents, usd_cents_per_hour):
 
 def serialize_aws_request(request, *, unsigned_headers=None):
     """
-    The kwargs that will be passed to httpx.stream or httpx.request
+    The kwargs that will be passed to aiohttp.ClientSession.request
     to generate a response from an AWSRequest instance.
 
     External clients use this so the kwargs should not be changed.
@@ -205,7 +205,7 @@ async def s3_copy(
     target_key,
     semaphore,
     s3_client,
-    httpx_client,  # Unused, but must be present to match signature
+    http_client,  # Unused, but must be present to match signature
 ):
     async with semaphore:
         await s3_client.copy(
@@ -222,7 +222,7 @@ async def s3_upload_content(
     key,
     semaphore,
     s3_client,
-    httpx_client,  # Unused, but must be present to match signature
+    http_client,  # Unused, but must be present to match signature
 ):
     async with semaphore:
         with io.BytesIO() as f:
@@ -253,10 +253,10 @@ async def s3_stream_response(
     key,
     semaphore,
     s3_client,
-    httpx_client,
+    http_client,
 ):
     async with semaphore:
-        async with httpx_client.stream(**request_kwargs) as resp:
+        async with http_client.request(**request_kwargs) as resp:
             resp.raise_for_status()
 
             multipart_upload = await s3_client.create_multipart_upload(
@@ -268,7 +268,7 @@ async def s3_stream_response(
             part_number = 1
 
             try:
-                async for chunk in resp.aiter_bytes(chunk_size=S3_CHUNK_SIZE):
+                async for chunk in resp.content.iter_chunked(S3_CHUNK_SIZE):
                     if not chunk:
                         continue
 
@@ -603,21 +603,23 @@ class Executor(ABC):
     async def _provision(self, *, tasks):
         semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
         session = aioboto3.Session()
-        timeout = httpx.Timeout(60.0)
+        timeout = aiohttp.ClientTimeout(
+            total=None, sock_connect=60, sock_read=60
+        )
 
         async with session.client(
             "s3",
             endpoint_url=settings.AWS_S3_ENDPOINT_URL,
             config=ASYNC_BOTO_CONFIG,
         ) as s3_client:
-            async with httpx.AsyncClient(timeout=timeout) as httpx_client:
+            async with aiohttp.ClientSession(timeout=timeout) as http_client:
                 async with asyncio.TaskGroup() as task_group:
                     for task in tasks:
                         task_group.create_task(
                             task(
                                 semaphore=semaphore,
                                 s3_client=s3_client,
-                                httpx_client=httpx_client,
+                                http_client=http_client,
                             )
                         )
 

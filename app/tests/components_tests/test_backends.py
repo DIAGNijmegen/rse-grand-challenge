@@ -368,7 +368,7 @@ def test_invocation_json(settings):
 
 
 class _DummyStreamCM:
-    """Async context manager to mimic httpx_client.stream(...)."""
+    """Async context manager to mimic http_client.request(...)."""
 
     def __init__(self, resp):
         self.resp = resp
@@ -382,9 +382,9 @@ class _DummyStreamCM:
 
 def _make_resp(chunks):
     """
-    Create a fake httpx response object:
+    Create a fake aiohttp response object:
     - raise_for_status is a sync mock
-    - aiter_bytes returns an async generator that yields items in `chunks`
+    - content.iter_chunked returns an async generator that yields items in `chunks`
       (items can be bytes or Exception instances to raise).
     """
     resp = Mock()
@@ -396,7 +396,8 @@ def _make_resp(chunks):
                 raise c
             yield c
 
-    resp.aiter_bytes = lambda chunk_size=None: _aiter(chunk_size)
+    resp.content = Mock()
+    resp.content.iter_chunked = lambda chunk_size=None: _aiter(chunk_size)
     return resp
 
 
@@ -409,8 +410,8 @@ async def test_s3_stream_response_writes_object_to_s3_endpoint(settings):
         b"!" * 5 * settings.MEGABYTE,
     ]
     resp = _make_resp(document)
-    httpx_client = Mock()
-    httpx_client.stream = Mock(return_value=_DummyStreamCM(resp))
+    http_client = Mock()
+    http_client.request = Mock(return_value=_DummyStreamCM(resp))
 
     semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
     session = aioboto3.Session()
@@ -427,7 +428,7 @@ async def test_s3_stream_response_writes_object_to_s3_endpoint(settings):
             request_kwargs={"url": "http://example.local/resource"},
             bucket=bucket,
             key=key,
-            httpx_client=httpx_client,
+            http_client=http_client,
             s3_client=s3_client,
             semaphore=semaphore,
         )
@@ -440,8 +441,8 @@ async def test_s3_stream_response_writes_object_to_s3_endpoint(settings):
 @pytest.mark.asyncio
 async def test_s3_stream_response_aborts_on_stream_error(settings):
     resp = _make_resp([b"part1", RuntimeError("stream-failure")])
-    httpx_client = Mock()
-    httpx_client.stream = Mock(return_value=_DummyStreamCM(resp))
+    http_client = Mock()
+    http_client.request = Mock(return_value=_DummyStreamCM(resp))
 
     semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
     session = aioboto3.Session()
@@ -459,7 +460,7 @@ async def test_s3_stream_response_aborts_on_stream_error(settings):
                 request_kwargs={"url": "http://example.local/resource"},
                 bucket=bucket,
                 key=key,
-                httpx_client=httpx_client,
+                http_client=http_client,
                 s3_client=s3_client,
                 semaphore=semaphore,
             )

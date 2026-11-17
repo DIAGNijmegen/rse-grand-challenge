@@ -4,7 +4,7 @@ import hmac
 import json
 from secrets import compare_digest
 
-import httpx
+import aiohttp
 import requests
 from asgiref.sync import async_to_sync
 from dal_select2.views import Select2ListView
@@ -128,7 +128,7 @@ class GitHubInstallationRequiredMixin:
 
     @cached_property
     def installations(self):
-        response = httpx.get(
+        response = requests.get(
             "https://api.github.com/user/installations",
             headers=self.github_request_headers,
             timeout=10,
@@ -168,20 +168,20 @@ class RepositoriesList(
     raise_exception = True
 
     async def _get_page_github_repos(
-        self, *, installation_id, page, per_page, semaphore, httpx_client
+        self, *, installation_id, page, per_page, semaphore, http_client
     ):
         async with semaphore:
-            response = await httpx_client.get(
+            async with http_client.get(
                 f"https://api.github.com/user/installations/{installation_id}/repositories",
                 params={"per_page": per_page, "page": page},
                 headers=self.github_request_headers,
-            )
-            response.raise_for_status()
+            ) as response:
+                response.raise_for_status()
 
-            return response.json()
+                return await response.json()
 
     async def _get_installation_github_repos(
-        self, *, installation_id, semaphore, httpx_client
+        self, *, installation_id, semaphore, http_client
     ):
         """
         Get the repositories for this users installation
@@ -196,7 +196,7 @@ class RepositoriesList(
             page=1,
             per_page=per_page,
             semaphore=semaphore,
-            httpx_client=httpx_client,
+            http_client=http_client,
         )
 
         repos = [repo["full_name"] for repo in response["repositories"]]
@@ -215,7 +215,7 @@ class RepositoriesList(
                             page=page,
                             per_page=per_page,
                             semaphore=semaphore,
-                            httpx_client=httpx_client,
+                            http_client=http_client,
                         )
                     )
                 )
@@ -229,11 +229,11 @@ class RepositoriesList(
     @async_to_sync
     async def _get_all_github_repos(self):
         semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
-        timeout = httpx.Timeout(10)
+        timeout = aiohttp.ClientTimeout(total=10)
 
         tasks = []
 
-        async with httpx.AsyncClient(timeout=timeout) as httpx_client:
+        async with aiohttp.ClientSession(timeout=timeout) as http_client:
             async with asyncio.TaskGroup() as task_group:
                 for installation in self.installations:
                     tasks.append(
@@ -241,7 +241,7 @@ class RepositoriesList(
                             self._get_installation_github_repos(
                                 installation_id=installation["id"],
                                 semaphore=semaphore,
-                                httpx_client=httpx_client,
+                                http_client=http_client,
                             )
                         )
                     )
