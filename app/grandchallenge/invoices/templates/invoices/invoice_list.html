@@ -115,7 +115,7 @@
     <dl>
         <dt>Available proportion</dt>
         <dd>
-            <span class="{% if challenge.percent_active_compute_budget_remaining <= 10 %}text-danger{% elif challenge.percent_active_compute_budget_remaining <= 30 %}text-warning{% else %}text-success{% endif %} pl-1">
+            <span class="{% if challenge.percent_active_compute_budget_remaining <= 10 %}text-danger{% elif challenge.percent_active_compute_budget_remaining <= 30 %}text-warning{% else %}text-success{% endif %} ps-1">
                 {{ challenge.percent_active_compute_budget_remaining }}%
             </span>
         </dd>

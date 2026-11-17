@@ -20,7 +20,7 @@
      {# No overflow detection, this is an approximation since spacing, font-size et cetera #}
      {#  all play a role #}
 
-     <pre class="pl-1 {% if str|line_count >= line_limit %}rounded border{% endif %}"
+     <pre class="ps-1 {% if str|line_count >= line_limit %}rounded border{% endif %}"
      style="max-height:{{ line_limit|add:4 }}rem;"
      >{{ str }}</pre>
 

@@ -291,15 +291,15 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                     ),
                     Div(
                         "structured_challenge_submission_doi",
-                        css_class="col-5 pl-0",
+                        css_class="col-5 ps-0",
                     ),
                     Div(
                         HTML("<p>or</p>"),
-                        css_class="col-1 pl-0 d-flex align-items-center justify-content-center",
+                        css_class="col-1 ps-0 d-flex align-items-center justify-content-center",
                     ),
                     Div(
                         "structured_challenge_submission_form",
-                        css_class="col-5 pl-0",
+                        css_class="col-5 ps-0",
                     ),
                     css_class="container row m-0 p-0 justify-content-between",
                 ),
