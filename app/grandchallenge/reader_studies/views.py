@@ -970,16 +970,21 @@ class UsersProgress(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        readers = self.object.readers_group.user_set.all()
+        editors = self.object.editors_group.user_set.all()
+        users = (
+            (readers | editors)
+            .select_related("user_profile", "verification")
+            .order_by("username")
+            .all()
+        )
+
         users = [
             {
                 "obj": reader,
                 "progress": self.object.get_progress_for_user(reader),
             }
-            for reader in get_user_model()
-            .objects.filter(answer__question__reader_study=self.object)
-            .distinct()
-            .select_related("user_profile", "verification")
-            .order_by("username")
+            for reader in users
         ]
 
         context.update(
@@ -1548,19 +1553,6 @@ class DisplaySetDetailView(CIVSetDetail):
     model = DisplaySet
     permission_required = "reader_studies.view_displayset"
     template_name = "reader_studies/displayset_detail.html"
-
-    def get_queryset(self):
-        # has_budget is a queryset annotation required by the viewer buttons
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related(
-                Prefetch(
-                    "reader_study",
-                    queryset=ReaderStudy.objects.with_has_budget(),
-                )
-            )
-        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
