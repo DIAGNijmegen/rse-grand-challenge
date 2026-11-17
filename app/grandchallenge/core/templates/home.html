@@ -100,7 +100,7 @@
                             <div class="row {% if not forloop.counter0|divisibleby:2 %} flex-sm-row-reverse {% endif %} align-items-center">
                                 <div class="col-md-6 my-3">
                                     <a href="{{ highlight.url }}"><h4>{{ highlight.title }}</h4></a>
-                                    <ul class="pl-3">
+                                    <ul class="ps-3">
                                         {% for point in highlight.bullet_points %}
                                             <li class="my-1">{{ point }}</li>
                                         {% endfor %}

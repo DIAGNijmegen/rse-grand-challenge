@@ -29,10 +29,10 @@
         <ul class="list-group">
             {% for publication in object_list %}
                 <li class="list-group-item p-0">
-                    <div class="py-2 pl-3">
+                    <div class="py-2 ps-3">
                         {{ publication.citation|clean }}
                     </div>
-                    <div class="pt-1 pb-2 pl-3">
+                    <div class="pt-1 pb-2 ps-3">
                         <a class="btn btn-outline-primary btn-sm" href="{{ publication.identifier.url }}"><i class="fa fa-link"></i></a>
                         {% get_associated_objects publication=publication checker=checker as publication_objects %}
                         {% if publication_objects %}

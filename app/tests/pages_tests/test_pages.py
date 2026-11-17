@@ -110,7 +110,7 @@ def test_page_create(client, two_challenge_sets):
     response = get_view_for_user(url=response.url, client=client)
     assert response.status_code == 200
     assert (
-        '<h1 id="hello-world">HELLO WORLD<a class="headerlink text-muted small pl-1" href="#hello-world" title="Permanent link">¶</a></h1>'
+        '<h1 id="hello-world">HELLO WORLD<a class="headerlink text-muted small ps-1" href="#hello-world" title="Permanent link">¶</a></h1>'
         in response.content.decode("utf-8")
     )
     # Check that it was created in the correct challenge

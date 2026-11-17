@@ -48,7 +48,7 @@ If you wish not to worry about how data is loaded and written, and you just want
 
 We'll be using a [demo algorithm template](https://github.com/DIAGNijmegen/demo-algorithm-template) for this instruction. However, downloading an updated and tailored algorithm template should be preferred!
 
-Algorithm editors can find the templates via **<i class="fas fa-hard-hat fa-fw"></i> Templates -> <i class="fa fa-download pl-1"></i> Download Algorithm Image Template**:
+Algorithm editors can find the templates via **<i class="fas fa-hard-hat fa-fw"></i> Templates -> <i class="fa fa-download ps-1"></i> Download Algorithm Image Template**:
 
 
 <img class="border shadow" src="/static/images/archive.png" style="width: 40em;"/>
