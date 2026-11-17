@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -49,6 +50,17 @@ def validate_submission(*, submission_pk: str | uuid.UUID):
         return {"status": "Skipping due to inputs still being validated."}
 
     if not submission.predictions_file and submission.user_upload:
+        # TODO The copy_object command sometimes fails, log the current state
+        # See https://github.com/DIAGNijmegen/rse-grand-challenge-admin/issues/997
+        status = Path("/proc/self/status").read_text()
+        task_logger.info(
+            "\n".join(
+                line
+                for line in status.splitlines()
+                if line.startswith(("VmPeak", "VmSize", "VmRSS", "Threads"))
+            )
+        )
+
         submission.user_upload.copy_object(
             to_field=submission.predictions_file
         )
