@@ -61,14 +61,14 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
 
                 <img class="" src="test-empty-class.png"/>
 
-                <img class="ml-3" src="test-existing-class.png"/>
+                <img class="ms-3" src="test-existing-class.png"/>
 
                 > Quote Me
 
                 <blockquote>
                 <p>Quote Me No Class</p>
                 </blockquote>
-                <blockquote class="ml-3">
+                <blockquote class="ms-3">
                 <p>Quote Me Existing Class</p>
                 </blockquote>
 
@@ -87,8 +87,8 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 </tbody>
                 </table>
 
-                <table class="ml-3">
-                <thead class="ml-3">
+                <table class="ms-3">
+                <thead class="ms-3">
                 <tr>
                 <th>existing class</th>
                 </tr>
@@ -102,7 +102,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                     pass
                 ```
                 <div><pre><code>no class</code></pre></div>
-                <div class="ml-3"><pre><code class="ml-3">existing class</code></pre></div>
+                <div class="ms-3"><pre><code class="ms-3">existing class</code></pre></div>
 
                 ~~Delete me~~
 
@@ -116,14 +116,14 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 <p><img src="test.png" class="img-fluid"></p>
                 <p><img src="test-no-class.png" class="img-fluid"></p>
                 <p><img class="img-fluid" src="test-empty-class.png"></p>
-                <p><img class="ml-3 img-fluid" src="test-existing-class.png"></p>
+                <p><img class="ms-3 img-fluid" src="test-existing-class.png"></p>
                 <blockquote class="blockquote">
                 <p>Quote Me</p>
                 </blockquote>
                 <blockquote class="blockquote">
                 <p>Quote Me No Class</p>
                 </blockquote>
-                <blockquote class="ml-3 blockquote">
+                <blockquote class="ms-3 blockquote">
                 <p>Quote Me Existing Class</p>
                 </blockquote>
 
@@ -158,8 +158,8 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 </tbody>
                 </table>
 
-                <table class="ml-3 table table-hover table-borderless">
-                <thead class="ml-3 table-light">
+                <table class="ms-3 table table-hover table-borderless">
+                <thead class="ms-3 table-light">
                 <tr>
                 <th>existing class</th>
                 </tr>
@@ -173,7 +173,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 </pre></div>
 
                 <div><pre><code class="codehilite">no class</code></pre></div>
-                <div class="ml-3"><pre><code class="ml-3 codehilite">existing class</code></pre></div>
+                <div class="ms-3"><pre><code class="ms-3 codehilite">existing class</code></pre></div>
 
                 <p><del>Delete me</del></p>
                 <p>CH<sub>3</sub>CH<sub>2</sub>OH
@@ -219,16 +219,16 @@ def test_markdown_rendering(markdown_with_html, expected_output):
             '<blockquote class="blockquote">Content</blockquote>',
         ),
         (  # Existing class
-            '<blockquote class="ml-2">Content</blockquote>',
-            '<blockquote class="ml-2 blockquote">Content</blockquote>',
+            '<blockquote class="ms-2">Content</blockquote>',
+            '<blockquote class="ms-2 blockquote">Content</blockquote>',
         ),
         (  # Extension class already present
             '<blockquote class="blockquote">Content</blockquote>',
             '<blockquote class="blockquote">Content</blockquote>',
         ),
         (  # Existing class + extension class
-            '<blockquote class="ml-2 blockquote">Content</blockquote>',
-            '<blockquote class="ml-2 blockquote">Content</blockquote>',
+            '<blockquote class="ms-2 blockquote">Content</blockquote>',
+            '<blockquote class="ms-2 blockquote">Content</blockquote>',
         ),
     ],
 )
