@@ -19,8 +19,8 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="pr-0 col-md-1 d-none d-md-block">Replies</div>
-                    <div class="pr-0 col-md-3 d-none d-md-block">Last post</div>
+                    <div class="pe-0 col-md-1 d-none d-md-block">Replies</div>
+                    <div class="pe-0 col-md-3 d-none d-md-block">Last post</div>
                 </div>
                 <div class="p-0 card-body">
                     <ul class="list-group">
@@ -28,7 +28,7 @@
                             {% check_unread_topic_posts_for_user topic=topic as user_has_unread_posts %}
                             <li class="list-group-item">
                                 <div class="row">
-                                    <div class="col-2 col-md-1 text-center align-content-center pr-0 p-md-0">
+                                    <div class="col-2 col-md-1 text-center align-content-center pe-0 p-md-0">
                                         <i class="
                                         fas
                                         {% if topic.is_sticky %}fa-lightbulb{% elif topic.is_announcement %}fa-info{% else %}fa-dot-circle{% endif %}
