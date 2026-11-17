@@ -1,9 +1,9 @@
 from collections import OrderedDict
-from collections.abc import Callable, Iterable
 from typing import NamedTuple
 
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
+from django.db.models import F
 
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
@@ -31,16 +31,48 @@ def get(inputs):
         raise MultipleObjectsReturned
 
 
+def get_metric_scores(*, evaluation_pks, metrics):
+    from grandchallenge.components.models import ComponentInterfaceValue
+
+    evaluation_metric_civs = ComponentInterfaceValue.objects.filter(
+        interface__slug="metrics-json-file",
+        evaluation_evaluations_as_output__in=evaluation_pks,
+    ).annotate(evaluation_pk=F("evaluation_evaluations_as_output"))
+
+    metric_scores = {}
+
+    for evaluation_metric_civ in evaluation_metric_civs.iterator(
+        chunk_size=100
+    ):
+        evaluation_metric_scores = {}
+
+        for metric in metrics:
+            evaluation_metric_scores[metric] = get_jsonpath(
+                evaluation_metric_civ.value,
+                metric.path,
+            )
+
+        if all(
+            isinstance(score, (int, float))
+            for score in evaluation_metric_scores.values()
+        ):
+            metric_scores[evaluation_metric_civ.evaluation_pk] = (
+                evaluation_metric_scores
+            )
+
+    return metric_scores
+
+
 def rank_results(
-    *, evaluations: list, metrics: tuple[Metric, ...], score_method: Callable
+    *, evaluations, metrics, metric_scores, score_method
 ) -> Positions:
     """Determine the overall rank for each result."""
     evaluations = _filter_valid_results(
-        evaluations=evaluations, metrics=metrics
+        evaluations=evaluations, metric_scores=metric_scores
     )
 
     rank_per_metric = _get_rank_per_metric(
-        evaluations=evaluations, metrics=metrics
+        evaluations=evaluations, metrics=metrics, metric_scores=metric_scores
     )
 
     rank_scores = {
@@ -49,22 +81,20 @@ def rank_results(
     }
 
     return Positions(
-        ranks=_scores_to_ranks(scores=rank_scores, reverse=False),
+        ranks=_scores_to_ranks(
+            evaluation_metric_score=rank_scores, reverse=False
+        ),
         rank_scores=rank_scores,
         rank_per_metric=rank_per_metric,
     )
 
 
-def _filter_valid_results(
-    *, evaluations: Iterable, metrics: tuple[Metric, ...]
-) -> list:
+def _filter_valid_results(*, evaluations, metric_scores):
     """Ensure that all the metrics are in every result."""
-    return [e for e in evaluations if not e.invalid_metrics]
+    return [e for e in evaluations if e.pk in metric_scores]
 
 
-def _get_rank_per_metric(
-    *, evaluations: Iterable, metrics: tuple[Metric, ...]
-) -> dict[str, dict[str, float]]:
+def _get_rank_per_metric(*, evaluations, metrics, metric_scores):
     """
     Takes results and calculates the rank for each of the individual metrics
 
@@ -74,17 +104,14 @@ def _get_rank_per_metric(
     """
     metric_rank = {}
     for metric in metrics:
-        # Extract the value of the metric for this primary key and sort on the
-        # value of the metric
-        metric_scores = {
-            e.pk: get_jsonpath(
-                e.metrics_json_file,
-                metric.path,
-            )
-            for e in evaluations
+        evaluation_metric_score = {
+            evaluation_pk: evaluation_metric_scores[metric]
+            for evaluation_pk, evaluation_metric_scores in metric_scores.items()
         }
+
         metric_rank[metric.path] = _scores_to_ranks(
-            scores=metric_scores, reverse=metric.reverse
+            evaluation_metric_score=evaluation_metric_score,
+            reverse=metric.reverse,
         )
 
     return {
@@ -96,9 +123,7 @@ def _get_rank_per_metric(
     }
 
 
-def _scores_to_ranks(
-    *, scores: dict, reverse: bool = False
-) -> dict[str, float]:
+def _scores_to_ranks(*, evaluation_metric_score, reverse):
     """
     Go from a score (a scalar) to a rank (integer). If two scalars are the
     same then they will have the same rank.
@@ -110,7 +135,11 @@ def _scores_to_ranks(
     values are the ranks.
     """
     scores = OrderedDict(
-        sorted(scores.items(), key=lambda t: t[1], reverse=reverse)
+        sorted(
+            evaluation_metric_score.items(),
+            key=lambda t: t[1],
+            reverse=reverse,
+        )
     )
 
     ranks = {}

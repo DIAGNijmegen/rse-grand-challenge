@@ -25,7 +25,11 @@ from grandchallenge.core.error_messages import (
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import get_file_mimetype
-from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
+from grandchallenge.evaluation.utils import (
+    SubmissionKindChoices,
+    get_metric_scores,
+    rank_results,
+)
 
 
 @lambda_task(
@@ -535,7 +539,6 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
             .select_for_update(nowait=True, of=("self",))
             .order_by("-created")
             .select_related("submission__creator", "submission__phase")
-            .prefetch_related("outputs__interface")
         )
 
     valid_evaluations = [
@@ -543,6 +546,13 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
         for e in evaluations
         if e.status == Evaluation.SUCCESS and e.published is True
     ]
+
+    # Extract the filter the evaluation metrics for each evaluation.
+    # Do this separately to reduce memory usage.
+    metric_scores = get_metric_scores(
+        evaluation_pks={evaluation.pk for evaluation in valid_evaluations},
+        metrics=phase.valid_metrics,
+    )
 
     if phase.result_display_choice == phase.MOST_RECENT:
         valid_evaluations = filter_by_creators_most_recent(
@@ -552,6 +562,7 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
         all_positions = rank_results(
             evaluations=valid_evaluations,
             metrics=phase.valid_metrics,
+            metric_scores=metric_scores,
             score_method=phase.scoring_method,
         )
         valid_evaluations = filter_by_creators_best(
@@ -561,6 +572,7 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
     final_positions = rank_results(
         evaluations=valid_evaluations,
         metrics=phase.valid_metrics,
+        metric_scores=metric_scores,
         score_method=phase.scoring_method,
     )
 
