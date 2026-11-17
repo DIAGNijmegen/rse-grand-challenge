@@ -9,7 +9,7 @@ def run():
 
 
 
-#### <i class="fas fa-users mr-2"></i> Participate in Grand Challenge in just a few steps
+#### <i class="fas fa-users me-2"></i> Participate in Grand Challenge in just a few steps
 
 [Register](https://grand-challenge.org/documentation/registration/) your account, request [verification](https://grand-challenge.org/documentation/verification/) and you're all set to participate.
 
@@ -17,25 +17,25 @@ def run():
 
 
 
-#### <i class="fas fa-graduation-cap mr-2"></i> Learn how to use and create your own algorithms, challenges or reader studies
+#### <i class="fas fa-graduation-cap me-2"></i> Learn how to use and create your own algorithms, challenges or reader studies
 
 Check out our hands-on tutorials on [algorithms](https://grand-challenge.org/documentation/algorithms/), [challenges](https://grand-challenge.org/documentation/challenges/) and [reader studies](https://grand-challenge.org/documentation/reader-studies/).
 
 
 
-#### <i class="fas fa-laptop-code mr-2"></i> Make use of our public API
+#### <i class="fas fa-laptop-code me-2"></i> Make use of our public API
 
 Uploading your data or running your algorithm on Grand Challenge can be done through the website, but you can also interact with Grand Challenge programmatically through the API. Learn more about how to use the GC API [here](https://grand-challenge.org/documentation/grand-challenge-api/).
 
 
 
-#### <i class="fas fa-question-circle  mr-2"></i> Still got questions?
+#### <i class="fas fa-question-circle  me-2"></i> Still got questions?
 
 Please feel free to contact support.
 
 
 
-#### <i class="fas fa-code-branch mr-2"></i> Contributing to Grand Challenge
+#### <i class="fas fa-code-branch me-2"></i> Contributing to Grand Challenge
 
 Would you like to contribute new features to Grand Challenge or spin up your own instance? Have a look at our [developer documentation](https://diagnijmegen.github.io/rse-grand-challenge/).""",
     )

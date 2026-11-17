@@ -5,7 +5,7 @@
     {% for user in users %}
         <li class="list-group-item">
             <div class="d-flex align-items-center">
-                <div class="mr-auto">
+                <div class="me-auto">
                     {{ user|user_profile_link }}
                 </div>
                 {% if user != request.user %}

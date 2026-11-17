@@ -45,17 +45,17 @@
                             {% if not profile.user.verification %}
                                 <a class="list-group-item list-group-item-action"
                                    href="{% url 'verifications:create' %}">
-                                    <i class="fa fa-user-check fa-fw mr-1"></i>Request Verification
+                                    <i class="fa fa-user-check fa-fw me-1"></i>Request Verification
                                 </a>
                             {% elif profile.user.verification.is_verified %}
                                 <a class="list-group-item list-group-item-action text-success"
                                    href="{% url 'verifications:detail' %}">
-                                    <i class="fa fa-user-check fa-fw mr-1"></i>Account Verified
+                                    <i class="fa fa-user-check fa-fw me-1"></i>Account Verified
                                 </a>
                             {% else %}
                                 <a class="list-group-item list-group-item-action"
                                    href="{% url 'verifications:detail' %}">
-                                    <i class="fa fa-user-check fa-fw mr-1"></i>Verification Status
+                                    <i class="fa fa-user-check fa-fw me-1"></i>Verification Status
                                 </a>
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
@@ -68,22 +68,22 @@
                             {% if profile.user.has_usable_password %}
                                 <a class="list-group-item list-group-item-action"
                                    href='{% url 'account_change_password' %}'><i
-                                        class="fa fa-key fa-fw mr-1"></i>{% trans "Change Password" %}
+                                        class="fa fa-key fa-fw me-1"></i>{% trans "Change Password" %}
                                 </a>
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
                                 href='{% url 'account_email' %}'><i
-                                    class="fa fa-envelope fa-fw mr-1"></i>{% trans "Change Email" %}
+                                    class="fa fa-envelope fa-fw me-1"></i>{% trans "Change Email" %}
                             </a>
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'api-tokens:list' %}'><i
-                                    class="fas fa-unlock fa-fw mr-1"></i>{% trans "Manage API Tokens" %}</a>
+                                    class="fas fa-unlock fa-fw me-1"></i>{% trans "Manage API Tokens" %}</a>
                         {% if request.user|has_2fa_enabled %}
                             <a class="list-group-item list-group-item-action" href="{% url 'mfa_index' %}" title="Multi-Factor Authentication Settings"><i
-                                   class="fas fa-qrcode fa-fw mr-1"></i>{% trans "MFA Settings" %}</a>
+                                   class="fas fa-qrcode fa-fw me-1"></i>{% trans "MFA Settings" %}</a>
                         {% else %}
                             <a class="list-group-item list-group-item-action" href="{% url 'mfa_activate_totp' %}" title="Enable Multi-Factor Authentication"><i
-                                   class="fas fa-qrcode fa-fw mr-1"></i>{% trans "Enable MFA" %}</a>
+                                   class="fas fa-qrcode fa-fw me-1"></i>{% trans "Enable MFA" %}</a>
                         {% endif %}
                         </ul>
 

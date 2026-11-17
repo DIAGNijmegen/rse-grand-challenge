@@ -22,7 +22,7 @@
             <a class="btn btn-primary"
             href="{% url 'challenges:requests-create' %}"
             title="Host your own challenge">
-                <i class="fas fa-plus mr-1"></i>Host your own Challenge
+                <i class="fas fa-plus me-1"></i>Host your own Challenge
             </a>
         </div>
         {% if request.user.is_staff %}
@@ -30,7 +30,7 @@
                 <a class="btn btn-primary"
                 href="{% url 'challenges:requests-budget-calculator' %}"
                 title="Request budget calculator">
-                    <i class="fas fa-calculator mr-1"></i>Budget Calculator
+                    <i class="fas fa-calculator me-1"></i>Budget Calculator
                 </a>
             </div>
         {% endif %}
@@ -60,7 +60,7 @@
                     <tr>
                         <td class="text-center align-middle">
                             <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}">
-                                <i class="fa fa-book mr-1"></i>Details
+                                <i class="fa fa-book me-1"></i>Details
                             </a>
                         </td>
                         <td class="text-center align-middle">{{ object.short_name }}</td>

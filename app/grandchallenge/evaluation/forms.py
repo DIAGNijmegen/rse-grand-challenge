@@ -789,7 +789,7 @@ class SubmissionAcceptForm(
         )
         self.helper.layout.append(
             StrictButton(
-                '<i class="fas fa-fw fa-check-circle mr-1"></i>Accept',
+                '<i class="fas fa-fw fa-check-circle me-1"></i>Accept',
                 type="submit",
                 css_class="btn btn-success ml-0",
             )
@@ -855,7 +855,7 @@ class SubmissionRejectForm(
         )
         self.helper.layout.append(
             StrictButton(
-                '<i class="fas fa-fw fa-times-circle mr-1"></i>Reject',
+                '<i class="fas fa-fw fa-times-circle me-1"></i>Reject',
                 type="submit",
                 css_class="btn btn-danger ml-0",
             )

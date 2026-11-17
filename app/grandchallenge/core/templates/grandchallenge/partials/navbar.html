@@ -3,7 +3,7 @@
 
 <nav class="navbar navbar-light navbar-top navbar-expand-md shadow bg-white">
     <div class="container">
-        <a class="navbar-brand mr-md-2 text-capitalize"
+        <a class="navbar-brand me-md-2 text-capitalize"
            href="{% url 'home' %}">
             {{ request.site.name }}
         </a>
@@ -13,7 +13,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
-            <ul class="navbar-nav mr-auto">
+            <ul class="navbar-nav me-auto">
                 <li class="nav-item">
                     <a class="nav-link {% if "challenges:" in request.resolver_match.view_name %}active{% endif %}"
                        href="{% url 'challenges:list' %}">
