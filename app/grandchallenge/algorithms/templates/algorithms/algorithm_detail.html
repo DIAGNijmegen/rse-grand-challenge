@@ -80,7 +80,7 @@
                 <a class="nav-link"
                    href="{% url 'algorithms:permission-request-list' slug=object.slug %}"
                 ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
-                        class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
+                        class="badge badge-pill bg-secondary align-middle">{{ pending_permission_requests }}</span>
                 </a>
             {% endif %}
 
@@ -515,11 +515,11 @@
                             {% include 'components/import_status_detail.html' with object=image %}
 
                             {% if image.can_execute and image == object.active_image %}
-                                <span class="badge badge-success">
+                                <span class="badge bg-success">
                                     Active
                                 </span>
                             {% else %}
-                                <span class="badge badge-danger">
+                                <span class="badge bg-danger">
                                     Inactive
                                 </span>
                             {% endif %}
@@ -563,11 +563,11 @@
                             {% include 'components/import_status_detail.html' with object=model %}
 
                             {% if model == object.active_model %}
-                                <span class="badge badge-success">
+                                <span class="badge bg-success">
                                     Active
                                 </span>
                             {% else %}
-                                <span class="badge badge-danger">
+                                <span class="badge bg-danger">
                                     Inactive
                                 </span>
                             {% endif %}

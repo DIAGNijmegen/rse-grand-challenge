@@ -9,13 +9,13 @@
 
 <span class="badge
     {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
-        badge-danger
+        bg-danger
     {% elif object.status == object.RETRY %}
-        badge-warning
+        bg-warning
     {% elif object.status == object.SUCCESS %}
-        badge-success
+        bg-success
     {% else %}
-        badge-info
+        bg-info
     {% endif %}">
         {{ object.get_status_display }}
 </span>

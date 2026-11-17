@@ -52,7 +52,7 @@
                             <td>{{ ground_truth }}</td>
                         {% endfor %}
                         <td data-order="{{ object.has_budget }}">
-                            <button class="btn btn-primary badge badge-primary"
+                            <button class="btn btn-primary badge bg-primary"
                                     {% if object.has_budget %}
                                         {% workstation_session_control_data workstation=object.workstation context_object=object display_set=entry reader_study=object %} title="Open in viewer"
                                     {% else %}

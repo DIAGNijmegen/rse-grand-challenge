@@ -137,11 +137,11 @@
                     <a href="{{ image.get_absolute_url }}">
                         {{ image }}
                         {% if image.can_execute and image == object.active_image %}
-                            <span class="badge badge-success">
+                            <span class="badge bg-success">
                                 Active
                             </span>
                         {% else %}
-                            <span class="badge badge-danger">
+                            <span class="badge bg-danger">
                                 Inactive
                             </span>
                         {% endif %}

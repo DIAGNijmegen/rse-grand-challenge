@@ -45,7 +45,7 @@
         </div>
     {% endif %}
 
-    <span class="badge p-2 my-2 {% if object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.is_desired_version %}<i class="fa fa-check-circle me-1"></i> Active ground truth for this phase {% else %} <i class="fa fa-times-circle me-1"></i> Inactive {% endif %}</span>
+    <span class="badge p-2 my-2 {% if object.is_desired_version %} bg-success {% else %} bg-danger {% endif %}">{% if object.is_desired_version %}<i class="fa fa-check-circle me-1"></i> Active ground truth for this phase {% else %} <i class="fa fa-times-circle me-1"></i> Inactive {% endif %}</span>
 
     <dl class="inline">
         <dt>ID</dt>

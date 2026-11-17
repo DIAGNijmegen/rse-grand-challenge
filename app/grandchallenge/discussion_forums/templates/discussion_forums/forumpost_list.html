@@ -26,7 +26,7 @@
 {% block extra_content %}
     {% if topic %}
         <div class="h3 my-3" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
-            {% if topic.is_locked %}<i class="fas fa-lock me-2 fa-xs badge-dark p-2 rounded"></i>{% endif %}
+            {% if topic.is_locked %}<i class="fas fa-lock me-2 fa-xs bg-dark p-2 rounded"></i>{% endif %}
             {{ topic.subject }}
         </div>
     {% else %}

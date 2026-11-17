@@ -145,7 +145,7 @@ class ChallengeSeries(models.Model):
     def badge(self):
         return format_html(
             (
-                '<span class="badge badge-info above-stretched-link" '
+                '<span class="badge bg-info above-stretched-link" '
                 'title="Associated with {0}"><i class="fas fa-globe fa-fw">'
                 "</i> {0}</span>"
             ),

@@ -8,11 +8,11 @@
 
 <span class="badge
     {% if object.status == object.DICOMImageSetUploadStatusChoices.FAILED %}
-        badge-danger
+        bg-danger
     {% elif object.status == object.DICOMImageSetUploadStatusChoices.COMPLETED %}
-        badge-success
+        bg-success
     {% else %}
-        badge-info
+        bg-info
     {% endif %}">
         {{ object.get_status_display }}
 </span>

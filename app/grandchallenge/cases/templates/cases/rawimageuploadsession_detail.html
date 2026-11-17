@@ -41,13 +41,13 @@
         <dd>
             <span class="badge
                 {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
-                    badge-danger
+                    bg-danger
                 {% elif object.status == object.RETRY %}
-                    badge-warning
+                    bg-warning
                 {% elif object.status == object.SUCCESS %}
-                    badge-success
+                    bg-success
                 {% else %}
-                    badge-info
+                    bg-info
                 {% endif %}">
                 {{ object.get_status_display }}
             </span>
@@ -100,7 +100,7 @@
                                 {% for file in image.files.all %}
                                     <li>
                                         <a href="{{ file.file.url }}">
-                                        <span class="badge badge-primary"
+                                        <span class="badge bg-primary"
                                               title="Download Image {{ image.name|stem }} ({{ file.file|suffix }})">
                                             <i class="fa fa-download"></i> Image ({{ file.file|suffix }})
                                         </span>
@@ -110,7 +110,7 @@
                             </ul>
                         </td>
                         <td>
-                            <button class="btn badge badge-primary"
+                            <button class="btn badge bg-primary"
                                {% workstation_session_control_data workstation=workstation context_object=image image=image %}
                             >
                                 <span>

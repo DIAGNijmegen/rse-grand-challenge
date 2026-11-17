@@ -23,13 +23,13 @@
     {% get_obj_perms request.user for object as "user_perms" %}
     <div class="row d-flex align-items-center ms-2">
         {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
-            <div class="badge badge-success h-50 p-2 me-1">Accepted</div>
+            <div class="badge bg-success h-50 p-2 me-1">Accepted</div>
         {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
-            <div class="badge badge-danger h-50 p-2 me-1">Rejected</div>
+            <div class="badge bg-danger h-50 p-2 me-1">Rejected</div>
         {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
-            <div class="badge badge-light h-50 p-2 me-1">Pending</div>
+            <div class="badge bg-light h-50 p-2 me-1">Pending</div>
         {% elif object.status == object.ChallengeRequestStatusChoices.DRAFT %}
-            <div class="badge badge-warning h-50 p-2 me-1">Draft</div>
+            <div class="badge bg-warning h-50 p-2 me-1">Draft</div>
         {% endif %}
         <h3>[{{ object.short_name }}] {{ object.title }}</h3>
     </div>
@@ -41,7 +41,7 @@
             <i class="fa fa-calendar text-primary pe-3"></i> Created on {{ object.created|date:'F j, Y' }}<br>
             {% if object.submitted_on %}
                 {% if object.status == object.ChallengeRequestStatusChoices.PENDING %}
-                    <i class="fa fa-rocket text-primary pe-3"></i> Submitted on<span class="badge ms-1 px-2 {% if object.submitted_on|timedifference < 8 %} badge-success {% elif object.submitted_on|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted_on|date:'F j, Y'}}</span><br>
+                    <i class="fa fa-rocket text-primary pe-3"></i> Submitted on<span class="badge ms-1 px-2 {% if object.submitted_on|timedifference < 8 %} bg-success {% elif object.submitted_on|timedifference < 15 %} bg-warning {% else %} bg-danger {% endif %}">{{ object.submitted_on|date:'F j, Y'}}</span><br>
                 {% else %}
                      <i class="fa fa-calendar text-primary pe-3"></i> Submitted on {{ object.submitted_on|date:'F j, Y' }}<br>
                 {% endif %}
