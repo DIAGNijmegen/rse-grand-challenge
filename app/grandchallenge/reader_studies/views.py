@@ -971,21 +971,16 @@ class UsersProgress(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        readers = self.object.readers_group.user_set.all()
-        editors = self.object.editors_group.user_set.all()
-        users = (
-            (readers | editors)
-            .select_related("user_profile", "verification")
-            .order_by("username")
-            .all()
-        )
-
         users = [
             {
                 "obj": reader,
                 "progress": self.object.get_progress_for_user(reader),
             }
-            for reader in users
+            for reader in get_user_model()
+            .objects.filter(answer__question__reader_study=self.object)
+            .distinct()
+            .select_related("user_profile", "verification")
+            .order_by("username")
         ]
 
         context.update(
