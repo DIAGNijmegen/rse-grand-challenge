@@ -77,7 +77,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "issued_on",
         "expires_on",
         "last_checked_on",
-        "is_not_expired",
+        "is_expired",
         "utilization_priority",
         "internal_comments",
     )
@@ -116,7 +116,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                     "follow_up_on",
                     (
                         "expires_on",
-                        "is_not_expired",
+                        "is_expired",
                     ),
                 ]
             },
@@ -168,7 +168,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "write_off_compute_cost",
         "invoice_consumed_compute_cost",
         "total_amount_euros",
-        "is_not_expired",
+        "is_expired",
         "challenge_compute_cost_euro_millicents",
         "challenge_total_projected_storage",
         "challenge_total_paid_compute_costs",
@@ -195,11 +195,9 @@ class InvoiceAdmin(admin.ModelAdmin):
     def internal_invoice_number_display(self, obj):
         return obj.internal_invoice_number
 
-    @admin.display(
-        boolean=True, ordering="expires_on", description="Not expired"
-    )
-    def is_not_expired(self, obj):
-        return not obj.is_expired
+    @admin.display(ordering="expires_on", description="Expired?")
+    def is_expired(self, obj):
+        return "Expired" if obj.is_expired else "-"
 
     def available_compute_cost(self, obj):
         return millicents_to_euro(obj.available_compute_cost_euro_millicents)
