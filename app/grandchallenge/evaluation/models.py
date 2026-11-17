@@ -1631,6 +1631,20 @@ class SubmissionStatusChoices(models.TextChoices):
             cls.CANCELLED,
         }
 
+    @classmethod
+    def get_pending_choices(cls):
+        return {
+            cls.VALIDATING_INPUTS,
+            cls.PENDING_REVIEW,
+        }
+
+
+class SubmissionManager(models.QuerySet):
+    def pending(self):
+        return self.filter(
+            status__in=SubmissionStatusChoices.get_pending_choices()
+        )
+
 
 class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
     """Store files for evaluation."""
@@ -1714,6 +1728,8 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         to=ComponentInterfaceValue,
         related_name="%(app_label)s_%(class)ss_as_additional_input",
     )
+
+    objects = SubmissionManager.as_manager()
 
     class Meta:
         unique_together = (
