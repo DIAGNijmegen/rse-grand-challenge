@@ -82,8 +82,8 @@
                     <td>
                         {% if interface.has_json_kind_example %}
                             <a href="#example-value-modal-{{ interface.pk }}"
-                                data-toggle="modal"
-                                data-target="#example-value-modal-{{ interface.pk }}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#example-value-modal-{{ interface.pk }}"
                                 class="text-decoration-none"
                                 role="button"
                                 title="View {{ interface.title }}">
@@ -102,7 +102,7 @@
                                             <h5 class="modal-title">
                                                 {{ interface.title }} Example
                                             </h5>
-                                            <button type="button" class="close" data-dismiss="modal"
+                                            <button type="button" class="close" data-bs-dismiss="modal"
                                                     aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
                                             </button>

@@ -10,8 +10,8 @@
 <p>
     <a class="btn btn-primary"
        role="button"
-       data-toggle="collapse"
-       data-target="#filterForm"
+       data-bs-toggle="collapse"
+       data-bs-target="#filterForm"
        aria-expanded="false"
        aria-controls="filterForm">
         <i class="fas fa-filter me-1"></i>Filter  {% if not model_name %}{{ filter.Meta.model|meta_attr:'verbose_name_plural'|title }}{% else %} {{ model_name|title }}s {% endif %}

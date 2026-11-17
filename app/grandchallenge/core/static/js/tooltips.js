@@ -1,8 +1,8 @@
 // Bootstrap tooltips are opt-in
-// Set attribute 'data-toggle' to "tooltip" on elements that should have a tooltip
+// Set attribute 'data-bs-toggle' to "tooltip" on elements that should have a tooltip
 // For example:
-//   <div data-toggle="tooltip" title="Tooltip content"></div>
+//   <div data-bs-toggle="tooltip" title="Tooltip content"></div>
 
 $(document).ready(() => {
-    $('[data-toggle="tooltip"]').tooltip();
+    $('[data-bs-toggle="tooltip"]').tooltip();
 });

@@ -66,7 +66,7 @@ $(document).ready(() => {
 
 function getDatatableLayout() {
     const dateButton = $(`
-        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#leaderboardDateModal"
+        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#leaderboardDateModal"
                 title="Leaderboard history">
             <i class="fas fa-history"></i>
         </button>

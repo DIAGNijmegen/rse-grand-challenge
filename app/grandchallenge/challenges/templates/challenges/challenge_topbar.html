@@ -35,7 +35,7 @@
                     {% endif %}
                     {% if "change_challenge" in challenge_perms or challenge.first_visible_phase and user_is_participant %}
                         <li class="nav-item dropdown">
-                            <a href="#" type="button" data-toggle="dropdown"  class="nav-link dropdown-toggle {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}">
+                            <a href="#" type="button" data-bs-toggle="dropdown"  class="nav-link dropdown-toggle {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}">
                                 <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit
                             </a>
                             <div class="dropdown-menu phase-nav-dropdown">
@@ -43,7 +43,7 @@
                             </div>
                         </li>
                         <li class="nav-item dropdown">
-                            <a href="#" type="button" data-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:evaluation-logs-detail,evaluation:update' %}active{% endif %}">
+                            <a href="#" type="button" data-bs-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:evaluation-logs-detail,evaluation:update' %}active{% endif %}">
                                 <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
                             </a>
                             <div class="dropdown-menu phase-nav-dropdown">
@@ -52,7 +52,7 @@
                         </li>
                     {% elif challenge.first_visible_phase and not challenge.hidden %}
                         <li class="nav-item dropdown">
-                            <a href="#" type="button" data-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:evaluation-logs-detail,evaluation:update' %}active{% endif %}">
+                            <a href="#" type="button" data-bs-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:evaluation-logs-detail,evaluation:update' %}active{% endif %}">
                                 <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
                             </a>
                             <div class="dropdown-menu phase-nav-dropdown">

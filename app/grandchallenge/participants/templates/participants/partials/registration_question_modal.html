@@ -4,8 +4,8 @@
 
 
 <button class="btn btn-xa btn-primary"
-        data-toggle="modal"
-        data-target="#RegistrationQuestionModal-{{ regrequest.pk }}"
+        data-bs-toggle="modal"
+        data-bs-target="#RegistrationQuestionModal-{{ regrequest.pk }}"
         class="text-decoration-none"
         role="button"
         title="View Question Answers">
@@ -23,7 +23,7 @@
                 <h5 class="modal-title">
                     Participation Request from {{ regrequest.user|user_profile_link }}
                 </h5>
-                <button type="button" class="close" data-dismiss="modal"
+                <button type="button" class="close" data-bs-dismiss="modal"
                         aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>

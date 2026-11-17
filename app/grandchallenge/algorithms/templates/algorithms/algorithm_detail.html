@@ -29,7 +29,7 @@
     <div class="col-12 col-md-4 col-lg-3 mb-3">
         <ul class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
             aria-orientation="vertical">
-            <a class="nav-link" id="v-pills-information-tab" data-toggle="pill"
+            <a class="nav-link" id="v-pills-information-tab" data-bs-toggle="pill"
                href="#information" role="tab" aria-controls="v-pills-information"
                aria-selected="true"><i
                     class="fas fa-info fa-fw"></i>&nbsp;Information
@@ -44,14 +44,14 @@
                         <i class="fas fa-exclamation-triangle text-danger"></i>
                     {% endif %}
                    </a>
-                    <a class="nav-link" id="v-pills-templates-tab" data-toggle="pill"
+                    <a class="nav-link" id="v-pills-templates-tab" data-bs-toggle="pill"
                         href="#templates" role="tab"
                         aria-controls="v-pills-templates"
                         aria-selected="false">
                     <i class="fas fa-hard-hat fa-fw"></i>&nbsp;Templates</a>
                 {% endif %}
 
-                <a class="nav-link" id="v-pills-containers-tab" data-toggle="pill"
+                <a class="nav-link" id="v-pills-containers-tab" data-bs-toggle="pill"
                    href="#containers" role="tab"
                    aria-controls="v-pills-containers"
                    aria-selected="false">
@@ -60,7 +60,7 @@
                     <i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
                     {# @formatter:on #}
                 </a>
-                <a class="nav-link" id="v-pills-models-tab" data-toggle="pill"
+                <a class="nav-link" id="v-pills-models-tab" data-bs-toggle="pill"
                    href="#models" role="tab"
                    aria-controls="v-pills-models"
                    aria-selected="false">
@@ -69,11 +69,11 @@
                         &nbsp; <i class="fas fa-exclamation-triangle text-danger"></i>
                     {% endif %}
                 </a>
-                <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
+                <a class="nav-link" id="v-pills-editors-tab" data-bs-toggle="pill"
                    href="#editors" role="tab" aria-controls="v-pills-editors"
                    aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
                 </a>
-                <a class="nav-link" id="v-pills-users-tab" data-toggle="pill"
+                <a class="nav-link" id="v-pills-users-tab" data-bs-toggle="pill"
                    href="#users" role="tab" aria-controls="v-pills-users"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Users
                 </a>
@@ -214,8 +214,8 @@
                         {% if not object.public %}
                             <a class="btn btn-primary btn-block"
                                href="#publishAlgorithmModal"
-                               data-toggle="modal"
-                               data-target="#publishAlgorithmModal">
+                               data-bs-toggle="modal"
+                               data-bs-target="#publishAlgorithmModal">
                                 <i class="fa fa-star"></i> Publish Algorithm
                             </a>
                         {% endif %}
@@ -585,7 +585,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Make this algorithm public</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
