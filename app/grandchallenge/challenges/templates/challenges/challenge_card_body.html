@@ -15,8 +15,8 @@
     {% if challenge.description %}
         <a href="#InfoModal"
            class="badge badge-dark above-stretched-link p-1 mt-1"
-           data-toggle="modal"
-           data-target="#InfoModal"
+           data-bs-toggle="modal"
+           data-bs-target="#InfoModal"
            data-title="{% firstof challenge.title challenge.short_name %}"
            data-description="{{ challenge.description }}"
            data-absolute-url="{{ challenge.get_absolute_url }}"
