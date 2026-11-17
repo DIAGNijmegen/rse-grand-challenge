@@ -86,6 +86,7 @@ from grandchallenge.evaluation.utils import (
     Metric,
     StatusChoices,
     SubmissionKindChoices,
+    is_valid_metric_score,
 )
 from grandchallenge.forge.models import ForgePhase
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
@@ -3430,8 +3431,8 @@ class Evaluation(
         return {
             metric.path
             for metric in self.submission.phase.valid_metrics
-            if not isinstance(
-                get_jsonpath(self.metrics_json_file, metric.path), (int, float)
+            if not is_valid_metric_score(
+                score=get_jsonpath(self.metrics_json_file, metric.path)
             )
         }
 

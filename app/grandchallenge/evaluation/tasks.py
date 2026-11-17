@@ -505,18 +505,28 @@ def filter_by_creators_best(*, evaluation_metrics, ranks):
     best_result_per_user = {}
 
     for evaluation_metric in evaluation_metrics:
-        creator = evaluation_metric.creator
-
         try:
             this_rank = ranks[evaluation_metric.evaluation_pk]
         except KeyError:
             # This result was not ranked
             continue
 
-        if creator not in best_result_per_user or (
-            this_rank < ranks[best_result_per_user[creator].evaluation_pk]
-        ):
-            best_result_per_user[creator] = evaluation_metric
+        if evaluation_metric.creator in best_result_per_user:
+            users_best_result = best_result_per_user[evaluation_metric.creator]
+            users_best_rank = ranks[users_best_result.evaluation_pk]
+
+            # A lower rank is better, ties are won by the older submission
+            is_better_rank = this_rank < users_best_rank
+            is_tied_and_older = (
+                this_rank == users_best_rank
+                and evaluation_metric.created < users_best_result.created
+            )
+            is_better = is_better_rank or is_tied_and_older
+        else:
+            is_better = True
+
+        if is_better:
+            best_result_per_user[evaluation_metric.creator] = evaluation_metric
 
     return [*best_result_per_user.values()]
 
@@ -549,7 +559,9 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
         metric_lookups=phase.valid_metrics,
     )
 
-    if phase.result_display_choice == phase.MOST_RECENT:
+    if phase.result_display_choice == phase.ALL:
+        pass
+    elif phase.result_display_choice == phase.MOST_RECENT:
         evaluation_metrics = filter_by_creators_most_recent(
             evaluation_metrics=evaluation_metrics
         )
@@ -560,6 +572,10 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
         )
         evaluation_metrics = filter_by_creators_best(
             evaluation_metrics=evaluation_metrics, ranks=all_positions.ranks
+        )
+    else:
+        raise ValueError(
+            f"Unknown result display choice: {phase.result_display_choice}"
         )
 
     final_positions = rank_results(

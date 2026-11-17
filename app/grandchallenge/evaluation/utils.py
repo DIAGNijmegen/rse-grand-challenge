@@ -1,4 +1,5 @@
 import datetime
+import math
 from collections import OrderedDict
 from typing import NamedTuple
 
@@ -39,6 +40,22 @@ def get(inputs):
         raise MultipleObjectsReturned
 
 
+def is_valid_metric_score(*, score):
+    # bool is a subclass of int, but is not a meaningful score
+    if isinstance(score, bool):
+        return False
+    elif isinstance(score, int):
+        # Checked separately as math.isfinite raises an OverflowError for
+        # ints that are too large to be converted to a float
+        return True
+    elif isinstance(score, float):
+        # NaN cannot be ordered or compared for ties, and infinity is not a
+        # meaningful score
+        return math.isfinite(score)
+    else:
+        return False
+
+
 def get_valid_evaluation_metrics(*, evaluations, metric_lookups):
     from grandchallenge.components.models import ComponentInterfaceValue
 
@@ -67,7 +84,7 @@ def get_valid_evaluation_metrics(*, evaluations, metric_lookups):
             )
 
         if all(
-            isinstance(score, (int, float))
+            is_valid_metric_score(score=score)
             for score in evaluation_metric_scores.values()
         ):
             evaluation_metrics.append(
@@ -84,6 +101,11 @@ def get_valid_evaluation_metrics(*, evaluations, metric_lookups):
 
 def rank_results(*, evaluation_metrics, score_method) -> Positions:
     """Determine the overall rank for each result."""
+    if not evaluation_metrics or not evaluation_metrics[0].metric_scores:
+        # Nothing to rank, so no result is ranked. All of the evaluation
+        # metrics have the same metrics extracted, so only check the first.
+        return Positions(ranks={}, rank_scores={}, rank_per_metric={})
+
     rank_per_metric = _get_rank_per_metric(
         evaluation_metrics=evaluation_metrics
     )
@@ -108,16 +130,9 @@ def _get_rank_per_metric(*, evaluation_metrics):
     values is another dictionary where the key is the path of the metric and
     the value is the rank of this result for this metric
     """
-    try:
-        # All of the evaluation metrics will have the same metrics extracted
-        metrics = evaluation_metrics[0].metric_scores.keys()
-    except IndexError:
-        # No valid results
-        return {}
-
     metric_rank = {}
 
-    for metric in metrics:
+    for metric in evaluation_metrics[0].metric_scores.keys():
         rank_scores = {
             evaluation_metric.evaluation_pk: evaluation_metric.metric_scores[
                 metric

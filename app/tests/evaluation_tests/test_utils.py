@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 
 from grandchallenge.components.models import (
@@ -5,7 +7,16 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase
-from grandchallenge.evaluation.tasks import calculate_ranks
+from grandchallenge.evaluation.tasks import (
+    calculate_ranks,
+    filter_by_creators_best,
+)
+from grandchallenge.evaluation.utils import (
+    EvaluationMetric,
+    Positions,
+    is_valid_metric_score,
+    rank_results,
+)
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import UserFactory
 
@@ -435,6 +446,213 @@ def test_null_results():
 
     expected_ranks = [1, 0]
     assert_ranks(queryset, expected_ranks)
+
+
+@pytest.mark.parametrize(
+    "evaluation_metrics",
+    (
+        [],
+        [
+            EvaluationMetric(
+                evaluation_pk="1",
+                creator="a",
+                created=datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC),
+                metric_scores={},
+            )
+        ],
+    ),
+    ids=("no_evaluation_metrics", "no_metrics_per_evaluation"),
+)
+def test_rank_results_nothing_to_rank(evaluation_metrics):
+    positions = rank_results(
+        evaluation_metrics=evaluation_metrics,
+        score_method=max,
+    )
+
+    assert positions == Positions(ranks={}, rank_scores={}, rank_per_metric={})
+
+
+@pytest.mark.parametrize(
+    "score, expected",
+    (
+        (1, True),
+        (0.5, True),
+        (0, True),
+        (-1.5, True),
+        (True, False),
+        (False, False),
+        (float("nan"), False),
+        (float("inf"), False),
+        (float("-inf"), False),
+        (10**400, True),  # Too large for a float, but still a valid int
+        (None, False),
+        ("1", False),
+        ([1], False),
+    ),
+)
+def test_is_valid_metric_score(score, expected):
+    assert is_valid_metric_score(score=score) is expected
+
+
+@pytest.mark.django_db
+def test_boolean_results_are_invalid():
+    phase = PhaseFactory()
+
+    results = [{"a": 0.6}, {"a": True}, {"a": False}]
+
+    queryset = [
+        EvaluationFactory(
+            submission__phase=phase,
+            status=Evaluation.SUCCESS,
+            time_limit=phase.evaluation_time_limit,
+        )
+        for _ in range(len(results))
+    ]
+
+    for e, r in zip(queryset, results, strict=True):
+        e.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="metrics-json-file"
+                ),
+                value=r,
+            )
+        )
+
+    phase.score_jsonpath = "a"
+    phase.result_display_choice = Phase.ALL
+    phase.save()
+
+    calculate_ranks(phase_pk=phase.pk)
+
+    assert_ranks(queryset, [1, 0, 0])
+    assert [e.invalid_metrics for e in queryset[:2]] == [set(), {"a"}]
+
+
+@pytest.mark.django_db
+def test_no_published_evaluations_resets_ranks():
+    phase = PhaseFactory()
+
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        status=Evaluation.SUCCESS,
+        time_limit=phase.evaluation_time_limit,
+        rank=1,
+        rank_score=1.0,
+        rank_per_metric={"a": 1},
+    )
+    evaluation.published = False
+    evaluation.save()
+    evaluation.outputs.add(
+        ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(slug="metrics-json-file"),
+            value={"a": 0.6},
+        )
+    )
+
+    phase.score_jsonpath = "a"
+    phase.save()
+
+    calculate_ranks(phase_pk=phase.pk)
+
+    evaluation.refresh_from_db()
+    assert evaluation.rank == 0
+    assert evaluation.rank_score == 0.0
+    assert evaluation.rank_per_metric == {}
+
+
+@pytest.mark.django_db
+def test_unknown_result_display_choice_raises(monkeypatch):
+    phase = PhaseFactory()
+    phase.result_display_choice = Phase.ALL
+    phase.save()
+
+    # Simulate the phase having a choice that calculate_ranks does not handle
+    monkeypatch.setattr(Phase, "ALL", "unhandled")
+
+    with pytest.raises(ValueError, match="result display choice"):
+        calculate_ranks(phase_pk=phase.pk)
+
+
+@pytest.mark.parametrize("reverse_input", (False, True))
+def test_filter_by_creators_best_older_wins_ties(reverse_input):
+    older = EvaluationMetric(
+        evaluation_pk="older",
+        creator="a",
+        created=datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC),
+        metric_scores={},
+    )
+    newer = EvaluationMetric(
+        evaluation_pk="newer",
+        creator="a",
+        created=datetime.datetime(2020, 1, 2, tzinfo=datetime.UTC),
+        metric_scores={},
+    )
+    newest_but_better = EvaluationMetric(
+        evaluation_pk="newest_but_better",
+        creator="b",
+        created=datetime.datetime(2020, 1, 3, tzinfo=datetime.UTC),
+        metric_scores={},
+    )
+    older_but_worse = EvaluationMetric(
+        evaluation_pk="older_but_worse",
+        creator="b",
+        created=datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC),
+        metric_scores={},
+    )
+    evaluation_metrics = [older, newer, newest_but_better, older_but_worse]
+
+    if reverse_input:
+        evaluation_metrics.reverse()
+
+    best = filter_by_creators_best(
+        evaluation_metrics=evaluation_metrics,
+        ranks={
+            "older": 1,
+            "newer": 1,
+            "newest_but_better": 1,
+            "older_but_worse": 2,
+        },
+    )
+
+    assert {metric.evaluation_pk for metric in best} == {
+        "older",
+        "newest_but_better",
+    }
+
+
+@pytest.mark.django_db
+def test_best_result_ties_won_by_older_submission():
+    phase = PhaseFactory()
+    user = UserFactory()
+
+    queryset = [
+        EvaluationFactory(
+            submission__phase=phase,
+            submission__creator=user,
+            status=Evaluation.SUCCESS,
+            time_limit=phase.evaluation_time_limit,
+        )
+        for _ in range(3)
+    ]
+
+    for e in queryset:
+        e.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="metrics-json-file"
+                ),
+                value={"a": 0.5},
+            )
+        )
+
+    phase.score_jsonpath = "a"
+    phase.result_display_choice = Phase.BEST
+    phase.save()
+
+    calculate_ranks(phase_pk=phase.pk)
+
+    assert_ranks(queryset, [1, 0, 0])
 
 
 def assert_ranks(queryset, expected_ranks, expected_rank_scores=None):
