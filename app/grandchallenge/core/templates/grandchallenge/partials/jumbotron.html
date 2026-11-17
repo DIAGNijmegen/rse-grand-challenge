@@ -6,7 +6,7 @@
 
 
 {% if jumbotron_title or jumbotron_background_url %}
-    <div class="jumbotron background-fill rounded-0 bg-primary mb-0"
+    <div class="py-5 text-shadow background-fill rounded-0 bg-primary mb-0"
          style="background-image: {% image_filter %}, url('{{ jumbotron_background_url }}');"
     >
         <div class="container">
@@ -34,7 +34,7 @@
                         <div class="col-sm-2 ms-auto mb-2">
                             <a class="text-white" href='https://aws.amazon.com/'>
                                 <img style="height: 1.6em;"
-                                     class="jumbotron-image"
+                                     class="image-shadow"
                                      loading="lazy"
                                      src="{% static 'images/Powered-By_logo-horiz_RGB_REV.png' %}"
                                      alt="Logo of Amazon Web Services"
