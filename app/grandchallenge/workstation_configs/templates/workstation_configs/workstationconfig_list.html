@@ -24,18 +24,18 @@
                         <div class="mb-2">
                             <small>
                                 {% if config.default_slab_render_method %}
-                                    <label for="render" class="font-weight-bold mb-0">Slab render method:</label>
+                                    <label for="render" class="fw-bold mb-0">Slab render method:</label>
                                     <div id="render">{{ config.get_default_slab_render_method_display }}</div>
                                 {% endif %}
                                 {% if config.default_orientation %}
-                                    <label for="orientation" class="font-weight-bold mb-0">Orientation:</label>
+                                    <label for="orientation" class="fw-bold mb-0">Orientation:</label>
                                     <div id="orientation">{{ config.get_default_orientation_display }}</div>
                                 {% endif %}
                                 {% if config.image_context %}
-                                    <label for="image_context" class="font-weight-bold mb-0">Image context:</label>
+                                    <label for="image_context" class="fw-bold mb-0">Image context:</label>
                                     <div id="image_context">{{ config.get_image_context_display }}</div>
                                 {% endif %}
-                                <label for="interpolation" class="font-weight-bold mb-0">Overlay interpolation:</label>
+                                <label for="interpolation" class="fw-bold mb-0">Overlay interpolation:</label>
                                 <div id="interpolation">{{ config.get_default_overlay_interpolation_display }}</div>
                             </small>
                         </div>

@@ -26,7 +26,7 @@
         {% csrf_token %}
         <p>Are you sure you want to delete this question:</p>
 
-        <h5 class="font-weight-bolder pb-4">'{{ object.question_text }}'</h5>
+        <h5 class="fw-bolder pb-4">'{{ object.question_text }}'</h5>
 
         {% if object.answers.exists %}
             <div class="alert alert-warning">
