@@ -1,10 +1,10 @@
 {% load pictures %}
 
-<div class="embed-responsive embed-responsive-1by1 mb-3">
+<div class="ratio ratio-1x1 mb-3">
     {% if profile.mugshot %}
-         {% picture profile.mugshot img_class="card-img-top embed-responsive-item rounded-circle" img_loading="lazy" img_alt="Item Logo" ratio="1/1" %}
+         {% picture profile.mugshot img_class="card-img-top rounded-circle" img_loading="lazy" img_alt="Item Logo" ratio="1/1" %}
     {% else %}
-         <img class="card-img-top embed-responsive-item rounded-circle"
+         <img class="card-img-top rounded-circle"
               src="{{ profile.get_gravatar_url }}"
               style="display: block; margin: auto;"
               alt="Users mugshot"
