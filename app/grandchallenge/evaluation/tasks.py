@@ -552,7 +552,7 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
             .only("pk", "rank", "rank_score", "rank_per_metric", "published")
         )
 
-    # Extract the filter the evaluation metrics for each evaluation.
+    # Extract the evaluation metrics for each evaluation.
     # Do this separately to reduce memory usage.
     evaluation_metrics = get_valid_evaluation_metrics(
         evaluations=evaluations,
