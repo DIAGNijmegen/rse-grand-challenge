@@ -5,7 +5,7 @@
 {% if challenge %}
     <nav class="navbar navbar-expand-sm navbar-light p-0 mb-3 mx-0 border-bottom align-items-start challenge-topbar">
         <div class="col me-auto px-0">
-            <ul class="nav navbar-nav nav-tabs">
+            <ul class="nav navbar-nav nav-tabs border-0">
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
                        href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
@@ -79,8 +79,8 @@
         </div>
 
         {% if challenge.use_registration_page and not user_is_participant %}
-            <div class="col-auto py-0 px-0">
-                <a class="btn btn-success"
+            <div class="col-auto py-0 px-0 align-self-center">
+                <a class="btn btn-success my-0"
                    href="{% url 'participants:registration-create' challenge_short_name=challenge.short_name %}"
                    role="button">
                     Join
