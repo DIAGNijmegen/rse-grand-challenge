@@ -36,7 +36,7 @@
     {% if challenge_request %}
         <ul>
             {% for field, value in challenge_request.budget_fields.items %}
-                <li><span class="font-weight-bold">{{ field|capfirst }}</span>: {{ value }}</li>
+                <li><span class="fw-bold">{{ field|capfirst }}</span>: {{ value }}</li>
             {% endfor %}
         </ul>
         {% if challenge_request.task_ids|length > 1 %}
