@@ -15,8 +15,8 @@
                     {% for item in news_carousel_items %}
                         <div class="container carousel-item {% if forloop.counter == 1 %}active{% endif %}">
                             <div class="row justify-content-center">
-                                <div class="col-md-3 embed-responsive embed-responsive-1by1">
-                                    <a class="embed-responsive-item d-flex align-items-center"
+                                <div class="col-md-3 ratio ratio-1x1">
+                                    <a class="d-flex align-items-center"
                                        href="{{ item.get_absolute_url }}">
                                         {% picture item.logo img_class="rounded mw-100 mh-100" img_loading="eager" img_alt=item.title img_width="100%" img_height="100%" m=3 %}
                                     </a>
