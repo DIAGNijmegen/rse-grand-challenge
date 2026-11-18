@@ -202,17 +202,17 @@
                             </p>
                         {% endif %}
                     </div>
-                    <div class="col-3 ps-0 my-auto">
-                        <a class="btn btn-primary btn-block"
+                    <div class="col-3 ps-0 my-auto d-grid">
+                        <a class="btn btn-primary"
                            href="{% url 'algorithms:update' slug=object.slug %}">
                             <i class="fa fa-cog"></i> Update Settings
                         </a>
-                        <a class="btn btn-primary btn-block"
+                        <a class="btn btn-primary"
                            href="{% url 'algorithms:description-update' slug=object.slug %}">
                             <i class="fa fa-edit"></i> Update Description
                         </a>
                         {% if not object.public %}
-                            <a class="btn btn-primary btn-block"
+                            <a class="btn btn-primary"
                                href="#publishAlgorithmModal"
                                data-bs-toggle="modal"
                                data-bs-target="#publishAlgorithmModal">
@@ -275,7 +275,7 @@
                     <div class="col-9">
                         {% for publication in object.publications.all %}
                             <div class="row px-3">
-                                <div class="col-1 px-0 my-auto text-center align-middle"><a class="btn btn-outline-primary p-1 btn-sm btn-block" href="{{ publication.identifier.url }}" target="_blank"
+                                <div class="col-1 px-0 my-auto text-center align-middle"><a class="btn btn-outline-primary p-1 btn-sm d-block" href="{{ publication.identifier.url }}" target="_blank"
                                    title="{{ publication.title }}">
                                     <i class="fa fa-link"></i>
                                 </a></div>
