@@ -84,7 +84,7 @@
                                title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
                             <div class="ratio ratio-1x1">
                                 {% if object.logo %}
-                                    {% picture object.logo img_class="card-img-top" img_loading="lazy" img_alt="Item Logo" ratio="1/1" s=12 m=6 l=4 %}
+                                    {% picture object.logo img_class="card-img-top" img_loading="lazy" img_alt="Item Logo" ratio="1/1" img_width="100%" img_height="100%" s=12 m=6 l=4 %}
                                 {% else %}
                                     <img class="card-img-top"
                                          loading="lazy"

@@ -15,7 +15,7 @@
                     <a class="stretched-link" href="{{ object.get_absolute_url }}"
                        title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
                     <div class="ratio ratio-1x1">
-                        {% picture object.logo img_class="card-img-top" img_loading="lazy" img_alt="Organization Logo" ratio="1/1" s=6 m=3 %}
+                        {% picture object.logo img_class="card-img-top" img_loading="lazy" img_alt="Organization Logo" ratio="1/1" img_width="100%" img_height="100%" s=6 m=3 %}
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ object.title }}</h5>

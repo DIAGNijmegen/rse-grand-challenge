@@ -2,7 +2,7 @@
 
 <div class="ratio ratio-1x1 mb-3">
     {% if profile.mugshot %}
-         {% picture profile.mugshot img_class="card-img-top rounded-circle" img_loading="lazy" img_alt="Item Logo" ratio="1/1" %}
+         {% picture profile.mugshot img_class="card-img-top rounded-circle" img_loading="lazy" img_alt="Item Logo" ratio="1/1" img_width="100%" img_height="100%" %}
     {% else %}
          <img class="card-img-top rounded-circle"
               src="{{ profile.get_gravatar_url }}"
