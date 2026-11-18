@@ -407,7 +407,7 @@ class Invoice(models.Model, FieldChangeMixin):
 
     def get_status_badge(self):
         return format_html(
-            '<span class="badge badge-{badge_class}">{text}</span>',
+            '<span class="badge bg-{badge_class}">{text}</span>',
             badge_class=self._status_badge_class,
             text=self._status_badge_text,
         )

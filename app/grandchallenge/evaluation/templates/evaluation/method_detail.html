@@ -85,7 +85,7 @@
         {% if object.is_manifest_valid is not None %}
         <dt>Image Is Valid</dt>
         <dd>
-            <span class="badge badge-{{ object.is_manifest_valid|yesno:'success,danger' }}">
+            <span class="badge bg-{{ object.is_manifest_valid|yesno:'success,danger' }}">
                 {{ object.is_manifest_valid }}
             </span>
         </dd>
@@ -98,7 +98,7 @@
 
         <dt>Image Can Be Used</dt>
         <dd>
-            <span class="badge badge-{{ object.can_execute|yesno:'success,danger' }}">
+            <span class="badge bg-{{ object.can_execute|yesno:'success,danger' }}">
                 {{ object.can_execute }}
             </span>
         </dd>
@@ -108,7 +108,7 @@
 
         <dt>Requires GPU Type</dt>
         <dd>
-            <span class="badge badge-{% if object.phase.evaluation_requires_gpu_type %}info{% else %}danger{% endif %}">
+            <span class="badge bg-{% if object.phase.evaluation_requires_gpu_type %}info{% else %}danger{% endif %}">
                 {{ object.phase.get_evaluation_requires_gpu_type_display }}
             </span>
         </dd>

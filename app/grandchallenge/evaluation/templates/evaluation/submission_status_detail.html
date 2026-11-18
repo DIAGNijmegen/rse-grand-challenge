@@ -13,7 +13,7 @@
     {% if "review_submission" in obj_perms and object.status == object.StatusChoices.PENDING_REVIEW %}
         {% include "evaluation/partials/submission_accept_reject.html" with object=object csrf_token=csrf_token only %}
     {% elif "cancel_submission" in obj_perms and object.status == object.StatusChoices.PENDING_REVIEW %}
-        <span class="badge badge-{{ object.status_context }} me-1">
+        <span class="badge bg-{{ object.status_context }} me-1">
             {{ object.get_status_display }}
         </span>
         <a href="{{ object.cancel_url }}"
@@ -23,7 +23,7 @@
             <i class="fas fa-fw fa-times-circle me-1"></i>Cancel
         </a>
     {% else %}
-        <span class="badge badge-{{ object.status_context }} me-1">
+        <span class="badge bg-{{ object.status_context }} me-1">
             {% if object.animate %}
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             {% endif %}
