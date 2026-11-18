@@ -10,6 +10,7 @@ $navbar-light-brand-color: $blue;
 $navbar-light-brand-hover-color: $blue;
 
 $pagination-bg: $blue;
+$pagination-active-bg: darken($blue, 15%);
 $pagination-hover-bg: darken($blue, 15%);
 $pagination-disabled-bg: lighten($blue, 15%);
 
