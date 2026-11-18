@@ -19,6 +19,8 @@ $breadcrumb-padding-y: 0.75rem;
 $breadcrumb-padding-x: 0;
 $breadcrumb-margin-bottom: 0;
 
+$carousel-control-color: $dark;
+
 @import "bootstrap/scss/bootstrap";
 @import "bootswatch/dist/flatly/bootswatch";
 @import "datatables";
