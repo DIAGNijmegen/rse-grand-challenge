@@ -26,7 +26,11 @@ from grandchallenge.core.error_messages import (
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import get_file_mimetype
-from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
+from grandchallenge.evaluation.utils import (
+    SubmissionKindChoices,
+    get_evaluation_scores,
+    rank_results,
+)
 
 
 @lambda_task(
@@ -492,38 +496,49 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
         evaluation.execute()
 
 
-def filter_by_creators_most_recent(*, evaluations):
-    # Go through the evaluations and only pass through the most recent
+def filter_by_creators_most_recent(*, evaluation_scores):
+    # Go through the evaluation_scores and only pass through the most recent
     # submission for each user
-    users_seen = set()
-    filtered_qs = []
+    users_most_recent_result = {}
 
-    for e in evaluations:
-        creator = e.submission.creator
+    for evaluation_score in evaluation_scores:
+        creator = evaluation_score.creator
 
-        if creator not in users_seen:
-            users_seen.add(creator)
-            filtered_qs.append(e)
+        if creator not in users_most_recent_result or (
+            evaluation_score.created
+            > users_most_recent_result[creator].created
+        ):
+            users_most_recent_result[creator] = evaluation_score
 
-    return filtered_qs
+    return [*users_most_recent_result.values()]
 
 
-def filter_by_creators_best(*, evaluations, ranks):
+def filter_by_creators_best(*, evaluation_scores, ranks):
     best_result_per_user = {}
 
-    for e in evaluations:
-        creator = e.submission.creator
-
+    for evaluation_score in evaluation_scores:
         try:
-            this_rank = ranks[e.pk]
+            this_rank = ranks[evaluation_score.evaluation_pk]
         except KeyError:
             # This result was not ranked
             continue
 
-        if creator not in best_result_per_user or (
-            this_rank < ranks[best_result_per_user[creator].pk]
-        ):
-            best_result_per_user[creator] = e
+        if evaluation_score.creator in best_result_per_user:
+            users_best_result = best_result_per_user[evaluation_score.creator]
+            users_best_rank = ranks[users_best_result.evaluation_pk]
+
+            # A lower rank is better, ties are won by the older submission
+            is_better_rank = this_rank < users_best_rank
+            is_tied_and_older = (
+                this_rank == users_best_rank
+                and evaluation_score.created < users_best_result.created
+            )
+            is_better = is_better_rank or is_tied_and_older
+        else:
+            is_better = True
+
+        if is_better:
+            best_result_per_user[evaluation_score.creator] = evaluation_score
 
     return [*best_result_per_user.values()]
 
@@ -546,50 +561,54 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
             )
             .select_for_update(nowait=True, of=("self",))
             .order_by("-created")
-            .select_related("submission__creator", "submission__phase")
-            .prefetch_related("outputs__interface")
+            .only("pk", "rank", "rank_score", "rank_per_metric", "published")
         )
 
-    valid_evaluations = [
-        e
-        for e in evaluations
-        if e.status == Evaluation.SUCCESS and e.published is True
-    ]
+    # Extract the evaluation metrics for each evaluation.
+    # Do this separately to reduce memory usage.
+    evaluation_scores = get_evaluation_scores(
+        evaluations=evaluations,
+        metric_lookups=phase.valid_metrics,
+    )
 
-    if phase.result_display_choice == phase.MOST_RECENT:
-        valid_evaluations = filter_by_creators_most_recent(
-            evaluations=valid_evaluations
+    if phase.result_display_choice == phase.ALL:
+        pass
+    elif phase.result_display_choice == phase.MOST_RECENT:
+        evaluation_scores = filter_by_creators_most_recent(
+            evaluation_scores=evaluation_scores
         )
     elif phase.result_display_choice == phase.BEST:
         all_positions = rank_results(
-            evaluations=valid_evaluations,
-            metrics=phase.valid_metrics,
+            evaluation_scores=evaluation_scores,
             score_method=phase.scoring_method,
         )
-        valid_evaluations = filter_by_creators_best(
-            evaluations=valid_evaluations, ranks=all_positions.ranks
+        evaluation_scores = filter_by_creators_best(
+            evaluation_scores=evaluation_scores, ranks=all_positions.ranks
+        )
+    else:
+        raise ValueError(
+            f"Unknown result display choice: {phase.result_display_choice}"
         )
 
     final_positions = rank_results(
-        evaluations=valid_evaluations,
-        metrics=phase.valid_metrics,
+        evaluation_scores=evaluation_scores,
         score_method=phase.scoring_method,
     )
 
-    for e in evaluations:
+    for evaluation in evaluations:
         try:
-            rank = final_positions.ranks[e.pk]
-            rank_score = final_positions.rank_scores[e.pk]
-            rank_per_metric = final_positions.rank_per_metric[e.pk]
+            rank = final_positions.ranks[evaluation.pk]
+            rank_score = final_positions.rank_scores[evaluation.pk]
+            rank_per_metric = final_positions.rank_per_metric[evaluation.pk]
         except KeyError:
             # This result will be excluded from the display
             rank = 0
             rank_score = 0.0
             rank_per_metric = {}
 
-        e.rank = rank
-        e.rank_score = rank_score
-        e.rank_per_metric = rank_per_metric
+        evaluation.rank = rank
+        evaluation.rank_score = rank_score
+        evaluation.rank_per_metric = rank_per_metric
 
     Evaluation.objects.bulk_update(
         evaluations, ["rank", "rank_score", "rank_per_metric"]
