@@ -45,21 +45,6 @@ p {
     object-fit: cover;
 }
 
-/* for responsive card-decks */
-.row.equal-height {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.row.equal-height > [class*="col-"] {
-    display: flex;
-    flex-direction: column;
-}
-
-.row.equal-height > [class*="col-"] .card {
-    flex: 1;
-}
-
 /* definition lists */
 dl.inline dd {
     display: inline;
