@@ -12,7 +12,7 @@ from grandchallenge.evaluation.tasks import (
     filter_by_creators_best,
 )
 from grandchallenge.evaluation.utils import (
-    EvaluationMetric,
+    ExtractedMetrics,
     Positions,
     is_valid_metric_score,
     rank_results,
@@ -453,11 +453,11 @@ def test_null_results():
     (
         [],
         [
-            EvaluationMetric(
+            ExtractedMetrics(
                 evaluation_pk="1",
                 creator="a",
                 created=datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC),
-                metric_scores={},
+                score_per_metric={},
             )
         ],
     ),
@@ -465,7 +465,7 @@ def test_null_results():
 )
 def test_rank_results_nothing_to_rank(evaluation_metrics):
     positions = rank_results(
-        evaluation_metrics=evaluation_metrics,
+        extracted_metrics=evaluation_metrics,
         score_method=max,
     )
 
@@ -576,29 +576,29 @@ def test_unknown_result_display_choice_raises(monkeypatch):
 
 @pytest.mark.parametrize("reverse_input", (False, True))
 def test_filter_by_creators_best_older_wins_ties(reverse_input):
-    older = EvaluationMetric(
+    older = ExtractedMetrics(
         evaluation_pk="older",
         creator="a",
         created=datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC),
-        metric_scores={},
+        score_per_metric={},
     )
-    newer = EvaluationMetric(
+    newer = ExtractedMetrics(
         evaluation_pk="newer",
         creator="a",
         created=datetime.datetime(2020, 1, 2, tzinfo=datetime.UTC),
-        metric_scores={},
+        score_per_metric={},
     )
-    newest_but_better = EvaluationMetric(
+    newest_but_better = ExtractedMetrics(
         evaluation_pk="newest_but_better",
         creator="b",
         created=datetime.datetime(2020, 1, 3, tzinfo=datetime.UTC),
-        metric_scores={},
+        score_per_metric={},
     )
-    older_but_worse = EvaluationMetric(
+    older_but_worse = ExtractedMetrics(
         evaluation_pk="older_but_worse",
         creator="b",
         created=datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC),
-        metric_scores={},
+        score_per_metric={},
     )
     evaluation_metrics = [older, newer, newest_but_better, older_but_worse]
 
@@ -606,7 +606,7 @@ def test_filter_by_creators_best_older_wins_ties(reverse_input):
         evaluation_metrics.reverse()
 
     best = filter_by_creators_best(
-        evaluation_metrics=evaluation_metrics,
+        extracted_metrics=evaluation_metrics,
         ranks={
             "older": 1,
             "newer": 1,

@@ -27,7 +27,7 @@ from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import (
     SubmissionKindChoices,
-    get_valid_evaluation_metrics,
+    extract_published_metrics,
     rank_results,
 )
 
@@ -484,49 +484,49 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
         evaluation.execute()
 
 
-def filter_by_creators_most_recent(*, evaluation_metrics):
-    # Go through the evaluation_metrics and only pass through the most recent
+def filter_by_creators_most_recent(*, extracted_metrics):
+    # Go through the extracted_metrics and only pass through the most recent
     # submission for each user
     users_most_recent_result = {}
 
-    for evaluation_metric in evaluation_metrics:
-        creator = evaluation_metric.creator
+    for extracted_metric in extracted_metrics:
+        creator = extracted_metric.creator
 
         if creator not in users_most_recent_result or (
-            evaluation_metric.created
+            extracted_metric.created
             > users_most_recent_result[creator].created
         ):
-            users_most_recent_result[creator] = evaluation_metric
+            users_most_recent_result[creator] = extracted_metric
 
     return [*users_most_recent_result.values()]
 
 
-def filter_by_creators_best(*, evaluation_metrics, ranks):
+def filter_by_creators_best(*, extracted_metrics, ranks):
     best_result_per_user = {}
 
-    for evaluation_metric in evaluation_metrics:
+    for extracted_metric in extracted_metrics:
         try:
-            this_rank = ranks[evaluation_metric.evaluation_pk]
+            this_rank = ranks[extracted_metric.evaluation_pk]
         except KeyError:
             # This result was not ranked
             continue
 
-        if evaluation_metric.creator in best_result_per_user:
-            users_best_result = best_result_per_user[evaluation_metric.creator]
+        if extracted_metric.creator in best_result_per_user:
+            users_best_result = best_result_per_user[extracted_metric.creator]
             users_best_rank = ranks[users_best_result.evaluation_pk]
 
             # A lower rank is better, ties are won by the older submission
             is_better_rank = this_rank < users_best_rank
             is_tied_and_older = (
                 this_rank == users_best_rank
-                and evaluation_metric.created < users_best_result.created
+                and extracted_metric.created < users_best_result.created
             )
             is_better = is_better_rank or is_tied_and_older
         else:
             is_better = True
 
         if is_better:
-            best_result_per_user[evaluation_metric.creator] = evaluation_metric
+            best_result_per_user[extracted_metric.creator] = extracted_metric
 
     return [*best_result_per_user.values()]
 
@@ -554,7 +554,7 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
 
     # Extract the evaluation metrics for each evaluation.
     # Do this separately to reduce memory usage.
-    evaluation_metrics = get_valid_evaluation_metrics(
+    extracted_metrics = extract_published_metrics(
         evaluations=evaluations,
         metric_lookups=phase.valid_metrics,
     )
@@ -562,16 +562,16 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
     if phase.result_display_choice == phase.ALL:
         pass
     elif phase.result_display_choice == phase.MOST_RECENT:
-        evaluation_metrics = filter_by_creators_most_recent(
-            evaluation_metrics=evaluation_metrics
+        extracted_metrics = filter_by_creators_most_recent(
+            extracted_metrics=extracted_metrics
         )
     elif phase.result_display_choice == phase.BEST:
         all_positions = rank_results(
-            evaluation_metrics=evaluation_metrics,
+            extracted_metrics=extracted_metrics,
             score_method=phase.scoring_method,
         )
-        evaluation_metrics = filter_by_creators_best(
-            evaluation_metrics=evaluation_metrics, ranks=all_positions.ranks
+        extracted_metrics = filter_by_creators_best(
+            extracted_metrics=extracted_metrics, ranks=all_positions.ranks
         )
     else:
         raise ValueError(
@@ -579,7 +579,7 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
         )
 
     final_positions = rank_results(
-        evaluation_metrics=evaluation_metrics,
+        extracted_metrics=extracted_metrics,
         score_method=phase.scoring_method,
     )
 
