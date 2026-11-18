@@ -15,34 +15,36 @@
 {% block content %}
     <h2>Viewer Configurations</h2>
 
-    <div class="card-columns">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3 mb-3">
         {% for config in object_list %}
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ config.title }}</h5>
-                    <div class="mb-2">
-                        <small>
-                            {% if config.default_slab_render_method %}
-                                <label for="render" class="font-weight-bold mb-0">Slab render method:</label>
-                                <div id="render">{{ config.get_default_slab_render_method_display }}</div>
-                            {% endif %}
-                            {% if config.default_orientation %}
-                                <label for="orientation" class="font-weight-bold mb-0">Orientation:</label>
-                                <div id="orientation">{{ config.get_default_orientation_display }}</div>
-                            {% endif %}
-                            {% if config.image_context %}
-                                <label for="image_context" class="font-weight-bold mb-0">Image context:</label>
-                                <div id="image_context">{{ config.get_image_context_display }}</div>
-                            {% endif %}
-                            <label for="interpolation" class="font-weight-bold mb-0">Overlay interpolation:</label>
-                            <div id="interpolation">{{ config.get_default_overlay_interpolation_display }}</div>
-                        </small>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ config.title }}</h5>
+                        <div class="mb-2">
+                            <small>
+                                {% if config.default_slab_render_method %}
+                                    <label for="render" class="font-weight-bold mb-0">Slab render method:</label>
+                                    <div id="render">{{ config.get_default_slab_render_method_display }}</div>
+                                {% endif %}
+                                {% if config.default_orientation %}
+                                    <label for="orientation" class="font-weight-bold mb-0">Orientation:</label>
+                                    <div id="orientation">{{ config.get_default_orientation_display }}</div>
+                                {% endif %}
+                                {% if config.image_context %}
+                                    <label for="image_context" class="font-weight-bold mb-0">Image context:</label>
+                                    <div id="image_context">{{ config.get_image_context_display }}</div>
+                                {% endif %}
+                                <label for="interpolation" class="font-weight-bold mb-0">Overlay interpolation:</label>
+                                <div id="interpolation">{{ config.get_default_overlay_interpolation_display }}</div>
+                            </small>
+                        </div>
+                        <a href="{{ config.get_absolute_url }}"
+                           class="btn btn-primary"
+                           title="View Viewer Configuration">
+                            <i class="fa fa-eye"></i> View
+                        </a>
                     </div>
-                    <a href="{{ config.get_absolute_url }}"
-                       class="btn btn-primary"
-                       title="View Viewer Configuration">
-                        <i class="fa fa-eye"></i> View
-                    </a>
                 </div>
             </div>
             {% empty %}
@@ -51,7 +53,7 @@
     </div>
 
     {% if perms.workstation_configs.add_workstationconfig %}
-        <p class="mt-3">
+        <p>
             <a class="btn btn-primary"
                href="{% url 'workstation-configs:create' %}">
                 <i class="fas fa-plus"></i> Add a new Viewer Configuration
