@@ -23,7 +23,7 @@ class Positions(NamedTuple):
     rank_per_metric: dict[str, dict[str, float]]
 
 
-class ExtractedMetrics(NamedTuple):
+class EvaluationScore(NamedTuple):
     evaluation_pk: str
     creator: str
     created: datetime.datetime
@@ -56,10 +56,16 @@ def is_valid_metric_score(*, score):
         return False
 
 
-def extract_published_metrics(*, evaluations, metric_lookups):
+def get_evaluation_scores(*, evaluations, metric_lookups):
     from grandchallenge.components.models import ComponentInterfaceValue
 
-    evaluation_metric_civs = ComponentInterfaceValue.objects.filter(
+    evaluation_scores = []
+
+    if not metric_lookups:
+        # Nothing to do
+        return evaluation_scores
+
+    evaluation_metrics_civs = ComponentInterfaceValue.objects.filter(
         interface__slug="metrics-json-file",
         evaluation_evaluations_as_output__in={
             evaluation.pk for evaluation in evaluations if evaluation.published
@@ -70,16 +76,14 @@ def extract_published_metrics(*, evaluations, metric_lookups):
         created=F("evaluation_evaluations_as_output__submission__created"),
     )
 
-    extracted_metrics = []
-
-    for evaluation_metric_civ in evaluation_metric_civs.iterator(
+    for evaluation_metrics_civ in evaluation_metrics_civs.iterator(
         chunk_size=100
     ):
         score_per_metric = {}
 
         for metric_lookup in metric_lookups:
             score_per_metric[metric_lookup] = get_jsonpath(
-                evaluation_metric_civ.value,
+                evaluation_metrics_civ.value,
                 metric_lookup.path,
             )
 
@@ -87,26 +91,26 @@ def extract_published_metrics(*, evaluations, metric_lookups):
             is_valid_metric_score(score=score)
             for score in score_per_metric.values()
         ):
-            extracted_metrics.append(
-                ExtractedMetrics(
-                    evaluation_pk=evaluation_metric_civ.evaluation_pk,
-                    creator=evaluation_metric_civ.creator,
-                    created=evaluation_metric_civ.created,
+            evaluation_scores.append(
+                EvaluationScore(
+                    evaluation_pk=evaluation_metrics_civ.evaluation_pk,
+                    creator=evaluation_metrics_civ.creator,
+                    created=evaluation_metrics_civ.created,
                     score_per_metric=score_per_metric,
                 )
             )
 
-    return extracted_metrics
+    return evaluation_scores
 
 
-def rank_results(*, extracted_metrics, score_method) -> Positions:
+def rank_results(*, evaluation_scores, score_method) -> Positions:
     """Determine the overall rank for each result."""
-    if not extracted_metrics or not extracted_metrics[0].score_per_metric:
+    if not evaluation_scores or not evaluation_scores[0].score_per_metric:
         # Nothing to rank, so no result is ranked. All of the evaluation
         # metrics have the same metrics extracted, so only check the first.
         return Positions(ranks={}, rank_scores={}, rank_per_metric={})
 
-    rank_per_metric = _get_rank_per_metric(extracted_metrics=extracted_metrics)
+    rank_per_metric = _get_rank_per_metric(evaluation_scores=evaluation_scores)
 
     rank_scores = {
         pk: score_method([*metrics.values()])
@@ -120,7 +124,7 @@ def rank_results(*, extracted_metrics, score_method) -> Positions:
     )
 
 
-def _get_rank_per_metric(*, extracted_metrics):
+def _get_rank_per_metric(*, evaluation_scores):
     """
     Takes results and calculates the rank for each of the individual metrics
 
@@ -130,12 +134,12 @@ def _get_rank_per_metric(*, extracted_metrics):
     """
     metric_rank = {}
 
-    for metric in extracted_metrics[0].score_per_metric.keys():
+    for metric in evaluation_scores[0].score_per_metric.keys():
         rank_scores = {
-            extracted_metric.evaluation_pk: extracted_metric.score_per_metric[
+            evaluation_score.evaluation_pk: evaluation_score.score_per_metric[
                 metric
             ]
-            for extracted_metric in extracted_metrics
+            for evaluation_score in evaluation_scores
         }
 
         metric_rank[metric.path] = _scores_to_ranks(
@@ -144,11 +148,11 @@ def _get_rank_per_metric(*, extracted_metrics):
         )
 
     return {
-        extracted_metric.evaluation_pk: {
-            metric_path: ranks[extracted_metric.evaluation_pk]
+        evaluation_score.evaluation_pk: {
+            metric_path: ranks[evaluation_score.evaluation_pk]
             for metric_path, ranks in metric_rank.items()
         }
-        for extracted_metric in extracted_metrics
+        for evaluation_score in evaluation_scores
     }
 
 
