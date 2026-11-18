@@ -147,14 +147,14 @@ function setCardAwaitingMessage(card, msg) {
     card.classList.remove("text-muted", "active");
     card.querySelector(".statusMessage").innerHTML = msg;
     card.querySelector(".statusSymbol").innerHTML =
-        '<div class="text-secondary spinner-grow" role="status"><span class="sr-only">Loading...</span></div>';
+        '<div class="text-secondary spinner-grow" role="status"><span class="visually-hidden">Loading...</span></div>';
 }
 
 function setCardActiveMessage(card, msg) {
     if (!card.classList.contains("active")) {
         card.classList.add("active");
         card.querySelector(".statusSymbol").innerHTML =
-            '<div class="text-primary spinner-border" role="status"><span class="sr-only">Loading...</span></div>';
+            '<div class="text-primary spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
     }
     card.querySelector(".statusMessage").innerHTML = msg;
 }
