@@ -36,22 +36,22 @@
 
                 </div>
 
-                <ol class="carousel-indicators position-relative">
+                <div class="carousel-indicators position-relative">
                     {% for item in news_carousel_items %}
-                        <li class="bg-primary {% if forloop.counter == 1 %}active{% endif %}" data-bs-target="#newsCarousel"
-                            data-slide-to="{{ forloop.counter0 }}">
-                        </li>
+                        <button type="button" class="bg-primary {% if forloop.counter == 1 %}active{% endif %}" data-bs-target="#newsCarousel"
+                            data-bs-slide-to="{{ forloop.counter0 }}">
+                        </button>
                     {% endfor %}
-                </ol>
+                </div>
 
-                <a class="carousel-control-prev text-dark" href="#newsCarousel" role="button" data-slide="prev">
-                    <i class="fas fa-angle-left fa-2x"></i>
+                <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Previous</span>
-                </a>
-                <a class="carousel-control-next text-dark" href="#newsCarousel" role="button" data-slide="next">
-                    <i class="fas fa-angle-right fa-2x"></i>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Next</span>
-                </a>
+                </button>
             </div>
         {% endif %}
 
