@@ -1250,7 +1250,7 @@ def test_answer_score_calculation():
         (500, 1000, True),
     ],
 )
-def test_reader_study_has_budget_after_credits_consumed(
+def test_reader_study_with_has_budget(
     credits_consumed, max_credits, has_budget
 ):
     reader_study = ReaderStudyFactory(

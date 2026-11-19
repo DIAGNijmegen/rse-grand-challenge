@@ -121,7 +121,9 @@ def test_update_multiple_reader_studies_credits_consumed(
     reader_studies = ReaderStudyFactory.create_batch(3)
 
     session_utilization = SessionUtilizationFactory(
-        duration=timedelta(hours=3)
+        duration=timedelta(
+            hours=3
+        )  # 3 hours * 500 credits/hour = 1500 credits
     )
     session_utilization.reader_studies.set(reader_studies)
 
