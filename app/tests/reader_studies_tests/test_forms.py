@@ -611,6 +611,8 @@ reader_study_non_copy_fields = {
     "created",
     "modified",
     "max_credits",
+    "credits_consumed",
+    "has_budget",
     "workstation_sessions",
     "actor_actions",
     "target_actions",
