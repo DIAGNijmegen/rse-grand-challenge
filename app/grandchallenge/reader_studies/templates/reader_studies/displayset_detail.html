@@ -14,6 +14,7 @@
 {% endblock %}
 
 {% block additional_content %}
+    {% if answering_users is not None %}
     <hr/>
     <h3>Answers by Users</h3>
     <div class="pb-3">
@@ -50,5 +51,6 @@
                 </tbody>
             </table>
         </div>
+    {% endif %}
     {% endif %}
 {% endblock %}
