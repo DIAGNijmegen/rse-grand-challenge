@@ -39,7 +39,7 @@
                                 <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit
                             </a>
                             <div class="dropdown-menu phase-nav-dropdown">
-                                {% include "evaluation/partials/phase_navbar.html" with submission_nav=True %}
+                                {% include "evaluation/partials/phase_dropdown_items.html" with submission_nav=True %}
                             </div>
                         </li>
                         <li class="nav-item dropdown">
@@ -47,7 +47,7 @@
                                 <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
                             </a>
                             <div class="dropdown-menu phase-nav-dropdown">
-                                {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
+                                {% include "evaluation/partials/phase_dropdown_items.html" with leaderboard_nav=True %}
                             </div>
                         </li>
                     {% elif challenge.first_visible_phase and not challenge.hidden %}
@@ -56,7 +56,7 @@
                                 <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
                             </a>
                             <div class="dropdown-menu phase-nav-dropdown">
-                                {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
+                                {% include "evaluation/partials/phase_dropdown_items.html" with leaderboard_nav=True %}
                             </div>
                         </li>
                     {% endif %}
