@@ -13,7 +13,9 @@
 
 {% endblock %}
 
-{% block additional_content %}
+{% block content %}
+    {{ block.super }}
+
     {% if answering_users is not None %}
     <hr/>
     <h3>Answers by Users</h3>
