@@ -76,6 +76,13 @@ cost_fixtures:
 		gc.localhost \
 		python manage.py runscript cost_fixtures
 
+bulk_content_fixtures:
+	docker compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
+		--rm \
+		gc.localhost \
+		python manage.py runscript bulk_content_fixtures
+
 component_interface_value_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
