@@ -503,7 +503,7 @@ def test_display_set_detail_without_answers(client):
     )
 
     assert reader_response.status_code == 200
-    assert list(reader_response.context["answering_users"]) == []
+    assert "answering_users" not in reader_response.context
     assert not reader_response.context[
         "user_can_launch_viewer"
     ], "Reader should not be able to launch viewer when out of budget"
@@ -567,6 +567,7 @@ def test_display_set_detail_lists_users_with_answers(client):
     ]
 
     editor_content = editor_response.rendered_content
+    assert "Answers by Users" in editor_content, "Section is shown"
     assert "View User's Answers" in editor_content
     assert "out of budget" not in editor_content
 
@@ -577,12 +578,13 @@ def test_display_set_detail_lists_users_with_answers(client):
         user=answered_user,
     )
     assert reader_response.status_code == 200
-    assert list(reader_response.context["answering_users"]) == [
-        answered_user,
-    ], "Only the user themselves should be listed when they are a reader and have answered"
+    assert (
+        "answering_users" not in reader_response.context
+    ), "Only users with change permission get the answering users"
 
     reader_content = str(reader_response.rendered_content)
-    assert "View User's Answers" in reader_content
+    assert "Answers by Users" not in reader_content, "Section is not shown"
+    assert "View User's Answers" not in reader_content
     assert "out of budget" in reader_content
 
 
