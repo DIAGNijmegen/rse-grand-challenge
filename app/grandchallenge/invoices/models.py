@@ -1,7 +1,9 @@
 import math
 import uuid
+from collections.abc import Sequence
 from datetime import timedelta
 from functools import cached_property
+from typing import NamedTuple
 
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -33,6 +35,64 @@ from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
     send_prepaid_invoice_paid_notification_emails,
 )
+
+
+class InvoiceStorageState(NamedTuple):
+    pk: int
+    compute_costs_euros: int
+    storage_costs_euros: int
+    compute_cost_euro_millicents: int
+    storage_cost_euro_millicents: int
+    storage_price_euro_millicents_per_gb: int
+
+
+def _capacity_gb(*, invoice: InvoiceStorageState) -> float:
+    price = invoice.storage_price_euro_millicents_per_gb
+
+    if price == 0:
+        return 0
+    else:
+        remaining_millicents = max(
+            (invoice.compute_costs_euros + invoice.storage_costs_euros)
+            * 100_000
+            - invoice.compute_cost_euro_millicents
+            - invoice.storage_cost_euro_millicents,
+            0,
+        )
+        return remaining_millicents / price
+
+
+def allocate_storage_costs(
+    *, invoices: Sequence[InvoiceStorageState], unassigned_gb: float
+) -> dict[int, int]:
+    """
+    Allocates unassigned storage GB to invoices, in the order given.
+    Any GB left over are added to the last invoice at its own
+    price. The caller is responsible for sorting invoices by priority.
+    """
+    costs = {
+        invoice.pk: invoice.storage_cost_euro_millicents
+        for invoice in invoices
+    }
+
+    if unassigned_gb <= 0 or not invoices:
+        return costs
+    else:
+        remaining_gb = unassigned_gb
+
+        for invoice in invoices:
+            assigned_gb = min(_capacity_gb(invoice=invoice), remaining_gb)
+            costs[invoice.pk] += round(
+                assigned_gb * invoice.storage_price_euro_millicents_per_gb
+            )
+            remaining_gb -= assigned_gb
+
+        last_invoice = invoices[-1]
+        costs[last_invoice.pk] += round(
+            remaining_gb * last_invoice.storage_price_euro_millicents_per_gb
+        )
+
+        return costs
 
 
 class PaymentStatusChoices(models.TextChoices):
