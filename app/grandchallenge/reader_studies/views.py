@@ -1546,18 +1546,6 @@ class DisplaySetDetailView(CIVSetDetail):
     permission_required = "reader_studies.view_displayset"
     template_name = "reader_studies/displayset_detail.html"
 
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .prefetch_related(
-                Prefetch(
-                    "reader_study",
-                    queryset=ReaderStudy.objects.with_has_budget(),
-                )
-            )
-        )
-
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
