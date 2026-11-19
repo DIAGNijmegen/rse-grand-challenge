@@ -167,6 +167,10 @@ def default_invoice_expiry():
     )
 
 
+def default_storage_price_euro_millicents_per_gb() -> int:
+    return settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB
+
+
 class Invoice(models.Model, FieldChangeMixin):
     objects = InvoiceQuerySet.as_manager()
 
@@ -225,6 +229,16 @@ class Invoice(models.Model, FieldChangeMixin):
     )
     storage_costs_euros = models.PositiveIntegerField(
         help_text="The storage costs in Euros"
+    )
+    storage_price_euro_millicents_per_gb = models.PositiveIntegerField(
+        help_text="The price of storage in Euro millicents per GB, fixed when the invoice is created",
+        default=default_storage_price_euro_millicents_per_gb,
+        editable=False,
+    )
+    storage_cost_euro_millicents = models.PositiveBigIntegerField(
+        help_text="The utilized storage costs in Euro millicents (cached from storage usage)",
+        default=0,
+        editable=False,
     )
 
     internal_invoice_number = models.CharField(

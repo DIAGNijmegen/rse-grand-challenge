@@ -140,6 +140,8 @@ class InvoiceAdmin(admin.ModelAdmin):
                     "approved_compute_cost",
                     "consumed_compute_cost",
                     "write_off_compute_cost",
+                    "storage_price_euro_millicents_per_gb",
+                    "storage_cost_euro_millicents",
                 ]
             },
         ),
@@ -166,6 +168,8 @@ class InvoiceAdmin(admin.ModelAdmin):
         "approved_compute_cost",
         "consumed_compute_cost",
         "write_off_compute_cost",
+        "storage_price_euro_millicents_per_gb",
+        "storage_cost_euro_millicents",
         "invoice_consumed_compute_cost",
         "total_amount_euros",
         "is_expired",
