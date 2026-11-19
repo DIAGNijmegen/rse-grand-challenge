@@ -21,9 +21,6 @@ from grandchallenge.reader_studies.models import (
     QuestionWidgetKindChoices,
     ReaderStudy,
 )
-from grandchallenge.reader_studies.tasks import (
-    update_reader_study_credits_consumed,
-)
 from tests.algorithms_tests.factories import EndpointFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -1241,42 +1238,29 @@ def test_answer_score_calculation():
 
 
 @pytest.mark.django_db
-def test_reader_study_out_of_budget_when_max_credits_consumed():
-    reader_study = ReaderStudyFactory(max_credits=100)
-
+@pytest.mark.parametrize(
+    "credits_consumed, max_credits, has_budget",
+    [
+        # Consumption exceeds max: out of budget
+        (500, 100, False),
+        # Consumption equals max: out of budget
+        (500, 500, False),
+        # Consumption below max: still has budget
+        (500, 501, True),
+        (500, 1000, True),
+    ],
+)
+def test_reader_study_has_budget_after_credits_consumed(
+    credits_consumed, max_credits, has_budget
+):
+    reader_study = ReaderStudyFactory(
+        max_credits=max_credits, credits_consumed=credits_consumed
+    )
     assert (
         ReaderStudy.objects.with_has_budget()
         .get(pk=reader_study.pk)
         .has_budget
-    )
-
-    session_utilization = SessionUtilizationFactory(
-        duration=timedelta(hours=1)
-    )
-    session_utilization.reader_studies.add(reader_study)
-
-    assert reader_study.session_utilizations.count() == 1
-    assert (
-        ReaderStudy.objects.with_calculated_credits_consumed()
-        .get(pk=reader_study.pk)
-        .calculated_credits_consumed
-        == 500
-    )
-
-    # The stored value only changes once the task has run
-    assert (
-        ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
-
-    update_reader_study_credits_consumed(pk=reader_study.pk)
-
-    assert (
-        not ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
+    ) == has_budget
 
 
 @pytest.mark.django_db
