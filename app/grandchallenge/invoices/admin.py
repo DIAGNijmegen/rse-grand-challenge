@@ -73,6 +73,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "payment_type",
         "payment_status",
         "total_amount_euros",
+        "storage_cost_euro_millicents",
         "percent_compute_budget_consumed_display",
         "issued_on",
         "expires_on",
