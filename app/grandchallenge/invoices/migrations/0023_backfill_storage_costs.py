@@ -1,17 +1,13 @@
-from collections.abc import Sequence
-
 from django.db import migrations
+from django.db.models import Prefetch, Q
 
-from grandchallenge.invoices.models import (
-    InvoiceStorageState,
-    allocate_storage_costs,
-)
+from grandchallenge.invoices.models import allocate_storage_costs
 
 GIGABYTE = 1024**3
 PROGRESS_INTERVAL = 50
 
 
-def is_budget_authorized(*, invoice, has_paid_prepaid_invoice: bool) -> bool:
+def is_budget_authorized(*, invoice, has_paid_prepaid_invoice):
     if invoice.payment_status == "CANCELLED":
         return False
     elif invoice.payment_type == "COMPLIMENTARY":
@@ -24,7 +20,7 @@ def is_budget_authorized(*, invoice, has_paid_prepaid_invoice: bool) -> bool:
         return False
 
 
-def authorized_invoices_in_priority_order(*, invoices: Sequence) -> list:
+def authorized_invoices(*, invoices):
     has_paid_prepaid_invoice = any(
         invoice.payment_type == "PREPAID"
         and invoice.payment_status == "PAID"
@@ -32,7 +28,7 @@ def authorized_invoices_in_priority_order(*, invoices: Sequence) -> list:
         for invoice in invoices
     )
 
-    authorized = [
+    return [
         invoice
         for invoice in invoices
         if is_budget_authorized(
@@ -40,17 +36,8 @@ def authorized_invoices_in_priority_order(*, invoices: Sequence) -> list:
         )
     ]
 
-    return sorted(
-        authorized,
-        key=lambda invoice: (
-            invoice.payment_status != "PAID",
-            invoice.expires_on,
-            invoice.created,
-        ),
-    )
 
-
-def unassigned_gb_for_challenge(*, challenge, invoices: Sequence) -> float:
+def unassigned_gb_for_challenge(*, challenge, invoices):
     size_gb = (
         challenge.size_in_storage + challenge.size_in_registry
     ) / GIGABYTE
@@ -73,7 +60,15 @@ def backfill(apps, schema_editor):
         Challenge.objects.filter(invoices__isnull=False)
         .distinct()
         .only("pk", "size_in_storage", "size_in_registry")
-        .prefetch_related("invoices")
+        # prefetch invoices in utlization priority order
+        .prefetch_related(
+            Prefetch(
+                "invoices",
+                queryset=Invoice.objects.annotate(
+                    is_paid=Q(payment_status="PAID")
+                ).order_by("-is_paid", "expires_on", "created"),
+            )
+        )
     )
 
     total = len(challenges)
@@ -83,9 +78,7 @@ def backfill(apps, schema_editor):
         if count % PROGRESS_INTERVAL == 0 or count == total:
             print(f"Processed {count}/{total} challenges")
 
-        invoices = authorized_invoices_in_priority_order(
-            invoices=challenge.invoices.all()
-        )
+        invoices = authorized_invoices(invoices=challenge.invoices.all())
 
         if not invoices:
             print(
@@ -95,26 +88,17 @@ def backfill(apps, schema_editor):
             continue
         else:
             new_costs = allocate_storage_costs(
-                invoices=[
-                    InvoiceStorageState(
-                        pk=invoice.pk,
-                        compute_costs_euros=invoice.compute_costs_euros,
-                        storage_costs_euros=invoice.storage_costs_euros,
-                        compute_cost_euro_millicents=invoice.compute_cost_euro_millicents,
-                        storage_cost_euro_millicents=invoice.storage_cost_euro_millicents,
-                        storage_price_euro_millicents_per_gb=invoice.storage_price_euro_millicents_per_gb,
-                    )
-                    for invoice in invoices
-                ],
+                invoices=invoices,
                 unassigned_gb=unassigned_gb_for_challenge(
                     challenge=challenge, invoices=invoices
                 ),
             )
 
             for invoice in invoices:
-                new_cost = new_costs[invoice.pk]
-                if new_cost != invoice.storage_cost_euro_millicents:
-                    invoice.storage_cost_euro_millicents = new_cost
+                if invoice.pk in new_costs:
+                    invoice.storage_cost_euro_millicents = new_costs[
+                        invoice.pk
+                    ]
                     changed.append(invoice)
 
     print(f"Updating storage costs of {len(changed)} invoices")
