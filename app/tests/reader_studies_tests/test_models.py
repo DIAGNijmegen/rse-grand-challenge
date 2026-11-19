@@ -1238,32 +1238,29 @@ def test_answer_score_calculation():
 
 
 @pytest.mark.django_db
-def test_reader_study_out_of_budget_when_max_credits_consumed():
-    reader_study = ReaderStudyFactory(max_credits=100)
-
+@pytest.mark.parametrize(
+    "credits_consumed, max_credits, has_budget",
+    [
+        # Consumption exceeds max: out of budget
+        (500, 100, False),
+        # Consumption equals max: out of budget
+        (500, 500, False),
+        # Consumption below max: still has budget
+        (500, 501, True),
+        (500, 1000, True),
+    ],
+)
+def test_reader_study_with_has_budget(
+    credits_consumed, max_credits, has_budget
+):
+    reader_study = ReaderStudyFactory(
+        max_credits=max_credits, credits_consumed=credits_consumed
+    )
     assert (
         ReaderStudy.objects.with_has_budget()
         .get(pk=reader_study.pk)
         .has_budget
-    )
-
-    session_utilization = SessionUtilizationFactory(
-        duration=timedelta(hours=1)
-    )
-    session_utilization.reader_studies.add(reader_study)
-
-    assert reader_study.session_utilizations.count() == 1
-    assert (
-        ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .credits_consumed
-        == 500
-    )
-    assert (
-        not ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
+    ) == has_budget
 
 
 @pytest.mark.django_db
@@ -1286,8 +1283,8 @@ def test_reader_study_session_credits_consumed_divided():
     assert other_session_utilization.credits_consumed == 1000
 
     credits_consumed = {
-        rs.pk: rs.credits_consumed
-        for rs in ReaderStudy.objects.with_has_budget()
+        rs.pk: rs.calculated_credits_consumed
+        for rs in ReaderStudy.objects.with_calculated_credits_consumed()
     }
 
     assert credits_consumed[reader_studies[0].pk] == 1000
@@ -1317,8 +1314,8 @@ def test_reader_study_endpoint_credits_consumed_divided():
     assert other_endpoint_utilization.credits_consumed == 4
 
     credits_consumed = {
-        rs.pk: rs.credits_consumed
-        for rs in ReaderStudy.objects.with_has_budget()
+        rs.pk: rs.calculated_credits_consumed
+        for rs in ReaderStudy.objects.with_calculated_credits_consumed()
     }
 
     assert credits_consumed[reader_studies[0].pk] == 4

@@ -1,8 +1,10 @@
+import math
 from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.settings import MAX_DELAY
 
 from config.lambda_tasks import (
     LONG_TASK_HARD_TIMEOUT,
@@ -180,3 +182,28 @@ def copy_reader_study_display_sets(*, orig_pk: str | UUID, new_pk: str | UUID):
             title=ds.title,
         )
         new_ds.values.set(ds.values.all())
+
+
+@lambda_task
+def update_reader_studies_credits_consumed():
+    seconds_per_task = math.ceil(
+        MAX_DELAY / max(ReaderStudy.objects.count(), 1)
+    )
+
+    for idx, reader_study in enumerate(ReaderStudy.objects.only("pk")):
+        update_reader_study_credits_consumed.execute_on_commit(
+            pk=reader_study.pk,
+            _delay=(idx * seconds_per_task) % MAX_DELAY,
+        )
+
+
+@lambda_task
+def update_reader_study_credits_consumed(*, pk: str | UUID):
+    calculated_credits_consumed = (
+        ReaderStudy.objects.with_calculated_credits_consumed()
+        .values_list("calculated_credits_consumed", flat=True)
+        .get(pk=pk)
+    )
+    ReaderStudy.objects.filter(pk=pk).update(
+        credits_consumed=calculated_credits_consumed
+    )

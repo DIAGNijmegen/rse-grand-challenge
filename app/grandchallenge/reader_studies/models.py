@@ -212,7 +212,7 @@ class ReaderStudyQuerySet(models.QuerySet):
             ),
         )
 
-    def with_has_budget(self):
+    def with_calculated_credits_consumed(self):
         session_credits_subquery = Subquery(
             SessionUtilizationReaderStudy.objects.filter(
                 reader_study=OuterRef("pk")
@@ -266,10 +266,14 @@ class ReaderStudyQuerySet(models.QuerySet):
         )
 
         return self.annotate(
-            credits_consumed=(
+            calculated_credits_consumed=(
                 Coalesce(session_credits_subquery, Value(0))
                 + Coalesce(endpoint_credits_subquery, Value(0))
             ),
+        )
+
+    def with_has_budget(self):
+        return self.annotate(
             has_budget=Q(max_credits__isnull=True)
             | Q(credits_consumed__lt=F("max_credits")),
         )
@@ -470,6 +474,11 @@ class ReaderStudy(
         null=True,
         blank=True,
         help_text="The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.",
+    )
+    credits_consumed = models.PositiveBigIntegerField(
+        default=0,
+        editable=False,
+        help_text="The number of credits consumed by this reader study, updated periodically by a background task.",
     )
 
     objects = ReaderStudyQuerySet.as_manager()
