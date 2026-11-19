@@ -1,0 +1,58 @@
+{% extends "components/civ_set_detail.html" %}
+{% load profiles %}
+{% load workstations %}
+
+{% block view_button_attributes %}
+    {{ block.super }}
+
+    {% if user_can_launch_viewer %}
+        {% workstation_session_control_data workstation=object.base_object.workstation context_object=object display_set=object config=object.base_object.workstation_config %}
+    {% else %}
+        disabled title="Reader study is out of budget and cannot be launched"
+    {% endif %}
+
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+
+    {% if answering_users is not None %}
+    <hr/>
+    <h3>Answers by Users</h3>
+    <div class="pb-3">
+        {% with count=answering_users|length %}
+            There {{ count|pluralize:"is,are" }} <strong>{{ count }} user{{ count|pluralize }}</strong>
+            that {{ count|pluralize:"has,have" }} answered a question for this display set.
+        {% endwith %}
+    </div>
+
+    {% if answering_users %}
+        <div class="table-responsive table-sm">
+            <table class="table table-hover">
+                <thead class="thead-light">
+                    <th>User</th>
+                    <th>Action</th>
+                </thead>
+                <tbody>
+                    {% for answering_user in answering_users %}
+                        <tr>
+                            <td class="py-3 align-middle w-100">{{ answering_user|user_profile_link }}</td>
+                            <td class="py-3 align-middle text-nowrap">
+                                <button class="btn btn-primary"
+                                    {% if user_can_launch_viewer %}
+                                        {% workstation_session_control_data workstation=object.reader_study.workstation context_object=object display_set=object reader_study=object.reader_study user=answering_user config=object.reader_study.workstation_config %}
+                                    {% else %}
+                                        disabled title="Reader study is out of budget and cannot be launched"
+                                    {% endif %}
+                                >
+                                    <i class="fas fa-eye"></i> View User's Answers
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+    {% endif %}
+{% endblock %}

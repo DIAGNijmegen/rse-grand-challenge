@@ -470,6 +470,125 @@ def test_display_set_detail_permissions(client):
 
 
 @pytest.mark.django_db
+def test_display_set_detail_without_answers(client):
+    rs = ReaderStudyFactory(max_credits=0)  # out of budget
+    editor = UserFactory()
+    rs.add_editor(editor)
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    ds = DisplaySetFactory(reader_study=rs)
+
+    editor_response = get_view_for_user(
+        viewname="reader-studies:display-set-detail",
+        client=client,
+        reverse_kwargs={"slug": rs.slug, "pk": ds.pk},
+        user=editor,
+    )
+
+    assert editor_response.status_code == 200
+    assert list(editor_response.context["answering_users"]) == []
+    assert editor_response.context[
+        "user_can_launch_viewer"
+    ], "Editor should be able to launch viewer even when out of budget"
+
+    editor_content = editor_response.rendered_content
+    assert "View User's Answers" not in editor_content
+
+    reader_response = get_view_for_user(
+        viewname="reader-studies:display-set-detail",
+        client=client,
+        reverse_kwargs={"slug": rs.slug, "pk": ds.pk},
+        user=reader,
+    )
+
+    assert reader_response.status_code == 200
+    assert "answering_users" not in reader_response.context
+    assert not reader_response.context[
+        "user_can_launch_viewer"
+    ], "Reader should not be able to launch viewer when out of budget"
+
+    reader_content = reader_response.rendered_content
+    assert "View User's Answers" not in reader_content
+
+
+@pytest.mark.django_db
+def test_display_set_detail_lists_users_with_answers(client):
+    rs = ReaderStudyFactory(max_credits=0)  # out of budget
+    editor = UserFactory()
+    rs.add_editor(editor)
+
+    ds = DisplaySetFactory(reader_study=rs)
+    other_ds = DisplaySetFactory(reader_study=rs)
+    question = QuestionFactory(reader_study=rs)
+
+    answered_user = UserFactory()
+    answered_user_not_a_reader = UserFactory()
+    other_ds_user = UserFactory()
+    no_answer_user = UserFactory()
+    ground_truth_user = UserFactory()
+
+    for user in answered_user, other_ds_user, no_answer_user:
+        rs.add_reader(user)
+
+    AnswerFactory(
+        creator=answered_user, question=question, display_set=ds, answer="a"
+    )
+    AnswerFactory(
+        creator=answered_user_not_a_reader,
+        question=question,
+        display_set=ds,
+        answer="a",
+    )
+    AnswerFactory(
+        creator=other_ds_user,
+        question=question,
+        display_set=other_ds,
+        answer="a",
+    )
+    AnswerFactory(
+        creator=ground_truth_user,
+        question=question,
+        display_set=ds,
+        answer="a",
+        is_ground_truth=True,
+    )
+
+    editor_response = get_view_for_user(
+        viewname="reader-studies:display-set-detail",
+        client=client,
+        reverse_kwargs={"slug": rs.slug, "pk": ds.pk},
+        user=editor,
+    )
+    assert editor_response.status_code == 200
+    assert list(editor_response.context["answering_users"]) == [
+        answered_user,
+        answered_user_not_a_reader,
+    ]
+
+    editor_content = editor_response.rendered_content
+    assert "Answers by Users" in editor_content, "Section is shown"
+    assert "View User's Answers" in editor_content
+    assert "out of budget" not in editor_content
+
+    reader_response = get_view_for_user(
+        viewname="reader-studies:display-set-detail",
+        client=client,
+        reverse_kwargs={"slug": rs.slug, "pk": ds.pk},
+        user=answered_user,
+    )
+    assert reader_response.status_code == 200
+    assert (
+        "answering_users" not in reader_response.context
+    ), "Only users with change permission get the answering users"
+
+    reader_content = str(reader_response.rendered_content)
+    assert "Answers by Users" not in reader_content, "Section is not shown"
+    assert "View User's Answers" not in reader_content
+    assert "out of budget" in reader_content
+
+
+@pytest.mark.django_db
 def test_display_set_update(
     client, settings, django_capture_on_commit_callbacks
 ):
