@@ -622,7 +622,11 @@ def test_session_create_reader_study_out_of_budget(client):
     reader_study.add_reader(user)
     path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
 
-    assert not ReaderStudy.objects.get(pk=reader_study.pk).has_budget
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
     assert Session.objects.count() == 0
 
     # reader cannot launch study
@@ -666,7 +670,11 @@ def test_session_create_for_out_of_budget_rs_does_not_preload_algorithms_or_crea
     QuestionFactory(reader_study=reader_study)
     reader_study.add_editor(editor)
 
-    assert not ReaderStudy.objects.get(pk=reader_study.pk).has_budget
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
     assert Session.objects.count() == 0
 
     mock_preload_interactive_algs_task = mocker.patch(

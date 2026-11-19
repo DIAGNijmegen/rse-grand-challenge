@@ -276,7 +276,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
     model = ReaderStudy
     permission_required = "reader_studies.view_readerstudy"
     raise_exception = True
-    queryset = ReaderStudy.objects.all().prefetch_related(
+    queryset = ReaderStudy.objects.with_has_budget().prefetch_related(
         "optional_hanging_protocols"
     )
 
@@ -432,6 +432,7 @@ class ReaderStudyStatistics(
     permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     template_name = "reader_studies/readerstudy_statistics.html"
+    queryset = ReaderStudy.objects.with_has_budget()
     # TODO: this view also contains the ground truth answer values.
     # If the permission is changed to 'read', we need to filter these values out.
 
@@ -443,6 +444,7 @@ class ReaderStudyUsage(
     permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     template_name = "reader_studies/readerstudy_usage.html"
+    queryset = ReaderStudy.objects.with_has_budget()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -614,7 +616,7 @@ class ReaderStudyDisplaySetList(ObjectPermissionRequiredMixin, CivSetListView):
             "answers",
             Prefetch(
                 "reader_study",
-                queryset=ReaderStudy.objects.all(),
+                queryset=ReaderStudy.objects.with_has_budget(),
             ),
         )
 
@@ -963,6 +965,7 @@ class UsersProgress(
     template_name = "reader_studies/readerstudy_progress.html"
     permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
+    queryset = ReaderStudy.objects.with_has_budget()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1411,7 +1414,7 @@ class AnswerViewSet(
                 queryset=Question.objects.prefetch_related(
                     Prefetch(
                         "reader_study",
-                        queryset=ReaderStudy.objects.all(),
+                        queryset=ReaderStudy.objects.with_has_budget(),
                     )
                 ),
             )
@@ -1545,6 +1548,18 @@ class DisplaySetDetailView(CIVSetDetail):
     model = DisplaySet
     permission_required = "reader_studies.view_displayset"
     template_name = "reader_studies/displayset_detail.html"
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                Prefetch(
+                    "reader_study",
+                    queryset=ReaderStudy.objects.with_has_budget(),
+                )
+            )
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

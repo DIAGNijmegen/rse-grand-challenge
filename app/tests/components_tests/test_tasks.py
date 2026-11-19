@@ -1375,9 +1375,11 @@ def test_preload_interactive_algorithms_excludes_reader_studies_without_budget(
         interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
     )
 
-    assert not ReaderStudy.objects.get(
-        pk=rs_with_exhausted_credit.pk
-    ).has_budget
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=rs_with_exhausted_credit.pk)
+        .has_budget
+    )
 
     with patch(
         "grandchallenge.components.tasks.InteractiveAlgorithmLambda"

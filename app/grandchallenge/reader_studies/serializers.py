@@ -275,7 +275,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         queryset=Question.objects.prefetch_related(
             Prefetch(
                 "reader_study",
-                queryset=ReaderStudy.objects.all(),
+                queryset=ReaderStudy.objects.with_has_budget(),
             )
         ),
     )
