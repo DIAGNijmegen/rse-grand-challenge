@@ -14,8 +14,6 @@ $pagination-active-bg: darken($blue, 15%);
 $pagination-hover-bg: darken($blue, 15%);
 $pagination-disabled-bg: lighten($blue, 15%);
 
-$card-height: 100%;
-
 @import "bootstrap/scss/bootstrap";
 @import "bootswatch/dist/flatly/bootswatch";
 @import "datatables";
