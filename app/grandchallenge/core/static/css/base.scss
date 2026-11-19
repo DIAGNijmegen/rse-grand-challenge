@@ -129,6 +129,10 @@ a.mark:hover {
     z-index: 1001;  // place above .vega-embed summary
 }
 
+.ratio > .vega-embed {
+    position: absolute;
+}
+
 .bg-gray-100 {
     background-color: $gray-100;
 }
