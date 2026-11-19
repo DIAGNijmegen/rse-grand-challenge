@@ -51,16 +51,19 @@ class ChallengeUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
+        # Add .p-3 because the tab-content is missing padding from crispy-bootstrap5,
+        # see https://github.com/django-crispy-forms/crispy-bootstrap5/issues/228
         self.helper.layout = Layout(
             TabHolder(
                 Tab(
                     "Information",
                     *information_items,
+                    css_class="p-3",
                 ),
-                Tab("Images", *images_items),
-                Tab("Event", *event_items),
-                Tab("Registration", *registration_items),
-                Tab("Teams", "use_teams"),
+                Tab("Images", *images_items, css_class="p-3"),
+                Tab("Event", *event_items, css_class="p-3"),
+                Tab("Registration", *registration_items, css_class="p-3"),
+                Tab("Teams", "use_teams", css_class="p-3"),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
