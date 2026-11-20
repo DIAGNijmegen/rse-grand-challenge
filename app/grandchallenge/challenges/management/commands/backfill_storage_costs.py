@@ -1,7 +1,7 @@
 import math
 from typing import NamedTuple
 
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
 from grandchallenge.challenges.costs import (
     allocate_storage_costs_for_challenge,
@@ -114,6 +114,51 @@ def top_up_euros(*, result):
     return math.ceil(result.budget_before / EURO_MILLICENTS)
 
 
+def validate_simulated_price(*, simulated_price, dry_run):
+    if simulated_price is None:
+        pass
+    elif not dry_run:
+        raise CommandError(
+            "--storage-price-euro-millicents-per-gb requires --dry-run"
+        )
+    elif simulated_price <= 0:
+        raise CommandError(
+            "--storage-price-euro-millicents-per-gb must be above 0"
+        )
+    else:
+        pass
+
+
+def allocate(*, challenge, simulated_price):
+    """
+    Allocates the storage of the challenge, expired invoices included. A
+    simulated price replaces the price on the invoices in memory only.
+    """
+    if simulated_price is None:
+        pass
+    else:
+        for invoice in challenge.invoices.all():
+            invoice.storage_price_euro_millicents_per_gb = simulated_price
+
+    return allocate_storage_costs_for_challenge(
+        challenge=challenge, include_expired=True
+    )
+
+
+def challenge_result(*, challenge, new_costs):
+    impact = budget_impact(challenge=challenge, new_costs=new_costs)
+    unallocated = unallocated_storage(challenge=challenge)
+
+    return ChallengeResult(
+        short_name=challenge.short_name,
+        budget_before=impact.before,
+        budget_after=impact.after,
+        is_accepting_submissions=is_accepting_submissions(challenge=challenge),
+        unallocated_gb=unallocated.gb,
+        unallocated_reason=unallocated.reason,
+    )
+
+
 def table(*, header, alignments, rows):
     lines = [
         f"| {' | '.join(header)} |",
@@ -138,10 +183,23 @@ class Command(BaseCommand):
             action="store_true",
             help="Report the changes without saving them",
         )
+        parser.add_argument(
+            "--storage-price-euro-millicents-per-gb",
+            type=int,
+            help=(
+                "Only with --dry-run: simulate this storage price instead of "
+                "the price on each invoice"
+            ),
+        )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
+        simulated_price = options["storage_price_euro_millicents_per_gb"]
         self.stderr.style_func = None
+
+        validate_simulated_price(
+            simulated_price=simulated_price, dry_run=dry_run
+        )
 
         challenges = list(
             Challenge.objects.with_invoices_with_utilization_priority()
@@ -155,23 +213,11 @@ class Command(BaseCommand):
         results = []
 
         for count, challenge in enumerate(challenges, start=1):
-            new_costs = allocate_storage_costs_for_challenge(
-                challenge=challenge, include_expired=True
+            new_costs = allocate(
+                challenge=challenge, simulated_price=simulated_price
             )
-            impact = budget_impact(challenge=challenge, new_costs=new_costs)
-            unallocated = unallocated_storage(challenge=challenge)
-
             results.append(
-                ChallengeResult(
-                    short_name=challenge.short_name,
-                    budget_before=impact.before,
-                    budget_after=impact.after,
-                    is_accepting_submissions=is_accepting_submissions(
-                        challenge=challenge
-                    ),
-                    unallocated_gb=unallocated.gb,
-                    unallocated_reason=unallocated.reason,
-                )
+                challenge_result(challenge=challenge, new_costs=new_costs)
             )
 
             for invoice, new_cost in new_costs.items():
@@ -191,11 +237,14 @@ class Command(BaseCommand):
             )
 
         for line in self.report(
-            results=results, updated=len(changed), dry_run=dry_run
+            results=results,
+            updated=len(changed),
+            dry_run=dry_run,
+            simulated_price=simulated_price,
         ):
             self.stdout.write(line)
 
-    def report(self, *, results, updated, dry_run):
+    def report(self, *, results, updated, dry_run, simulated_price):
         out_of_budget = sorted(
             (result for result in results if is_out_of_budget(result=result)),
             key=lambda result: -result.budget_before,
@@ -235,6 +284,15 @@ class Command(BaseCommand):
         else:
             mode = f"**Applied.** {updated} invoices got storage costs."
 
+        if simulated_price is None:
+            price = "Storage price: the price frozen on each invoice."
+        else:
+            price = (
+                f"**Simulated storage price: {simulated_price:,} euro "
+                f"millicents per GB ({simulated_price / EURO_MILLICENTS:.2f} "
+                "EUR)**, instead of the price on each invoice."
+            )
+
         top_ups = sum(top_up_euros(result=result) for result in out_of_budget)
         accepting_top_ups = sum(
             top_up_euros(result=result)
@@ -256,6 +314,8 @@ class Command(BaseCommand):
             "# Storage cost backfill report",
             "",
             mode,
+            "",
+            price,
             "",
             "Budget before is the available compute budget. Budget after is the available compute "
             "and storage budget with the new storage costs. Amounts are in EUR.",
