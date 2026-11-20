@@ -916,6 +916,9 @@ COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION = os.environ.get(
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
+# Theme name must match the select2-bootstrap-5-theme CSS selectors
+SELECT2_THEME = "bootstrap-5"
+
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
