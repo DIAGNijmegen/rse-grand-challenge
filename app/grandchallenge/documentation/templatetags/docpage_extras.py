@@ -5,16 +5,32 @@ from grandchallenge.subdomains.utils import reverse
 register = template.Library()
 
 
+# Number of nesting levels rendered in the sidebar. This must match the
+# children prefetch in DocPageDetail.get_context_data.
+SIDEBAR_MAX_DEPTH = 4
+
+
 @register.simple_tag
-def get_subordinate_pages(page):
-    subordinate_pages = []
-    for child in page.children.all():
-        subordinate_pages.append(child)
-        for grandchild in child.children.all():
-            subordinate_pages.append(grandchild)
-            for greatgrandchild in grandchild.children.all():
-                subordinate_pages.append(greatgrandchild)
-    return subordinate_pages
+def get_active_page_ids(top_level_pages, current_page):
+    """
+    Return the ids of the current page and all of its ancestors.
+    """
+
+    def find_path(pages, depth):
+        if depth >= SIDEBAR_MAX_DEPTH:
+            return None
+
+        for page in pages:
+            if page.pk == current_page.pk:
+                return [page.pk]
+
+            path = find_path(page.children.all(), depth + 1)
+            if path is not None:
+                return [page.pk, *path]
+
+        return None
+
+    return set(find_path(top_level_pages, 0) or [])
 
 
 @register.simple_tag
