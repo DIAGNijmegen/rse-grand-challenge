@@ -1,5 +1,5 @@
 import math
-from collections import namedtuple
+from typing import NamedTuple
 
 from django.core.management import BaseCommand
 
@@ -10,8 +10,26 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import Invoice
 
 EURO_MILLICENTS = 100_000
+PROGRESS_INTERVAL = 50
 
-BudgetImpact = namedtuple("BudgetImpact", ["before", "after"])
+
+class BudgetImpact(NamedTuple):
+    before: int
+    after: int
+
+
+class UnallocatedStorage(NamedTuple):
+    gb: float
+    reason: str
+
+
+class ChallengeResult(NamedTuple):
+    short_name: str
+    budget_before: int
+    budget_after: int
+    is_accepting_submissions: bool
+    unallocated_gb: float
+    unallocated_reason: str
 
 
 def available_total_euro_millicents(*, invoice, storage_cost_euro_millicents):
@@ -19,12 +37,10 @@ def available_total_euro_millicents(*, invoice, storage_cost_euro_millicents):
         approved = (
             invoice.compute_costs_euros + invoice.storage_costs_euros
         ) * EURO_MILLICENTS
-        consumed = min(
-            invoice.compute_cost_euro_millicents
-            + storage_cost_euro_millicents,
-            approved,
+        consumed = (
+            invoice.compute_cost_euro_millicents + storage_cost_euro_millicents
         )
-        return approved - consumed
+        return max(approved - consumed, 0)
     else:
         return 0
 
@@ -61,175 +77,304 @@ def is_accepting_submissions(*, challenge):
     )
 
 
+def unallocated_storage(*, challenge):
+    """
+    The storage the allocator had nowhere to put. Any overflow lands on the
+    last authorized invoice, so storage is only left over if there is no
+    authorized invoice.
+    """
+    invoices = challenge.invoices.all()
+    unassigned_gb = challenge.unassigned_storage_gb
+
+    if unassigned_gb <= 0:
+        return UnallocatedStorage(gb=0, reason="")
+    elif not invoices:
+        return UnallocatedStorage(gb=unassigned_gb, reason="no invoices")
+    elif not any(invoice.is_budget_authorized for invoice in invoices):
+        return UnallocatedStorage(
+            gb=unassigned_gb, reason="no authorized invoice"
+        )
+    else:
+        return UnallocatedStorage(gb=0, reason="")
+
+
+def euros(*, euro_millicents):
+    return f"{euro_millicents / EURO_MILLICENTS:,.2f}"
+
+
+def euro_change(*, euro_millicents):
+    return f"{euro_millicents / EURO_MILLICENTS:+,.2f}"
+
+
+def is_out_of_budget(*, result):
+    return result.budget_before > 0 and result.budget_after <= 0
+
+
+def top_up_euros(*, result):
+    return math.ceil(result.budget_before / EURO_MILLICENTS)
+
+
+def table(*, header, alignments, rows):
+    lines = [
+        f"| {' | '.join(header)} |",
+        f"|{'|'.join(alignments)}|",
+    ]
+    lines.extend(f"| {' | '.join(row)} |" for row in rows)
+    return lines
+
+
 class Command(BaseCommand):
     help = (
         "Assigns the storage that challenges currently use to their "
-        "authorized invoices, expired invoices included, and reports the "
-        "effect on the available budget. Running it again changes nothing."
+        "authorized invoices, expired invoices included, and prints a "
+        "Markdown report of the effect on the available budget. Progress "
+        "goes to stderr, so the report can be redirected to a file. Running "
+        "it again changes nothing."
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Print the changes without saving them",
+            help="Report the changes without saving them",
         )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
-        prefix = "[DRY RUN] " if dry_run else ""
+        self.stderr.style_func = None
 
         challenges = list(
             Challenge.objects.with_invoices_with_utilization_priority()
-            .filter(invoices__isnull=False)
-            .distinct()
-            .order_by("pk")
+            .order_by("short_name")
             .prefetch_related("phase_set")
             .only("pk", "short_name", "size_in_storage", "size_in_registry")
         )
         total = len(challenges)
 
-        self.stdout.write(
-            self.style.MIGRATE_HEADING(
-                f"{prefix}Backfilling storage costs for {total} challenges"
-            )
-        )
-
         changed = []
-        authorized_without_allocation = 0
-        not_authorized = 0
-        gained = 0
-        lost = 0
-        out_of_budget = []
+        results = []
 
         for count, challenge in enumerate(challenges, start=1):
             new_costs = allocate_storage_costs_for_challenge(
                 challenge=challenge, include_expired=True
             )
             impact = budget_impact(challenge=challenge, new_costs=new_costs)
-            change = impact.after - impact.before
+            unallocated = unallocated_storage(challenge=challenge)
 
-            gained += max(change, 0)
-            lost += max(-change, 0)
-
-            out_of_budget_note = self.out_of_budget_note(
-                challenge=challenge, impact=impact, out_of_budget=out_of_budget
-            )
-            self.stdout.write(
-                f"[{count}/{total}] "
-                f"{self.style.MIGRATE_LABEL(challenge.short_name)}: "
-                f"available budget {impact.before / EURO_MILLICENTS:.2f} -> "
-                f"{impact.after / EURO_MILLICENTS:.2f} EUR "
-                f"{self.colored_change(change=change)}{out_of_budget_note}"
-            )
-
-            for invoice in challenge.invoices.all():
-                if invoice in new_costs:
-                    status = self.style.SUCCESS(
-                        f"storage cost {invoice.storage_cost_euro_millicents}"
-                        f" -> {new_costs[invoice]} euro millicents"
-                    )
-                    invoice.storage_cost_euro_millicents = new_costs[invoice]
-                    changed.append(invoice)
-                elif invoice.is_budget_authorized:
-                    status = "no storage cost allocated"
-                    authorized_without_allocation += 1
-                else:
-                    status = self.style.WARNING(
-                        "not authorized, no storage cost allocated"
-                    )
-                    not_authorized += 1
-
-                self.stdout.write(
-                    f"    invoice {invoice.pk} "
-                    f"({invoice.payment_type}/{invoice.payment_status}, "
-                    f"expires {invoice.expires_on}): {status}"
+            results.append(
+                ChallengeResult(
+                    short_name=challenge.short_name,
+                    budget_before=impact.before,
+                    budget_after=impact.after,
+                    is_accepting_submissions=is_accepting_submissions(
+                        challenge=challenge
+                    ),
+                    unallocated_gb=unallocated.gb,
+                    unallocated_reason=unallocated.reason,
                 )
+            )
+
+            for invoice, new_cost in new_costs.items():
+                invoice.storage_cost_euro_millicents = new_cost
+                changed.append(invoice)
+
+            if count % PROGRESS_INTERVAL == 0 or count == total:
+                self.stderr.write(f"Processed {count}/{total} challenges")
+            else:
+                pass
 
         if dry_run:
-            self.stdout.write(
-                self.style.WARNING(f"{prefix}Nothing was saved.")
-            )
+            pass
         else:
             Invoice.objects.bulk_update(
                 changed, ["storage_cost_euro_millicents"]
             )
 
-        self.write_summary(
-            updated=len(changed),
-            authorized_without_allocation=authorized_without_allocation,
-            not_authorized=not_authorized,
-            gained=gained,
-            lost=lost,
-            out_of_budget=out_of_budget,
-            prefix=prefix,
+        for line in self.report(
+            results=results, updated=len(changed), dry_run=dry_run
+        ):
+            self.stdout.write(line)
+
+    def report(self, *, results, updated, dry_run):
+        out_of_budget = sorted(
+            (result for result in results if is_out_of_budget(result=result)),
+            key=lambda result: -result.budget_before,
+        )
+        reduced = sorted(
+            (
+                result
+                for result in results
+                if result.budget_after < result.budget_before
+                and not is_out_of_budget(result=result)
+            ),
+            key=lambda result: result.budget_after - result.budget_before,
+        )
+        increased = sorted(
+            (
+                result
+                for result in results
+                if result.budget_after > result.budget_before
+            ),
+            key=lambda result: result.budget_before - result.budget_after,
+        )
+        unchanged = [
+            result
+            for result in results
+            if result.budget_after == result.budget_before
+        ]
+        unallocated = sorted(
+            (result for result in results if result.unallocated_reason),
+            key=lambda result: -result.unallocated_gb,
         )
 
-    def colored_change(self, *, change):
-        text = f"({change / EURO_MILLICENTS:+.2f})"
-
-        if change > 0:
-            return self.style.SUCCESS(text)
-        elif change < 0:
-            return self.style.ERROR(text)
-        else:
-            return text
-
-    def out_of_budget_note(self, *, challenge, impact, out_of_budget):
-        if impact.before > 0 and impact.after <= 0:
-            top_up = math.ceil(impact.before / EURO_MILLICENTS)
-            accepting = is_accepting_submissions(challenge=challenge)
-            out_of_budget.append((top_up, accepting))
-
-            note = self.style.ERROR(
-                f" OUT OF BUDGET, top-up needed: {top_up} EUR"
+        if dry_run:
+            mode = (
+                f"**Dry run, nothing was saved.** {updated} invoices would "
+                "get storage costs."
             )
-            if accepting:
-                note += self.style.WARNING(" (accepting submissions)")
-            else:
-                pass
-
-            return note
         else:
-            return ""
+            mode = f"**Applied.** {updated} invoices got storage costs."
 
-    def write_summary(
-        self,
-        *,
-        updated,
-        authorized_without_allocation,
-        not_authorized,
-        gained,
-        lost,
-        out_of_budget,
-        prefix,
-    ):
-        accepting_top_ups = [
-            top_up for top_up, accepting in out_of_budget if accepting
+        top_ups = sum(top_up_euros(result=result) for result in out_of_budget)
+        accepting_top_ups = sum(
+            top_up_euros(result=result)
+            for result in out_of_budget
+            if result.is_accepting_submissions
+        )
+        accepting_count = sum(
+            1 for result in out_of_budget if result.is_accepting_submissions
+        )
+        reduced_total = sum(
+            result.budget_after - result.budget_before
+            for result in reduced + out_of_budget
+        )
+        increased_total = sum(
+            result.budget_after - result.budget_before for result in increased
+        )
+
+        lines = [
+            "# Storage cost backfill report",
+            "",
+            mode,
+            "",
+            "Budget before is the available compute budget. Budget after is the available compute "
+            "and storage budget with the new storage costs. Amounts are in EUR.",
+            "",
+            "## Summary",
+            "",
+            f"- Challenges processed: {len(results)}",
+            f"- Out of budget: {len(out_of_budget)} challenges, "
+            f"{accepting_count} of them accepting submissions",
+            f"- Top-ups needed: {top_ups} EUR in total, "
+            f"{accepting_top_ups} EUR for challenges accepting submissions",
+            f"- Budget reduced: {len(reduced) + len(out_of_budget)} "
+            "challenges (including the ones out of budget), "
+            f"{euro_change(euro_millicents=reduced_total)} EUR in total",
+            f"- Budget increased: {len(increased)} challenges, "
+            f"{euro_change(euro_millicents=increased_total)} EUR in total",
+            f"- Budget unchanged: {len(unchanged)} challenges",
+            f"- Unallocated storage: {len(unallocated)} challenges, "
+            f"{sum(result.unallocated_gb for result in unallocated):,.2f} GB "
+            "in total",
+            "",
         ]
 
-        self.stdout.write(self.style.MIGRATE_HEADING(f"\n{prefix}Summary"))
-        self.stdout.write(
-            f"Invoices {'to update' if prefix else 'updated'}: {updated}"
+        lines += self.section(
+            title=f"Out of budget ({len(out_of_budget)})",
+            description=(
+                "Challenges that had budget before and have none after. The "
+                "top-up is the budget before rounded up to whole euros, to "
+                "put on a complimentary invoice."
+            ),
+            header=(
+                "Challenge",
+                "Budget before",
+                "Budget after",
+                "Top-up",
+                "Accepting submissions",
+            ),
+            alignments=(":---", "---:", "---:", "---:", ":---"),
+            rows=[
+                (
+                    result.short_name,
+                    euros(euro_millicents=result.budget_before),
+                    euros(euro_millicents=result.budget_after),
+                    str(top_up_euros(result=result)),
+                    str(result.is_accepting_submissions),
+                )
+                for result in out_of_budget
+            ],
         )
-        self.stdout.write(
-            "Invoices without allocation: "
-            f"{authorized_without_allocation + not_authorized} "
-            f"({authorized_without_allocation} authorized with nothing to "
-            f"allocate, {not_authorized} not authorized)"
+        lines += self.section(
+            title=f"Budget reduced ({len(reduced)})",
+            description=(
+                "Challenges that still have budget after, but less than "
+                "before. Largest reduction first."
+            ),
+            header=("Challenge", "Budget before", "Budget after", "Change"),
+            alignments=(":---", "---:", "---:", "---:"),
+            rows=[
+                (
+                    result.short_name,
+                    euros(euro_millicents=result.budget_before),
+                    euros(euro_millicents=result.budget_after),
+                    euro_change(
+                        euro_millicents=result.budget_after
+                        - result.budget_before
+                    ),
+                )
+                for result in reduced
+            ],
         )
-        self.stdout.write(
-            "Available budget gained: "
-            + self.style.SUCCESS(f"{gained / EURO_MILLICENTS:.2f} EUR")
-            + ", lost: "
-            + self.style.ERROR(f"{lost / EURO_MILLICENTS:.2f} EUR")
+        lines += self.section(
+            title=f"Budget increased ({len(increased)})",
+            description=(
+                "Challenges whose reserved storage budget is larger than the "
+                "storage costs they get. Largest increase first."
+            ),
+            header=("Challenge", "Budget before", "Budget after", "Change"),
+            alignments=(":---", "---:", "---:", "---:"),
+            rows=[
+                (
+                    result.short_name,
+                    euros(euro_millicents=result.budget_before),
+                    euros(euro_millicents=result.budget_after),
+                    euro_change(
+                        euro_millicents=result.budget_after
+                        - result.budget_before
+                    ),
+                )
+                for result in increased
+            ],
         )
-        self.stdout.write(
-            f"Challenges running out of budget: {len(out_of_budget)}, "
-            f"of which accepting submissions: {len(accepting_top_ups)}"
+        lines += self.section(
+            title=f"Unallocated storage ({len(unallocated)})",
+            description=(
+                "Challenges with data that could not be put on any invoice. "
+                "It will be charged to their next authorized invoice. "
+                "Largest first."
+            ),
+            header=("Challenge", "Unallocated", "Reason"),
+            alignments=(":---", "---:", ":---"),
+            rows=[
+                (
+                    result.short_name,
+                    f"{result.unallocated_gb:,.2f} GB",
+                    result.unallocated_reason,
+                )
+                for result in unallocated
+            ],
         )
-        self.stdout.write(
-            f"Top-ups needed: {sum(top_up for top_up, _ in out_of_budget)} "
-            f"EUR in total, {sum(accepting_top_ups)} EUR for challenges "
-            "accepting submissions"
-        )
+
+        return lines
+
+    def section(self, *, title, description, header, alignments, rows):
+        lines = [f"## {title}", "", description, ""]
+
+        if rows:
+            lines += table(header=header, alignments=alignments, rows=rows)
+        else:
+            lines.append("None.")
+
+        lines.append("")
+        return lines
