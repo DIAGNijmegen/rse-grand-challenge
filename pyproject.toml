@@ -151,6 +151,7 @@ font-awesome = { version = "==5.15.4", include = ["css/all(.min)?.css", "webfont
 bootstrap = { version = "==5.3.8", include = ["js/bootstrap.bundle(.min)?.js(.map)?", "css/bootstrap(.min)?.css(.map)?", "scss/*"] }
 # bootswatch version should match bootstrap, see #4093
 bootswatch = { version = "==5.3.8", provider = "unpkg", include = ["dist/flatly/.*.scss"] }
+select2-bootstrap-5-theme = { version = "==1.3.0", include = ["select2-bootstrap-5-theme(.min)?.css"] }
 floating-scroll = { version = "==3.2.0", provider = "unpkg", include = ["dist/jquery.floatingscroll.min.js", "dist/jquery.floatingscroll.css"] }
 "@github/markdown-toolbar-element" = { version = "==1.2.0", provider = "unpkg", include = ["dist/index.umd.js$"] }
 # Use the builder at https://datatables.net/download/
