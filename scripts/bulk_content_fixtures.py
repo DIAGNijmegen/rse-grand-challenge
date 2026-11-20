@@ -307,6 +307,7 @@ def _create_users():
             is_active=True,
             first_name=fake.first_name(),
             last_name=fake.last_name(),
+            date_joined=now() - timedelta(days=7),  # enable forum posts
         )
         user.set_password(username)
         user.save()

@@ -15,6 +15,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
+from django.utils.timezone import now
 from faker import Faker
 from guardian.shortcuts import assign_perm
 from knox.models import AuthToken, hash_token
@@ -129,6 +130,7 @@ def _create_users(usernames):
             is_active=True,
             first_name=fake.first_name(),
             last_name=fake.last_name(),
+            date_joined=now() - timedelta(days=7),  # enable forum posts
         )
         user.set_password(username)
         user.save()

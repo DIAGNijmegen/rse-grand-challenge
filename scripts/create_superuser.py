@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
+from django.utils.timezone import now
 
 from grandchallenge.verifications.models import Verification
 from tests.factories import activate_2fa, get_unused_recovery_codes
@@ -11,7 +14,10 @@ def run():
     get_user_model().objects.filter(username=username).delete()
 
     su = get_user_model().objects.create_superuser(
-        username=username, email=f"{username}@example.com", password=username
+        username=username,
+        email=f"{username}@example.com",
+        password=username,
+        date_joined=now() - timedelta(days=7),  # enable forum posts
     )
     print(f"Created superuser with username and password: {username}")
 
