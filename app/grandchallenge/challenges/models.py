@@ -116,6 +116,14 @@ class ChallengeQuerySet(models.QuerySet):
             )
         )
 
+    def with_invoices_with_utilization_priority(self):
+        return self.prefetch_related(
+            Prefetch(
+                "invoices",
+                queryset=Invoice.objects.with_budget_authorization().in_utilization_priority_order(),
+            )
+        )
+
 
 def validate_nounderscores(value):
     if "_" in value:
@@ -917,6 +925,24 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             slug=self.slug,
             url=self.get_absolute_url(),
         )
+
+    @cached_property
+    def unassigned_storage_gb(self):
+        """
+        The GB of storage and registry data that are not yet accounted for
+        by storage costs on the authorized invoices, expired ones included.
+        Negative if the data has shrunk since it was assigned.
+        """
+        size_gb = (
+            self.size_in_storage + self.size_in_registry
+        ) / settings.GIGABYTE
+        accounted_gb = sum(
+            invoice.storage_cost_euro_millicents
+            / invoice.storage_price_euro_millicents_per_gb
+            for invoice in self.invoices.all()
+            if invoice.is_budget_authorized
+        )
+        return size_gb - accounted_gb
 
     # ---------------- Postpaid admin calculation properties ------------------
     # The following properties are used for postpaid admin calculations.

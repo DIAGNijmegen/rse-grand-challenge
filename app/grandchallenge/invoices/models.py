@@ -149,6 +149,11 @@ class InvoiceQuerySet(models.QuerySet):
             )
         )
 
+    def in_utilization_priority_order(self):
+        return self.annotate(
+            is_paid=Q(payment_status=Invoice.PaymentStatusChoices.PAID)
+        ).order_by("-is_paid", "expires_on", "created")
+
     def with_utilization_priority_per_challenge(self):
         return self.annotate(
             is_paid=Q(payment_status=Invoice.PaymentStatusChoices.PAID)
@@ -165,6 +170,10 @@ def default_invoice_expiry():
     return now().date() + relativedelta(
         years=settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
     )
+
+
+def default_storage_price_euro_millicents_per_gb() -> int:
+    return settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS
 
 
 class Invoice(models.Model, FieldChangeMixin):
@@ -225,6 +234,16 @@ class Invoice(models.Model, FieldChangeMixin):
     )
     storage_costs_euros = models.PositiveIntegerField(
         help_text="The storage costs in Euros"
+    )
+    storage_price_euro_millicents_per_gb = models.PositiveIntegerField(
+        help_text="The price of storage in Euro millicents per GB, fixed when the invoice is created",
+        default=default_storage_price_euro_millicents_per_gb,
+        editable=False,
+    )
+    storage_cost_euro_millicents = models.PositiveBigIntegerField(
+        help_text="The utilized storage costs in Euro millicents (cached from storage usage)",
+        default=0,
+        editable=False,
     )
 
     internal_invoice_number = models.CharField(

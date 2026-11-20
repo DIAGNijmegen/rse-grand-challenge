@@ -852,3 +852,76 @@ def test_status_aggregates(settings):
 
     assert aggregates["num_is_overdue"] == 2
     assert aggregates["num_is_due"] == 1
+
+
+@pytest.mark.django_db
+def test_new_invoice_takes_storage_price_from_settings(*, settings) -> None:
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
+        12_345
+    )
+
+    invoice = InvoiceFactory()
+    invoice.refresh_from_db()
+
+    assert invoice.storage_price_euro_millicents_per_gb == 12_345
+
+
+@pytest.mark.django_db
+def test_changing_storage_price_setting_leaves_existing_invoices_unchanged(
+    *, settings
+) -> None:
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
+        12_345
+    )
+    existing_invoice = InvoiceFactory()
+
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
+        54_321
+    )
+    new_invoice = InvoiceFactory()
+
+    existing_invoice.refresh_from_db()
+    new_invoice.refresh_from_db()
+
+    assert existing_invoice.storage_price_euro_millicents_per_gb == 12_345
+    assert new_invoice.storage_price_euro_millicents_per_gb == 54_321
+
+
+@pytest.mark.django_db
+def test_in_utilization_priority_order_matches_window_priority():
+    challenge = ChallengeFactory()
+    today_date = now().date()
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.ISSUED,
+        expires_on=today_date + timedelta(days=10),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=300),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=100),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=100),
+    )
+
+    expected = list(
+        Invoice.objects.filter(challenge=challenge)
+        .with_utilization_priority_per_challenge()
+        .order_by("utilization_priority")
+        .values_list("pk", flat=True)
+    )
+    actual = list(
+        Invoice.objects.filter(challenge=challenge)
+        .in_utilization_priority_order()
+        .values_list("pk", flat=True)
+    )
+
+    assert actual == expected
