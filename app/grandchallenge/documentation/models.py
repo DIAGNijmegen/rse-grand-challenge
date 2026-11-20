@@ -69,19 +69,13 @@ class DocPage(models.Model):
                 # Use the default
                 pass
         elif not self.id and self.parent:
-            try:
-                self.order = (
-                    DocPage.objects.filter(slug=self.parent.slug)
-                    .get()
-                    .children.last()
-                    .order
-                    + 1
-                )
-            except AttributeError:
-                self.order = (
-                    DocPage.objects.filter(slug=self.parent.slug).get().order
-                    + 1
-                )
+            # Place the new page after the last descendant of its parent, so
+            # that a page's subtree stays contiguous in the ordering.
+            last_page = DocPage.objects.get(pk=self.parent.pk)
+            while (last_child := last_page.children.last()) is not None:
+                last_page = last_child
+
+            self.order = last_page.order + 1
 
         self.update_content_plain()
 

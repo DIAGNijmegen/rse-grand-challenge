@@ -65,6 +65,33 @@ def test_child_page_position_on_save():
 
 
 @pytest.mark.django_db
+def test_new_child_page_placed_after_descendants_of_siblings():
+    p1 = DocPageFactory(parent=None)
+    p2 = DocPageFactory(parent=None)
+
+    p1a = DocPageFactory(parent=p1)
+    p1a_sub = DocPageFactory(parent=p1a)
+    p1a_sub_sub = DocPageFactory(parent=p1a_sub)
+
+    # A second child must come after the whole subtree of the first child
+    p1b = DocPageFactory(parent=p1)
+    p1b_sub = DocPageFactory(parent=p1b)
+
+    pages = [p1, p1a, p1a_sub, p1a_sub_sub, p1b, p1b_sub, p2]
+    for p in pages:
+        p.refresh_from_db()
+
+    assert [p.order for p in pages] == [1, 2, 3, 4, 5, 6, 7]
+
+    for page, next_page in zip(pages[:-1], pages[1:], strict=True):
+        assert page.next == next_page
+        assert next_page.previous == page
+
+    assert not p2.next
+    assert not p1.previous
+
+
+@pytest.mark.django_db
 def test_properties():
     p1 = DocPageFactory(parent=None)
     p2 = DocPageFactory(parent=None)
