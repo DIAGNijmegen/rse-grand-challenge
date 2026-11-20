@@ -144,20 +144,6 @@ def test_unassigned_storage_gb_is_negative_when_data_has_shrunk():
 
 
 @pytest.mark.django_db
-def test_unassigned_storage_gb_ignores_invoices_with_zero_price():
-    challenge = ChallengeFactory(
-        size_in_storage=6 * GIGABYTE, size_in_registry=4 * GIGABYTE
-    )
-    _invoice(
-        challenge=challenge,
-        storage_cost_euro_millicents=10_000,
-        storage_price_euro_millicents_per_gb=0,
-    )
-
-    assert _prefetched(challenge=challenge).unassigned_storage_gb == 10
-
-
-@pytest.mark.django_db
 def test_storage_and_registry_size_are_both_included():
     challenge = ChallengeFactory(
         size_in_storage=10 * GIGABYTE, size_in_registry=5 * GIGABYTE

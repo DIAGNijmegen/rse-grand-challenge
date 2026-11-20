@@ -941,7 +941,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             / invoice.storage_price_euro_millicents_per_gb
             for invoice in self.invoices.all()
             if invoice.is_budget_authorized
-            and invoice.storage_price_euro_millicents_per_gb > 0
         )
         return size_gb - accounted_gb
 

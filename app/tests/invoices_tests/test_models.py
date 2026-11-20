@@ -856,7 +856,9 @@ def test_status_aggregates(settings):
 
 @pytest.mark.django_db
 def test_new_invoice_takes_storage_price_from_settings(*, settings) -> None:
-    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB = 12_345
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
+        12_345
+    )
 
     invoice = InvoiceFactory()
     invoice.refresh_from_db()
@@ -868,10 +870,14 @@ def test_new_invoice_takes_storage_price_from_settings(*, settings) -> None:
 def test_changing_storage_price_setting_leaves_existing_invoices_unchanged(
     *, settings
 ) -> None:
-    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB = 12_345
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
+        12_345
+    )
     existing_invoice = InvoiceFactory()
 
-    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB = 54_321
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
+        54_321
+    )
     new_invoice = InvoiceFactory()
 
     existing_invoice.refresh_from_db()

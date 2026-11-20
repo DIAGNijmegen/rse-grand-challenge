@@ -173,7 +173,7 @@ def default_invoice_expiry():
 
 
 def default_storage_price_euro_millicents_per_gb() -> int:
-    return settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB
+    return settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS
 
 
 class Invoice(models.Model, FieldChangeMixin):
