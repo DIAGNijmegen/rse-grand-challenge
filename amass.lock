@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:58e8a7c337a1e23bd339a922110fc9ed0b49c4909e0c8fff247492c405545120",
+  "content_hash": "sha256:13932e40b684c94a69ad53b67309f3ba8655a80dba241192ca38318ddc3d7b47",
   "dependencies": [
     {
       "name": "@diagnijmegen/rse-grand-challenge-dicom-de-id-procedure",
@@ -772,6 +772,22 @@
         {
           "name": "moment.min.js",
           "sri": "sha512-i2CVnAiguN6SnJ3d2ChOOddMWQyvgQTzm0qSgiKhOqBMGCx4fGU5BtzXEybnKatWPDkXPFyCI0lbG42BnVjr/Q=="
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "select2-bootstrap-5-theme",
+      "version": "1.3.0",
+      "provider": "cdnjs",
+      "assets": [
+        {
+          "name": "select2-bootstrap-5-theme.css",
+          "sri": "sha512-8y/BzCVdFU/3nfweHjuwIXYh1B4ujUaPDadFLtQN42KHxWUhfca04K3VA3XwoAS6Qx/RXZRaetxnf9OOphrdxg=="
+        },
+        {
+          "name": "select2-bootstrap-5-theme.min.css",
+          "sri": "sha512-z/90a5SWiu4MWVelb5+ny7sAayYUfMmdXKEAbpj27PfdkamNdyI3hcjxPxkOPbrXoKIm7r9V2mElt5f1OtVhqA=="
         }
       ],
       "maps": []
