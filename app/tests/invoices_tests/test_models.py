@@ -879,3 +879,43 @@ def test_changing_storage_price_setting_leaves_existing_invoices_unchanged(
 
     assert existing_invoice.storage_price_euro_millicents_per_gb == 12_345
     assert new_invoice.storage_price_euro_millicents_per_gb == 54_321
+
+
+@pytest.mark.django_db
+def test_in_utilization_priority_order_matches_window_priority():
+    challenge = ChallengeFactory()
+    today_date = now().date()
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.ISSUED,
+        expires_on=today_date + timedelta(days=10),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=300),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=100),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=100),
+    )
+
+    expected = list(
+        Invoice.objects.filter(challenge=challenge)
+        .with_utilization_priority_per_challenge()
+        .order_by("utilization_priority")
+        .values_list("pk", flat=True)
+    )
+    actual = list(
+        Invoice.objects.filter(challenge=challenge)
+        .in_utilization_priority_order()
+        .values_list("pk", flat=True)
+    )
+
+    assert actual == expected

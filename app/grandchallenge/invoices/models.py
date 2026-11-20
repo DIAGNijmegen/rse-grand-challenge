@@ -35,60 +35,6 @@ from grandchallenge.invoices.tasks import (
 )
 
 
-def _capacity_gb(*, invoice):
-    price = invoice.storage_price_euro_millicents_per_gb
-
-    if price == 0:
-        return 0
-    else:
-        remaining_millicents = max(
-            (invoice.compute_costs_euros + invoice.storage_costs_euros)
-            * 100_000
-            - invoice.compute_cost_euro_millicents
-            - invoice.storage_cost_euro_millicents,
-            0,
-        )
-        return remaining_millicents / price
-
-
-def allocate_storage_costs(*, invoices, unassigned_gb):
-    """
-    Allocates unassigned storage GB to invoices, in the order given. Any GB
-    left over are added to the last invoice at its own price. The caller is
-    responsible for sorting invoices by priority. All invoices must belong to
-    the same challenge. The invoices are not modified. Returns the new
-    storage_cost_euro_millicents by invoice pk for the invoices that changed.
-    """
-    if len({invoice.challenge_id for invoice in invoices}) > 1:
-        raise ValueError("All invoices must belong to the same challenge")
-    elif unassigned_gb <= 0 or not invoices:
-        return {}
-    else:
-        new_costs = {
-            invoice.pk: invoice.storage_cost_euro_millicents
-            for invoice in invoices
-        }
-        remaining_gb = unassigned_gb
-
-        for invoice in invoices:
-            assigned_gb = min(_capacity_gb(invoice=invoice), remaining_gb)
-            new_costs[invoice.pk] += round(
-                assigned_gb * invoice.storage_price_euro_millicents_per_gb
-            )
-            remaining_gb -= assigned_gb
-
-        last_invoice = invoices[-1]
-        new_costs[last_invoice.pk] += round(
-            remaining_gb * last_invoice.storage_price_euro_millicents_per_gb
-        )
-
-        return {
-            invoice.pk: new_costs[invoice.pk]
-            for invoice in invoices
-            if new_costs[invoice.pk] > invoice.storage_cost_euro_millicents
-        }
-
-
 class PaymentStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", "Initialized"
     REQUESTED = "REQUESTED", "Invoice Requested"
@@ -202,6 +148,11 @@ class InvoiceQuerySet(models.QuerySet):
                 follow_up_on__lte=now().date(),
             )
         )
+
+    def in_utilization_priority_order(self):
+        return self.annotate(
+            is_paid=Q(payment_status=Invoice.PaymentStatusChoices.PAID)
+        ).order_by("-is_paid", "expires_on", "created")
 
     def with_utilization_priority_per_challenge(self):
         return self.annotate(

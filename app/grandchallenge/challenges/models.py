@@ -116,6 +116,14 @@ class ChallengeQuerySet(models.QuerySet):
             )
         )
 
+    def with_invoices_with_utilization_priority(self):
+        return self.prefetch_related(
+            Prefetch(
+                "invoices",
+                queryset=Invoice.objects.with_budget_authorization().in_utilization_priority_order(),
+            )
+        )
+
 
 def validate_nounderscores(value):
     if "_" in value:
