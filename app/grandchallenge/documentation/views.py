@@ -6,7 +6,7 @@ from django.contrib.postgres.search import (
     TrigramSimilarity,
 )
 from django.db.models import F, Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_list_or_404
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
@@ -70,7 +70,7 @@ class DocPageDetail(DetailView):
 
 class DocumentationHome(DocPageDetail):
     def get_object(self, queryset=None):
-        return get_object_or_404(DocPage, order=1)
+        return get_list_or_404(DocPage, is_faq=False)[0]
 
 
 class DocPageMetadataUpdate(
