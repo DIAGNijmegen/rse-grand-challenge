@@ -3,15 +3,10 @@ html {
     position: relative;
     min-height: 100%;
     scroll-behavior: smooth;
-    scroll-padding-top: 5rem;
 }
 
 p {
     line-height: 1.6;
-}
-
-.child-p-mb-0 > p {
-    margin-bottom: 0;
 }
 
 .text-shadow {
@@ -123,17 +118,6 @@ dl.inline dt:after {
 .thumbnail {
     max-height: 90px;
     max-width: 90px;
-}
-
-.box-shadow {
-    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.1);
-}
-
-.color-box {
-    display: inline-block;
-    border: black solid 1px;
-    min-width: 0.9375rem;
-    min-height: 0.9375rem;
 }
 
 a[aria-expanded="true"] .fa-chevron-right {
