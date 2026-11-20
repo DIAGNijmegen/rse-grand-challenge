@@ -90,10 +90,14 @@ class Command(BaseCommand):
         total = len(challenges)
 
         self.stdout.write(
-            f"{prefix}Backfilling storage costs for {total} challenges"
+            self.style.MIGRATE_HEADING(
+                f"{prefix}Backfilling storage costs for {total} challenges"
+            )
         )
 
         changed = []
+        authorized_without_allocation = 0
+        not_authorized = 0
         gained = 0
         lost = 0
         out_of_budget = []
@@ -108,65 +112,117 @@ class Command(BaseCommand):
             gained += max(change, 0)
             lost += max(-change, 0)
 
-            line = (
-                f"[{count}/{total}] {challenge.short_name}: available budget "
-                f"{impact.before / EURO_MILLICENTS:.2f} -> "
+            out_of_budget_note = self.out_of_budget_note(
+                challenge=challenge, impact=impact, out_of_budget=out_of_budget
+            )
+            self.stdout.write(
+                f"[{count}/{total}] "
+                f"{self.style.MIGRATE_LABEL(challenge.short_name)}: "
+                f"available budget {impact.before / EURO_MILLICENTS:.2f} -> "
                 f"{impact.after / EURO_MILLICENTS:.2f} EUR "
-                f"({change / EURO_MILLICENTS:+.2f})"
+                f"{self.colored_change(change=change)}{out_of_budget_note}"
             )
 
-            if impact.before > 0 and impact.after <= 0:
-                top_up = math.ceil(impact.before / EURO_MILLICENTS)
-                accepting = is_accepting_submissions(challenge=challenge)
-                out_of_budget.append((top_up, accepting))
-                line += f" OUT OF BUDGET, top-up needed: {top_up} EUR"
-                if accepting:
-                    line += " (accepting submissions)"
+            for invoice in challenge.invoices.all():
+                if invoice in new_costs:
+                    status = self.style.SUCCESS(
+                        f"storage cost {invoice.storage_cost_euro_millicents}"
+                        f" -> {new_costs[invoice]} euro millicents"
+                    )
+                    invoice.storage_cost_euro_millicents = new_costs[invoice]
+                    changed.append(invoice)
+                elif invoice.is_budget_authorized:
+                    status = "no storage cost allocated"
+                    authorized_without_allocation += 1
                 else:
-                    pass
-            else:
-                pass
+                    status = self.style.WARNING(
+                        "not authorized, no storage cost allocated"
+                    )
+                    not_authorized += 1
 
-            self.stdout.write(line)
-
-            for invoice, new_cost in new_costs.items():
                 self.stdout.write(
                     f"    invoice {invoice.pk} "
                     f"({invoice.payment_type}/{invoice.payment_status}, "
-                    f"expires {invoice.expires_on}): storage cost "
-                    f"{invoice.storage_cost_euro_millicents} -> {new_cost} "
-                    "euro millicents"
+                    f"expires {invoice.expires_on}): {status}"
                 )
-                invoice.storage_cost_euro_millicents = new_cost
-                changed.append(invoice)
 
         if dry_run:
-            self.stdout.write(f"{prefix}Nothing was saved.")
+            self.stdout.write(
+                self.style.WARNING(f"{prefix}Nothing was saved.")
+            )
         else:
             Invoice.objects.bulk_update(
                 changed, ["storage_cost_euro_millicents"]
             )
 
         self.write_summary(
-            changed=changed,
+            updated=len(changed),
+            authorized_without_allocation=authorized_without_allocation,
+            not_authorized=not_authorized,
             gained=gained,
             lost=lost,
             out_of_budget=out_of_budget,
             prefix=prefix,
         )
 
-    def write_summary(self, *, changed, gained, lost, out_of_budget, prefix):
+    def colored_change(self, *, change):
+        text = f"({change / EURO_MILLICENTS:+.2f})"
+
+        if change > 0:
+            return self.style.SUCCESS(text)
+        elif change < 0:
+            return self.style.ERROR(text)
+        else:
+            return text
+
+    def out_of_budget_note(self, *, challenge, impact, out_of_budget):
+        if impact.before > 0 and impact.after <= 0:
+            top_up = math.ceil(impact.before / EURO_MILLICENTS)
+            accepting = is_accepting_submissions(challenge=challenge)
+            out_of_budget.append((top_up, accepting))
+
+            note = self.style.ERROR(
+                f" OUT OF BUDGET, top-up needed: {top_up} EUR"
+            )
+            if accepting:
+                note += self.style.WARNING(" (accepting submissions)")
+            else:
+                pass
+
+            return note
+        else:
+            return ""
+
+    def write_summary(
+        self,
+        *,
+        updated,
+        authorized_without_allocation,
+        not_authorized,
+        gained,
+        lost,
+        out_of_budget,
+        prefix,
+    ):
         accepting_top_ups = [
             top_up for top_up, accepting in out_of_budget if accepting
         ]
 
-        self.stdout.write(f"\n{prefix}Summary")
+        self.stdout.write(self.style.MIGRATE_HEADING(f"\n{prefix}Summary"))
         self.stdout.write(
-            f"Invoices {'to update' if prefix else 'updated'}: {len(changed)}"
+            f"Invoices {'to update' if prefix else 'updated'}: {updated}"
         )
         self.stdout.write(
-            f"Available budget gained: {gained / EURO_MILLICENTS:.2f} EUR, "
-            f"lost: {lost / EURO_MILLICENTS:.2f} EUR"
+            "Invoices without allocation: "
+            f"{authorized_without_allocation + not_authorized} "
+            f"({authorized_without_allocation} authorized with nothing to "
+            f"allocate, {not_authorized} not authorized)"
+        )
+        self.stdout.write(
+            "Available budget gained: "
+            + self.style.SUCCESS(f"{gained / EURO_MILLICENTS:.2f} EUR")
+            + ", lost: "
+            + self.style.ERROR(f"{lost / EURO_MILLICENTS:.2f} EUR")
         )
         self.stdout.write(
             f"Challenges running out of budget: {len(out_of_budget)}, "
