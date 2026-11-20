@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.db.models import Avg, Sum
 
@@ -297,16 +296,7 @@ def allocate_storage_costs_for_challenge(*, challenge, include_expired=False):
         if invoice.is_budget_authorized
     ]
 
-    size_gb = (
-        challenge.size_in_storage + challenge.size_in_registry
-    ) / settings.GIGABYTE
-    accounted_gb = sum(
-        invoice.storage_cost_euro_millicents
-        / invoice.storage_price_euro_millicents_per_gb
-        for invoice in invoices
-        if invoice.storage_price_euro_millicents_per_gb > 0
-    )
-    remaining_gb = size_gb - accounted_gb
+    remaining_gb = challenge.unassigned_storage_gb
 
     if include_expired:
         invoices_to_fill = invoices

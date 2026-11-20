@@ -112,6 +112,52 @@ def test_allocation_makes_no_queries_for_a_prefetched_challenge(
 
 
 @pytest.mark.django_db
+def test_unassigned_storage_gb_counts_authorized_invoices_expired_included():
+    challenge = ChallengeFactory(
+        size_in_storage=30 * GIGABYTE, size_in_registry=20 * GIGABYTE
+    )
+    _invoice(challenge=challenge, storage_cost_euro_millicents=10_000)
+    _invoice(
+        challenge=challenge,
+        expires_in_days=-10,
+        storage_cost_euro_millicents=5_000,
+    )
+    _invoice(
+        challenge=challenge,
+        payment_status=Invoice.PaymentStatusChoices.CANCELLED,
+        storage_cost_euro_millicents=20_000,
+    )
+
+    # 50 GB in total, 10 GB and 5 GB on the authorized invoices, the
+    # cancelled invoice does not count
+    assert _prefetched(challenge=challenge).unassigned_storage_gb == 35
+
+
+@pytest.mark.django_db
+def test_unassigned_storage_gb_is_negative_when_data_has_shrunk():
+    challenge = ChallengeFactory(
+        size_in_storage=3 * GIGABYTE, size_in_registry=2 * GIGABYTE
+    )
+    _invoice(challenge=challenge, storage_cost_euro_millicents=10_000)
+
+    assert _prefetched(challenge=challenge).unassigned_storage_gb == -5
+
+
+@pytest.mark.django_db
+def test_unassigned_storage_gb_ignores_invoices_with_zero_price():
+    challenge = ChallengeFactory(
+        size_in_storage=6 * GIGABYTE, size_in_registry=4 * GIGABYTE
+    )
+    _invoice(
+        challenge=challenge,
+        storage_cost_euro_millicents=10_000,
+        storage_price_euro_millicents_per_gb=0,
+    )
+
+    assert _prefetched(challenge=challenge).unassigned_storage_gb == 10
+
+
+@pytest.mark.django_db
 def test_storage_and_registry_size_are_both_included():
     challenge = ChallengeFactory(
         size_in_storage=10 * GIGABYTE, size_in_registry=5 * GIGABYTE
