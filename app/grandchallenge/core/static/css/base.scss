@@ -140,3 +140,78 @@ a.mark:hover {
 .breadcrumb-item > a {
     color: $secondary;
 }
+
+.documentation-sidebar {
+    .doc-nav-item {
+        margin-bottom: $spacer * .25;
+        list-style: none;
+
+        > .nav-link {
+            border-radius: $border-radius;
+            transition: none;
+        }
+    }
+
+    // Level 0: dark
+    .doc-nav-level-0 {
+        > .nav-link {
+            color: $white;
+            background-color: $dark;
+
+            &:hover,
+            &:focus,
+            &.active {
+                color: $white;
+                background-color: shade-color($dark, 15%);
+            }
+        }
+
+        > .doc-nav-list {
+            margin-top: $spacer * .25;
+        }
+    }
+
+    // Level 1: light
+    .doc-nav-level-1 {
+        > .nav-link {
+            color: $primary;
+            background-color: $light;
+
+            &:hover,
+            &:focus {
+                background-color: shade-color($light, 15%);
+            }
+        }
+
+        > .doc-nav-list {
+            margin-top: $spacer * .25;
+        }
+    }
+
+    // Level 2: outlined
+    .doc-nav-level-2 {
+        border: $border-width solid $border-color;
+        border-radius: $border-radius;
+
+        > .nav-link {
+            color: $primary;
+        }
+    }
+
+    // Level 3: indented
+    .doc-nav-level-3 {
+        margin-left: $spacer * 3;
+        margin-right: $spacer;
+        list-style: disc;
+
+        > .nav-link {
+            color: $primary;
+            padding-left: $spacer * .5;
+        }
+    }
+
+    // The current page is bold, except for top level pages which are highlighted
+    :is(.doc-nav-level-1, .doc-nav-level-2, .doc-nav-level-3) > .nav-link.active {
+        font-weight: bold;
+    }
+}

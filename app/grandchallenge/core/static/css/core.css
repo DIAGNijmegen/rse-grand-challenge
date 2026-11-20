@@ -110,11 +110,6 @@ dl.inline dt:after {
     width: 3rem;
 }
 
-.documentation-sidebar {
-    top: 5rem;
-    z-index: 1;
-}
-
 .thumbnail {
     max-height: 90px;
     max-width: 90px;
