@@ -16,9 +16,11 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
@@ -197,13 +199,14 @@ def update_reader_studies_credits_consumed():
         )
 
 
-@lambda_task
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def update_reader_study_credits_consumed(*, pk: str | UUID):
-    calculated_credits_consumed = (
-        ReaderStudy.objects.with_calculated_credits_consumed()
-        .values_list("calculated_credits_consumed", flat=True)
-        .get(pk=pk)
-    )
-    ReaderStudy.objects.filter(pk=pk).update(
-        credits_consumed=calculated_credits_consumed
-    )
+    with check_lock_acquired():
+        reader_study = (
+            ReaderStudy.objects.with_calculated_credits_consumed()
+            .select_for_update(nowait=True, no_key=True, of=("self",))
+            .get(pk=pk)
+        )
+
+    reader_study.credits_consumed = reader_study.calculated_credits_consumed
+    reader_study.save(update_fields=("credits_consumed",))
