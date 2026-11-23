@@ -855,36 +855,52 @@ def test_status_aggregates(settings):
 
 
 @pytest.mark.django_db
-def test_new_invoice_takes_storage_price_from_settings(*, settings) -> None:
-    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
-        12_345
-    )
+def test_new_invoice_multiplies_yearly_price_by_retention_period(
+    *, settings
+) -> None:
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 12_345
+    settings.CHALLENGE_NUM_SUPPORT_YEARS = 3
 
     invoice = InvoiceFactory()
     invoice.refresh_from_db()
 
-    assert invoice.storage_price_euro_millicents_per_gb == 12_345
+    assert invoice.storage_price_euro_millicents_per_gb == 37_035
 
 
 @pytest.mark.django_db
-def test_changing_storage_price_setting_leaves_existing_invoices_unchanged(
+def test_changing_yearly_price_leaves_existing_invoices_unchanged(
     *, settings
 ) -> None:
-    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
-        12_345
-    )
+    settings.CHALLENGE_NUM_SUPPORT_YEARS = 5
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 12_345
     existing_invoice = InvoiceFactory()
 
-    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_FOR_5_YEARS = (
-        54_321
-    )
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 54_321
     new_invoice = InvoiceFactory()
 
     existing_invoice.refresh_from_db()
     new_invoice.refresh_from_db()
 
-    assert existing_invoice.storage_price_euro_millicents_per_gb == 12_345
-    assert new_invoice.storage_price_euro_millicents_per_gb == 54_321
+    assert existing_invoice.storage_price_euro_millicents_per_gb == 61_725
+    assert new_invoice.storage_price_euro_millicents_per_gb == 271_605
+
+
+@pytest.mark.django_db
+def test_changing_retention_period_leaves_existing_invoices_unchanged(
+    *, settings
+) -> None:
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 10_000
+    settings.CHALLENGE_NUM_SUPPORT_YEARS = 5
+    existing_invoice = InvoiceFactory()
+
+    settings.CHALLENGE_NUM_SUPPORT_YEARS = 2
+    new_invoice = InvoiceFactory()
+
+    existing_invoice.refresh_from_db()
+    new_invoice.refresh_from_db()
+
+    assert existing_invoice.storage_price_euro_millicents_per_gb == 50_000
+    assert new_invoice.storage_price_euro_millicents_per_gb == 20_000
 
 
 @pytest.mark.django_db
