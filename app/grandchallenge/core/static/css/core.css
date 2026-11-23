@@ -174,19 +174,6 @@ a[aria-expanded="false"] .fa-chevron-down {
     display: none;
 }
 
-/* htmx */
-.htmx-indicator {
-    display: none;
-}
-
-.htmx-request .htmx-indicator {
-    display: inline-block;
-}
-
-.htmx-request.htmx-indicator {
-    display: inline-block;
-}
-
 /* Fixes a large whitespace for fieldset legends */
 fieldset > legend {
     width: inherit;
