@@ -7,6 +7,7 @@ Note that your challenge is currently hidden and is not yet listed on our challe
 To get your challenge ready, please have a close look at [our documentation](https://grand-challenge.org/documentation/create-your-own-challenge/) and the steps below.
 
 Next steps:
+
 1. On your challenge page, go to Admin - General Settings and carefully review all information there. All of the options are described in our documentation.
    1. Upload a logo and banner for your challenge
    2. Optionally enable the forum (recommended) and teams features
