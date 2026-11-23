@@ -15,7 +15,7 @@ Based on the following information:
 <div class="table-responsive">
     <table class="table table-hover table-sm">
         <tr>
-            <td class="col-9 font-italic">Total number of submissions to the challenge</td>
+            <td class="col-9 fst-italic">Total number of submissions to the challenge</td>
             <td class="col-3 text-end">
                 {% if object.total_number_of_submissions > 500 %}
                     <i class="fa fa-exclamation-triangle text-warning"></i>
@@ -24,11 +24,11 @@ Based on the following information:
             </td>
         </tr>
         <tr>
-            <td class="col-9 font-italic">Total data stored for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
+            <td class="col-9 fst-italic">Total data stored for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
             <td class="col-3 text-end">{{ object.total_data_and_docker_storage_bytes|naturalsize }}</td>
         </tr>
         <tr>
-            <td class="col-9 font-italic">Total estimated on-demand GPU time</td>
+            <td class="col-9 fst-italic">Total estimated on-demand GPU time</td>
             <td class="col-3 text-end">{{ object.total_compute_time|naturaldelta }}</td>
         </tr>
     </table>

@@ -286,7 +286,7 @@ class Notification(UUIDModel):
         elif self.type == NotificationTypeChoices.ACCESS_REQUEST:
             if self.target_content_type.model == "challenge":
                 notification_addition = format_html(
-                    '<span class="text-truncate font-italic text-muted align-middle '
+                    '<span class="text-truncate fst-italic text-muted align-middle '
                     'mx-2">| Accept or decline <a href="{link}"> here </a>.</span>',
                     link=reverse(
                         "participants:registration-list",
@@ -340,7 +340,7 @@ class Notification(UUIDModel):
         ):
             if self.action_object.error_message:
                 error_message = format_html(
-                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    '<span class ="text-truncate fst-italic text-muted align-middle '
                     'mx-2">| {}</span>',
                     self.action_object.error_message,
                 )
@@ -369,7 +369,7 @@ class Notification(UUIDModel):
         ):
             if self.action_object.error_message:
                 error_message = format_html(
-                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    '<span class ="text-truncate fst-italic text-muted align-middle '
                     'mx-2">| {}</span>',
                     self.action_object.error_message,
                 )
@@ -438,7 +438,7 @@ class Notification(UUIDModel):
                 message=self.message,
                 addition=addition,
                 description=format_html(
-                    '<span class="text-truncate font-italic text-muted align-middle '
+                    '<span class="text-truncate fst-italic text-muted align-middle '
                     'mx-2 ">| Inspect the output and any error messages <a href="{}">'
                     "here</a>.</span>",
                     self.description,
@@ -459,7 +459,7 @@ class Notification(UUIDModel):
                 addition = ""
             if self.description:
                 description = format_html(
-                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    '<span class ="text-truncate fst-italic text-muted align-middle '
                     'mx-2">| {}</span>',
                     self.description,
                 )
