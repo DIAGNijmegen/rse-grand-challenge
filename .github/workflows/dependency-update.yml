@@ -32,6 +32,10 @@ jobs:
               uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
               with:
                   python-version: ${{ env.PYTHON_VERSION }}
+            - name: Setup Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: package.json
             - name: Update Dependencies
               id: dependency-update
               timeout-minutes: 5
@@ -39,6 +43,7 @@ jobs:
                   LOCK_OUTPUT=$(
                     uv lock --upgrade --no-progress 2>&1
                     uv lock --upgrade --no-progress --project virtualenvs/biom 2>&1
+                    npm update --package-lock-only --ignore-scripts --min-release-age=7 2>&1
                   )
                   echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
                   echo "$LOCK_OUTPUT" >> $GITHUB_ENV
