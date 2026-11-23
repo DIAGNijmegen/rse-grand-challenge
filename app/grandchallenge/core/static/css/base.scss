@@ -16,6 +16,7 @@ $pagination-disabled-bg: lighten($blue, 15%);
 
 $breadcrumb-active-color: $light;
 $breadcrumb-divider-color: $secondary;
+$breadcrumb-divider: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><path d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z' fill='#{$breadcrumb-divider-color}'/></svg>");
 $breadcrumb-padding-y: 0.75rem;
 $breadcrumb-padding-x: 0;
 $breadcrumb-margin-bottom: 0;
@@ -36,6 +37,14 @@ $carousel-control-color: $dark;
 .table-responsive {
   padding: $focus-ring-width;
   margin: (-$focus-ring-width) (-$focus-ring-width) 0;
+}
+
+.breadcrumb {
+    line-height: 1;
+}
+
+.breadcrumb-item > a {
+    text-decoration: none !important;
 }
 
 // Show heading permalinks only on hover
