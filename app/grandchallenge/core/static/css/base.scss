@@ -62,6 +62,11 @@ $carousel-control-color: $dark;
     visibility: visible;
 }
 
+// Temporary fix for underline under headers in homepage features section
+#home-features a:has(h4):not(:hover)  {
+    text-decoration-line: none;
+}
+
 // Reserve space for focus box-shadow
 .btn, .pagination {
     margin: $btn-focus-width;
