@@ -805,10 +805,8 @@ class ReaderStudy(
     @cached_property
     def leaderboard(self):
         """The leaderboard for this ``ReaderStudy``."""
-        n_hangings = self.display_sets.count()
-        question_count = float(self.answerable_question_count) * n_hangings
         return {
-            "question_count": question_count,
+            "ground_truth_count": self.ground_truth_count,
             "grouped_scores": self.scores_by_user,
         }
 
@@ -817,7 +815,9 @@ class ReaderStudy(
         """Statistics per question and case based on the total / average score."""
         scores_by_question = (
             Answer.objects.filter(
-                question__reader_study=self, is_ground_truth=False
+                question__in=self.questions_with_ground_truth,
+                question__reader_study=self,
+                is_ground_truth=False,
             )
             .order_by("question_id")
             .values("question__question_text")
@@ -892,8 +892,7 @@ class ReaderStudy(
             "max_score_questions": float(len(self.display_sets.all()))
             * self.scores_by_user.count(),
             "scores_by_question": scores_by_question,
-            "max_score_cases": float(self.answerable_question_count)
-            * self.scores_by_user.count(),
+            "max_score_cases": self.ground_truth_count,
             "scores_by_case": scores_by_case,
             "ground_truths": ground_truths,
             "questions": questions,

@@ -218,23 +218,26 @@ def submission_file(tmpdir_factory):
 def reader_study_with_gt():
     rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
-    q1, q2, q3 = [
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.AnswerType.BOOL,
-            question_text="q1",
-        ),
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.AnswerType.BOOL,
-            question_text="q2",
-        ),
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.AnswerType.BOOL,
-            question_text="q3",
-        ),
-    ]
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.BOOL,
+        question_text="q1",
+    )
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.BOOL,
+        question_text="q2",
+    )
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.BOOL,
+        question_text="q3",
+    )
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.MASK,
+        question_text="q4",
+    )
 
     r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
     rs.add_reader(r1)
@@ -248,7 +251,7 @@ def reader_study_with_gt():
     rs.view_content = {"main": [ci.slug]}
     rs.save()
 
-    for question in [q1, q2, q3]:
+    for question in rs.ground_truth_applicable_questions:
         for ds in rs.display_sets.all():
             AnswerFactory(
                 question=question,
