@@ -131,6 +131,10 @@ a.mark:hover {
     background-color: $gray-100;
 }
 
+.nav-link {
+    transition: none;
+}
+
 .documentation-sidebar {
     .doc-nav-item {
         margin-bottom: $spacer * .25;
@@ -138,7 +142,6 @@ a.mark:hover {
 
         > .nav-link {
             border-radius: $border-radius;
-            transition: none;
         }
     }
 
