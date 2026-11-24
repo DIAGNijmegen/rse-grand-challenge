@@ -208,7 +208,7 @@ def test_leaderboard(  # noqa: C901
 
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 8
-    assert leaderboard["ground_truth_count"] == 6.0
+    assert leaderboard["max_score_cases"] == 6.0
     scores = leaderboard["grouped_scores"]
     assert len(scores) == 1
     user_score = scores[0]
@@ -230,7 +230,7 @@ def test_leaderboard(  # noqa: C901
     del rs.leaderboard
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 16
-    assert leaderboard["ground_truth_count"] == 6.0
+    assert leaderboard["max_score_cases"] == 6.0
     scores = leaderboard["grouped_scores"]
     assert len(scores) == 2
     for user_score in scores:
@@ -250,7 +250,7 @@ def test_leaderboard(  # noqa: C901
     del rs.leaderboard
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 24
-    assert leaderboard["ground_truth_count"] == 6.0
+    assert leaderboard["max_score_cases"] == 6.0
     scores = leaderboard["grouped_scores"]
     assert len(scores) == 3
     for user_score in scores:
@@ -1197,14 +1197,20 @@ def test_ground_truth_complete():
 
     # Sanity, add a technically allowed duplicate GT answer
     AnswerFactory(display_set=ds1, question=q1, is_ground_truth=True)
+    del rs.max_score_cases
+    del rs.ground_truth_is_complete
     assert (
         not rs.ground_truth_is_complete
     ), "One GT answer should (still) be missing"
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=False)
+    del rs.max_score_cases
+    del rs.ground_truth_is_complete
     assert not rs.ground_truth_is_complete, "Non GT answer does not count"
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=True)
+    del rs.max_score_cases
+    del rs.ground_truth_is_complete
     assert rs.ground_truth_is_complete, "All GT answers are given"
 
 

@@ -47,7 +47,7 @@
                     {% else %}
                         <td>{% if entry.creator__username == request.user.username %} You {% else %} Reader {% endif %}</td>
                     {% endif %}
-                    <td data-order="{{ entry.score__sum }}">{{ entry.score__sum }} / {{ object.leaderboard.ground_truth_count }}</td>
+                    <td data-order="{{ entry.score__sum }}">{{ entry.score__sum }} / {{ object.leaderboard.max_score_cases }}</td>
                     <td data-order="{{ entry.score__avg }}">{{ entry.score__avg|floatformat:4 }}</td>
                 </tr>
             {% endfor %}

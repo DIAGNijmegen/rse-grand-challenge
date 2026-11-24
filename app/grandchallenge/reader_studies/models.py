@@ -759,8 +759,8 @@ class ReaderStudy(
             answer_type__in=AnswerType.get_annotation_types()
         ).all()
 
-    @property
-    def ground_truth_count(self):
+    @cached_property
+    def max_score_cases(self):
         return (
             Answer.objects.filter(
                 question__in=self.ground_truth_applicable_questions,
@@ -771,12 +771,12 @@ class ReaderStudy(
             .count()
         )
 
-    @property
+    @cached_property
     def ground_truth_is_complete(self):
-        count_gt_viable_questions = len(self.ground_truth_applicable_questions)
         return (
-            self.ground_truth_count
-            == self.display_sets.count() * count_gt_viable_questions
+            self.max_score_cases
+            == len(self.ground_truth_applicable_questions)
+            * self.display_sets.count()
         )
 
     def score_for_user(self, user):
@@ -806,7 +806,7 @@ class ReaderStudy(
     def leaderboard(self):
         """The leaderboard for this ``ReaderStudy``."""
         return {
-            "ground_truth_count": self.ground_truth_count,
+            "max_score_cases": self.max_score_cases,
             "grouped_scores": self.scores_by_user,
         }
 
@@ -892,7 +892,7 @@ class ReaderStudy(
             "max_score_questions": float(len(self.display_sets.all()))
             * self.scores_by_user.count(),
             "scores_by_question": scores_by_question,
-            "max_score_cases": self.ground_truth_count,
+            "max_score_cases": self.max_score_cases,
             "scores_by_case": scores_by_case,
             "ground_truths": ground_truths,
             "questions": questions,
