@@ -83,7 +83,10 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.tasks import validate_submission
-from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.evaluation.utils import (
+    SubmissionCommentsChoices,
+    SubmissionKindChoices,
+)
 from grandchallenge.forge.forge import generate_phase_pack
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
@@ -695,9 +698,17 @@ class EvaluationAdminList(
             ]
         )
 
-        if self.phase.allow_submission_comments:
+        if (
+            self.phase.submission_comments_choice
+            != SubmissionCommentsChoices.OFF
+        ):
             columns.extend(
-                [Column(title="Comment", sort_field="submission__comment")]
+                [
+                    Column(
+                        title=self.phase.submission_comments_label,
+                        sort_field="submission__comment",
+                    )
+                ]
             )
 
         return columns
@@ -1038,7 +1049,10 @@ class LeaderboardDetail(
 
         if self.phase.display_submission_comments:
             columns.append(
-                Column(title="Comment", sort_field="submission__comment")
+                Column(
+                    title=self.phase.submission_comments_label,
+                    sort_field="submission__comment",
+                )
             )
 
         if self.phase.show_supplementary_url:

@@ -195,6 +195,12 @@ class StatusChoices(models.TextChoices):
     COMPLETED = "COMPLETED", "Completed"
 
 
+class SubmissionCommentsChoices(models.TextChoices):
+    OFF = "off", "Off"
+    OPTIONAL = "opt", "Optional"
+    REQUIRED = "req", "Required"
+
+
 class SubmissionKindChoices(models.IntegerChoices):
     CSV = 1, "Predictions"
     # ZIP = 2, "ZIP"

@@ -55,7 +55,10 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.evaluation.tasks import validate_submission
-from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.evaluation.utils import (
+    SubmissionCommentsChoices,
+    SubmissionKindChoices,
+)
 from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
 from grandchallenge.hanging_protocols.models import VIEW_CONTENT_SCHEMA
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -71,7 +74,9 @@ submission_options = (
     "submissions_limit_per_user_per_period",
     "submission_limit_period",
     "auto_evaluate_new_submissions",
-    "allow_submission_comments",
+    "submission_comments_choice",
+    "submission_comments_label",
+    "submission_comments_help_text",
     "supplementary_file_choice",
     "supplementary_file_label",
     "supplementary_file_help_text",
@@ -377,7 +382,25 @@ class SubmissionForm(
         if not self._phase.external_evaluation:
             del self.fields["confirm_submission"]
 
-        if not self._phase.allow_submission_comments:
+        if self._phase.submission_comments_label:
+            self.fields["comment"].label = (
+                self._phase.submission_comments_label
+            )
+
+        if self._phase.submission_comments_help_text:
+            self.fields["comment"].help_text = clean(
+                self._phase.submission_comments_help_text
+            )
+
+        if (
+            self._phase.submission_comments_choice
+            == SubmissionCommentsChoices.REQUIRED
+        ):
+            self.fields["comment"].required = True
+        elif (
+            self._phase.submission_comments_choice
+            == SubmissionCommentsChoices.OFF
+        ):
             del self.fields["comment"]
 
         if self._phase.supplementary_file_label:

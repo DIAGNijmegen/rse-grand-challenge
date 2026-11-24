@@ -88,6 +88,6 @@
 
 <split></split>
 
-{% if object.allow_submission_comments %}
+{% if object.submission.phase.submission_comments_choice != object.submission.phase.SubmissionCommentsChoices.OFF %}
     {{ object.submission.comment }}
 {% endif %}

@@ -58,7 +58,10 @@ from grandchallenge.evaluation.models import (
     PhaseAlgorithmInterface,
     Submission,
 )
-from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.evaluation.utils import (
+    SubmissionCommentsChoices,
+    SubmissionKindChoices,
+)
 from grandchallenge.invoices.models import (
     PaymentStatusChoices,
     PaymentTypeChoices,
@@ -1147,6 +1150,55 @@ class TestSubmissionFormOptions:
             ),
         )
         assert form.fields["supplementary_url"].help_text == "Keep"
+
+    def test_no_submission_comments(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(
+                submission_comments_choice=SubmissionCommentsChoices.OFF
+            ),
+        )
+        assert "comment" not in form.fields
+
+    def test_submission_comments_optional(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(
+                submission_comments_choice=SubmissionCommentsChoices.OPTIONAL
+            ),
+        )
+        assert "comment" in form.fields
+        assert form.fields["comment"].required is False
+
+    def test_submission_comments_required(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(
+                submission_comments_choice=SubmissionCommentsChoices.REQUIRED
+            ),
+        )
+        assert "comment" in form.fields
+        assert form.fields["comment"].required is True
+
+    def test_submission_comments_label(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(
+                submission_comments_choice=SubmissionCommentsChoices.OPTIONAL,
+                submission_comments_label="TEST",
+            ),
+        )
+        assert form.fields["comment"].label == "TEST"
+
+    def test_submission_comments_help_text(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            phase=PhaseFactory(
+                submission_comments_choice=SubmissionCommentsChoices.OPTIONAL,
+                submission_comments_help_text="Keep<script>TEST</script>",
+            ),
+        )
+        assert form.fields["comment"].help_text == "Keep"
 
 
 def test_algorithm_for_phase_form():
