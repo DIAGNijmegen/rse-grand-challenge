@@ -212,7 +212,7 @@ class ReaderStudyQuerySet(models.QuerySet):
             ),
         )
 
-    def with_has_budget(self):
+    def with_calculated_credits_consumed(self):
         session_credits_subquery = Subquery(
             SessionUtilizationReaderStudy.objects.filter(
                 reader_study=OuterRef("pk")
@@ -266,12 +266,22 @@ class ReaderStudyQuerySet(models.QuerySet):
         )
 
         return self.annotate(
-            credits_consumed=(
+            calculated_credits_consumed=(
                 Coalesce(session_credits_subquery, Value(0))
                 + Coalesce(endpoint_credits_subquery, Value(0))
             ),
+        )
+
+    def with_has_budget(self):
+        # Unknown (null) credits consumed is treated as zero
+        # We err on the benefit of the user and allow them to continue
+        # even if the credits consumed is (yet) unknown.
+
+        return self.annotate(
+            credits_consumed_or_zero=Coalesce("credits_consumed", Value(0)),
+        ).annotate(
             has_budget=Q(max_credits__isnull=True)
-            | Q(credits_consumed__lt=F("max_credits")),
+            | Q(credits_consumed_or_zero__lt=F("max_credits")),
         )
 
 
@@ -471,6 +481,12 @@ class ReaderStudy(
         blank=True,
         help_text="The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.",
     )
+    credits_consumed = models.PositiveBigIntegerField(
+        null=True,
+        default=None,
+        editable=False,
+        help_text="The number of credits consumed by this reader study, updated periodically by a background task. Unknown (null) when no maximum number of credits is set.",
+    )
 
     objects = ReaderStudyQuerySet.as_manager()
 
@@ -485,6 +501,11 @@ class ReaderStudy(
             models.UniqueConstraint(
                 fields=["slug"],
                 name="%(app_label)s_%(class)s_unique_slug",
+            ),
+            models.CheckConstraint(
+                condition=Q(max_credits__isnull=False)
+                | Q(credits_consumed__isnull=True),
+                name="%(app_label)s_%(class)s_credits_consumed_null_without_max_credits",
             ),
         ]
 
@@ -640,6 +661,9 @@ class ReaderStudy(
 
         if adding:
             self.create_groups()
+
+        if self.max_credits is None:
+            self.credits_consumed = None
 
         super().save(*args, **kwargs)
 

@@ -26,6 +26,9 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
+from grandchallenge.reader_studies.tasks import (
+    update_reader_study_credits_consumed,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
@@ -1661,6 +1664,9 @@ def test_usage_view_total_credits_matches_per_user_sum(client):
         session=session4, duration=timedelta(hours=3)
     )
 
+    # Run the background update task
+    update_reader_study_credits_consumed(pk=rs1.pk)
+
     response = get_view_for_user(
         viewname="reader-studies:usage",
         client=client,
@@ -1669,14 +1675,15 @@ def test_usage_view_total_credits_matches_per_user_sum(client):
     )
     assert response.status_code == 200
 
-    # Get the reader study with budget annotation
-    rs1_with_budget = ReaderStudy.objects.with_has_budget().get(pk=rs1.pk)
-
     # Get per-user credits from the view context
     user_usage = response.context["user_usage"]
     per_user_total = sum(u.total_credits for u in user_usage)
 
-    assert per_user_total == rs1_with_budget.credits_consumed
+    rs1.refresh_from_db()
+    assert per_user_total == rs1.credits_consumed
+    assert response.context["credits_remaining"] == (
+        rs1.max_credits - per_user_total
+    )
     assert len(user_usage) == 2
 
 

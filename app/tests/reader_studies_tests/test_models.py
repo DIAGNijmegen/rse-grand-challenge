@@ -1238,32 +1238,68 @@ def test_answer_score_calculation():
 
 
 @pytest.mark.django_db
-def test_reader_study_out_of_budget_when_max_credits_consumed():
-    reader_study = ReaderStudyFactory(max_credits=100)
-
+@pytest.mark.parametrize(
+    "credits_consumed, max_credits, has_budget",
+    [
+        # Consumption exceeds max: out of budget
+        (500, 100, False),
+        # Consumption equals max: out of budget
+        (500, 500, False),
+        # Consumption below max: still has budget
+        (500, 501, True),
+        (500, 1000, True),
+        # Consumption not yet known: still has budget
+        (None, 1000, True),
+        (None, 0, False),
+        # No max: always has budget
+        (None, None, True),
+    ],
+)
+def test_reader_study_with_has_budget(
+    credits_consumed, max_credits, has_budget
+):
+    reader_study = ReaderStudyFactory(
+        max_credits=max_credits, credits_consumed=credits_consumed
+    )
     assert (
         ReaderStudy.objects.with_has_budget()
         .get(pk=reader_study.pk)
         .has_budget
-    )
+    ) == has_budget
 
-    session_utilization = SessionUtilizationFactory(
-        duration=timedelta(hours=1)
-    )
-    session_utilization.reader_studies.add(reader_study)
 
-    assert reader_study.session_utilizations.count() == 1
-    assert (
-        ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .credits_consumed
-        == 500
-    )
-    assert (
-        not ReaderStudy.objects.with_has_budget()
-        .get(pk=reader_study.pk)
-        .has_budget
-    )
+@pytest.mark.django_db
+def test_reader_study_save_resets_credits_consumed_without_max_credits():
+    reader_study = ReaderStudyFactory(max_credits=1000, credits_consumed=500)
+    reader_study.refresh_from_db()
+    assert reader_study.credits_consumed == 500  # Sanity
+
+    reader_study.max_credits = None
+    reader_study.save()
+
+    reader_study.refresh_from_db()
+    assert reader_study.credits_consumed is None
+
+
+@pytest.mark.django_db
+def test_reader_study_credits_consumed_requires_max_credits_constraint():
+    reader_study = ReaderStudyFactory(max_credits=None)
+
+    # save() resets credits_consumed, so use update() to hit the constraint
+    with pytest.raises(IntegrityError):
+        ReaderStudy.objects.filter(pk=reader_study.pk).update(
+            credits_consumed=500
+        )
+
+
+@pytest.mark.django_db
+def test_reader_study_save_keeps_credits_consumed_with_max_credits():
+    reader_study = ReaderStudyFactory(max_credits=1000, credits_consumed=500)
+
+    reader_study.save()
+
+    reader_study.refresh_from_db()
+    assert reader_study.credits_consumed == 500  # No change
 
 
 @pytest.mark.django_db
@@ -1286,8 +1322,8 @@ def test_reader_study_session_credits_consumed_divided():
     assert other_session_utilization.credits_consumed == 1000
 
     credits_consumed = {
-        rs.pk: rs.credits_consumed
-        for rs in ReaderStudy.objects.with_has_budget()
+        rs.pk: rs.calculated_credits_consumed
+        for rs in ReaderStudy.objects.with_calculated_credits_consumed()
     }
 
     assert credits_consumed[reader_studies[0].pk] == 1000
@@ -1317,8 +1353,8 @@ def test_reader_study_endpoint_credits_consumed_divided():
     assert other_endpoint_utilization.credits_consumed == 4
 
     credits_consumed = {
-        rs.pk: rs.credits_consumed
-        for rs in ReaderStudy.objects.with_has_budget()
+        rs.pk: rs.calculated_credits_consumed
+        for rs in ReaderStudy.objects.with_calculated_credits_consumed()
     }
 
     assert credits_consumed[reader_studies[0].pk] == 4

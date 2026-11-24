@@ -76,6 +76,9 @@ from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.tasks import (
+    update_reader_study_credits_consumed,
+)
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import WorkstationImage
 from tests.algorithms_tests.factories import (
@@ -1365,6 +1368,7 @@ def test_preload_interactive_algorithms_excludes_reader_studies_without_budget(
         duration=timedelta(hours=1)
     )
     session_utilization.reader_studies.add(rs_with_exhausted_credit)
+    update_reader_study_credits_consumed(pk=rs_with_exhausted_credit.pk)
 
     QuestionFactory(
         reader_study=rs_with_exhausted_credit,

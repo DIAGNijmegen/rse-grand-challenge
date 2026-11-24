@@ -1,8 +1,10 @@
+import math
 from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.settings import MAX_DELAY
 
 from config.lambda_tasks import (
     LONG_TASK_HARD_TIMEOUT,
@@ -14,9 +16,11 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
@@ -180,3 +184,33 @@ def copy_reader_study_display_sets(*, orig_pk: str | UUID, new_pk: str | UUID):
             title=ds.title,
         )
         new_ds.values.set(ds.values.all())
+
+
+@lambda_task
+def update_reader_studies_credits_consumed():
+    reader_study_pks_with_credits = ReaderStudy.objects.exclude(
+        max_credits__isnull=True
+    ).values_list("pk", flat=True)
+
+    seconds_per_task = math.ceil(
+        MAX_DELAY / max(len(reader_study_pks_with_credits), 1)
+    )
+
+    for idx, reader_study_pk in enumerate(reader_study_pks_with_credits):
+        update_reader_study_credits_consumed.execute_on_commit(
+            pk=reader_study_pk,
+            _delay=(idx * seconds_per_task) % MAX_DELAY,
+        )
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def update_reader_study_credits_consumed(*, pk: str | UUID):
+    with check_lock_acquired():
+        reader_study = (
+            ReaderStudy.objects.with_calculated_credits_consumed()
+            .select_for_update(nowait=True, no_key=True, of=("self",))
+            .get(pk=pk)
+        )
+
+    reader_study.credits_consumed = reader_study.calculated_credits_consumed
+    reader_study.save(update_fields=("credits_consumed",))

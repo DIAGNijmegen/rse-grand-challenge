@@ -611,6 +611,7 @@ reader_study_non_copy_fields = {
     "created",
     "modified",
     "max_credits",
+    "credits_consumed",
     "workstation_sessions",
     "actor_actions",
     "target_actions",
@@ -763,6 +764,7 @@ def reader_study_with_fields():
         roll_over_answers_for_n_cases=1,
         leaderboard_accessible_to_readers=True,
         max_credits=1,
+        credits_consumed=1,
     )
     rs.workstation_sessions.set([SessionFactory()])
     rs.optional_hanging_protocols.set([HangingProtocolFactory()])
