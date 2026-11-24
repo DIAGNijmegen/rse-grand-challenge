@@ -89,7 +89,7 @@ def post_install_redirect(request):
         messages.add_message(
             request,
             messages.ERROR,
-            "Could not install GitHub application, please try again.",
+            "Could not install the GitHub application, please try again.",
         )
         return redirect(state.redirect_url)
 
