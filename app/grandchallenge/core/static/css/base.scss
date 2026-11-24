@@ -41,10 +41,14 @@ $carousel-control-color: $dark;
 
 .breadcrumb {
     line-height: 1;
-}
 
-.breadcrumb-item > a:not(:hover) {
-    text-decoration-line: none !important;
+    .breadcrumb-item > a {
+        color: $secondary;
+
+        &:not(:hover) {
+            text-decoration-line: none !important;
+        }
+    }
 }
 
 // Show heading permalinks only on hover
@@ -150,10 +154,6 @@ a.mark:hover {
 
 .bg-gray-100 {
     background-color: $gray-100;
-}
-
-.breadcrumb-item > a {
-    color: $secondary;
 }
 
 .nav-link {
