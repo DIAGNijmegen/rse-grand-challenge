@@ -253,7 +253,7 @@
             <span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_has_budget</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_calculated_credits_consumed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">session_credits_subquery</span> <span class="o">=</span> <span class="n">Subquery</span><span class="p">(</span>
             <span class="n">SessionUtilizationReaderStudy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">reader_study</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">"pk"</span><span class="p">)</span>
@@ -307,12 +307,22 @@
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="n">credits_consumed</span><span class="o">=</span><span class="p">(</span>
+            <span class="n">calculated_credits_consumed</span><span class="o">=</span><span class="p">(</span>
                 <span class="n">Coalesce</span><span class="p">(</span><span class="n">session_credits_subquery</span><span class="p">,</span> <span class="n">Value</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
                 <span class="o">+</span> <span class="n">Coalesce</span><span class="p">(</span><span class="n">endpoint_credits_subquery</span><span class="p">,</span> <span class="n">Value</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
             <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_has_budget</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Unknown (null) credits consumed is treated as zero</span>
+        <span class="c1"># We err on the benefit of the user and allow them to continue</span>
+        <span class="c1"># even if the credits consumed is (yet) unknown.</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">credits_consumed_or_zero</span><span class="o">=</span><span class="n">Coalesce</span><span class="p">(</span><span class="s2">"credits_consumed"</span><span class="p">,</span> <span class="n">Value</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
             <span class="n">has_budget</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">max_credits__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">credits_consumed__lt</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">"max_credits"</span><span class="p">)),</span>
+            <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">credits_consumed_or_zero__lt</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">"max_credits"</span><span class="p">)),</span>
         <span class="p">)</span></div>
 
 
@@ -515,6 +525,12 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">"The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage."</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">credits_consumed</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">"The number of credits consumed by this reader study, updated periodically by a background task. Unknown (null) when no maximum number of credits is set."</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">objects</span> <span class="o">=</span> <span class="n">ReaderStudyQuerySet</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
 
@@ -529,6 +545,11 @@
             <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
                 <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"slug"</span><span class="p">],</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">"</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">_unique_slug"</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">CheckConstraint</span><span class="p">(</span>
+                <span class="n">condition</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">max_credits__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">credits_consumed__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">_credits_consumed_null_without_max_credits"</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">]</span>
 
@@ -689,6 +710,9 @@
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">create_groups</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_credits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">credits_consumed</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
