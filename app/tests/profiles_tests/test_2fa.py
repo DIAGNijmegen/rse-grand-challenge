@@ -167,4 +167,6 @@ def test_allowed_urls():
         "account_confirm_login_code",
         "mfa_authenticate",
         "account_set_password",
+        "account_confirm_reauthentication_code",
+        "account_request_reauthentication_code",
     }
