@@ -133,3 +133,34 @@ def test_update_multiple_reader_studies_credits_consumed(
     for reader_study in reader_studies:
         reader_study.refresh_from_db()
         assert reader_study.credits_consumed == 500
+
+
+@pytest.mark.django_db
+def test_update_reader_studies_credits_consumed_skips_null_max_credits(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    reader_study_with_max_credits = ReaderStudyFactory(max_credits=1000)
+    reader_study_without_max_credits = ReaderStudyFactory(max_credits=None)
+
+    session_utilization = SessionUtilizationFactory(
+        duration=timedelta(
+            hours=2
+        )  # 2 hours * 500 credits/hour = 1000 credits
+    )
+    session_utilization.reader_studies.set(
+        [reader_study_with_max_credits, reader_study_without_max_credits]
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_reader_studies_credits_consumed()
+
+    reader_study_with_max_credits.refresh_from_db()
+    reader_study_without_max_credits.refresh_from_db()
+
+    # Sanity: the task ran for the reader study with a max_credits set
+    assert reader_study_with_max_credits.credits_consumed == 500
+
+    # No max_credits means no budget to enforce, so it is not updated
+    assert reader_study_without_max_credits.credits_consumed == 0

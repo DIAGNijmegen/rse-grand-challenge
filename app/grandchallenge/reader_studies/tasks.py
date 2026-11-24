@@ -188,13 +188,21 @@ def copy_reader_study_display_sets(*, orig_pk: str | UUID, new_pk: str | UUID):
 
 @lambda_task
 def update_reader_studies_credits_consumed():
+
+    reader_study_pks_with_credits = ReaderStudy.objects.filter(
+        max_credits__isnull=False
+    ).values_list("pk")
+
     seconds_per_task = math.ceil(
-        MAX_DELAY / max(ReaderStudy.objects.count(), 1)
+        MAX_DELAY / max(len(reader_study_pks_with_credits), 1)
     )
 
-    for idx, reader_study in enumerate(ReaderStudy.objects.only("pk")):
+    for idx, reader_study_pk in enumerate(reader_study_pks_with_credits):
+        seconds_per_task = math.ceil(
+            MAX_DELAY / max(ReaderStudy.objects.count(), 1)
+        )
         update_reader_study_credits_consumed.execute_on_commit(
-            pk=reader_study.pk,
+            pk=reader_study_pk,
             _delay=(idx * seconds_per_task) % MAX_DELAY,
         )
 
