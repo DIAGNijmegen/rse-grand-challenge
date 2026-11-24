@@ -551,7 +551,10 @@ class ReaderStudyUsage(
             .select_related("user_profile", "verification")
         )
 
-        if self.object.max_credits is not None:
+        if (
+            self.object.max_credits is not None
+            and self.object.credits_consumed is not None
+        ):
             credits_remaining = (
                 self.object.max_credits - self.object.credits_consumed
             )

@@ -26,7 +26,13 @@
         <tbody>
             <tr>
                 <th>Used</th>
-                <td>{{ object.credits_consumed }}</td>
+                <td>
+                {% if object.max_credits is None %}
+                    -
+                {% else %}
+                    {{ object.credits_consumed|default_if_none:"Updating" }}
+                {% endif %}
+                </td>
             </tr>
             <tr>
                 <th>Remaining</th>

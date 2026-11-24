@@ -48,7 +48,16 @@ class ReaderStudyAdmin(admin.ModelAdmin):
         "workstation__slug",
     )
     search_fields = ("title", "slug", "pk")
-    readonly_fields = ("credits_consumed",)
+    readonly_fields = ("credits_consumed_display",)
+
+    @admin.display(description="Credits consumed")
+    def credits_consumed_display(self, obj):
+        if obj.credits_consumed is None:
+            if obj.max_credits is None:
+                return "Uncalculated (no max credits set)"
+            else:
+                return "Updating"
+        return obj.credits_consumed
 
     def get_form(self, *args, **kwargs):
         help_texts = {

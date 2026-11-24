@@ -87,8 +87,8 @@ def test_answers_from_ground_truth_with_existing_answers():
 
 @pytest.mark.django_db
 def test_update_single_reader_study_credits_consumed():
-    reader_study = ReaderStudyFactory()
-    other_reader_study = ReaderStudyFactory()
+    reader_study = ReaderStudyFactory(max_credits=10000)
+    other_reader_study = ReaderStudyFactory(max_credits=10000)
 
     session_utilization = SessionUtilizationFactory(
         duration=timedelta(
@@ -98,7 +98,7 @@ def test_update_single_reader_study_credits_consumed():
     session_utilization.reader_studies.set([reader_study, other_reader_study])
 
     reader_study.refresh_from_db()
-    assert reader_study.credits_consumed == 0
+    assert reader_study.credits_consumed is None
 
     update_reader_study_credits_consumed(pk=reader_study.pk)
 
@@ -109,7 +109,7 @@ def test_update_single_reader_study_credits_consumed():
     )  # half of the session utilization is attributed to this reader study
 
     # The other one should not be updated (yet)
-    assert other_reader_study.credits_consumed == 0
+    assert other_reader_study.credits_consumed is None
 
 
 @pytest.mark.django_db
@@ -118,7 +118,7 @@ def test_update_multiple_reader_studies_credits_consumed(
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    reader_studies = ReaderStudyFactory.create_batch(3)
+    reader_studies = ReaderStudyFactory.create_batch(3, max_credits=10000)
 
     session_utilization = SessionUtilizationFactory(
         duration=timedelta(
@@ -163,4 +163,4 @@ def test_update_reader_studies_credits_consumed_skips_null_max_credits(
     assert reader_study_with_max_credits.credits_consumed == 500
 
     # No max_credits means no budget to enforce, so it is not updated
-    assert reader_study_without_max_credits.credits_consumed == 0
+    assert reader_study_without_max_credits.credits_consumed is None

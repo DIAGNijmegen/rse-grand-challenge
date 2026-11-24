@@ -1661,6 +1661,16 @@ def test_usage_view_total_credits_matches_per_user_sum(client):
         session=session4, duration=timedelta(hours=3)
     )
 
+    # Get the reader study with budget annotation
+    rs1_with_credits = (
+        ReaderStudy.objects.with_calculated_credits_consumed().get(pk=rs1.pk)
+    )
+
+    # Normally set by the background task
+    ReaderStudy.objects.filter(pk=rs1.pk).update(
+        credits_consumed=rs1_with_credits.calculated_credits_consumed
+    )
+
     response = get_view_for_user(
         viewname="reader-studies:usage",
         client=client,
@@ -1669,16 +1679,14 @@ def test_usage_view_total_credits_matches_per_user_sum(client):
     )
     assert response.status_code == 200
 
-    # Get the reader study with budget annotation
-    rs1_with_credits = (
-        ReaderStudy.objects.with_calculated_credits_consumed().get(pk=rs1.pk)
-    )
-
     # Get per-user credits from the view context
     user_usage = response.context["user_usage"]
     per_user_total = sum(u.total_credits for u in user_usage)
 
     assert per_user_total == rs1_with_credits.calculated_credits_consumed
+    assert response.context["credits_remaining"] == (
+        rs1.max_credits - per_user_total
+    )
     assert len(user_usage) == 2
 
 
