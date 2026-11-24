@@ -73,6 +73,13 @@ class Command(BaseCommand):
         "data attributes."
     )
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--hide-matches",
+            action="store_true",
+            help="Only output the model, field and pk, not the matched text.",
+        )
+
     def handle(self, *args, **options):
         total_objects = 0
 
@@ -93,10 +100,12 @@ class Command(BaseCommand):
 
                     if matches:
                         total_objects += 1
-                        self.stdout.write(
-                            f"{model_label}.{field_name} pk={pk}: "
-                            f"{', '.join(sorted(matches))}"
-                        )
+                        line = f"{model_label}.{field_name} pk={pk}"
+
+                        if not options["hide_matches"]:
+                            line += f": {', '.join(sorted(matches))}"
+
+                        self.stdout.write(line)
 
         self.stdout.write(
             self.style.SUCCESS(f"Found {total_objects} field(s) with matches")
