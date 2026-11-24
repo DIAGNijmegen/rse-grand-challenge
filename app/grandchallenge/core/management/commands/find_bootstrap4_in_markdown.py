@@ -82,6 +82,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         total_objects = 0
+        total_fields = 0
 
         for model_label, field_names in MARKDOWN_FIELDS:
             model = apps.get_model(model_label)
@@ -91,6 +92,8 @@ class Command(BaseCommand):
             for pk, *values in model.objects.values_list(
                 "pk", *field_names
             ).iterator(chunk_size=1000):
+                field_matches = {}
+
                 for field_name, value in zip(field_names, values, strict=True):
                     matches = {
                         m.group(0)
@@ -99,14 +102,27 @@ class Command(BaseCommand):
                     }
 
                     if matches:
-                        total_objects += 1
-                        line = f"{model_label}.{field_name} pk={pk}"
+                        field_matches[field_name] = sorted(matches)
 
-                        if not options["hide_matches"]:
-                            line += f": {', '.join(sorted(matches))}"
+                if not field_matches:
+                    continue
 
-                        self.stdout.write(line)
+                total_objects += 1
+                total_fields += len(field_matches)
+
+                if options["hide_matches"]:
+                    fields = ", ".join(field_matches)
+                    self.stdout.write(f"{model_label} pk={pk}: {fields}")
+                else:
+                    self.stdout.write(f"{model_label} pk={pk}")
+                    for field_name, matches in field_matches.items():
+                        self.stdout.write(
+                            f"    {field_name}: {', '.join(matches)}"
+                        )
 
         self.stdout.write(
-            self.style.SUCCESS(f"Found {total_objects} field(s) with matches")
+            self.style.SUCCESS(
+                f"Found matches in {total_fields} field(s) "
+                f"across {total_objects} object(s)"
+            )
         )
