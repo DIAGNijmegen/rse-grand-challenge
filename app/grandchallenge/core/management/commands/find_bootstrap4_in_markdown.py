@@ -79,11 +79,12 @@ class Command(BaseCommand):
         for model_label, field_names in MARKDOWN_FIELDS:
             model = apps.get_model(model_label)
 
-            for field_name in field_names:
-                # Python re is used as Postgres regex does not support \b
-                for pk, value in model.objects.values_list(
-                    "pk", field_name
-                ).iterator(chunk_size=1000):
+            # One query per model, Python re is used as Postgres regex
+            # does not support \b
+            for pk, *values in model.objects.values_list(
+                "pk", *field_names
+            ).iterator(chunk_size=1000):
+                for field_name, value in zip(field_names, values, strict=True):
                     matches = {
                         m.group(0)
                         for text in _iter_strings(value)
