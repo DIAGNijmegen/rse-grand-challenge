@@ -62,9 +62,9 @@ $carousel-control-color: $dark;
     visibility: visible;
 }
 
-// Temporary fix for underline under headers in homepage features section
-.no-underline-header-links a:has(h1, h2, h3, h4, h5, h6):not(:hover),
-.no-underline-header-links :is(h1, h2, h3, h4, h5, h6) > a:not(:hover) {
+// Remove underline under heading links
+a:has(h1, h2, h3, h4, h5, h6):not(:hover),
+:is(h1, h2, h3, h4, h5, h6) > a:not(:hover) {
     text-decoration-line: none;
 }
 
