@@ -23,7 +23,7 @@
     <form method="post"
           action="{% url 'direct_messages:conversation-create' username=object.username %}">
         {% csrf_token %}
-        <button class="btn btn btn-primary"
+        <button class="btn btn-primary"
                 type="submit"
                 {% if not challenge.is_active %}
                     disabled
