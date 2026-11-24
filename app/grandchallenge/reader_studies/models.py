@@ -748,12 +748,6 @@ class ReaderStudy(
         }
 
     @cached_property
-    def questions_with_ground_truth(self):
-        return self.questions.annotate(
-            gt_count=Count("answer", filter=Q(answer__is_ground_truth=True))
-        ).filter(gt_count__gte=1)
-
-    @cached_property
     def ground_truth_applicable_questions(self):
         return self.answerable_questions.exclude(
             answer_type__in=AnswerType.get_annotation_types()
@@ -781,10 +775,9 @@ class ReaderStudy(
 
     def score_for_user(self, user):
         """Returns the average and total score for answers given by ``user``."""
-
         return Answer.objects.filter(
             creator=user,
-            question__in=self.questions_with_ground_truth,
+            question__in=self.ground_truth_applicable_questions,
             is_ground_truth=False,
         ).aggregate(Sum("score"), Avg("score"))
 
@@ -793,7 +786,7 @@ class ReaderStudy(
         """The average and total scores for this ``ReaderStudy`` grouped by user."""
         return (
             Answer.objects.filter(
-                question__in=self.questions_with_ground_truth,
+                question__in=self.ground_truth_applicable_questions,
                 is_ground_truth=False,
             )
             .order_by("creator_id")
@@ -815,8 +808,7 @@ class ReaderStudy(
         """Statistics per question and case based on the total / average score."""
         scores_by_question = (
             Answer.objects.filter(
-                question__in=self.questions_with_ground_truth,
-                question__reader_study=self,
+                question__in=self.ground_truth_applicable_questions,
                 is_ground_truth=False,
             )
             .order_by("question_id")
@@ -830,10 +822,18 @@ class ReaderStudy(
             .select_related("reader_study__workstation__config")
             .annotate(
                 sum=Sum(
-                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                    "answers__score",
+                    filter=Q(
+                        answers__is_ground_truth=False,
+                        answers__question__in=self.ground_truth_applicable_questions,
+                    ),
                 ),
                 avg=Avg(
-                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                    "answers__score",
+                    filter=Q(
+                        answers__is_ground_truth=False,
+                        answers__question__in=self.ground_truth_applicable_questions,
+                    ),
                 ),
             )
             .order_by("avg")
