@@ -43,8 +43,8 @@ $carousel-control-color: $dark;
     line-height: 1;
 }
 
-.breadcrumb-item > a {
-    text-decoration: none !important;
+.breadcrumb-item > a:not(:hover) {
+    text-decoration-line: none !important;
 }
 
 // Show heading permalinks only on hover
