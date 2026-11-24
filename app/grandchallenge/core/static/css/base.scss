@@ -44,7 +44,7 @@ $carousel-control-color: $dark;
 }
 
 // Reserve space for focus box-shadow
-.btn {
+.btn, .pagination {
     margin: $btn-focus-width;
 }
 
