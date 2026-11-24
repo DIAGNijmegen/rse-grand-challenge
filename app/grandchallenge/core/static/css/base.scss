@@ -185,6 +185,11 @@ a.mark:hover {
 
         > .nav-link {
             color: $primary;
+
+            &:hover,
+            &:focus {
+                color: $black;
+            }
         }
     }
 
@@ -197,6 +202,11 @@ a.mark:hover {
         > .nav-link {
             color: $primary;
             padding-left: $spacer * .5;
+
+            &:hover,
+            &:focus {
+                color: $black;
+            }
         }
     }
 
