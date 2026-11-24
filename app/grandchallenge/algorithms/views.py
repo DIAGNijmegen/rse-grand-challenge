@@ -975,6 +975,20 @@ class AlgorithmPermissionRequestCreate(
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
+    @cached_property
+    def permission_request(self):
+        return AlgorithmPermissionRequest.objects.filter(
+            algorithm=self.algorithm, user=self.request.user
+        ).first()
+
+    def get(self, *args, **kwargs):
+        if self.permission_request is None and self.request.user.has_perm(
+            "algorithms.change_algorithm", self.algorithm
+        ):
+            return HttpResponseRedirect(self.algorithm.get_absolute_url())
+        else:
+            return super().get(*args, **kwargs)
+
     def get_success_url(self):
         return self.algorithm.get_absolute_url()
 
@@ -993,12 +1007,9 @@ class AlgorithmPermissionRequestCreate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        permission_request = AlgorithmPermissionRequest.objects.filter(
-            algorithm=self.algorithm, user=self.request.user
-        ).first()
         context.update(
             {
-                "permission_request": permission_request,
+                "permission_request": self.permission_request,
                 "algorithm": self.algorithm,
             }
         )

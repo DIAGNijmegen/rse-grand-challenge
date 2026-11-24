@@ -1088,6 +1088,20 @@ class ReaderStudyPermissionRequestCreate(
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
+    @cached_property
+    def permission_request(self):
+        return ReaderStudyPermissionRequest.objects.filter(
+            reader_study=self.reader_study, user=self.request.user
+        ).first()
+
+    def get(self, *args, **kwargs):
+        if self.permission_request is None and self.request.user.has_perm(
+            "reader_studies.change_readerstudy", self.reader_study
+        ):
+            return HttpResponseRedirect(self.reader_study.get_absolute_url())
+        else:
+            return super().get(*args, **kwargs)
+
     def get_success_url(self):
         return self.reader_study.get_absolute_url()
 
@@ -1107,12 +1121,9 @@ class ReaderStudyPermissionRequestCreate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        permission_request = ReaderStudyPermissionRequest.objects.filter(
-            reader_study=self.reader_study, user=self.request.user
-        ).first()
         context.update(
             {
-                "permission_request": permission_request,
+                "permission_request": self.permission_request,
                 "reader_study": self.reader_study,
             }
         )

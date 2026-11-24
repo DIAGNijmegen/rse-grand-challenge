@@ -293,6 +293,20 @@ class ArchivePermissionRequestCreate(
     def archive(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
 
+    @cached_property
+    def permission_request(self):
+        return ArchivePermissionRequest.objects.filter(
+            archive=self.archive, user=self.request.user
+        ).first()
+
+    def get(self, *args, **kwargs):
+        if self.permission_request is None and self.request.user.has_perm(
+            "archives.change_archive", self.archive
+        ):
+            return HttpResponseRedirect(self.archive.get_absolute_url())
+        else:
+            return super().get(*args, **kwargs)
+
     def get_success_url(self):
         return self.archive.get_absolute_url()
 
@@ -312,11 +326,11 @@ class ArchivePermissionRequestCreate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        permission_request = ArchivePermissionRequest.objects.filter(
-            archive=self.archive, user=self.request.user
-        ).first()
         context.update(
-            {"permission_request": permission_request, "archive": self.archive}
+            {
+                "permission_request": self.permission_request,
+                "archive": self.archive,
+            }
         )
         return context
 
