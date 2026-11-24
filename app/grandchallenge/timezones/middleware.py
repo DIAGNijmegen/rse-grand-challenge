@@ -9,8 +9,13 @@ class TimezoneMiddleware:
 
     def __call__(self, request):
         tzname = request.session.get("timezone")
+
         if tzname:
             timezone.activate(zoneinfo.ZoneInfo(tzname))
         else:
             timezone.deactivate()
-        return self.get_response(request)
+
+        try:
+            return self.get_response(request)
+        finally:
+            timezone.deactivate()
