@@ -27,7 +27,10 @@ $carousel-control-color: $dark;
 }
 
 // Reserve space for focus box-shadow of buttons
-.table-responsive { padding: $focus-ring-width; margin: -$focus-ring-width; }
+.table-responsive {
+  padding: $focus-ring-width;
+  margin: (-$focus-ring-width) (-$focus-ring-width) 0;
+}
 
 // Show heading permalinks only on hover
 :is(h1, h2, h3, h4, h5, h6) > .headerlink {
