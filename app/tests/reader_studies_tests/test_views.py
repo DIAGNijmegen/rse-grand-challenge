@@ -26,6 +26,9 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
+from grandchallenge.reader_studies.tasks import (
+    update_reader_study_credits_consumed,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
@@ -1666,10 +1669,8 @@ def test_usage_view_total_credits_matches_per_user_sum(client):
         ReaderStudy.objects.with_calculated_credits_consumed().get(pk=rs1.pk)
     )
 
-    # Normally set by the background task
-    ReaderStudy.objects.filter(pk=rs1.pk).update(
-        credits_consumed=rs1_with_credits.calculated_credits_consumed
-    )
+    # Run the background update task
+    update_reader_study_credits_consumed(pk=rs1_with_credits.pk)
 
     response = get_view_for_user(
         viewname="reader-studies:usage",
