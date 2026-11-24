@@ -3,7 +3,7 @@ from urllib.parse import quote_plus
 
 import pytest
 from django.contrib.auth.models import Group
-from django.http import Http404
+from django.core.exceptions import PermissionDenied
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -1101,7 +1101,10 @@ def test_workstation_image(rf, settings):
     view = SessionCreate()
     view.setup(request)
 
-    with pytest.raises(Http404):
+    with pytest.raises(
+        PermissionDenied,
+        match="This viewer is not active, please select an active viewer",
+    ):
         # No default workstation
         _ = view.workstation_image
 
@@ -1127,7 +1130,10 @@ def test_workstation_image(rf, settings):
     # No images for workstation
     view.setup(request, slug=WorkstationFactory().slug)
     del view.workstation_image
-    with pytest.raises(Http404):
+    with pytest.raises(
+        PermissionDenied,
+        match="This viewer is not active, please select an active viewer",
+    ):
         _ = view.workstation_image
 
 

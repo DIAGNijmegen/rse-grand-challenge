@@ -346,7 +346,9 @@ class SessionCreate(
         workstation_image = workstation.active_image
 
         if workstation_image is None:
-            raise Http404("No container images found for this workstation")
+            raise PermissionDenied(
+                "This viewer is not active, please select an active viewer."
+            )
 
         return workstation_image
 
