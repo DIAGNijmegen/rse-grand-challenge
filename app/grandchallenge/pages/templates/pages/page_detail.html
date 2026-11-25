@@ -30,11 +30,11 @@
                         <a class="nav-link px-2 py-1 mb-1 d-flex align-items-center {% if page == object %}active{% endif %}"
                            href="{{ page.get_absolute_url }}">
                             {% if page.permission_level == page.REGISTERED_ONLY %}
-                                <i class="fas fa-lock fa-fw mr-1 flex-shrink-0" title="Page is only visible by participants of this challenge"></i>
+                                <i class="fas fa-lock fa-fw me-1 flex-shrink-0" title="Page is only visible by participants of this challenge"></i>
                             {% elif page.permission_level == page.ADMIN_ONLY %}
-                                <i class="fas fa-lock fa-fw mr-1 flex-shrink-0 text-danger" title="Page is only visible by admins of this challenge"></i>
+                                <i class="fas fa-lock fa-fw me-1 flex-shrink-0 text-danger" title="Page is only visible by admins of this challenge"></i>
                             {% else %}
-                                <i class="fa fa-fw mr-1 flex-shrink-0"></i>
+                                <i class="fa fa-fw me-1 flex-shrink-0"></i>
                             {% endif %}
                             {{ page|title }}
                         </a>
@@ -44,7 +44,7 @@
             {% if challenge.contact_email %}
                 <li class="nav-item">
                     <a class="nav-link px-2 py-1 mb-1 d-flex align-items-center" target="_blank" href="mailto:{{ challenge.contact_email|random_encode|clean }}">
-                        <i class="fas fa-envelope fa-fw mr-1"></i>
+                        <i class="fas fa-envelope fa-fw me-1"></i>
                         Email organizers
                     </a>
                 </li>
@@ -54,7 +54,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="ml-lg-3">
+    <div class="ms-lg-3">
         {% if user_is_participant %}
             {% include "challenges/partials/participant_verification_warning.html" %}
         {% endif %}

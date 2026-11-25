@@ -17,14 +17,14 @@
         <a class="btn btn-primary {% if base_obj.algorithm_interfaces_locked %} disabled {% endif %}"
            href="{{ base_obj.algorithm_interface_create_url }}"
         >
-        <i class="fas fa-plus pr-1"></i> Add new interface
+        <i class="fas fa-plus pe-1"></i> Add new interface
         </a>
     </span>
     {% if is_phase and interfaces %}
         <a class="btn btn-primary"
             href="{% url 'evaluation:interfaces-copy' slug=base_obj.slug challenge_short_name=challenge.short_name %}"
         >
-            <i class="fas fa-copy pr-1"></i> Copy interfaces
+            <i class="fas fa-copy pe-1"></i> Copy interfaces
         </a>
     {% endif %}
 </p>

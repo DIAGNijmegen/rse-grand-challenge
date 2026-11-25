@@ -47,7 +47,7 @@
                 <th class="text-center">Status</th>
                 <th class="nonSortable">Title</th>
                 <th class="nonSortable">Description</th>
-                <th class="text-right">Due</th>
+                <th class="text-end">Due</th>
                 <th>Action</th>
             </tr>
             </thead>
@@ -76,7 +76,7 @@
                     </td>
                     <td title="{{ task.deadline }}"
                         data-order="{{ task.deadline|date:"c" }}"
-                        class="align-middle text-right {{ task.complete|yesno:'text-muted,' }}"
+                        class="align-middle text-end {{ task.complete|yesno:'text-muted,' }}"
                          style="{{ task.complete|yesno:'text-decoration: line-through;,' }}"
                     >
                         {{ task.deadline|naturaltime }}

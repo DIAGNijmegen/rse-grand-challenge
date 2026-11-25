@@ -26,7 +26,7 @@
 {% block extra_content %}
     {% if topic %}
         <div class="h3 my-3" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
-            {% if topic.is_locked %}<i class="fas fa-lock mr-2 fa-xs badge-dark p-2 rounded"></i>{% endif %}
+            {% if topic.is_locked %}<i class="fas fa-lock me-2 fa-xs badge-dark p-2 rounded"></i>{% endif %}
             {{ topic.subject }}
         </div>
     {% else %}
@@ -40,15 +40,15 @@
                 {% if 'create_topic_post' in user_perms %}
                     {% if not page_obj.has_next %}
                         <a href="#new-post-card" class="btn btn-primary btn-sm">
-                            <i class="fas fa-comment mr-1"></i>Reply
+                            <i class="fas fa-comment me-1"></i>Reply
                         </a>
                     {% else %}
-                        <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary btn-sm"><i class="fas fa-comment mr-1"></i>Reply</a>
+                        <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary btn-sm"><i class="fas fa-comment me-1"></i>Reply</a>
                     {% endif %}
                 {% endif %}
                 {% if 'delete_forumtopic' in  user_perms %}
                     <a href="{% url 'discussion-forums:topic-delete' slug=topic.slug %}" class="btn btn-danger btn-sm">
-                        <i class="fas fa-trash mr-1"></i>Delete topic
+                        <i class="fas fa-trash me-1"></i>Delete topic
                     </a>
                 {% endif %}
                 {% if 'lock_forumtopic' in user_perms and not topic.is_locked %}
@@ -58,7 +58,7 @@
                     >
                         {% csrf_token %}
                         <input type="hidden" name="is_locked" value="True">
-                        <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock mr-1"></i>
+                        <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock me-1"></i>
                             Lock topic
                         </button>
                     </form>
@@ -69,13 +69,13 @@
                     >
                         {% csrf_token %}
                         <input type="hidden" name="is_locked" value="False">
-                        <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock-open mr-1"></i>
+                        <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock-open me-1"></i>
                             Unlock topic
                         </button>
                     </form>
                 {% endif %}
             </div>
-            <div class="col-12 col-md-4 text-left text-md-right">
+            <div class="col-12 col-md-4 text-start text-md-end">
                 {% include 'discussion_forums/partials/follow_unfollow_links.html' with object=topic %}
             </div>
         </div>
@@ -105,7 +105,7 @@
         {% else %}
             <div class="d-flex justify-content-between">
                 <div class="d-inline">
-                    <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary my-1"><i class="fas fa-comment mr-1"></i>Reply</a>
+                    <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary my-1"><i class="fas fa-comment me-1"></i>Reply</a>
                 </div>
                 {% include "grandchallenge/partials/pagination.html" %}
             </div>

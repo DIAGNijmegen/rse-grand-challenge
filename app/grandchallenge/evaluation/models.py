@@ -2949,7 +2949,7 @@ class EvaluationActionMessageBuilder:
     @property
     def exclamation_mark(self):
         return format_html(
-            '<i class="fas fa-exclamation-triangle fa-fw text-warning pr-1"></i>'
+            '<i class="fas fa-exclamation-triangle fa-fw text-warning pe-1"></i>'
         )
 
     def algorithm_logs_message(self, label):

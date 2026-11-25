@@ -35,7 +35,7 @@
                             {% endif %}
                         </h5>
                         <p class="card-text">{{ object.description }}</p>
-                        <div class="mt-auto mr-auto above-stretched-link">
+                        <div class="mt-auto me-auto above-stretched-link">
                             {% get_obj_perms request.user for object as "workstation_perms" %}
                             {% if "change_workstation" in workstation_perms %}
                                 <a href="{% url 'workstations:update' slug=object.slug %}"

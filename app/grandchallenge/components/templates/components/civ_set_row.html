@@ -16,7 +16,7 @@
         title="Cannot select for deletion: answers for display set exist"
      {% endif %}
 >
-    <input class="checkbox pr-1 mr-1"
+    <input class="checkbox pe-1 me-1"
        name="selected-for-deletion"
        value="{{ object.id }}"
        type="checkbox"
@@ -44,7 +44,7 @@
     {{ object.order }}
     <split></split>
 {% endif %}
-<ul class="list-unstyled mb-0 text-left">
+<ul class="list-unstyled mb-0 text-start">
     {% for civ in object.values.all|sort_civs %}
     <li>
         {% include "components/partials/civ.html" with object=civ display_inline=True only %}

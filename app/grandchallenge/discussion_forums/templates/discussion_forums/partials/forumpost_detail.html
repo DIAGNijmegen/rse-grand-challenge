@@ -8,7 +8,7 @@
     <div class="card-body">
         <div class="row">
             <div class="col-md-10">
-                <div class="float-right">
+                <div class="float-end">
                     {% get_obj_perms request.user for post as "user_perms" %}
                     {% if 'change_forumpost' in user_perms %}
                         <a hx-get="{% url 'discussion-forums:post-update' challenge_short_name=post.topic.forum.linked_challenge.short_name slug=post.topic.slug pk=post.pk %}"
@@ -50,9 +50,9 @@
                 <p>
                     <small class="text-muted">
                         {% if post in unread_posts_by_user %}
-                            <span class="text-danger mr-1" title="New post"><i class="fa fa-circle pl-1"></i></span>
+                            <span class="text-danger me-1" title="New post"><i class="fa fa-circle ps-1"></i></span>
                         {% endif %}
-                        <i class="fas fa-clock mr-1"></i>By: {{ post.creator|user_profile_link }}
+                        <i class="fas fa-clock me-1"></i>By: {{ post.creator|user_profile_link }}
                         {{ post.created|naturaltime }}
                         {% if not topic %}
                             in <a href="{{ post.topic.get_absolute_url }}">{{ post.topic }}</a>

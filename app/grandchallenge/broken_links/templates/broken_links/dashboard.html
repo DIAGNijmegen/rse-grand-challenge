@@ -47,14 +47,14 @@
                     <thead class="table-light">
                     <tr>
                         <th>Path</th>
-                        <th class="text-right">Count</th>
+                        <th class="text-end">Count</th>
                     </tr>
                     </thead>
                     <tbody>
                         {% for entry in top_internal_paths %}
                             <tr>
                                 <td class="text-break">{{ entry.path }}</td>
-                                <td class="text-right">{{ entry.count }}</td>
+                                <td class="text-end">{{ entry.count }}</td>
                             </tr>
                         {% empty %}
                             <tr><td colspan="2">No internal broken links.</td></tr>
@@ -70,14 +70,14 @@
                     <thead class="table-light">
                     <tr>
                         <th>Referer</th>
-                        <th class="text-right">Count</th>
+                        <th class="text-end">Count</th>
                     </tr>
                     </thead>
                     <tbody>
                         {% for entry in top_referers %}
                             <tr>
                                 <td class="text-break">{{ entry.referer }}</td>
-                                <td class="text-right">{{ entry.count }}</td>
+                                <td class="text-end">{{ entry.count }}</td>
                             </tr>
                         {% empty %}
                             <tr><td colspan="2">No broken links.</td></tr>
@@ -96,14 +96,14 @@
                     <thead class="table-light">
                     <tr>
                         <th>Path</th>
-                        <th class="text-right">Count</th>
+                        <th class="text-end">Count</th>
                     </tr>
                     </thead>
                     <tbody>
                         {% for entry in top_paths %}
                             <tr>
                                 <td class="text-break">{{ entry.path }}</td>
-                                <td class="text-right">{{ entry.count }}</td>
+                                <td class="text-end">{{ entry.count }}</td>
                             </tr>
                         {% empty %}
                             <tr><td colspan="2">No broken links.</td></tr>
@@ -119,14 +119,14 @@
                     <thead class="table-light">
                     <tr>
                         <th>IP Address</th>
-                        <th class="text-right">Count</th>
+                        <th class="text-end">Count</th>
                     </tr>
                     </thead>
                     <tbody>
                         {% for entry in top_ip_addresses %}
                             <tr>
                                 <td class="text-break">{{ entry.ip_address }}</td>
-                                <td class="text-right">{{ entry.count }}</td>
+                                <td class="text-end">{{ entry.count }}</td>
                             </tr>
                         {% empty %}
                             <tr><td colspan="2">No broken links.</td></tr>

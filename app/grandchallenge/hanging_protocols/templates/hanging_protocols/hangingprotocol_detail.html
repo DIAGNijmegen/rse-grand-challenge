@@ -26,7 +26,7 @@
     <div class="row col-12 p-0 m-0">
         <span class="col-10 p-0 d-flex align-items-center">Created by {{ object.creator|user_profile_link }}</span>
         {% if 'change_hangingprotocol' in user_perms %}
-            <div class="col-2 text-right p-0"><a class="btn btn-primary" href="{% url 'hanging-protocols:update' slug=object.slug %}">Edit</a></div>
+            <div class="col-2 text-end p-0"><a class="btn btn-primary" href="{% url 'hanging-protocols:update' slug=object.slug %}">Edit</a></div>
         {% endif %}
     </div>
     <br>

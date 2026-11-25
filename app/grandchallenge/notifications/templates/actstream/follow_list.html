@@ -20,8 +20,8 @@
 
     <div class="row">
         <div class="col-6">
-            <input class="checkbox-inline ml-3 mt-3" type="checkbox" id="SelectCheckboxes"/>
-            <label class="form-check-label ml-1" id="LabelSelectAll" for="SelectCheckboxes">
+            <input class="checkbox-inline ms-3 mt-3" type="checkbox" id="SelectCheckboxes"/>
+            <label class="form-check-label ms-1" id="LabelSelectAll" for="SelectCheckboxes">
                 Select all
             </label>
         </div>
@@ -32,10 +32,10 @@
 
     <ul class="list-group">
         {% for follow in object_list %}
-            <li class="list-group-item p-1 pl-3">
+            <li class="list-group-item p-1 ps-3">
                 <div class="d-flex justify-content-between">
                     <div class="mt-1 pt-2 p-0">
-                        <input class="checkbox mr-2" name="checkbox" type="checkbox" id="{{ follow.pk }}"
+                        <input class="checkbox me-2" name="checkbox" type="checkbox" id="{{ follow.pk }}"
                                value="{{ follow.pk }}"
                                data-flag={% if follow.flag == 'job-active' %}"job-follow"{% else %}"standard-follow"{% endif %}
                                data-url="{% url 'api:follow-detail' pk=follow.pk %}"

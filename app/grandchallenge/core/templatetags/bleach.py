@@ -208,7 +208,7 @@ def md2html(
         extensions.append(
             TocExtension(
                 permalink=True,
-                permalink_class="headerlink text-muted small pl-1",
+                permalink_class="headerlink text-muted small ps-1",
             )
         )
 

@@ -59,9 +59,9 @@
                     <i class="fa fa-trophy fa-2x align-middle"></i>
                     <span class="align-middle">&nbsp;&nbsp;FEATURED CHALLENGES</span>
                 </div>
-                <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pr-0">
+                <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pe-0">
                     <div class="d-flex justify-content-end">
-                        <a class="btn btn-md btn-primary mr-3"
+                        <a class="btn btn-md btn-primary me-3"
                            href="{% url 'challenges:list' %}">Participate in a challenge</a>
                         <a class="btn btn-md btn-outline-primary"
                            href="{% url 'challenges:requests-create' %}">Organize your own challenge</a>
@@ -78,9 +78,9 @@
                     <i class="fa fa-code fa-2x align-middle"></i>
                     <span class="align-middle">&nbsp;&nbsp;FEATURED ALGORITHMS</span>
                 </div>
-                <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pr-0">
+                <div class="col-12 col-lg-6 col-md-7 col-sm-8 mb-2 pe-0">
                     <div class="d-flex justify-content-end">
-                        <a class="btn btn-md btn-primary mr-3"
+                        <a class="btn btn-md btn-primary me-3"
                            href="{% url 'algorithms:list' %}">Try out an algorithm</a>
                         <a class="btn btn-md btn-outline-primary"
                            href="{% url 'algorithms:create-redirect' %}">Host your own algorithm</a>
@@ -100,7 +100,7 @@
                             <div class="row {% if not forloop.counter0|divisibleby:2 %} flex-sm-row-reverse {% endif %} align-items-center">
                                 <div class="col-md-6 my-3">
                                     <a href="{{ highlight.url }}"><h4>{{ highlight.title }}</h4></a>
-                                    <ul class="pl-3">
+                                    <ul class="ps-3">
                                         {% for point in highlight.bullet_points %}
                                             <li class="my-1">{{ point }}</li>
                                         {% endfor %}

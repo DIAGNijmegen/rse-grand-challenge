@@ -25,7 +25,7 @@
 
     {% if not object.ground_truth_is_complete %}
         <div class="alert alert-warning" role="alert">
-            <i class="fa fa-exclamation-triangle pr-1" aria-hidden="true"></i>The ground truth is incomplete.
+            <i class="fa fa-exclamation-triangle pe-1" aria-hidden="true"></i>The ground truth is incomplete.
             Some case questions that are ground-truth applicable have no ground truth assigned.
         </div>
     {% endif %}
@@ -37,7 +37,7 @@
             </p>
             <a class="btn btn-danger"
                     href="{% url 'reader-studies:ground-truth-delete' slug=object.slug %}">
-                <i class="fas fa-trash-alt fa-fw pr-1"></i>Delete Ground&nbsp;Truth
+                <i class="fas fa-trash-alt fa-fw pe-1"></i>Delete Ground&nbsp;Truth
             </a>
         </div>
 
@@ -52,7 +52,7 @@
             <div>
                 <a class="btn btn-primary"
                         href="{% url 'reader-studies:add-answers-from-ground-truth' slug=object.slug %}">
-                    <i class="fas fa-copy fa-fw pr-1"></i>Copy Ground&nbsp;Truth to Answers
+                    <i class="fas fa-copy fa-fw pe-1"></i>Copy Ground&nbsp;Truth to Answers
                 </a>
             </div>
         </div>
@@ -73,12 +73,12 @@
             <div>
                 <a class="btn btn-primary"
                     href="{% url 'reader-studies:add-ground-truth-csv' slug=object.slug %}">
-                    <i class="fas fa-upload fa-fw pr-1"></i>Upload via CSV
+                    <i class="fas fa-upload fa-fw pe-1"></i>Upload via CSV
                 </a>
                 or
                 <a class="btn btn-primary"
                     href="{% url 'reader-studies:add-ground-truth-answers' slug=object.slug %}">
-                    <i class="fas fa-users pr-1"></i>Use Answers from User
+                    <i class="fas fa-users pe-1"></i>Use Answers from User
                 </a>
             </div>
         </div>

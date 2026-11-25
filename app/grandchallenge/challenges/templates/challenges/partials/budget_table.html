@@ -16,7 +16,7 @@ Based on the following information:
     <table class="table table-hover table-sm">
         <tr>
             <td class="col-9 font-italic">Total number of submissions to the challenge</td>
-            <td class="col-3 text-right">
+            <td class="col-3 text-end">
                 {% if object.total_number_of_submissions > 500 %}
                     <i class="fa fa-exclamation-triangle text-warning"></i>
                 {% endif %}
@@ -25,11 +25,11 @@ Based on the following information:
         </tr>
         <tr>
             <td class="col-9 font-italic">Total data stored for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
-            <td class="col-3 text-right">{{ object.total_data_and_docker_storage_bytes|naturalsize }}</td>
+            <td class="col-3 text-end">{{ object.total_data_and_docker_storage_bytes|naturalsize }}</td>
         </tr>
         <tr>
             <td class="col-9 font-italic">Total estimated on-demand GPU time</td>
-            <td class="col-3 text-right">{{ object.total_compute_time|naturaldelta }}</td>
+            <td class="col-3 text-end">{{ object.total_compute_time|naturaldelta }}</td>
         </tr>
     </table>
 </div>
@@ -62,10 +62,10 @@ Based on the following information:
             <tr>
                 <th>Item</th>
                 <th class="col-5">Description</th>
-                <th class="text-right">Price per unit</th>
+                <th class="text-end">Price per unit</th>
                 <th>Number</th>
                 <th>Unit</th>
-                <th class="text-right">Total</th>
+                <th class="text-end">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -74,20 +74,20 @@ Based on the following information:
                     Base cost
                 </td>
                 <td><small class="text-dark">This covers a contribution towards platform maintenance, development and support.</small></td>
-                <td class="text-right">{{ object.base_cost_euros|euro:0 }}</td>
+                <td class="text-end">{{ object.base_cost_euros|euro:0 }}</td>
                 <td>1</td>
                 <td>Challenge</td>
-                <td class="text-right font-weight-bold">{{ object.base_cost_euros|euro:0 }}</td>
+                <td class="text-end font-weight-bold">{{ object.base_cost_euros|euro:0 }}</td>
             </tr>
             <tr>
                 <td class="font-weight-bold">
                     Capacity reservation
                 </td>
                 <td><small class="text-dark">Capacity reservation units for compute and storage costs.</small></td>
-                <td class="text-right">{{ capacity_reservation_pack_size_in_euro|euro:0 }}</td>
+                <td class="text-end">{{ capacity_reservation_pack_size_in_euro|euro:0 }}</td>
                 <td>{{ object.capacity_reservation_units }}</td>
                 <td>Units</td>
-                <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro:0 }}</td>
+                <td class="text-end font-weight-bold">{{ object.capacity_reservation_euros|euro:0 }}</td>
             </tr>
             <tr class="table-info">
                 <td class="font-weight-bold">
@@ -97,7 +97,7 @@ Based on the following information:
                 <td></td>
                 <td></td>
                 <td></td>
-                <td class="text-right font-weight-bold">{{ object.total_challenge_price|euro:0 }}</td>
+                <td class="text-end font-weight-bold">{{ object.total_challenge_price|euro:0 }}</td>
             </tr>
         </tbody>
     </table>
@@ -117,10 +117,10 @@ Based on the following information:
                     <tr>
                         <th>Item</th>
                         <th class="col-5">Description</th>
-                        <th class="text-right">Price per unit</th>
+                        <th class="text-end">Price per unit</th>
                         <th>Number</th>
                         <th>Unit</th>
-                        <th class="text-right">Total</th>
+                        <th class="text-end">Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -129,9 +129,9 @@ Based on the following information:
                             <td>Compute phase {{ forloop.counter }}
                                 <br>
                                 {% if phase.use_batch_mode %}
-                                    <span class="badge badge-info"><i class="fas fa-layer-group mr-1"></i> Batch mode</span>
+                                    <span class="badge badge-info"><i class="fas fa-layer-group me-1"></i> Batch mode</span>
                                 {% else %}
-                                    <span class="badge badge-secondary"><i class="fas fa-cube mr-1"></i> Single mode</span>
+                                    <span class="badge badge-secondary"><i class="fas fa-cube me-1"></i> Single mode</span>
                                 {% endif %}
                             </td>
                             <td>{{ task.inference_time_average_seconds }} seconds average job time per case,
@@ -144,10 +144,10 @@ Based on the following information:
                                     One job per case, resulting in a total of {{ phase.number_of_jobs }} job{{ phase.number_of_jobs|pluralize }}.
                                 {% endif %}
                             </td>
-                            <td class="text-right">{{ task.compute_costs_euros_per_hour|euro }}</td>
+                            <td class="text-end">{{ task.compute_costs_euros_per_hour|euro }}</td>
                             <td>{{ phase.compute_time_hours }}</td>
                             <td>Hours</td>
-                            <td class="text-right">{{ phase.compute_costs_euros|euro }}</td>
+                            <td class="text-end">{{ phase.compute_costs_euros|euro }}</td>
                         </tr>
                         <tr>
                             <td>Data storage phase {{ forloop.counter }}</td>
@@ -156,10 +156,10 @@ Based on the following information:
                                 {{ task.average_size_job_output_mb }} MB average output per case,
                                 {{ phase.number_of_job_outputs }} output{{ phase.number_of_job_outputs|pluralize }},
                                 for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
-                            <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                            <td class="text-end">{{ object.storage_costs_euros_per_gb|euro }}</td>
                             <td>{{ phase.data_storage_size_gb }}</td>
                             <td>GB</td>
-                            <td class="text-right">{{ phase.data_storage_costs_euros|euro }}</td>
+                            <td class="text-end">{{ phase.data_storage_costs_euros|euro }}</td>
                         </tr>
                         <tr class="table-light">
                             <td>Total phase {{ forloop.counter }}</td>
@@ -167,7 +167,7 @@ Based on the following information:
                             <td></td>
                             <td></td>
                             <td></td>
-                            <td class="text-right">{{ phase.compute_and_storage_costs_euros|euro }}</td>
+                            <td class="text-end">{{ phase.compute_and_storage_costs_euros|euro }}</td>
                         </tr>
                         <tr>
                             <td colspan="6">&nbsp;</td>
@@ -180,10 +180,10 @@ Based on the following information:
                             {{ task.number_of_docker_images_per_team }} unique submission{{ task.number_of_docker_images_per_team|pluralize }} per team,
                             {{ task.number_of_teams }} team{{ task.number_of_teams|pluralize }},
                             for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
-                        <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                        <td class="text-end">{{ object.storage_costs_euros_per_gb|euro }}</td>
                         <td>{{ task.docker_storage_size_gb }}</td>
                         <td>GB</td>
-                        <td class="text-right">{{ task.docker_storage_costs_euros|euro }}</td>
+                        <td class="text-end">{{ task.docker_storage_costs_euros|euro }}</td>
                     </tr>
                     <tr>
                         <td colspan="6">&nbsp;</td>
@@ -191,15 +191,15 @@ Based on the following information:
 
                     <tr>
                         <td class="font-weight-bold" colspan="5">Compute task {{ task_id }}</td>
-                        <td class="text-right font-weight-bold">{{ task.compute_costs_euros|euro }}</td>
+                        <td class="text-end font-weight-bold">{{ task.compute_costs_euros|euro }}</td>
                     </tr>
                     <tr>
                         <td class="font-weight-bold" colspan="5">Storage task {{ task_id }}</td>
-                        <td class="text-right font-weight-bold">{{ task.storage_costs_euros|euro }}</td>
+                        <td class="text-end font-weight-bold">{{ task.storage_costs_euros|euro }}</td>
                     </tr>
                     <tr class="table-info">
                         <td class="font-weight-bold border-top border-dark" colspan="5">Total task {{ task_id }}</td>
-                        <td class="text-right font-weight-bold border-top border-dark">{{ task.compute_and_storage_costs_euros|euro }}</td>
+                        <td class="text-end font-weight-bold border-top border-dark">{{ task.compute_and_storage_costs_euros|euro }}</td>
                     </tr>
 
                 </tbody>
@@ -216,10 +216,10 @@ Based on the following information:
             <tr>
                 <th>Item</th>
                 <th class="col-5">Description</th>
-                <th class="text-right">Price per unit</th>
+                <th class="text-end">Price per unit</th>
                 <th>Number</th>
                 <th>Unit</th>
-                <th class="text-right">Total</th>
+                <th class="text-end">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -227,23 +227,23 @@ Based on the following information:
 
             <tr>
                 <td class="font-weight-bold" colspan="5">Total compute</td>
-                <td class="text-right font-weight-bold">{{ object.total_compute_costs_euros|euro }}</td>
+                <td class="text-end font-weight-bold">{{ object.total_compute_costs_euros|euro }}</td>
             </tr>
             <tr>
                 <td class="font-weight-bold" colspan="5">Total storage</td>
-                <td class="text-right font-weight-bold">{{ object.total_storage_costs_euros|euro }}</td>
+                <td class="text-end font-weight-bold">{{ object.total_storage_costs_euros|euro }}</td>
             </tr>
             <tr class="table-light">
                 <td class="font-weight-bold border-top border-dark" colspan="5">Total</td>
-                <td class="text-right font-weight-bold border-top border-dark">{{ object.total_compute_and_storage_costs_euros|euro }}</td>
+                <td class="text-end font-weight-bold border-top border-dark">{{ object.total_compute_and_storage_costs_euros|euro }}</td>
             </tr>
             <tr class="table-info">
                 <td class="font-weight-bold">Capacity reservation</td>
                 <td>Required capacity reservation units</td>
-                <td class="text-right">{{ capacity_reservation_pack_size_in_euro|euro:0 }}</td>
+                <td class="text-end">{{ capacity_reservation_pack_size_in_euro|euro:0 }}</td>
                 <td>{{ object.capacity_reservation_units }}</td>
                 <td>Units</td>
-                <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro }}</td>
+                <td class="text-end font-weight-bold">{{ object.capacity_reservation_euros|euro }}</td>
             </tr>
         </tbody>
     </table>
@@ -257,11 +257,11 @@ Based on the following information:
         <tbody>
             <tr>
                 <td>Compute</td>
-                <td class="text-right">{{ object.capacity_reservation_compute_euros|floatformat:0 }}</td>
+                <td class="text-end">{{ object.capacity_reservation_compute_euros|floatformat:0 }}</td>
             </tr>
             <tr>
                 <td>Storage</td>
-                <td class="text-right">{{ object.capacity_reservation_storage_euros|floatformat:0 }}</td>
+                <td class="text-end">{{ object.capacity_reservation_storage_euros|floatformat:0 }}</td>
             </tr>
         </tbody>
     </table>

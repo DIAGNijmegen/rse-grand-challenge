@@ -77,7 +77,7 @@
                 {% endif %}
             </dl>
         </div>
-        <div class="col-md-6 pl-3 border-left rounded">
+        <div class="col-md-6 ps-3 border-start rounded">
             <dl>
                 <dt>Base contribution</dt>
                 <dd>€&nbsp;{{ object.support_costs_euros }}</dd>
@@ -88,7 +88,7 @@
                 <dt>Storage capacity reservation</dt>
                 <dd class="mb-0">€&nbsp;{{ object.storage_costs_euros }}</dd>
 
-                <hr class="mt-3 ml-0" style="width: 44%">
+                <hr class="mt-3 ms-0" style="width: 44%">
 
                 <dt>Total amount</dt>
                 <dd>{{ invoice.total_amount_euros|euro:0 }}</dd>
@@ -110,7 +110,7 @@
         <dl>
             <dt>Available proportion</dt>
             <dd>
-                <span class="pr-4 {% if object.percent_compute_budget_remaining <= 10 %}text-danger{% elif object.percent_compute_budget_remaining <= 30 %}text-warning{% else %}text-success{% endif %} pl-1">
+                <span class="pe-4 {% if object.percent_compute_budget_remaining <= 10 %}text-danger{% elif object.percent_compute_budget_remaining <= 30 %}text-warning{% else %}text-success{% endif %} ps-1">
                     {{ object.percent_compute_budget_remaining }}%
                 </span>
             </dd>

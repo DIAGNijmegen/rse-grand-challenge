@@ -32,11 +32,11 @@
     {% include "datatables/partials/datatable.html" with columns=columns %}
 
     {% if phase.result_display_choice == phase.BEST %}
-        <p class="small ml-3">
+        <p class="small ms-3">
             Only the best published result for each participant is listed.
         </p>
     {% elif phase.result_display_choice == phase.MOST_RECENT %}
-        <p class="small ml-3">
+        <p class="small ms-3">
             Only the most recent published result for each participant is listed.
         </p>
     {% else %}
@@ -57,8 +57,8 @@
                             Select a date to display the leaderboard as it was on that day.
                         </p>
                         <form class="d-flex align-items-center flex-row flex-wrap" action="">
-                            <label class="mr-sm-2" for="leaderboardDate">Date:</label>
-                            <input class="mr-sm-2" type="date" id="leaderboardDate" name="date" required
+                            <label class="me-2" for="leaderboardDate">Date:</label>
+                            <input class="me-2" type="date" id="leaderboardDate" name="date" required
                                    value="{{ request.GET.date }}">
                             <button type="submit" class="btn btn-primary btn-sm">Submit</button>
                         </form>
