@@ -31,7 +31,8 @@ def _invoice(
         expires_on=now().date() + timedelta(days=expires_in_days),
         compute_costs_euros=compute_costs_euros,
         storage_costs_euros=storage_costs_euros,
-        storage_price_euro_millicents_per_gb_for_retention_period=storage_price_euro_millicents_per_gb,
+        storage_price_euro_millicents_per_gb_per_year=storage_price_euro_millicents_per_gb,
+        storage_retention_years=1,
         **kwargs,
     )
 

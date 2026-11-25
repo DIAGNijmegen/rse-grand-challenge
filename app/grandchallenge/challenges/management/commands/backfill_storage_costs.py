@@ -143,11 +143,13 @@ def validate_simulated_price(*, simulated_price, dry_run):
         pass
     elif not dry_run:
         raise CommandError(
-            "--storage-price-euro-millicents-per-gb requires --dry-run"
+            "--storage-price-euro-millicents-per-gb-per-year requires "
+            "--dry-run"
         )
     elif simulated_price <= 0:
         raise CommandError(
-            "--storage-price-euro-millicents-per-gb must be above 0"
+            "--storage-price-euro-millicents-per-gb-per-year must be "
+            "above 0"
         )
     else:
         pass
@@ -183,13 +185,14 @@ def allocate(*, challenge, simulated_price):
 
     The prefetched invoices are changed in memory only: they get the
     reserved costs so that the fill takes them into account, and a simulated
-    price replaces their price.
+    yearly price replaces their yearly price. Each invoice keeps its own
+    retention years.
     """
     if simulated_price is None:
         pass
     else:
         for invoice in challenge.invoices.all():
-            invoice.storage_price_euro_millicents_per_gb_for_retention_period = (
+            invoice.storage_price_euro_millicents_per_gb_per_year = (
                 simulated_price
             )
 
@@ -250,18 +253,20 @@ class Command(BaseCommand):
             help="Report the changes without saving them",
         )
         parser.add_argument(
-            "--storage-price-euro-millicents-per-gb",
+            "--storage-price-euro-millicents-per-gb-per-year",
             type=int,
             help=(
-                "Only with --dry-run: simulate this storage price per GB for "
-                "the whole retention period instead of the price on each "
-                "invoice"
+                "Only with --dry-run: simulate this storage price per GB per "
+                "year instead of the yearly price on each invoice. Each "
+                "invoice keeps its own retention years"
             ),
         )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
-        simulated_price = options["storage_price_euro_millicents_per_gb"]
+        simulated_price = options[
+            "storage_price_euro_millicents_per_gb_per_year"
+        ]
         self.stderr.style_func = None
 
         validate_simulated_price(
@@ -363,8 +368,10 @@ class Command(BaseCommand):
         else:
             price = (
                 f"**Simulated storage price: {simulated_price:,} euro "
-                f"millicents per GB ({simulated_price / EURO_MILLICENTS:.2f} "
-                "EUR)**, instead of the price on each invoice."
+                "millicents per GB per year "
+                f"({simulated_price / EURO_MILLICENTS:.5f} EUR)**, instead "
+                "of the yearly price on each invoice. Each invoice keeps "
+                "its own retention years."
             )
 
         top_ups = sum(top_up_euros(result=result) for result in out_of_budget)

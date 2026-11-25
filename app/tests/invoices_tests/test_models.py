@@ -855,7 +855,7 @@ def test_status_aggregates(settings):
 
 
 @pytest.mark.django_db
-def test_new_invoice_multiplies_yearly_price_by_retention_period(
+def test_new_invoice_stores_yearly_price_and_retention_years(
     *, settings
 ) -> None:
     settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 12_345
@@ -864,79 +864,68 @@ def test_new_invoice_multiplies_yearly_price_by_retention_period(
     invoice = InvoiceFactory()
     invoice.refresh_from_db()
 
-    assert (
-        invoice.storage_price_euro_millicents_per_gb_for_retention_period
-        == 37_035
-    )
+    assert invoice.storage_price_euro_millicents_per_gb_per_year == 12_345
+    assert invoice.storage_retention_years == 3
 
 
 @pytest.mark.django_db
-def test_changing_yearly_price_leaves_existing_invoices_unchanged(
+def test_changing_settings_leaves_existing_invoices_unchanged(
     *, settings
 ) -> None:
-    settings.CHALLENGE_NUM_SUPPORT_YEARS = 5
     settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 12_345
+    settings.CHALLENGE_NUM_SUPPORT_YEARS = 5
     existing_invoice = InvoiceFactory()
 
     settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 54_321
     new_invoice = InvoiceFactory()
 
-    existing_invoice.refresh_from_db()
-    new_invoice.refresh_from_db()
-
-    assert (
-        existing_invoice.storage_price_euro_millicents_per_gb_for_retention_period
-        == 61_725
-    )
-    assert (
-        new_invoice.storage_price_euro_millicents_per_gb_for_retention_period
-        == 271_605
-    )
-
-
-@pytest.mark.django_db
-def test_changing_retention_period_leaves_existing_invoices_unchanged(
-    *, settings
-) -> None:
-    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 10_000
-    settings.CHALLENGE_NUM_SUPPORT_YEARS = 5
-    existing_invoice = InvoiceFactory()
-
     settings.CHALLENGE_NUM_SUPPORT_YEARS = 2
-    new_invoice = InvoiceFactory()
+    newest_invoice = InvoiceFactory()
 
-    existing_invoice.refresh_from_db()
-    new_invoice.refresh_from_db()
+    for invoice in (existing_invoice, new_invoice, newest_invoice):
+        invoice.refresh_from_db()
 
     assert (
-        existing_invoice.storage_price_euro_millicents_per_gb_for_retention_period
-        == 50_000
+        existing_invoice.storage_price_euro_millicents_per_gb_per_year
+        == 12_345
     )
+    assert existing_invoice.storage_retention_years == 5
+    assert new_invoice.storage_price_euro_millicents_per_gb_per_year == 54_321
+    assert new_invoice.storage_retention_years == 5
     assert (
-        new_invoice.storage_price_euro_millicents_per_gb_for_retention_period
-        == 20_000
+        newest_invoice.storage_price_euro_millicents_per_gb_per_year == 54_321
+    )
+    assert newest_invoice.storage_retention_years == 2
+
+
+def test_storage_price_for_retention_period_is_the_product() -> None:
+    invoice = Invoice(
+        storage_price_euro_millicents_per_gb_per_year=15_328,
+        storage_retention_years=5,
+    )
+
+    assert (
+        invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        == 76_640
     )
 
 
 @pytest.mark.django_db
-def test_storage_price_of_zero_is_rejected() -> None:
+@pytest.mark.parametrize(
+    "field_name",
+    (
+        "storage_price_euro_millicents_per_gb_per_year",
+        "storage_retention_years",
+    ),
+)
+def test_storage_price_fields_reject_zero(*, field_name) -> None:
     invoice = InvoiceFactory()
-    invoice.storage_price_euro_millicents_per_gb_for_retention_period = 0
+    setattr(invoice, field_name, 0)
 
     with pytest.raises(ValidationError) as error:
         invoice.full_clean()
 
-    assert list(error.value.error_dict) == [
-        "storage_price_euro_millicents_per_gb_for_retention_period"
-    ]
-
-
-@pytest.mark.django_db
-def test_storage_price_of_one_is_accepted() -> None:
-    invoice = InvoiceFactory()
-    invoice.storage_price_euro_millicents_per_gb_for_retention_period = 1
-
-    invoice.full_clean()
+    assert list(error.value.error_dict) == [field_name]
 
 
 @pytest.mark.django_db

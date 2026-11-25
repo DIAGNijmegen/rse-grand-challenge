@@ -24,10 +24,19 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="invoice",
-            name="storage_price_euro_millicents_per_gb_for_retention_period",
+            name="storage_price_euro_millicents_per_gb_per_year",
             field=models.PositiveIntegerField(
-                default=grandchallenge.invoices.models.default_storage_price_euro_millicents_per_gb_for_retention_period,
-                help_text="The price of storage in Euro millicents per GB for the whole retention period. Set when the invoice is created, as the yearly storage price multiplied by the number of retention years",
+                default=grandchallenge.invoices.models.default_storage_price_euro_millicents_per_gb_per_year,
+                help_text="The price of storage in Euro millicents per GB per year. Set from the current setting when the invoice is created",
+                validators=[django.core.validators.MinValueValidator(1)],
+            ),
+        ),
+        migrations.AddField(
+            model_name="invoice",
+            name="storage_retention_years",
+            field=models.PositiveSmallIntegerField(
+                default=grandchallenge.invoices.models.default_storage_retention_years,
+                help_text="The number of years stored data is retained for. Set from the current setting when the invoice is created",
                 validators=[django.core.validators.MinValueValidator(1)],
             ),
         ),

@@ -173,11 +173,12 @@ def default_invoice_expiry():
     )
 
 
-def default_storage_price_euro_millicents_per_gb_for_retention_period() -> int:
-    return (
-        settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR
-        * settings.CHALLENGE_NUM_SUPPORT_YEARS
-    )
+def default_storage_price_euro_millicents_per_gb_per_year() -> int:
+    return settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR
+
+
+def default_storage_retention_years() -> int:
+    return settings.CHALLENGE_NUM_SUPPORT_YEARS
 
 
 class Invoice(models.Model, FieldChangeMixin):
@@ -239,9 +240,14 @@ class Invoice(models.Model, FieldChangeMixin):
     storage_costs_euros = models.PositiveIntegerField(
         help_text="The storage costs in Euros"
     )
-    storage_price_euro_millicents_per_gb_for_retention_period = models.PositiveIntegerField(
-        help_text="The price of storage in Euro millicents per GB for the whole retention period. Set when the invoice is created, as the yearly storage price multiplied by the number of retention years",
-        default=default_storage_price_euro_millicents_per_gb_for_retention_period,
+    storage_price_euro_millicents_per_gb_per_year = models.PositiveIntegerField(
+        help_text="The price of storage in Euro millicents per GB per year. Set from the current setting when the invoice is created",
+        default=default_storage_price_euro_millicents_per_gb_per_year,
+        validators=[MinValueValidator(1)],
+    )
+    storage_retention_years = models.PositiveSmallIntegerField(
+        help_text="The number of years stored data is retained for. Set from the current setting when the invoice is created",
+        default=default_storage_retention_years,
         validators=[MinValueValidator(1)],
     )
     storage_cost_euro_millicents = models.PositiveBigIntegerField(
@@ -421,6 +427,13 @@ class Invoice(models.Model, FieldChangeMixin):
             )
         except TypeError:
             return
+
+    @property
+    def storage_price_euro_millicents_per_gb_for_retention_period(self):
+        return (
+            self.storage_price_euro_millicents_per_gb_per_year
+            * self.storage_retention_years
+        )
 
     @property
     def _current_state(self):
