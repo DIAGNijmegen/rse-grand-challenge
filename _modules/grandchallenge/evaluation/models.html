@@ -124,6 +124,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Metric</span><span class="p">,</span>
     <span class="n">StatusChoices</span><span class="p">,</span>
+    <span class="n">SubmissionCommentsChoices</span><span class="p">,</span>
     <span class="n">SubmissionKindChoices</span><span class="p">,</span>
     <span class="n">is_valid_metric_score</span><span class="p">,</span>
 <span class="p">)</span>
@@ -342,6 +343,7 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
+    <span class="n">SubmissionCommentsChoices</span> <span class="o">=</span> <span class="n">SubmissionCommentsChoices</span>
     <span class="n">SubmissionKindChoices</span> <span class="o">=</span> <span class="n">SubmissionKindChoices</span>
     <span class="n">StatusChoices</span> <span class="o">=</span> <span class="n">StatusChoices</span>
 
@@ -440,10 +442,33 @@
             <span class="s2">"or an algorithm?"</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">allow_submission_comments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">submission_comments_choice</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">SubmissionCommentsChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">SubmissionCommentsChoices</span><span class="o">.</span><span class="n">OFF</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">"Allow users to submit comments as part of their submission."</span>
+            <span class="s2">"Show a comment field on the submission page so that users can "</span>
+            <span class="s2">"add a comment to their submission. Off turns this feature off, "</span>
+            <span class="s2">"Optional means that including a comment is optional for the "</span>
+            <span class="s2">"user, Required means that the user must provide a comment."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">submission_comments_label</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"Comment"</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"The label that will be used on the submission and results page "</span>
+            <span class="s2">"for the comment. For example: Method Description."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">submission_comments_help_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"The help text to include on the submissions page to describe the "</span>
+            <span class="s1">'comment. Eg: "A short description of your method.".'</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">display_submission_comments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
@@ -804,6 +829,12 @@
             <span class="p">(</span><span class="s2">"configure_algorithm_phase"</span><span class="p">,</span> <span class="s2">"Configure Algorithm Phase"</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">CheckConstraint</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">_submission_comments_choice_valid"</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Q</span><span class="p">(</span>
+                    <span class="n">submission_comments_choice__in</span><span class="o">=</span><span class="n">SubmissionCommentsChoices</span><span class="o">.</span><span class="n">values</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
             <span class="n">models</span><span class="o">.</span><span class="n">CheckConstraint</span><span class="p">(</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">"</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">_batch_mode_only_for_closed_logs"</span><span class="p">,</span>
                 <span class="n">condition</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Q</span><span class="p">(</span><span class="n">use_batch_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
