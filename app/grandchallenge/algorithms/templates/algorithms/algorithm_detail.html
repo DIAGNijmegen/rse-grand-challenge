@@ -238,7 +238,7 @@
 
             {% if object.display_editors %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Editor{{ editors|length|pluralize }}:</div>
+                    <div class="col-3 fw-bold">Editor{{ editors|length|pluralize }}:</div>
                     <div class="col-9">
                         {% for user in editors %}
                             <span class="me-3">{{ user|user_profile_link }}</span>
@@ -249,28 +249,28 @@
 
             {% if object.contact_email %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Contact email:</div>
+                    <div class="col-3 fw-bold">Contact email:</div>
                     <div class="col-9"><a target="_blank" href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a></div>
                 </div>
             {% endif %}
 
             {% if object.active_image %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Image Version:</div>
+                    <div class="col-3 fw-bold">Image Version:</div>
                     <div class="col-9">{{ object.active_image.pk }} — <span class="text-nowrap">{{ object.active_image.created|date }}</span></div>
                 </div>
             {% endif %}
 
             {% if object.active_model %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Model Version:</div>
+                    <div class="col-3 fw-bold">Model Version:</div>
                     <div class="col-9">{{ object.active_model.pk }} — <span class="text-nowrap">{{ object.active_model.created|date }}</span></div>
                 </div>
             {% endif %}
 
             {% if object.publications.all %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Associated publication{{ object.publications.all|pluralize }}:
+                    <div class="col-3 fw-bold">Associated publication{{ object.publications.all|pluralize }}:
                     </div>
                     <div class="col-9">
                         {% for publication in object.publications.all %}

@@ -124,15 +124,15 @@
     <div class="table-responsive">
         <table class="table table-hover">
         {% for label, value in fields.items %}
-            <tr><td class="font-weight-bold">{{ label|title }}</td> <td>{{ value|linebreaks }}</td></tr>
+            <tr><td class="fw-bold">{{ label|title }}</td> <td>{{ value|linebreaks }}</td></tr>
         {% endfor %}
         {% if object.data_license %}
-            <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-check-circle text-success pe-2"></i> The organizers agree to publish their public data set under a CC-BY license.</td></tr>
+            <tr><td class="fw-bold">Public data license</td> <td><i class="fas fa-check-circle text-success pe-2"></i> The organizers agree to publish their public data set under a CC-BY license.</td></tr>
         {% elif object.data_license != None %}
-            <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-exclamation-circle text-danger pe-2"></i> The organizers do not agree to publish their public data set under a CC-BY license for the following reason: <br> <span class="ms-4">{{ object.data_license_extra }}</span></td></tr>
+            <tr><td class="fw-bold">Public data license</td> <td><i class="fas fa-exclamation-circle text-danger pe-2"></i> The organizers do not agree to publish their public data set under a CC-BY license for the following reason: <br> <span class="ms-4">{{ object.data_license_extra }}</span></td></tr>
         {% endif %}
         {% if object.comments %}
-            <tr><td class="font-weight-bold">Comments from organizers</td> <td><div class="bg-warning rounded p-3">{{ object.comments|linebreaks }}</div></td></tr>
+            <tr><td class="fw-bold">Comments from organizers</td> <td><div class="bg-warning rounded p-3">{{ object.comments|linebreaks }}</div></td></tr>
         {% endif %}
         </table>
     </div>
