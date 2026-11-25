@@ -129,10 +129,37 @@ def validate_simulated_price(*, simulated_price, dry_run):
         pass
 
 
+def reserved_storage_costs(*, challenge):
+    """
+    The reserved storage of each paid invoice, for the invoices whose storage
+    cost is still below it. Paid storage counts as spent on storage.
+    """
+    reserved_costs = {}
+
+    for invoice in challenge.invoices.all():
+        reserved_cost = invoice.storage_costs_euros * EURO_MILLICENTS
+
+        if (
+            invoice.payment_status == Invoice.PaymentStatusChoices.PAID
+            and reserved_cost > invoice.storage_cost_euro_millicents
+        ):
+            reserved_costs[invoice] = reserved_cost
+        else:
+            pass
+
+    return reserved_costs
+
+
 def allocate(*, challenge, simulated_price):
     """
-    Allocates the storage of the challenge, expired invoices included. A
-    simulated price replaces the price on the invoices in memory only.
+    Charges the reserved storage on the paid invoices, then fills the storage
+    that is still unassigned over all authorized invoices, expired ones
+    included. Returns {invoice: new storage cost} for every invoice whose
+    cost increases.
+
+    The prefetched invoices are changed in memory only: they get the
+    reserved costs so that the fill takes them into account, and a simulated
+    price replaces their price.
     """
     if simulated_price is None:
         pass
@@ -142,9 +169,16 @@ def allocate(*, challenge, simulated_price):
                 simulated_price
             )
 
-    return allocate_storage_costs_for_challenge(
+    reserved_costs = reserved_storage_costs(challenge=challenge)
+
+    for invoice, reserved_cost in reserved_costs.items():
+        invoice.storage_cost_euro_millicents = reserved_cost
+
+    filled_costs = allocate_storage_costs_for_challenge(
         challenge=challenge, include_expired=True
     )
+
+    return {**reserved_costs, **filled_costs}
 
 
 def challenge_result(*, challenge, new_costs):
@@ -172,9 +206,10 @@ def table(*, header, alignments, rows):
 
 class Command(BaseCommand):
     help = (
-        "Assigns the storage that challenges currently use to their "
-        "authorized invoices, expired invoices included, and prints a "
-        "Markdown report of the effect on the available budget. Progress "
+        "Charges the reserved storage on paid invoices, assigns the storage "
+        "that challenges use beyond that to their authorized invoices, "
+        "expired invoices included, and prints a Markdown report of the "
+        "effect on the available budget. Progress "
         "goes to stderr, so the report can be redirected to a file. Running "
         "it again changes nothing."
     )
@@ -320,8 +355,11 @@ class Command(BaseCommand):
             "",
             price,
             "",
-            "Budget before is the available compute budget. Budget after is the available compute "
-            "and storage budget with the new storage costs. Amounts are in EUR.",
+            "Paid invoices are charged their reserved storage first. Storage "
+            "beyond that is filled over the authorized invoices, expired "
+            "ones first. Budget before is the available compute budget. "
+            "Budget after is the available compute and storage budget with "
+            "the new storage costs. Amounts are in EUR.",
             "",
             "## Summary",
             "",
@@ -392,8 +430,9 @@ class Command(BaseCommand):
         lines += self.section(
             title=f"Budget increased ({len(increased)})",
             description=(
-                "Challenges whose reserved storage budget is larger than the "
-                "storage costs they get. Largest increase first."
+                "Challenges with unpaid authorized invoices, for example "
+                "initialized postpaid ones, whose reserved storage becomes "
+                "spendable. Largest increase first."
             ),
             header=("Challenge", "Budget before", "Budget after", "Change"),
             alignments=(":---", "---:", "---:", "---:"),
