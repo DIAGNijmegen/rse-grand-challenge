@@ -36,7 +36,7 @@ p {
 }
 
 /* for square images */
-.embed-responsive .card-img-top {
+.ratio .card-img-top {
     object-fit: cover;
 }
 

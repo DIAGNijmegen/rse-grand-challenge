@@ -82,11 +82,11 @@
                         <div class="card h-100 gc-card">
                             <a class="stretched-link" href="{{ object.get_absolute_url }}"
                                title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
-                            <div class="embed-responsive embed-responsive-1by1">
+                            <div class="ratio ratio-1x1">
                                 {% if object.logo %}
-                                    {% picture object.logo img_class="card-img-top embed-responsive-item" img_loading="lazy" img_alt="Item Logo" ratio="1/1" s=12 m=6 l=4 %}
+                                    {% picture object.logo img_class="card-img-top" img_loading="lazy" img_alt="Item Logo" ratio="1/1" img_width="100%" img_height="100%" s=12 m=6 l=4 %}
                                 {% else %}
-                                    <img class="card-img-top embed-responsive-item"
+                                    <img class="card-img-top"
                                          loading="lazy"
                                          alt="Item Logo"
                                          src="{% static 'images/3697E1-0.8.png' %}"
