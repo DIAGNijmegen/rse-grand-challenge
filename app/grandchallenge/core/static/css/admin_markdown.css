@@ -1,34 +1,94 @@
-/* Bootstrap css conflicts with the markdown editor css in the Django admin in dark mode,
-this adds additional styles to fix that */
+/* Styles for the markdown editor in the Django admin.
+   Uses Django admin CSS variables so light and dark mode work natively. */
 
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: black;
-    }
+.gc-md-admin {
+    display: inline-block;
+    width: 100%;
+    max-width: 800px;
+}
 
-    .module {
-        background-color: black;
-    }
+.gc-md-tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--hairline-color, #ccc);
+}
 
-    h2 {
-        color: white;
-    }
+.gc-md-tab {
+    padding: 6px 14px;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+    background: none;
+    color: var(--link-fg, #447e9b);
+    cursor: pointer;
+}
 
-    i {
-        color: white;
-    }
+.gc-md-tab-active {
+    border-color: var(--hairline-color, #ccc);
+    background: var(--body-bg, #fff);
+    color: var(--body-fg, #333);
+    margin-bottom: -1px;
+}
 
-    .nav-tabs {
-        border-bottom-color: black;
-    }
+.gc-md-panel[hidden] {
+    display: none;
+}
 
-    .markdownx-preview {
-        overflow: hidden !important;
-        background-color: white;
-        padding: 1.5rem 1.5rem;
-    }
+.gc-md-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 8px 0;
+}
 
-    .help {
-        margin: 0 !important;
-    }
+.gc-md-toolbar > * {
+    padding: 3px 8px;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 4px;
+    background: var(--darkened-bg, #f8f8f8);
+    color: var(--body-fg, #333);
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.gc-md-toolbar > *:hover {
+    background: var(--selected-row, #e1e1e1);
+}
+
+.gc-md-textarea textarea {
+    box-sizing: border-box;
+    width: 100%;
+    font-family: var(--font-family-monospace, monospace);
+}
+
+.gc-md-notes {
+    margin: 4px 0 0 !important;
+    padding-left: 0 !important;
+}
+
+.markdownx-preview {
+    box-sizing: border-box;
+    min-height: 100px;
+    margin-top: 8px;
+    padding: 1rem 1.5rem;
+    overflow: auto;
+    background: var(--body-bg, #fff);
+    color: var(--body-fg, #333);
+    border: 1px solid var(--hairline-color, #ccc);
+}
+
+.markdownx-preview img {
+    max-width: 100%;
+}
+
+.markdownx-preview pre,
+.markdownx-preview code {
+    font-family: var(--font-family-monospace, monospace);
+}
+
+.markdownx-preview pre {
+    padding: 8px;
+    overflow: auto;
+    background: var(--darkened-bg, #f8f8f8);
 }

@@ -1,7 +1,33 @@
-{% load static %}
-
-{% include "grandchallenge/partials/style.html" %}
-
-<link href="{% static "css/admin_markdown.css" %}" type="text/css" rel="stylesheet">
-
-{% include "markdownx/inline_widget.html" %}
+<div class="gc-md-admin">
+    <div class="gc-md-tabs" role="tablist">
+        <button type="button" class="gc-md-tab gc-md-tab-active" role="tab" id="editor-tab-{{ widget.attrs.id }}" data-gc-md-target="editor-{{ widget.attrs.id }}" aria-controls="editor-{{ widget.attrs.id }}" aria-selected="true">Editor</button>
+        <button type="button" class="gc-md-tab" role="tab" id="preview-tab-{{ widget.attrs.id }}" data-gc-md-target="preview-{{ widget.attrs.id }}" aria-controls="preview-{{ widget.attrs.id }}" aria-selected="false">Preview</button>
+    </div>
+    <div class="markdownx gc-md-panels">
+        <div class="gc-md-panel" id="editor-{{ widget.attrs.id }}" role="tabpanel" aria-labelledby="editor-tab-{{ widget.attrs.id }}">
+            <markdown-toolbar for="{{ widget.attrs.id }}" class="gc-md-toolbar">
+                <md-header title="Heading"><b>H</b></md-header>
+                <md-bold title="Bold"><b>B</b></md-bold>
+                <md-italic title="Italic"><i>I</i></md-italic>
+                <md-unordered-list title="Unordered List">&bull; List</md-unordered-list>
+                <md-ordered-list title="Ordered List">1. List</md-ordered-list>
+                <md-quote title="Quote">&ldquo; Quote</md-quote>
+                <md-code title="Inline Code">&lt;/&gt;</md-code>
+                <md-link title="Link">Link</md-link>
+            </markdown-toolbar>
+            <div class="gc-md-textarea">
+                {% include 'django/forms/widgets/textarea.html' %}
+            </div>
+            <p class="help gc-md-notes">
+                You can use
+                <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet" target="_blank" rel="noopener">markdown syntax</a>
+                here. Drag and drop images to upload them to the server. For code blocks with python syntax
+                highlighting use ```python ```. See <a href="https://pygments.org/languages/" target="_blank" rel="noopener">here</a>
+                for a list of other supported languages. To embed YouTube videos use [youtube id].
+            </p>
+        </div>
+        <div class="gc-md-panel" id="preview-{{ widget.attrs.id }}" role="tabpanel" aria-labelledby="preview-tab-{{ widget.attrs.id }}" hidden>
+            <div class="markdownx-preview"></div>
+        </div>
+    </div>
+</div>

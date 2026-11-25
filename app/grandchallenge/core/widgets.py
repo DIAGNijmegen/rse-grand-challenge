@@ -85,13 +85,13 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
             css={
                 "all": [
                     *AdminMarkdownxWidget.Media.css["all"],
+                    "css/admin_markdown.css",
                 ]
             },
             js=[
                 "js/markdownx.js",
                 "vendored/@github/markdown-toolbar-element/dist/index.umd.js",
-                "vendored/jquery/jquery.min.js",
-                "vendored/bootstrap/js/bootstrap.bundle.min.js",
+                "js/admin_markdown_tabs.js",
             ],
         )
 
