@@ -1,16 +1,14 @@
 <a href="#civModal-{{ civ.pk }}"
    data-bs-toggle="modal"
    data-bs-target="#civModal-{{ civ.pk }}"
-   class="text-decoration-none"
+   class="btn btn-primary badge"
    role="button"
    title="View {{ civ.interface.title }}"
 >
-    <div class="badge bg-primary">
-        <i
-                class="fas fa-fw fa-eye"
-        ></i>
-        {{ civ.interface.title|truncatechars:64 }}
-    </div>
+    <i
+            class="fas fa-fw fa-eye"
+    ></i>
+    {{ civ.interface.title|truncatechars:64 }}
     {% block preview %}{% endblock %}
 </a>
 
