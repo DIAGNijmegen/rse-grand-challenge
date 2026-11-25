@@ -175,13 +175,15 @@ class PhaseUpdateForm(
             if choice in self.instance.evaluation_selectable_gpu_type_choices
         ]
 
+        # Add .p-3 because the tab-content is missing padding from crispy-bootstrap5,
+        # see https://github.com/django-crispy-forms/crispy-bootstrap5/issues/228
         self.helper.layout = Layout(
             TabHolder(
-                Tab("Phase", *phase_options),
-                Tab("Submission", *submission_options),
-                Tab("Scoring", *scoring_options),
-                Tab("Leaderboard", *leaderboard_options),
-                Tab("Result Detail", *result_detail_options),
+                Tab("Phase", *phase_options, css_class="p-3"),
+                Tab("Submission", *submission_options, css_class="p-3"),
+                Tab("Scoring", *scoring_options, css_class="p-3"),
+                Tab("Leaderboard", *leaderboard_options, css_class="p-3"),
+                Tab("Result Detail", *result_detail_options, css_class="p-3"),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -200,6 +202,7 @@ class PhaseUpdateForm(
                         "but recommended. It will ensure that all algorithms are configured in the same way. </p>"
                     ),
                     *algorithm_setting_options,
+                    css_class="p-3",
                 )
             )
 
