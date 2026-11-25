@@ -841,7 +841,7 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
             attrs={
                 "data-placeholder": "No repository selected, search for a repository here...",
                 "data-minimum-input-length": 3,
-                "data-theme": settings.CRISPY_TEMPLATE_PACK,
+                "data-theme": settings.SELECT2_THEME,
             },
         ),
     )

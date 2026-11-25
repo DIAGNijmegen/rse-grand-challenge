@@ -662,7 +662,7 @@ class SingleCIVForm(InterfaceFormFieldsMixin, Form):
                 {
                     "data-placeholder": "Search for a socket ...",
                     "data-minimum-input-length": 3,
-                    "data-theme": settings.CRISPY_TEMPLATE_PACK,
+                    "data-theme": settings.SELECT2_THEME,
                     "data-html": True,
                 }
             )

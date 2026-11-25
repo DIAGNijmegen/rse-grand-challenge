@@ -11,9 +11,9 @@
 {# DataTables with colvis #}
 {% compress js %}
     <script src="{% static 'vendored/datatables.net/js/dataTables.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'vendored/datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
     <script src="{% static 'vendored/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'vendored/datatables.net-buttons-bs5/js/buttons.bootstrap5.min.js' %}"></script>
     <script src="{% static 'vendored/datatables.net-buttons/js/buttons.colVis.min.js' %}"></script>
 {% endcompress %}
 
@@ -28,3 +28,5 @@
 
 {# Disable-after-submit for all forms with gc-disable-after-submit attribute #}
 <script type="module" src="{% static 'js/disable_after_submit.mjs' %}"></script>
+
+<link rel="stylesheet" href="{% static 'vendored/select2-bootstrap-5-theme/select2-bootstrap-5-theme.min.css' %}">

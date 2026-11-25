@@ -23,7 +23,7 @@ class UserGroupForm(SaveFormInitMixin, Form):
             attrs={
                 "data-placeholder": "Search for a user ...",
                 "data-minimum-input-length": 3,
-                "data-theme": settings.CRISPY_TEMPLATE_PACK,
+                "data-theme": settings.SELECT2_THEME,
                 "data-html": True,
             },
         ),
