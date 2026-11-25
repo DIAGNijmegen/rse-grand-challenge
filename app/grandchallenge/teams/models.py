@@ -97,6 +97,6 @@ class TeamMember(models.Model):
 
     def delete(self, *args, **kwargs):
         if self.team.owner == self.user:
-            raise PermissionDenied("The team owner cannot be removed")
+            raise PermissionDenied("The team owner cannot be removed.")
 
         super().delete(*args, **kwargs)

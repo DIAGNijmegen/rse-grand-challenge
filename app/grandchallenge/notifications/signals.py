@@ -40,7 +40,7 @@ def disallow_spam(sender, *, instance, **_):
     if account_age.days < settings.FORUMS_MIN_ACCOUNT_AGE_DAYS:
         raise PermissionDenied(
             "Your account is too new to create a forum post, "
-            "please try again later"
+            "please try again later."
         )
 
 
