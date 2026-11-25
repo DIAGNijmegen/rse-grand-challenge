@@ -14,7 +14,7 @@
                         {% for page in flatpages %}
                             <li>
                                 {# Manual construction of url is used here due to flatpage redirect errors #}
-                                <a class="text-secondary"
+                                <a class="nav-link text-secondary"
                                         {# @formatter:off #}
                                    href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
                                         {# @formatter:on #}
@@ -23,13 +23,13 @@
                             </li>
                         {% endfor %}
                         <li>
-                            <a class="text-secondary"
+                            <a class="nav-link text-secondary"
                                href="{% url 'statistics:detail' %}">
                                 Statistics
                             </a>
                         </li>
                         <li>
-                            <a class="text-secondary"
+                            <a class="nav-link text-secondary"
                                href="https://diagnijmegen.github.io/rse-grand-challenge-status/"
                                target="_blank">
                                 Status
@@ -42,7 +42,7 @@
                     <ul class="list-unstyled ms-1 mb-0">
                         {% for policy in policy_pages %}
                             <li>
-                                <a class="text-secondary"
+                                <a class="nav-link text-secondary"
                                     href="{{ policy.get_absolute_url }}">
                                         {{ policy.title }}
                                 </a>
