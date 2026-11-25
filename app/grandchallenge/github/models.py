@@ -73,6 +73,9 @@ class GitHubUserToken(models.Model):
         # Small grace time for when the tokens were issued
         token_acquired_at = timezone.now() - timedelta(seconds=60)
 
+        if "access_token" not in payload:
+            raise GitHubBadRefreshTokenException
+
         self.access_token = payload["access_token"]
         self.access_token_expires = token_acquired_at + timedelta(
             seconds=int(payload["expires_in"])

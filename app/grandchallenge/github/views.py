@@ -9,6 +9,7 @@ import requests
 from asgiref.sync import async_to_sync
 from dal_select2.views import Select2ListView
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.transaction import non_atomic_requests
@@ -57,7 +58,7 @@ def github_webhook(request):
 def post_install_redirect(request):
     """
     Github apps only allow a single post install callback url.
-    These cannot be dynamic, so we need a redirect to the correct alogrithm.
+    These cannot be dynamic, so we need a redirect to the correct algorithm.
     """
     state = decode_github_state(state=request.GET.get("state"))
 
@@ -82,7 +83,15 @@ def post_install_redirect(request):
     except ObjectDoesNotExist:
         user_token = GitHubUserToken(user=request.user)
 
-    user_token.update_from_payload(payload=resp.json())
+    try:
+        user_token.update_from_payload(payload=resp.json())
+    except GitHubBadRefreshTokenException:
+        messages.add_message(
+            request,
+            messages.ERROR,
+            "Could not install the GitHub application, please try again.",
+        )
+        return redirect(state.redirect_url)
 
     headers = {
         "Accept": "application/vnd.github+json",
