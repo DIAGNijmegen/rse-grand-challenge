@@ -1,17 +1,17 @@
 @import "bootswatch/dist/flatly/variables";
 
 // Overrides (placed after flatly so we can reference its colours)
-$link-color: $cyan;
+$link-color: $info;
 $input-color: $black;
 
 $navbar-dark-hover-color: $gray-500;
-$navbar-light-color: $blue;
-$navbar-light-brand-color: $blue;
-$navbar-light-brand-hover-color: $blue;
+$navbar-light-color: $primary;
+$navbar-light-brand-color: $primary;
+$navbar-light-brand-hover-color: $primary;
 
-$pagination-bg: $blue;
-$pagination-hover-bg: darken($blue, 15%);
-$pagination-disabled-bg: lighten($blue, 15%);
+$pagination-bg: $primary;
+$pagination-hover-bg: darken($primary, 15%);
+$pagination-disabled-bg: lighten($primary, 15%);
 
 @import "bootstrap/scss/bootstrap";
 @import "bootswatch/dist/flatly/bootswatch";
