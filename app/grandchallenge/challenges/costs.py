@@ -254,3 +254,66 @@ def update_size_in_storage_and_registry(
     challenge.size_in_registry = sum(
         item.get("size_in_registry__sum") or 0 for item in items
     )
+
+
+def allocate_storage_costs_for_challenge(*, challenge, include_expired=False):
+    """
+    Returns {invoice: new storage_cost_euro_millicents} for the invoices of
+    the challenge whose storage cost should increase. This function does not
+    update the invoices.
+
+    The storage that is not yet accounted for is the S3 storage
+    (size_in_storage, the registry is not charged) minus what all its
+    authorized invoices (expired included) already carry.
+    It is assigned to the non-expired authorized invoices, or to all authorized
+    invoices if include_expired is set, in utilization priority order.
+    Each invoice takes what its remaining budget allows, and any GB left over
+    are added to the last invoice at its own price.
+
+    The challenge must come from
+    Challenge.objects.with_invoices_with_utilization_priority(), so that its
+    invoices are prefetched in priority order with their budget
+    authorization, and it must have its size fields loaded.
+    """
+    invoices = [
+        invoice
+        for invoice in challenge.invoices.all()
+        if invoice.is_budget_authorized
+    ]
+
+    remaining_gb = challenge.unassigned_storage_gb
+
+    if include_expired:
+        invoices_to_fill = invoices
+    else:
+        invoices_to_fill = [
+            invoice for invoice in invoices if not invoice.is_expired
+        ]
+
+    if remaining_gb <= 0 or not invoices_to_fill:
+        return {}
+    else:
+        new_costs = {
+            invoice: invoice.storage_cost_euro_millicents
+            for invoice in invoices_to_fill
+        }
+
+        for invoice in invoices_to_fill:
+            assigned_gb = min(invoice.capacity_gb, remaining_gb)
+            new_costs[invoice] += round(
+                assigned_gb
+                * invoice.storage_price_euro_millicents_per_gb_for_retention_period
+            )
+            remaining_gb -= assigned_gb
+
+        last_invoice = invoices_to_fill[-1]
+        new_costs[last_invoice] += round(
+            remaining_gb
+            * last_invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        )
+
+        return {
+            invoice: new_cost
+            for invoice, new_cost in new_costs.items()
+            if new_cost > invoice.storage_cost_euro_millicents
+        }

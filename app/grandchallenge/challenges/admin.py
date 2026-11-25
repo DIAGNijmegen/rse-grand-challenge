@@ -49,6 +49,7 @@ class ChallengeAdmin(ModelAdmin):
         "is_active_until",
         "size_in_storage",
         "size_in_registry",
+        "unassigned_storage_gb_display",
         "available_compute_euros",
     )
     list_filter = (
@@ -63,6 +64,10 @@ class ChallengeAdmin(ModelAdmin):
             .get_queryset(*args, **kwargs)
             .with_invoices_with_budget_authorization()
         )
+
+    @admin.display(description="Unassigned storage")
+    def unassigned_storage_gb_display(self, obj):
+        return f"{obj.unassigned_storage_gb:.2f} GB"
 
     def available_compute_euros(self, obj):
         return millicents_to_euro(obj.available_compute_cost_euro_millicents)

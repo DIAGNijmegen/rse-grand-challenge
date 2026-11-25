@@ -852,3 +852,143 @@ def test_status_aggregates(settings):
 
     assert aggregates["num_is_overdue"] == 2
     assert aggregates["num_is_due"] == 1
+
+
+@pytest.mark.django_db
+def test_new_invoice_stores_yearly_price_and_retention_years(
+    *, settings
+) -> None:
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 12_345
+    settings.CHALLENGE_NUM_SUPPORT_YEARS = 3
+
+    invoice = InvoiceFactory()
+    invoice.refresh_from_db()
+
+    assert invoice.storage_price_euro_millicents_per_gb_per_year == 12_345
+    assert invoice.storage_retention_years == 3
+
+
+@pytest.mark.django_db
+def test_changing_settings_leaves_existing_invoices_unchanged(
+    *, settings
+) -> None:
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 12_345
+    settings.CHALLENGE_NUM_SUPPORT_YEARS = 5
+    existing_invoice = InvoiceFactory()
+
+    settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = 54_321
+    new_invoice = InvoiceFactory()
+
+    settings.CHALLENGE_NUM_SUPPORT_YEARS = 2
+    newest_invoice = InvoiceFactory()
+
+    for invoice in (existing_invoice, new_invoice, newest_invoice):
+        invoice.refresh_from_db()
+
+    assert (
+        existing_invoice.storage_price_euro_millicents_per_gb_per_year
+        == 12_345
+    )
+    assert existing_invoice.storage_retention_years == 5
+    assert new_invoice.storage_price_euro_millicents_per_gb_per_year == 54_321
+    assert new_invoice.storage_retention_years == 5
+    assert (
+        newest_invoice.storage_price_euro_millicents_per_gb_per_year == 54_321
+    )
+    assert newest_invoice.storage_retention_years == 2
+
+
+def test_storage_price_for_retention_period_is_the_product() -> None:
+    invoice = Invoice(
+        storage_price_euro_millicents_per_gb_per_year=15_328,
+        storage_retention_years=5,
+    )
+
+    assert (
+        invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        == 76_640
+    )
+
+
+def test_capacity_gb_is_the_remaining_budget_over_the_price() -> None:
+    invoice = Invoice(
+        compute_costs_euros=1,
+        storage_costs_euros=1,
+        compute_cost_euro_millicents=50_000,
+        storage_cost_euro_millicents=30_000,
+        storage_price_euro_millicents_per_gb_per_year=20_000,
+        storage_retention_years=1,
+    )
+
+    assert invoice.capacity_gb == 6
+
+
+def test_capacity_gb_is_zero_when_the_budget_is_overspent() -> None:
+    invoice = Invoice(
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        compute_cost_euro_millicents=150_000,
+        storage_cost_euro_millicents=0,
+        storage_price_euro_millicents_per_gb_per_year=20_000,
+        storage_retention_years=1,
+    )
+
+    assert invoice.capacity_gb == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "field_name",
+    (
+        "storage_price_euro_millicents_per_gb_per_year",
+        "storage_retention_years",
+    ),
+)
+def test_storage_price_fields_reject_zero(*, field_name) -> None:
+    invoice = InvoiceFactory()
+    setattr(invoice, field_name, 0)
+
+    with pytest.raises(ValidationError) as error:
+        invoice.full_clean()
+
+    assert list(error.value.error_dict) == [field_name]
+
+
+@pytest.mark.django_db
+def test_in_utilization_priority_order_matches_window_priority():
+    challenge = ChallengeFactory()
+    today_date = now().date()
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.ISSUED,
+        expires_on=today_date + timedelta(days=10),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=300),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=100),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=PaymentStatusChoices.PAID,
+        expires_on=today_date + timedelta(days=100),
+    )
+
+    expected = list(
+        Invoice.objects.filter(challenge=challenge)
+        .with_utilization_priority_per_challenge()
+        .order_by("utilization_priority")
+        .values_list("pk", flat=True)
+    )
+    actual = list(
+        Invoice.objects.filter(challenge=challenge)
+        .in_utilization_priority_order()
+        .values_list("pk", flat=True)
+    )
+
+    assert actual == expected
