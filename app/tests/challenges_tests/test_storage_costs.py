@@ -31,7 +31,7 @@ def _invoice(
         expires_on=now().date() + timedelta(days=expires_in_days),
         compute_costs_euros=compute_costs_euros,
         storage_costs_euros=storage_costs_euros,
-        storage_price_euro_millicents_per_gb=storage_price_euro_millicents_per_gb,
+        storage_price_euro_millicents_per_gb_for_retention_period=storage_price_euro_millicents_per_gb,
         **kwargs,
     )
 
@@ -46,7 +46,7 @@ def _accounted_gb(*, invoices, new_costs=None):
     new_costs = new_costs or {}
     return sum(
         new_costs.get(invoice, invoice.storage_cost_euro_millicents)
-        / invoice.storage_price_euro_millicents_per_gb
+        / invoice.storage_price_euro_millicents_per_gb_for_retention_period
         for invoice in invoices
     )
 

@@ -6,6 +6,7 @@ from functools import cached_property
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import (
     Count,
@@ -172,7 +173,7 @@ def default_invoice_expiry():
     )
 
 
-def default_storage_price_euro_millicents_per_gb() -> int:
+def default_storage_price_euro_millicents_per_gb_for_retention_period() -> int:
     return (
         settings.CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR
         * settings.CHALLENGE_NUM_SUPPORT_YEARS
@@ -238,10 +239,10 @@ class Invoice(models.Model, FieldChangeMixin):
     storage_costs_euros = models.PositiveIntegerField(
         help_text="The storage costs in Euros"
     )
-    storage_price_euro_millicents_per_gb = models.PositiveIntegerField(
-        help_text="The price of storage in Euro millicents per GB, fixed when the invoice is created",
-        default=default_storage_price_euro_millicents_per_gb,
-        editable=False,
+    storage_price_euro_millicents_per_gb_for_retention_period = models.PositiveIntegerField(
+        help_text="The price of storage in Euro millicents per GB for the whole retention period. Set when the invoice is created, as the yearly storage price multiplied by the number of retention years",
+        default=default_storage_price_euro_millicents_per_gb_for_retention_period,
+        validators=[MinValueValidator(1)],
     )
     storage_cost_euro_millicents = models.PositiveBigIntegerField(
         help_text="The utilized storage costs in Euro millicents (cached from storage usage)",

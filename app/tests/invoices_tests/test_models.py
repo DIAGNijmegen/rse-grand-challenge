@@ -864,7 +864,10 @@ def test_new_invoice_multiplies_yearly_price_by_retention_period(
     invoice = InvoiceFactory()
     invoice.refresh_from_db()
 
-    assert invoice.storage_price_euro_millicents_per_gb == 37_035
+    assert (
+        invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        == 37_035
+    )
 
 
 @pytest.mark.django_db
@@ -881,8 +884,14 @@ def test_changing_yearly_price_leaves_existing_invoices_unchanged(
     existing_invoice.refresh_from_db()
     new_invoice.refresh_from_db()
 
-    assert existing_invoice.storage_price_euro_millicents_per_gb == 61_725
-    assert new_invoice.storage_price_euro_millicents_per_gb == 271_605
+    assert (
+        existing_invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        == 61_725
+    )
+    assert (
+        new_invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        == 271_605
+    )
 
 
 @pytest.mark.django_db
@@ -899,8 +908,35 @@ def test_changing_retention_period_leaves_existing_invoices_unchanged(
     existing_invoice.refresh_from_db()
     new_invoice.refresh_from_db()
 
-    assert existing_invoice.storage_price_euro_millicents_per_gb == 50_000
-    assert new_invoice.storage_price_euro_millicents_per_gb == 20_000
+    assert (
+        existing_invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        == 50_000
+    )
+    assert (
+        new_invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        == 20_000
+    )
+
+
+@pytest.mark.django_db
+def test_storage_price_of_zero_is_rejected() -> None:
+    invoice = InvoiceFactory()
+    invoice.storage_price_euro_millicents_per_gb_for_retention_period = 0
+
+    with pytest.raises(ValidationError) as error:
+        invoice.full_clean()
+
+    assert list(error.value.error_dict) == [
+        "storage_price_euro_millicents_per_gb_for_retention_period"
+    ]
+
+
+@pytest.mark.django_db
+def test_storage_price_of_one_is_accepted() -> None:
+    invoice = InvoiceFactory()
+    invoice.storage_price_euro_millicents_per_gb_for_retention_period = 1
+
+    invoice.full_clean()
 
 
 @pytest.mark.django_db

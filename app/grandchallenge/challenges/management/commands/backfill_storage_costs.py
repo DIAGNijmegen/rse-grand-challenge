@@ -138,7 +138,9 @@ def allocate(*, challenge, simulated_price):
         pass
     else:
         for invoice in challenge.invoices.all():
-            invoice.storage_price_euro_millicents_per_gb = simulated_price
+            invoice.storage_price_euro_millicents_per_gb_for_retention_period = (
+                simulated_price
+            )
 
     return allocate_storage_costs_for_challenge(
         challenge=challenge, include_expired=True
@@ -187,8 +189,9 @@ class Command(BaseCommand):
             "--storage-price-euro-millicents-per-gb",
             type=int,
             help=(
-                "Only with --dry-run: simulate this storage price instead of "
-                "the price on each invoice"
+                "Only with --dry-run: simulate this storage price per GB for "
+                "the whole retention period instead of the price on each "
+                "invoice"
             ),
         )
 

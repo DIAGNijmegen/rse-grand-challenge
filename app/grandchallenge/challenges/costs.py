@@ -263,7 +263,10 @@ def _capacity_gb(*, invoice):
         - invoice.storage_cost_euro_millicents,
         0,
     )
-    return remaining_millicents / invoice.storage_price_euro_millicents_per_gb
+    return (
+        remaining_millicents
+        / invoice.storage_price_euro_millicents_per_gb_for_retention_period
+    )
 
 
 def allocate_storage_costs_for_challenge(*, challenge, include_expired=False):
@@ -310,13 +313,15 @@ def allocate_storage_costs_for_challenge(*, challenge, include_expired=False):
         for invoice in invoices_to_fill:
             assigned_gb = min(_capacity_gb(invoice=invoice), remaining_gb)
             new_costs[invoice] += round(
-                assigned_gb * invoice.storage_price_euro_millicents_per_gb
+                assigned_gb
+                * invoice.storage_price_euro_millicents_per_gb_for_retention_period
             )
             remaining_gb -= assigned_gb
 
         last_invoice = invoices_to_fill[-1]
         new_costs[last_invoice] += round(
-            remaining_gb * last_invoice.storage_price_euro_millicents_per_gb
+            remaining_gb
+            * last_invoice.storage_price_euro_millicents_per_gb_for_retention_period
         )
 
         return {

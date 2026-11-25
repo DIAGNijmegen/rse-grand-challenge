@@ -938,7 +938,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         ) / settings.GIGABYTE
         accounted_gb = sum(
             invoice.storage_cost_euro_millicents
-            / invoice.storage_price_euro_millicents_per_gb
+            / invoice.storage_price_euro_millicents_per_gb_for_retention_period
             for invoice in self.invoices.all()
             if invoice.is_budget_authorized
         )
