@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import pytest
 from actstream.actions import follow, is_following
 from actstream.models import Follow
@@ -598,54 +600,20 @@ def test_follows_deleted_when_base_obj_deleted(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "factory,namespace,request_model,request_attr",
-    (
-        (
-            AlgorithmFactory,
-            "algorithms",
-            AlgorithmPermissionRequest,
-            "algorithm",
-        ),
-        (
-            ReaderStudyFactory,
-            "reader-studies",
-            ReaderStudyPermissionRequest,
-            "reader_study",
-        ),
-        (ArchiveFactory, "archives", ArchivePermissionRequest, "archive"),
-    ),
+    "factory",
+    (AlgorithmFactory, ReaderStudyFactory, ArchiveFactory),
 )
-def test_permission_request_create_redirects_editors(
-    client, factory, namespace, request_model, request_attr
+def test_detail_view_redirects_anonymous_user_to_login(
+    client, factory, settings
 ):
     base_object = factory(
         access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
     )
-    permission_create_url = reverse(
-        f"{namespace}:permission-request-create",
-        kwargs={"slug": base_object.slug},
-    )
+    detail_path = urlparse(base_object.get_absolute_url()).path
 
-    editor = UserFactory()
-    base_object.add_editor(editor)
-    non_editor = UserFactory()
-
-    # Editors without a permission request are sent to the object page
     response = get_view_for_user(
-        client=client, user=editor, url=permission_create_url
+        client=client, user=None, url=base_object.get_absolute_url()
     )
+
     assert response.status_code == 302
-    assert response.url == base_object.get_absolute_url()
-
-    # Users without change permission can still see the create page
-    response = get_view_for_user(
-        client=client, user=non_editor, url=permission_create_url
-    )
-    assert response.status_code == 200
-
-    # Editors with an existing permission request are not redirected
-    request_model.objects.create(user=editor, **{request_attr: base_object})
-    response = get_view_for_user(
-        client=client, user=editor, url=permission_create_url
-    )
-    assert response.status_code == 200
+    assert response.url == f"{settings.LOGIN_URL}?next={detail_path}"

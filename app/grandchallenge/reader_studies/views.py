@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
+from django.contrib.auth.views import redirect_to_login
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import (
@@ -288,12 +289,15 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
         try:
             return super().check_permissions(request)
         except PermissionDenied:
-            return HttpResponseRedirect(
-                reverse(
-                    "reader-studies:permission-request-create",
-                    kwargs={"slug": self.object.slug},
+            if request.user.is_authenticated:
+                return HttpResponseRedirect(
+                    reverse(
+                        "reader-studies:permission-request-create",
+                        kwargs={"slug": self.object.slug},
+                    )
                 )
-            )
+            else:
+                return redirect_to_login(next=request.get_full_path())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1088,20 +1092,6 @@ class ReaderStudyPermissionRequestCreate(
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
-    @cached_property
-    def permission_request(self):
-        return ReaderStudyPermissionRequest.objects.filter(
-            reader_study=self.reader_study, user=self.request.user
-        ).first()
-
-    def get(self, *args, **kwargs):
-        if self.permission_request is None and self.request.user.has_perm(
-            "reader_studies.change_readerstudy", self.reader_study
-        ):
-            return HttpResponseRedirect(self.reader_study.get_absolute_url())
-        else:
-            return super().get(*args, **kwargs)
-
     def get_success_url(self):
         return self.reader_study.get_absolute_url()
 
@@ -1121,9 +1111,12 @@ class ReaderStudyPermissionRequestCreate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        permission_request = ReaderStudyPermissionRequest.objects.filter(
+            reader_study=self.reader_study, user=self.request.user
+        ).first()
         context.update(
             {
-                "permission_request": self.permission_request,
+                "permission_request": permission_request,
                 "reader_study": self.reader_study,
             }
         )
