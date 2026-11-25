@@ -85,6 +85,7 @@ from grandchallenge.evaluation.templatetags.evaluation_extras import (
 from grandchallenge.evaluation.utils import (
     Metric,
     StatusChoices,
+    SubmissionCommentsChoices,
     SubmissionKindChoices,
     is_valid_metric_score,
 )
@@ -301,6 +302,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         ),
     )
 
+    SubmissionCommentsChoices = SubmissionCommentsChoices
     SubmissionKindChoices = SubmissionKindChoices
     StatusChoices = StatusChoices
 
@@ -399,10 +401,33 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "or an algorithm?"
         ),
     )
-    allow_submission_comments = models.BooleanField(
-        default=False,
+    submission_comments_choice = models.CharField(
+        max_length=3,
+        choices=SubmissionCommentsChoices.choices,
+        default=SubmissionCommentsChoices.OFF,
         help_text=(
-            "Allow users to submit comments as part of their submission."
+            "Show a comment field on the submission page so that users can "
+            "add a comment to their submission. Off turns this feature off, "
+            "Optional means that including a comment is optional for the "
+            "user, Required means that the user must provide a comment."
+        ),
+    )
+    submission_comments_label = models.CharField(
+        max_length=32,
+        blank=True,
+        default="Comment",
+        help_text=(
+            "The label that will be used on the submission and results page "
+            "for the comment. For example: Method Description."
+        ),
+    )
+    submission_comments_help_text = models.CharField(
+        max_length=128,
+        blank=True,
+        default="",
+        help_text=(
+            "The help text to include on the submissions page to describe the "
+            'comment. Eg: "A short description of your method.".'
         ),
     )
     display_submission_comments = models.BooleanField(
@@ -763,6 +788,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ("configure_algorithm_phase", "Configure Algorithm Phase"),
         )
         constraints = [
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_submission_comments_choice_valid",
+                condition=models.Q(
+                    submission_comments_choice__in=SubmissionCommentsChoices.values
+                ),
+            ),
             models.CheckConstraint(
                 name="%(app_label)s_%(class)s_batch_mode_only_for_closed_logs",
                 condition=models.Q(use_batch_mode=False)
