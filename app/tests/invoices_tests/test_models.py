@@ -910,6 +910,32 @@ def test_storage_price_for_retention_period_is_the_product() -> None:
     )
 
 
+def test_capacity_gb_is_the_remaining_budget_over_the_price() -> None:
+    invoice = Invoice(
+        compute_costs_euros=1,
+        storage_costs_euros=1,
+        compute_cost_euro_millicents=50_000,
+        storage_cost_euro_millicents=30_000,
+        storage_price_euro_millicents_per_gb_per_year=20_000,
+        storage_retention_years=1,
+    )
+
+    assert invoice.capacity_gb == 6
+
+
+def test_capacity_gb_is_zero_when_the_budget_is_overspent() -> None:
+    invoice = Invoice(
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        compute_cost_euro_millicents=150_000,
+        storage_cost_euro_millicents=0,
+        storage_price_euro_millicents_per_gb_per_year=20_000,
+        storage_retention_years=1,
+    )
+
+    assert invoice.capacity_gb == 0
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "field_name",

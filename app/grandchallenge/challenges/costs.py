@@ -256,19 +256,6 @@ def update_size_in_storage_and_registry(
     )
 
 
-def _capacity_gb(*, invoice):
-    remaining_millicents = max(
-        (invoice.compute_costs_euros + invoice.storage_costs_euros) * 100_000
-        - invoice.compute_cost_euro_millicents
-        - invoice.storage_cost_euro_millicents,
-        0,
-    )
-    return (
-        remaining_millicents
-        / invoice.storage_price_euro_millicents_per_gb_for_retention_period
-    )
-
-
 def allocate_storage_costs_for_challenge(*, challenge, include_expired=False):
     """
     Returns {invoice: new storage_cost_euro_millicents} for the invoices of
@@ -312,7 +299,7 @@ def allocate_storage_costs_for_challenge(*, challenge, include_expired=False):
         }
 
         for invoice in invoices_to_fill:
-            assigned_gb = min(_capacity_gb(invoice=invoice), remaining_gb)
+            assigned_gb = min(invoice.capacity_gb, remaining_gb)
             new_costs[invoice] += round(
                 assigned_gb
                 * invoice.storage_price_euro_millicents_per_gb_for_retention_period

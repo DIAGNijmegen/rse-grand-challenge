@@ -4,7 +4,6 @@ import pytest
 from django.utils.timezone import now
 
 from grandchallenge.challenges.costs import (
-    _capacity_gb,
     allocate_storage_costs_for_challenge,
 )
 from grandchallenge.challenges.models import Challenge
@@ -525,7 +524,7 @@ def test_invoice_receives_gb_only_after_earlier_invoices_are_full(
 
     for index, invoice in enumerate(invoices):
         earlier_invoice_has_capacity_left = any(
-            _capacity_gb(invoice=earlier_invoice) > 0
+            earlier_invoice.capacity_gb > 0
             for earlier_invoice in invoices[:index]
         )
         if earlier_invoice_has_capacity_left:

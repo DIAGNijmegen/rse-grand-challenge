@@ -436,6 +436,19 @@ class Invoice(models.Model, FieldChangeMixin):
         )
 
     @property
+    def capacity_gb(self):
+        remaining_millicents = max(
+            (self.compute_costs_euros + self.storage_costs_euros) * 100_000
+            - self.compute_cost_euro_millicents
+            - self.storage_cost_euro_millicents,
+            0,
+        )
+        return (
+            remaining_millicents
+            / self.storage_price_euro_millicents_per_gb_for_retention_period
+        )
+
+    @property
     def _current_state(self):
         state = super()._current_state
         state["total_amount_euros"] = self.total_amount_euros

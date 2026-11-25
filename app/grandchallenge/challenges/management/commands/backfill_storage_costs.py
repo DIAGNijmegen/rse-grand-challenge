@@ -19,9 +19,12 @@ class BudgetImpact(NamedTuple):
     after: int
 
 
-class UnallocatedStorage(NamedTuple):
+class UnallocatableStorage(NamedTuple):
     gb: float
     reason: str
+
+
+NO_UNALLOCATABLE_STORAGE = UnallocatableStorage(gb=0, reason="")
 
 
 class ChallengeResult(NamedTuple):
@@ -29,8 +32,8 @@ class ChallengeResult(NamedTuple):
     budget_before: int
     budget_after: int
     is_accepting_submissions: bool
-    unallocated_gb: float
-    unallocated_reason: str
+    unallocatable_gb: float
+    unallocatable_reason: str
     stored_gb: float
     storage_headroom_gb: float
     has_invoices: bool
@@ -81,25 +84,27 @@ def is_accepting_submissions(*, challenge):
     )
 
 
-def unallocated_storage(*, challenge):
+def unallocatable_storage(*, challenge):
     """
-    The storage the allocator had nowhere to put. Any overflow lands on the
-    last authorized invoice, so storage is only left over if there is no
-    authorized invoice.
+    The storage that is not yet on an invoice and that the allocator cannot
+    put on one. This is checked on the state before the new costs are
+    applied, it does not use the allocation result. The allocator puts any
+    overflow on the last authorized invoice, so storage can only be left over
+    if there is no authorized invoice.
     """
     invoices = challenge.invoices.all()
     unassigned_gb = challenge.unassigned_storage_gb
 
-    if unassigned_gb <= 0:
-        return UnallocatedStorage(gb=0, reason="")
+    if unassigned_gb <= 0 or any(
+        invoice.is_budget_authorized for invoice in invoices
+    ):
+        return NO_UNALLOCATABLE_STORAGE
     elif not invoices:
-        return UnallocatedStorage(gb=unassigned_gb, reason="no invoices")
-    elif not any(invoice.is_budget_authorized for invoice in invoices):
-        return UnallocatedStorage(
+        return UnallocatableStorage(gb=unassigned_gb, reason="no invoices")
+    else:
+        return UnallocatableStorage(
             gb=unassigned_gb, reason="no authorized invoice"
         )
-    else:
-        return UnallocatedStorage(gb=0, reason="")
 
 
 def storage_headroom_gb(*, challenge, new_costs):
@@ -210,15 +215,15 @@ def allocate(*, challenge, simulated_price):
 
 def challenge_result(*, challenge, new_costs):
     impact = budget_impact(challenge=challenge, new_costs=new_costs)
-    unallocated = unallocated_storage(challenge=challenge)
+    unallocatable = unallocatable_storage(challenge=challenge)
 
     return ChallengeResult(
         short_name=challenge.short_name,
         budget_before=impact.before,
         budget_after=impact.after,
         is_accepting_submissions=is_accepting_submissions(challenge=challenge),
-        unallocated_gb=unallocated.gb,
-        unallocated_reason=unallocated.reason,
+        unallocatable_gb=unallocatable.gb,
+        unallocatable_reason=unallocatable.reason,
         stored_gb=challenge.size_in_storage / settings.GIGABYTE,
         storage_headroom_gb=storage_headroom_gb(
             challenge=challenge, new_costs=new_costs
@@ -343,9 +348,9 @@ class Command(BaseCommand):
             for result in results
             if result.budget_after == result.budget_before
         ]
-        unallocated = sorted(
-            (result for result in results if result.unallocated_reason),
-            key=lambda result: -result.unallocated_gb,
+        unallocatable = sorted(
+            (result for result in results if result.unallocatable_reason),
+            key=lambda result: -result.unallocatable_gb,
         )
         headroom = sorted(
             (result for result in results if result.storage_headroom_gb > 0),
@@ -417,8 +422,8 @@ class Command(BaseCommand):
             f"- Budget increased: {len(increased)} challenges, "
             f"{euro_change(euro_millicents=increased_total)} EUR in total",
             f"- Budget unchanged: {len(unchanged)} challenges",
-            f"- Unallocated storage: {len(unallocated)} challenges, "
-            f"{sum(result.unallocated_gb for result in unallocated):,.2f} GB "
+            f"- Unallocatable storage: {len(unallocatable)} challenges, "
+            f"{sum(result.unallocatable_gb for result in unallocatable):,.2f} GB "
             "in total",
             f"- Storage headroom: {len(headroom)} challenges, "
             f"{sum(result.storage_headroom_gb for result in headroom):,.2f} GB "
@@ -497,21 +502,21 @@ class Command(BaseCommand):
             ],
         )
         lines += self.section(
-            title=f"Unallocated storage ({len(unallocated)})",
+            title=f"Unallocatable storage ({len(unallocatable)})",
             description=(
                 "Challenges with data that could not be put on any invoice. "
                 "It will be charged to their next authorized invoice. "
                 "Largest first."
             ),
-            header=("Challenge", "Unallocated", "Reason"),
+            header=("Challenge", "Unallocatable", "Reason"),
             alignments=(":---", "---:", ":---"),
             rows=[
                 (
                     result.short_name,
-                    f"{result.unallocated_gb:,.2f} GB",
-                    result.unallocated_reason,
+                    f"{result.unallocatable_gb:,.2f} GB",
+                    result.unallocatable_reason,
                 )
-                for result in unallocated
+                for result in unallocatable
             ],
         )
 
@@ -549,7 +554,7 @@ class Command(BaseCommand):
                 "Every challenge is expected to have an "
                 "invoice, so these should not exist. Challenges with only "
                 "a cancelled invoice have an invoice and are not listed. "
-                "Their data is also reported under unallocated storage."
+                "Their data is also reported under unallocatable storage."
             ),
             header=("Challenge", "Stored (GB)", "Accepting submissions"),
             alignments=(":---", "---:", ":---"),
