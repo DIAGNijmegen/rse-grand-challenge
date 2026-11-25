@@ -64,21 +64,6 @@ dl.inline dt:after {
     display: block;
 }
 
-.breadcrumb {
-    margin-bottom: 0;
-    background-color: inherit;
-    padding-left: 0;
-    padding-right: 0;
-}
-
-.breadcrumb-item.active {
-    color: var(--light);
-}
-
-.breadcrumb-item > a {
-    color: var(--secondary);
-}
-
 /* Fix display of select2 dropdowns when used in collapsible bootstrap elements */
 .select2-container,
 .select2-container li:only-child,
