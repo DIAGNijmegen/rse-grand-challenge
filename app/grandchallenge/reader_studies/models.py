@@ -772,19 +772,13 @@ class ReaderStudy(
         }
 
     @cached_property
-    def questions_with_ground_truth(self):
-        return self.questions.annotate(
-            gt_count=Count("answer", filter=Q(answer__is_ground_truth=True))
-        ).filter(gt_count__gte=1)
-
-    @cached_property
     def ground_truth_applicable_questions(self):
         return self.answerable_questions.exclude(
             answer_type__in=AnswerType.get_annotation_types()
         ).all()
 
-    @property
-    def ground_truth_count(self):
+    @cached_property
+    def max_score_cases(self):
         return (
             Answer.objects.filter(
                 question__in=self.ground_truth_applicable_questions,
@@ -795,20 +789,19 @@ class ReaderStudy(
             .count()
         )
 
-    @property
+    @cached_property
     def ground_truth_is_complete(self):
-        count_gt_viable_questions = len(self.ground_truth_applicable_questions)
         return (
-            self.ground_truth_count
-            == self.display_sets.count() * count_gt_viable_questions
+            self.max_score_cases
+            == len(self.ground_truth_applicable_questions)
+            * self.display_sets.count()
         )
 
     def score_for_user(self, user):
         """Returns the average and total score for answers given by ``user``."""
-
         return Answer.objects.filter(
             creator=user,
-            question__in=self.questions_with_ground_truth,
+            question__in=self.ground_truth_applicable_questions,
             is_ground_truth=False,
         ).aggregate(Sum("score"), Avg("score"))
 
@@ -817,7 +810,7 @@ class ReaderStudy(
         """The average and total scores for this ``ReaderStudy`` grouped by user."""
         return (
             Answer.objects.filter(
-                question__in=self.questions_with_ground_truth,
+                question__in=self.ground_truth_applicable_questions,
                 is_ground_truth=False,
             )
             .order_by("creator_id")
@@ -829,10 +822,8 @@ class ReaderStudy(
     @cached_property
     def leaderboard(self):
         """The leaderboard for this ``ReaderStudy``."""
-        n_hangings = self.display_sets.count()
-        question_count = float(self.answerable_question_count) * n_hangings
         return {
-            "question_count": question_count,
+            "max_score_cases": self.max_score_cases,
             "grouped_scores": self.scores_by_user,
         }
 
@@ -841,7 +832,8 @@ class ReaderStudy(
         """Statistics per question and case based on the total / average score."""
         scores_by_question = (
             Answer.objects.filter(
-                question__reader_study=self, is_ground_truth=False
+                question__in=self.ground_truth_applicable_questions,
+                is_ground_truth=False,
             )
             .order_by("question_id")
             .values("question__question_text")
@@ -854,10 +846,18 @@ class ReaderStudy(
             .select_related("reader_study__workstation__config")
             .annotate(
                 sum=Sum(
-                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                    "answers__score",
+                    filter=Q(
+                        answers__is_ground_truth=False,
+                        answers__question__in=self.ground_truth_applicable_questions,
+                    ),
                 ),
                 avg=Avg(
-                    "answers__score", filter=Q(answers__is_ground_truth=False)
+                    "answers__score",
+                    filter=Q(
+                        answers__is_ground_truth=False,
+                        answers__question__in=self.ground_truth_applicable_questions,
+                    ),
                 ),
             )
             .order_by("avg")
@@ -916,8 +916,7 @@ class ReaderStudy(
             "max_score_questions": float(len(self.display_sets.all()))
             * self.scores_by_user.count(),
             "scores_by_question": scores_by_question,
-            "max_score_cases": float(self.answerable_question_count)
-            * self.scores_by_user.count(),
+            "max_score_cases": self.max_score_cases,
             "scores_by_case": scores_by_case,
             "ground_truths": ground_truths,
             "questions": questions,

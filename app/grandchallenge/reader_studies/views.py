@@ -343,8 +343,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                     "user_score": self.object.score_for_user(
                         self.request.user
                     ),
-                    "answerable_questions": self.object.answerable_question_count
-                    * self.object.display_sets.count(),
+                    "max_score_cases": self.object.max_score_cases,
                 }
             )
 

@@ -10,7 +10,7 @@ from grandchallenge.reader_studies.templatetags.reader_study_tags import (
 def test_get_ground_truth(reader_study_with_mc_gt):
     rs = reader_study_with_mc_gt
     for ds in rs.display_sets.all():
-        for q in rs.questions.all():
+        for q in rs.ground_truth_applicable_questions.all():
             assert (
                 get_ground_truth(rs, ds.pk, q.question_text)
                 == Answer.objects.get(

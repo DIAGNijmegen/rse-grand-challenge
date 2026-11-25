@@ -207,8 +207,8 @@ def test_leaderboard(  # noqa: C901
                 )
 
     leaderboard = rs.leaderboard
-    assert Answer.objects.filter(is_ground_truth=False).count() == 6
-    assert leaderboard["question_count"] == 6.0
+    assert Answer.objects.filter(is_ground_truth=False).count() == 8
+    assert leaderboard["max_score_cases"] == 6.0
     scores = leaderboard["grouped_scores"]
     assert len(scores) == 1
     user_score = scores[0]
@@ -229,8 +229,8 @@ def test_leaderboard(  # noqa: C901
     del rs.scores_by_user
     del rs.leaderboard
     leaderboard = rs.leaderboard
-    assert Answer.objects.filter(is_ground_truth=False).count() == 12
-    assert leaderboard["question_count"] == 6.0
+    assert Answer.objects.filter(is_ground_truth=False).count() == 16
+    assert leaderboard["max_score_cases"] == 6.0
     scores = leaderboard["grouped_scores"]
     assert len(scores) == 2
     for user_score in scores:
@@ -249,8 +249,8 @@ def test_leaderboard(  # noqa: C901
     del rs.scores_by_user
     del rs.leaderboard
     leaderboard = rs.leaderboard
-    assert Answer.objects.filter(is_ground_truth=False).count() == 18
-    assert leaderboard["question_count"] == 6.0
+    assert Answer.objects.filter(is_ground_truth=False).count() == 24
+    assert leaderboard["max_score_cases"] == 6.0
     scores = leaderboard["grouped_scores"]
     assert len(scores) == 3
     for user_score in scores:
@@ -275,16 +275,16 @@ def test_statistics(reader_study_with_gt, django_capture_on_commit_callbacks):
                 )
 
     statistics = rs.statistics
-    assert Answer.objects.filter(is_ground_truth=False).count() == 6
+    assert Answer.objects.filter(is_ground_truth=False).count() == 8
     assert statistics["max_score_questions"] == 2.0
     scores = statistics["scores_by_question"]
-    assert len(scores) == rs.questions.count()
+    assert len(scores) == rs.ground_truth_applicable_questions.count()
     questions = set(rs_questions)
     for score in scores:
         questions -= {score["question__question_text"]}
         assert score["score__sum"] == 2.0
         assert score["score__avg"] == 1.0
-    assert questions == set()
+    assert questions == {"q4"}  # mask question, excluded
 
     scores = statistics["scores_by_case"]
     assert len(scores) == rs.display_sets.count()
@@ -311,10 +311,10 @@ def test_statistics(reader_study_with_gt, django_capture_on_commit_callbacks):
 
     del rs.statistics
     statistics = rs.statistics
-    assert Answer.objects.filter(is_ground_truth=False).count() == 12
+    assert Answer.objects.filter(is_ground_truth=False).count() == 16
     assert statistics["max_score_cases"] == 6.0
     scores = statistics["scores_by_question"]
-    assert len(scores) == rs.questions.count()
+    assert len(scores) == rs.ground_truth_applicable_questions.count()
     questions = set(rs_questions)
     for score in scores:
         questions -= {score["question__question_text"]}
@@ -324,12 +324,20 @@ def test_statistics(reader_study_with_gt, django_capture_on_commit_callbacks):
         else:
             assert score["score__sum"] == 2.0
             assert score["score__avg"] == 0.5
-    assert questions == set()
+    assert questions == {"q4"}  # mask question, excluded
 
-    assert sorted(statistics["questions"]) == sorted(rs_questions)
+    rs_ground_truth_applicable_questions = (
+        rs.ground_truth_applicable_questions.values_list(
+            "question_text", flat=True
+        )
+    )
+
+    assert sorted(statistics["questions"]) == sorted(
+        rs_ground_truth_applicable_questions
+    )
     for ds in rs.display_sets.all():
         assert sorted(statistics["ground_truths"][ds.pk].keys()) == sorted(
-            rs_questions
+            rs_ground_truth_applicable_questions
         )
 
 
@@ -351,7 +359,7 @@ def test_score_for_user(
                 )
 
     score = rs.score_for_user(r1)
-    assert Answer.objects.filter(is_ground_truth=False).count() == 6
+    assert Answer.objects.filter(is_ground_truth=False).count() == 8
     assert score["score__sum"] == 3.0
     assert score["score__avg"] == 0.5
 
@@ -1189,14 +1197,20 @@ def test_ground_truth_complete():
 
     # Sanity, add a technically allowed duplicate GT answer
     AnswerFactory(display_set=ds1, question=q1, is_ground_truth=True)
+    del rs.max_score_cases
+    del rs.ground_truth_is_complete
     assert (
         not rs.ground_truth_is_complete
     ), "One GT answer should (still) be missing"
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=False)
+    del rs.max_score_cases
+    del rs.ground_truth_is_complete
     assert not rs.ground_truth_is_complete, "Non GT answer does not count"
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=True)
+    del rs.max_score_cases
+    del rs.ground_truth_is_complete
     assert rs.ground_truth_is_complete, "All GT answers are given"
 
 
