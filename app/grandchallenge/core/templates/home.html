@@ -8,7 +8,7 @@
 {% block content %}
     {% cache 600 homepage %}
         {% if news_carousel_items %}
-            <div id="newsCarousel" class="carousel slide" data-ride="carousel" data-interval="10000">
+            <div id="newsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="10000">
 
                 <div class="carousel-inner">
 
@@ -36,7 +36,7 @@
 
                 <ol class="carousel-indicators position-relative">
                     {% for item in news_carousel_items %}
-                        <li class="bg-primary {% if forloop.counter == 1 %}active{% endif %}" data-target="#newsCarousel"
+                        <li class="bg-primary {% if forloop.counter == 1 %}active{% endif %}" data-bs-target="#newsCarousel"
                             data-slide-to="{{ forloop.counter0 }}">
                         </li>
                     {% endfor %}

@@ -20,8 +20,8 @@
                         <button hx-get="{% url 'discussion-forums:post-delete' challenge_short_name=post.topic.forum.linked_challenge.short_name slug=post.topic.slug pk=post.pk %}"
                                 hx-target="#postDeleteModal-{{ post.pk }}"
                                 hx-trigger="click"
-                                data-toggle="modal"
-                                data-target="#postDeleteModal-{{ post.pk }}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#postDeleteModal-{{ post.pk }}"
                                 class="btn btn-danger btn-sm"
                                 title="Delete {{ post.pk }}"
                         >
@@ -34,7 +34,7 @@
                                         <h5 class="modal-title">
                                             Confirm Post Deletion
                                         </h5>
-                                        <button type="button" class="close" data-dismiss="modal"
+                                        <button type="button" class="close" data-bs-dismiss="modal"
                                                 aria-label="Close">
                                             <span aria-hidden="true">&times;</span>
                                         </button>

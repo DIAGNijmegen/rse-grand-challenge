@@ -52,8 +52,8 @@ CLEAN_ALLOWED_TAGS = frozenset(
     }
 )
 CLEAN_ALLOWED_ATTRIBUTES = {
-    "*": ["class", "data-toggle", "id", "style", "role"],
-    "a": ["href", "title", "target", "rel", "data-target"],
+    "*": ["class", "data-bs-toggle", "id", "style", "role"],
+    "a": ["href", "title", "target", "rel", "data-bs-target"],
     "abbr": ["title"],
     "acronym": ["title"],
     "img": ["height", "src", "width"],

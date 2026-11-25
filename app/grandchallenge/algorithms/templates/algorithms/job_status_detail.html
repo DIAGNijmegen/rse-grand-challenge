@@ -12,7 +12,7 @@
                         <h5 class="modal-title">
                             Error Message
                         </h5>
-                        <button type="button" class="close" data-dismiss="modal"
+                        <button type="button" class="close" data-bs-dismiss="modal"
                                 aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -30,8 +30,8 @@
         </div>
 
         <a href="#errorInfoModal-{{ object.pk }}"
-            data-toggle="modal"
-            data-target="#errorInfoModal-{{ object.pk }}"
+            data-bs-toggle="modal"
+            data-bs-target="#errorInfoModal-{{ object.pk }}"
             class="badge badge-{{ object.status_context }}"
             title="Click to see the error message"
         >
