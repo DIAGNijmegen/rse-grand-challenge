@@ -146,7 +146,7 @@
                 <tbody>
                     <tr>
                         <td>
-                            <span class="badge {% if challenge.status == challenge.StatusChoices.OPEN %}badge-success{% elif challenge.status == challenge.StatusChoices.OPENING_SOON %}badge-warning{% else %}badge-danger{% endif %}">{{ challenge.status.name }}</span>
+                            <span class="badge {% if challenge.status == challenge.StatusChoices.OPEN %}bg-success{% elif challenge.status == challenge.StatusChoices.OPENING_SOON %}bg-warning{% else %}bg-danger{% endif %}">{{ challenge.status.name }}</span>
                         </td>
                         <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
                         <td data-order="{% if challenge.percent_active_compute_budget_consumed is None %}-1{% else %}{{ challenge.percent_active_compute_budget_consumed }}{% endif %}" class="{% if challenge.percent_active_compute_budget_consumed >= 100 %}text-danger{% elif challenge.percent_active_compute_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_active_compute_budget_consumed is not None %}{{ challenge.percent_active_compute_budget_consumed }}&nbsp;%{% endif %}</td>
@@ -203,7 +203,7 @@
                         <tr>
                             <td>{{ phase.title }}</td>
                             <td>{{ phase.get_submission_kind_display }}</td>
-                            <td><span class="badge {% if phase.status == phase.StatusChoices.OPEN %}badge-success{% elif phase.status == phase.StatusChoices.OPENING_SOON %}badge-warning{% else %}badge-danger{% endif %}">{{ phase.status.name }}</span></td>
+                            <td><span class="badge {% if phase.status == phase.StatusChoices.OPEN %}bg-success{% elif phase.status == phase.StatusChoices.OPENING_SOON %}bg-warning{% else %}bg-danger{% endif %}">{{ phase.status.name }}</span></td>
                             <td>{{ phase.num_archive_items }}</td>
                             <td>{{ phase.num_submissions }}</td>
                             <td>{{ phase.num_successful_submissions }}</td>

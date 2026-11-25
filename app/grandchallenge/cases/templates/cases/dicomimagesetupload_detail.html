@@ -41,11 +41,11 @@
         <dd>
             <span class="badge
                 {% if object.status == object.DICOMImageSetUploadStatusChoices.FAILED %}
-                    badge-danger
+                    bg-danger
                 {% elif object.status == object.DICOMImageSetUploadStatusChoices.COMPLETED %}
-                    badge-success
+                    bg-success
                 {% else %}
-                    badge-info
+                    bg-info
                 {% endif %}">
                     {{ object.get_status_display }}
             </span>
@@ -67,13 +67,13 @@
                                 <td>{{ image.name }}</td>
                                 <td>{{ image.shape_without_color|join:"x" }}</td>
                                 <td>
-                                    <span class="badge badge-primary"
+                                    <span class="badge bg-primary"
                                           title="DICOM Image {{ image.name|stem }}">
                                         DICOM Image {{ image.name|stem }}
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn badge badge-primary"
+                                    <button class="btn badge bg-primary"
                                        {% workstation_session_control_data workstation=workstation context_object=image image=image %}
                                     >
                                         <span>

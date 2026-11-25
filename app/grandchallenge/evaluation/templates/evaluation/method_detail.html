@@ -43,7 +43,7 @@
             </a><br>
         {% endif %}
 
-        <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle me-1"></i> Active Method for this Phase{% else %} <i class="fa fa-times-circle me-1"></i> Inactive {% endif %}</span>
+        <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} bg-success {% else %} bg-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle me-1"></i> Active Method for this Phase{% else %} <i class="fa fa-times-circle me-1"></i> Inactive {% endif %}</span>
     {% endif %}
 
     <dl class="inline">
@@ -85,7 +85,7 @@
         {% if object.is_manifest_valid is not None %}
         <dt>Image Is Valid</dt>
         <dd>
-            <span class="badge badge-{{ object.is_manifest_valid|yesno:'success,danger' }}">
+            <span class="badge bg-{{ object.is_manifest_valid|yesno:'success,danger' }}">
                 {{ object.is_manifest_valid }}
             </span>
         </dd>
@@ -98,7 +98,7 @@
 
         <dt>Image Can Be Used</dt>
         <dd>
-            <span class="badge badge-{{ object.can_execute|yesno:'success,danger' }}">
+            <span class="badge bg-{{ object.can_execute|yesno:'success,danger' }}">
                 {{ object.can_execute }}
             </span>
         </dd>
@@ -108,7 +108,7 @@
 
         <dt>Requires GPU Type</dt>
         <dd>
-            <span class="badge badge-{% if object.phase.evaluation_requires_gpu_type %}info{% else %}danger{% endif %}">
+            <span class="badge bg-{% if object.phase.evaluation_requires_gpu_type %}info{% else %}danger{% endif %}">
                 {{ object.phase.get_evaluation_requires_gpu_type_display }}
             </span>
         </dd>

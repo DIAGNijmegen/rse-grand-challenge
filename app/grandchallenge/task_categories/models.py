@@ -17,7 +17,7 @@ class TaskType(models.Model):
     def badge(self):
         return format_html(
             (
-                '<span class="badge badge-light above-stretched-link" '
+                '<span class="badge bg-light above-stretched-link" '
                 'title="{0} challenge"><i class="fas fa-tasks fa-fw">'
                 "</i> {0}</span>"
             ),
