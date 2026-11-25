@@ -14,6 +14,8 @@ $pagination-active-bg: darken($blue, 15%);
 $pagination-hover-bg: darken($blue, 15%);
 $pagination-disabled-bg: lighten($blue, 15%);
 
+$carousel-control-color: $dark;
+
 @import "bootstrap/scss/bootstrap";
 @import "bootswatch/dist/flatly/bootswatch";
 @import "datatables";

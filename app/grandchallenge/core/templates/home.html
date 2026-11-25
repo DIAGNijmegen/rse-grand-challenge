@@ -15,13 +15,15 @@
                     {% for item in news_carousel_items %}
                         <div class="container carousel-item {% if forloop.counter == 1 %}active{% endif %}">
                             <div class="row justify-content-center">
-                                <div class="col-md-3 ratio ratio-1x1">
-                                    <a class="d-flex align-items-center"
-                                       href="{{ item.get_absolute_url }}">
-                                        {% picture item.logo img_class="rounded mw-100 mh-100" img_loading="eager" img_alt=item.title img_width="100%" img_height="100%" m=3 %}
-                                    </a>
+                                <div class="col-md-3">
+                                    <div class="ratio ratio-1x1">
+                                        <a class="d-flex align-items-center"
+                                           href="{{ item.get_absolute_url }}">
+                                            {% picture item.logo img_class="rounded mw-100 mh-100" img_loading="eager" img_alt=item.title img_width="100%" img_height="100%" m=3 %}
+                                        </a>
+                                    </div>
                                 </div>
-                                <div class="col-md-7  d-flex align-items-center">
+                                <div class="col-md-7 d-flex align-items-center">
                                     <a class="text-decoration-none text-primary stretched-link"
                                        href="{{ item.get_absolute_url }}">
                                         <h4>{{ item.title }}</h4>
@@ -34,22 +36,22 @@
 
                 </div>
 
-                <ol class="carousel-indicators position-relative">
+                <div class="carousel-indicators position-relative">
                     {% for item in news_carousel_items %}
-                        <li class="bg-primary {% if forloop.counter == 1 %}active{% endif %}" data-bs-target="#newsCarousel"
-                            data-slide-to="{{ forloop.counter0 }}">
-                        </li>
+                        <button type="button" class="bg-primary {% if forloop.counter == 1 %}active{% endif %}" data-bs-target="#newsCarousel"
+                            data-bs-slide-to="{{ forloop.counter0 }}">
+                        </button>
                     {% endfor %}
-                </ol>
+                </div>
 
-                <a class="carousel-control-prev text-dark" href="#newsCarousel" role="button" data-slide="prev">
-                    <i class="fas fa-angle-left fa-2x"></i>
+                <button class="carousel-control-prev" type="button" data-bs-target="#newsCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Previous</span>
-                </a>
-                <a class="carousel-control-next text-dark" href="#newsCarousel" role="button" data-slide="next">
-                    <i class="fas fa-angle-right fa-2x"></i>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#newsCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
                     <span class="visually-hidden">Next</span>
-                </a>
+                </button>
             </div>
         {% endif %}
 
