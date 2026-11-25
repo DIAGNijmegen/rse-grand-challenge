@@ -1,6 +1,7 @@
 import math
 from typing import NamedTuple
 
+from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 
 from grandchallenge.challenges.costs import (
@@ -30,6 +31,8 @@ class ChallengeResult(NamedTuple):
     is_accepting_submissions: bool
     unallocated_gb: float
     unallocated_reason: str
+    stored_gb: float
+    storage_headroom_gb: float
 
 
 def available_total_euro_millicents(*, invoice, storage_cost_euro_millicents):
@@ -96,6 +99,24 @@ def unallocated_storage(*, challenge):
         )
     else:
         return UnallocatedStorage(gb=0, reason="")
+
+
+def storage_headroom_gb(*, challenge, new_costs):
+    """
+    The GB that the storage costs on the authorized invoices (expired ones
+    included) account for beyond what the challenge stores, after the
+    backfill. Booking the reserved storage of paid invoices creates it. The
+    data can grow into it without any further storage cost, even after the
+    invoices expire, because storage costs never decrease and expired
+    invoices still count as accounted for.
+    """
+    accounted_gb = sum(
+        new_costs.get(invoice, invoice.storage_cost_euro_millicents)
+        / invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        for invoice in challenge.invoices.all()
+        if invoice.is_budget_authorized
+    )
+    return max(accounted_gb - challenge.size_in_storage / settings.GIGABYTE, 0)
 
 
 def euros(*, euro_millicents):
@@ -192,6 +213,10 @@ def challenge_result(*, challenge, new_costs):
         is_accepting_submissions=is_accepting_submissions(challenge=challenge),
         unallocated_gb=unallocated.gb,
         unallocated_reason=unallocated.reason,
+        stored_gb=challenge.size_in_storage / settings.GIGABYTE,
+        storage_headroom_gb=storage_headroom_gb(
+            challenge=challenge, new_costs=new_costs
+        ),
     )
 
 
@@ -313,6 +338,10 @@ class Command(BaseCommand):
             (result for result in results if result.unallocated_reason),
             key=lambda result: -result.unallocated_gb,
         )
+        headroom = sorted(
+            (result for result in results if result.storage_headroom_gb > 0),
+            key=lambda result: -result.storage_headroom_gb,
+        )
 
         if dry_run:
             mode = (
@@ -376,6 +405,9 @@ class Command(BaseCommand):
             f"- Budget unchanged: {len(unchanged)} challenges",
             f"- Unallocated storage: {len(unallocated)} challenges, "
             f"{sum(result.unallocated_gb for result in unallocated):,.2f} GB "
+            "in total",
+            f"- Storage headroom: {len(headroom)} challenges, "
+            f"{sum(result.storage_headroom_gb for result in headroom):,.2f} GB "
             "in total",
             "",
         ]
@@ -465,6 +497,33 @@ class Command(BaseCommand):
                     result.unallocated_reason,
                 )
                 for result in unallocated
+            ],
+        )
+
+        lines += self.section(
+            title=f"Storage headroom ({len(headroom)})",
+            description=(
+                "Challenges whose storage costs account for more GB than "
+                "they store, mostly because the reserved storage of their "
+                "paid invoices is booked in full. Their data can grow by "
+                "this much without any further storage cost, also after "
+                "their invoices expire. Largest first."
+            ),
+            header=(
+                "Challenge",
+                "Headroom",
+                "Stored",
+                "Accepting submissions",
+            ),
+            alignments=(":---", "---:", "---:", ":---"),
+            rows=[
+                (
+                    result.short_name,
+                    f"{result.storage_headroom_gb:,.2f} GB",
+                    f"{result.stored_gb:,.2f} GB",
+                    str(result.is_accepting_submissions),
+                )
+                for result in headroom
             ],
         )
 
