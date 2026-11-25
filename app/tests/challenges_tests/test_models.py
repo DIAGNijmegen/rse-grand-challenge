@@ -1446,3 +1446,66 @@ def test_challenge_request_algorithm_selectable_gpu_type_choices_validation(
             challenge_request.clean()
     else:
         challenge_request.clean()
+
+
+@pytest.mark.django_db
+def test_challenge_total_budget_properties_without_invoices() -> None:
+    challenge = refresh_challenge(challenge=ChallengeFactory())
+
+    assert challenge.approved_total_cost_euro_millicents == 0
+    assert challenge.available_total_cost_euro_millicents == 0
+    assert challenge.consumed_total_cost_euro_millicents == 0
+    assert challenge.active_approved_total_cost_euro_millicents == 0
+    assert challenge.active_available_total_cost_euro_millicents == 0
+    assert challenge.active_consumed_total_cost_euro_millicents == 0
+    assert challenge.percent_active_total_budget_consumed is None
+    assert challenge.percent_active_total_budget_remaining is None
+
+
+@pytest.mark.django_db
+def test_challenge_total_budget_properties_sum_over_invoices() -> None:
+    challenge = ChallengeFactory()
+    InvoiceFactory(  # Active
+        challenge=challenge,
+        compute_costs_euros=10,
+        storage_costs_euros=5,
+        compute_cost_euro_millicents=600_000,
+        storage_cost_euro_millicents=200_000,
+    )
+    InvoiceFactory(  # Expired and overspent
+        challenge=challenge,
+        compute_costs_euros=2,
+        storage_costs_euros=0,
+        compute_cost_euro_millicents=300_000,
+        storage_cost_euro_millicents=50_000,
+        expires_on=now() - timedelta(days=1),
+    )
+    InvoiceFactory(  # Not authorized
+        challenge=challenge,
+        compute_costs_euros=100,
+        storage_costs_euros=100,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+
+    challenge = refresh_challenge(challenge=challenge)
+    invoices = list(challenge.invoices.all())
+
+    assert challenge.approved_total_cost_euro_millicents == 1_700_000
+    assert challenge.consumed_total_cost_euro_millicents == 1_000_000
+    assert challenge.available_total_cost_euro_millicents == 700_000
+    assert challenge.write_off_total_cost_euro_millicents == 150_000
+    assert challenge.active_approved_total_cost_euro_millicents == 1_500_000
+    assert challenge.active_consumed_total_cost_euro_millicents == 800_000
+    assert challenge.active_available_total_cost_euro_millicents == 700_000
+    assert challenge.percent_active_total_budget_consumed == 53
+    assert challenge.percent_active_total_budget_remaining == 47
+
+    assert challenge.approved_total_cost_euro_millicents == sum(
+        invoice.approved_total_cost_euro_millicents for invoice in invoices
+    )
+    assert challenge.available_total_cost_euro_millicents == sum(
+        invoice.available_total_cost_euro_millicents for invoice in invoices
+    )
+    assert challenge.write_off_total_cost_euro_millicents == sum(
+        invoice.write_off_total_cost_euro_millicents for invoice in invoices
+    )

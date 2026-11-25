@@ -533,6 +533,60 @@ class Invoice(models.Model, FieldChangeMixin):
         )
 
     @cached_property
+    def approved_total_cost_euro_millicents(self):
+        if self.is_budget_authorized:
+            return (
+                self.compute_costs_euros + self.storage_costs_euros
+            ) * 100_000
+        else:
+            return 0
+
+    @cached_property
+    def consumed_total_cost_euro_millicents(self):
+        return min(
+            self.compute_cost_euro_millicents
+            + self.storage_cost_euro_millicents,
+            self.approved_total_cost_euro_millicents,  # Cap
+        )
+
+    @cached_property
+    def available_total_cost_euro_millicents(self):
+        if self.is_expired:
+            return 0
+        else:
+            return (
+                self.approved_total_cost_euro_millicents
+                - self.consumed_total_cost_euro_millicents
+            )
+
+    @cached_property
+    def write_off_total_cost_euro_millicents(self):
+        balance = self.approved_total_cost_euro_millicents - (
+            self.compute_cost_euro_millicents
+            + self.storage_cost_euro_millicents
+        )
+        return abs(min(balance, 0))
+
+    @cached_property
+    def percent_total_budget_consumed(self):
+        if self.approved_total_cost_euro_millicents > 0:
+            return int(
+                100
+                * self.consumed_total_cost_euro_millicents
+                / self.approved_total_cost_euro_millicents
+            )
+        else:
+            return None
+
+    @cached_property
+    def percent_total_budget_remaining(self):
+        consumed = self.percent_total_budget_consumed
+        if consumed is not None:
+            return 100 - consumed
+        else:
+            return None
+
+    @cached_property
     def write_off_compute_cost_euro_millicents(self):
         balance = (
             self.approved_compute_cost_euro_millicents

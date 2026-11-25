@@ -992,3 +992,320 @@ def test_in_utilization_priority_order_matches_window_priority():
     )
 
     assert actual == expected
+
+
+TOTAL_BUDGET_CASES = (
+    pytest.param(
+        {
+            "compute_costs_euros": 2,
+            "storage_costs_euros": 1,
+            "compute_cost_euro_millicents": 100_000,
+            "storage_cost_euro_millicents": 50_000,
+        },
+        False,
+        300_000,
+        150_000,
+        150_000,
+        id="authorized",
+    ),
+    pytest.param(
+        {
+            "compute_costs_euros": 1,
+            "storage_costs_euros": 1,
+            "compute_cost_euro_millicents": 300_000,
+            "storage_cost_euro_millicents": 50_000,
+        },
+        False,
+        200_000,
+        200_000,
+        0,
+        id="over_consumed",
+    ),
+    pytest.param(
+        {
+            "compute_costs_euros": 2,
+            "storage_costs_euros": 1,
+            "compute_cost_euro_millicents": 100_000,
+            "storage_cost_euro_millicents": 50_000,
+            "payment_status": PaymentStatusChoices.ISSUED,
+        },
+        False,
+        0,
+        0,
+        0,
+        id="unauthorized",
+    ),
+    pytest.param(
+        {
+            "compute_costs_euros": 2,
+            "storage_costs_euros": 1,
+            "compute_cost_euro_millicents": 100_000,
+            "storage_cost_euro_millicents": 50_000,
+            "payment_status": PaymentStatusChoices.CANCELLED,
+        },
+        False,
+        0,
+        0,
+        0,
+        id="cancelled",
+    ),
+    pytest.param(
+        {
+            "compute_costs_euros": 2,
+            "storage_costs_euros": 1,
+            "compute_cost_euro_millicents": 100_000,
+            "storage_cost_euro_millicents": 50_000,
+            "expires_on": now().date() - timedelta(days=1),
+        },
+        True,
+        300_000,
+        150_000,
+        0,
+        id="expired",
+    ),
+)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "invoice_kwargs, is_expired, approved, consumed, available",
+    TOTAL_BUDGET_CASES,
+)
+def test_total_budget_properties(
+    *, invoice_kwargs, is_expired, approved, consumed, available
+):
+    invoice = refresh_invoice(invoice=InvoiceFactory(**invoice_kwargs))
+
+    assert invoice.is_expired is is_expired
+    assert invoice.approved_total_cost_euro_millicents == approved
+    assert invoice.consumed_total_cost_euro_millicents == consumed
+    assert invoice.available_total_cost_euro_millicents == available
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "invoice_kwargs, is_expired, approved, consumed, available",
+    TOTAL_BUDGET_CASES,
+)
+def test_consumed_total_budget_is_within_approved_total_budget(
+    *, invoice_kwargs, is_expired, approved, consumed, available
+):
+    invoice = refresh_invoice(invoice=InvoiceFactory(**invoice_kwargs))
+
+    assert (
+        0
+        <= invoice.consumed_total_cost_euro_millicents
+        <= invoice.approved_total_cost_euro_millicents
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "invoice_kwargs, is_expired, approved, consumed, available",
+    TOTAL_BUDGET_CASES,
+)
+def test_available_total_budget_is_never_negative(
+    *, invoice_kwargs, is_expired, approved, consumed, available
+):
+    invoice = refresh_invoice(invoice=InvoiceFactory(**invoice_kwargs))
+
+    assert invoice.available_total_cost_euro_millicents >= 0
+
+
+@pytest.mark.django_db
+def test_unexpired_consumed_plus_available_equals_approved_total_budget():
+    invoice = refresh_invoice(
+        invoice=InvoiceFactory(
+            compute_costs_euros=2,
+            storage_costs_euros=1,
+            compute_cost_euro_millicents=100_000,
+            storage_cost_euro_millicents=50_000,
+        )
+    )
+
+    assert (
+        invoice.consumed_total_cost_euro_millicents
+        + invoice.available_total_cost_euro_millicents
+        == invoice.approved_total_cost_euro_millicents
+    )
+
+
+@pytest.mark.django_db
+def test_expired_invoice_has_no_available_total_budget():
+    invoice = refresh_invoice(
+        invoice=InvoiceFactory(
+            compute_costs_euros=2,
+            storage_costs_euros=1,
+            compute_cost_euro_millicents=100_000,
+            storage_cost_euro_millicents=50_000,
+            expires_on=now().date() - timedelta(days=1),
+        )
+    )
+
+    assert invoice.available_total_cost_euro_millicents == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "invoice_kwargs, is_expired, approved, consumed, available",
+    [
+        case
+        for case in TOTAL_BUDGET_CASES
+        if case.id in ("authorized", "over_consumed")
+    ],
+)
+def test_allocator_capacity_matches_available_total_budget(
+    *, invoice_kwargs, is_expired, approved, consumed, available
+):
+    invoice = refresh_invoice(
+        invoice=InvoiceFactory(
+            storage_price_euro_millicents_per_gb_per_year=1_000,
+            storage_retention_years=1,
+            **invoice_kwargs,
+        )
+    )
+
+    assert (
+        invoice.capacity_gb
+        * invoice.storage_price_euro_millicents_per_gb_for_retention_period
+        == invoice.available_total_cost_euro_millicents
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "invoice_kwargs, expected_consumed, expected_remaining",
+    (
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 100_000,
+                "storage_cost_euro_millicents": 50_000,
+            },
+            50,
+            50,
+            id="positive_approved_total",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 1,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 300_000,
+            },
+            100,
+            0,
+            id="over_consumed",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 0,
+                "storage_costs_euros": 0,
+            },
+            None,
+            None,
+            id="zero_approved_total",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "payment_status": PaymentStatusChoices.CANCELLED,
+            },
+            None,
+            None,
+            id="unauthorized",
+        ),
+    ),
+)
+def test_percent_total_budget_properties(
+    *, invoice_kwargs, expected_consumed, expected_remaining
+):
+    invoice = refresh_invoice(invoice=InvoiceFactory(**invoice_kwargs))
+
+    assert invoice.percent_total_budget_consumed == expected_consumed
+    assert invoice.percent_total_budget_remaining == expected_remaining
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "invoice_kwargs, expected_write_off",
+    (
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 100_000,
+                "storage_cost_euro_millicents": 50_000,
+            },
+            0,
+            id="within_budget",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 200_000,
+                "storage_cost_euro_millicents": 100_000,
+            },
+            0,
+            id="exactly_at_budget",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 250_000,
+                "storage_cost_euro_millicents": 100_000,
+            },
+            50_000,
+            id="over_budget_by_compute_and_storage_combined",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 100_000,
+                "storage_cost_euro_millicents": 230_000,
+            },
+            30_000,
+            id="storage_alone_pushes_over",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 250_000,
+                "storage_cost_euro_millicents": 100_000,
+                "expires_on": now().date() - timedelta(days=1),
+            },
+            50_000,
+            id="expired_over_budget",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 100_000,
+                "storage_cost_euro_millicents": 50_000,
+                "expires_on": now().date() - timedelta(days=1),
+            },
+            0,
+            id="expired_within_budget",
+        ),
+        pytest.param(
+            {
+                "compute_costs_euros": 2,
+                "storage_costs_euros": 1,
+                "compute_cost_euro_millicents": 100_000,
+                "storage_cost_euro_millicents": 50_000,
+                "payment_status": PaymentStatusChoices.CANCELLED,
+            },
+            150_000,
+            id="unauthorized_writes_off_all_cost",
+        ),
+    ),
+)
+def test_write_off_total_cost(*, invoice_kwargs, expected_write_off):
+    invoice = refresh_invoice(invoice=InvoiceFactory(**invoice_kwargs))
+
+    assert invoice.write_off_total_cost_euro_millicents == expected_write_off

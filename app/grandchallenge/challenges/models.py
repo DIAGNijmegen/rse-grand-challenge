@@ -824,6 +824,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
+    def write_off_total_cost_euro_millicents(self):
+        return sum(
+            invoice.write_off_total_cost_euro_millicents
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
     def percent_active_compute_budget_consumed(self):
         consumed = self.active_consumed_compute_cost_euro_millicents
         approved = self.active_approved_compute_cost_euro_millicents
@@ -836,6 +843,66 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     @cached_property
     def percent_active_compute_budget_remaining(self):
         consumed = self.percent_active_compute_budget_consumed
+        if consumed is not None:
+            return 100 - consumed
+        else:
+            return None
+
+    @cached_property
+    def approved_total_cost_euro_millicents(self):
+        return sum(
+            invoice.approved_total_cost_euro_millicents
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def active_approved_total_cost_euro_millicents(self):
+        return sum(
+            invoice.approved_total_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
+    def available_total_cost_euro_millicents(self):
+        return sum(
+            invoice.available_total_cost_euro_millicents
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def active_available_total_cost_euro_millicents(self):
+        return sum(
+            invoice.available_total_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
+    def consumed_total_cost_euro_millicents(self):
+        return sum(
+            invoice.consumed_total_cost_euro_millicents
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def active_consumed_total_cost_euro_millicents(self):
+        return sum(
+            invoice.consumed_total_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
+    def percent_active_total_budget_consumed(self):
+        consumed = self.active_consumed_total_cost_euro_millicents
+        approved = self.active_approved_total_cost_euro_millicents
+
+        if approved > 0:
+            return int(100 * consumed / approved)
+        else:
+            return None
+
+    @cached_property
+    def percent_active_total_budget_remaining(self):
+        consumed = self.percent_active_total_budget_consumed
         if consumed is not None:
             return 100 - consumed
         else:

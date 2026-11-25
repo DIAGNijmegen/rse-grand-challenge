@@ -75,6 +75,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "total_amount_euros",
         "storage_cost_euro_millicents",
         "percent_compute_budget_consumed_display",
+        "percent_total_budget_consumed_display",
         "issued_on",
         "expires_on",
         "last_checked_on",
@@ -137,10 +138,15 @@ class InvoiceAdmin(admin.ModelAdmin):
             {
                 "fields": [
                     "percent_compute_budget_consumed_display",
+                    "percent_total_budget_consumed_display",
                     "available_compute_cost",
                     "approved_compute_cost",
                     "consumed_compute_cost",
                     "write_off_compute_cost",
+                    "approved_total_cost",
+                    "available_total_cost",
+                    "consumed_total_cost",
+                    "write_off_total_cost",
                     "storage_price_euro_millicents_per_gb_per_year",
                     "storage_retention_years",
                     "storage_price_euro_millicents_per_gb_for_retention_period",
@@ -167,10 +173,15 @@ class InvoiceAdmin(admin.ModelAdmin):
         "created",
         "invoice_request_text",
         "percent_compute_budget_consumed_display",
+        "percent_total_budget_consumed_display",
         "available_compute_cost",
         "approved_compute_cost",
         "consumed_compute_cost",
         "write_off_compute_cost",
+        "approved_total_cost",
+        "available_total_cost",
+        "consumed_total_cost",
+        "write_off_total_cost",
         "storage_price_euro_millicents_per_gb_for_retention_period",
         "storage_cost_euro_millicents",
         "invoice_consumed_compute_cost",
@@ -217,6 +228,18 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def write_off_compute_cost(self, obj):
         return millicents_to_euro(obj.write_off_compute_cost_euro_millicents)
+
+    def approved_total_cost(self, obj):
+        return millicents_to_euro(obj.approved_total_cost_euro_millicents)
+
+    def available_total_cost(self, obj):
+        return millicents_to_euro(obj.available_total_cost_euro_millicents)
+
+    def consumed_total_cost(self, obj):
+        return millicents_to_euro(obj.consumed_total_cost_euro_millicents)
+
+    def write_off_total_cost(self, obj):
+        return millicents_to_euro(obj.write_off_total_cost_euro_millicents)
 
     @admin.display(description="Consumed compute cost charged to this invoice")
     def invoice_consumed_compute_cost(self, obj):
@@ -297,6 +320,14 @@ class InvoiceAdmin(admin.ModelAdmin):
         if value is None:
             return "-"
         return f"{value}%"
+
+    @admin.display(description="Consumed total budget")
+    def percent_total_budget_consumed_display(self, obj):
+        value = obj.percent_total_budget_consumed
+        if value is None:
+            return "-"
+        else:
+            return f"{value}%"
 
     def has_delete_permission(self, request, obj=None):
         # invoices cannot be deleted
