@@ -33,6 +33,7 @@ class ChallengeResult(NamedTuple):
     unallocated_reason: str
     stored_gb: float
     storage_headroom_gb: float
+    has_invoices: bool
 
 
 def available_total_euro_millicents(*, invoice, storage_cost_euro_millicents):
@@ -108,7 +109,9 @@ def storage_headroom_gb(*, challenge, new_costs):
     backfill. Booking the reserved storage of paid invoices creates it. The
     data can grow into it without any further storage cost, even after the
     invoices expire, because storage costs never decrease and expired
-    invoices still count as accounted for.
+    invoices still count as accounted for. It may include storage freed by
+    the cleanup of failed or unsuccessful container images, as sizes are only
+    known as a current total.
     """
     accounted_gb = sum(
         new_costs.get(invoice, invoice.storage_cost_euro_millicents)
@@ -217,6 +220,7 @@ def challenge_result(*, challenge, new_costs):
         storage_headroom_gb=storage_headroom_gb(
             challenge=challenge, new_costs=new_costs
         ),
+        has_invoices=bool(challenge.invoices.all()),
     )
 
 
@@ -342,6 +346,9 @@ class Command(BaseCommand):
             (result for result in results if result.storage_headroom_gb > 0),
             key=lambda result: -result.storage_headroom_gb,
         )
+        without_invoices = [
+            result for result in results if not result.has_invoices
+        ]
 
         if dry_run:
             mode = (
@@ -409,6 +416,7 @@ class Command(BaseCommand):
             f"- Storage headroom: {len(headroom)} challenges, "
             f"{sum(result.storage_headroom_gb for result in headroom):,.2f} GB "
             "in total",
+            f"- Challenges without invoices: {len(without_invoices)}",
             "",
         ]
 
@@ -507,7 +515,9 @@ class Command(BaseCommand):
                 "they store, mostly because the reserved storage of their "
                 "paid invoices is booked in full. Their data can grow by "
                 "this much without any further storage cost, also after "
-                "their invoices expire. Largest first."
+                "their invoices expire. This may include storage freed by "
+                "the cleanup of failed or unsuccessful container images. "
+                "Largest first."
             ),
             header=(
                 "Challenge",
@@ -524,6 +534,25 @@ class Command(BaseCommand):
                     str(result.is_accepting_submissions),
                 )
                 for result in headroom
+            ],
+        )
+        lines += self.section(
+            title=f"Challenges without invoices ({len(without_invoices)})",
+            description=(
+                "Every challenge is expected to have an "
+                "invoice, so these should not exist. Challenges with only "
+                "a cancelled invoice have an invoice and are not listed. "
+                "Their data is also reported under unallocated storage."
+            ),
+            header=("Challenge", "Stored (GB)", "Accepting submissions"),
+            alignments=(":---", "---:", ":---"),
+            rows=[
+                (
+                    result.short_name,
+                    f"{result.stored_gb:,.2f}",
+                    str(result.is_accepting_submissions),
+                )
+                for result in without_invoices
             ],
         )
 
