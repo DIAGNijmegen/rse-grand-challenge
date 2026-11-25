@@ -30,7 +30,7 @@ class BoundFieldWithDNoneClass(BoundField):
 
 
 class FileSourceChoiceField(ChoiceField):
-    widget = SourceSelect(attrs={"class": "custom-select"})
+    widget = SourceSelect(attrs={"class": "form-select"})
 
     def __init__(
         self,
