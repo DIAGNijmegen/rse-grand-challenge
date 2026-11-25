@@ -30,81 +30,10 @@
 {% block sidebar %}
     <div class={% if currentdocpage.is_faq %}"col-xl-6 col-lg-5 col-md-4"{% else %}"col-xl-4 col-lg-3"{% endif %}>
         <nav class="documentation-sidebar mt-3">
-            <ul class="nav flex-column" id="documentation_nav_accordion">
+            {% get_active_page_ids top_level_pages currentdocpage as active_page_ids %}
+            <ul class="nav flex-column">
                 {% for page in top_level_pages %}
-                    {% get_subordinate_pages page as subpages %}
-                    {% if not subpages %}
-                        <li class="nav-item mb-1">
-                            <a class="nav-link rounded btn-dark {% if page == currentdocpage %}active {% endif %}"
-                               id="{{ page.slug }}"
-                               href="{% url 'documentation:detail' slug=page.slug %}">
-                                    {{ page.title }}
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item mb-1 rounded">
-                            <a class="nav-link rounded btn-dark {% if page == currentdocpage or currentdocpage in subpages %}active {% endif %}"
-                               id="{{ page.slug }}"
-                               href="{% url 'documentation:detail' slug=page.slug %}">
-                                    {{ page.title }} &nbsp;&nbsp;<i class="fas fa-caret-down"></i>
-                            </a>
-                                <ul class="rounded {% if currentdocpage == page or currentdocpage in subpages %}collapse show{% else %}collapse hide{% endif %} list-group">
-                                    {% for subpage in page.children.all %}
-                                        {% get_subordinate_pages subpage as subpage_subpages %}
-                                        {% if not subpage_subpages %}
-                                            <li class="list-group-item border-0 p-0 {% if subpage == page.children.first %}mt-1{% endif %} mb-1">
-                                                <a class="nav-link rounded {% if subpage == currentdocpage  %}active fw-bold{% endif %} text-primary bg-light"
-                                                   id="{{ subpage.slug }}"
-                                                   href="{% url 'documentation:detail' slug=subpage.slug %}">
-                                                        {{ subpage.title }}
-                                                </a>
-                                            </li>
-                                        {% else %}
-                                            <li class="list-group-item border-0 p-0 mb-1 {% if subpage == page.children.first %}mt-1{% endif %}">
-                                                <a class="nav-link rounded {% if subpage == currentdocpage  %}active fw-bold{% endif %} text-primary bg-light"
-                                                   id="{{ subpage.slug }}"
-                                                   href="{% url 'documentation:detail' slug=subpage.slug %}">
-                                                        {{ subpage.title }} &nbsp;&nbsp;<i class="fas fa-caret-down"></i>
-                                                </a>
-                                            </li>
-                                            <ul class="rounded {% if currentdocpage == subpage or currentdocpage in subpage_subpages %}collapse show{% else %}collapse hide{% endif %} list-group">
-                                                {% for tertiarypage in subpage.children.all %}
-                                                    {% if not tertiarypage.children.all %}
-                                                        <li class="list-group-item border p-0 mb-1">
-                                                            <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active fw-bold{% endif %} text-primary"
-                                                               id="{{ tertiarypage.slug }}"
-                                                               href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
-                                                                    {{ tertiarypage.title }}
-                                                            </a>
-                                                        </li>
-                                                    {% else %}
-                                                        <li class="list-group-item border {% if tertiarypage == currentdocpage or currentdocpage in tertiarypage.children.all %}border-bottom-0 {% else %}mb-1{% endif %} p-0">
-                                                            <a class="nav-link rounded {% if tertiarypage == currentdocpage %}active fw-bold{% endif %} text-primary"
-                                                               id="{{ tertiarypage.slug }}"
-                                                               href="{% url 'documentation:detail' slug=tertiarypage.slug %}">
-                                                                    {{ tertiarypage.title }}&nbsp;&nbsp;<i class="fas fa-caret-down"></i>
-                                                            </a>
-                                                        </li>
-                                                        <ul class="border-start border-end border-bottom {% if currentdocpage == tertiarypage or currentdocpage in tertiarypage.children.all %} collapse show {% else %} collapse hide {% endif %} list-group mb-1">
-                                                            {# If the number of nesting levels is changed, also change the children prefetch and the test_docpage_detail_num_queries #}
-                                                            {% for fourthpage in tertiarypage.children.all %}
-                                                                <li class="p-0 mb-1 ms-5 me-3">
-                                                                    <a class="nav-link {% if fourthpage == currentdocpage %}active fw-bold{% endif %} text-primary ps-2"
-                                                                       id="{{ fourthpage.slug }}"
-                                                                       href="{% url 'documentation:detail' slug=fourthpage.slug %}">
-                                                                            {{ fourthpage.title }}
-                                                                    </a>
-                                                                </li>
-                                                            {% endfor %}
-                                                        </ul>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </ul>
-                                        {% endif %}
-                                    {% endfor %}
-                                </ul>
-                        </li>
-                    {% endif %}
+                    {% include "documentation/partials/sidebar_item.html" with page=page depth=0 %}
                 {% endfor %}
             </ul>
         </nav>
@@ -123,8 +52,8 @@
 {% endblock %}
 
 {% block content %}
-        <div class="row mt-3">
-            <div class="col-12 col-sm-6 col-md-7 d-inline-block text-start">
+        <div class="row">
+            <div class="col-12 col-sm-8 mt-3 d-inline-block text-start">
                 {% if 'documentation.change_docpage' in perms %}
                     <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:list' %}">Page overview</a>
                     <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:create' %}">Add</a>
@@ -136,9 +65,9 @@
                     </a>
                 {% endif %}
             </div>
-            <div class="col-12 col-sm-6 col-md-5 justify-content-start justify-content-sm-end d-flex align-items-center flex-row flex-wrap">
+            <div class="col-12 col-sm-4 mt-3 justify-content-start justify-content-sm-end d-flex align-items-center flex-row flex-wrap">
                 <form>
-                    <input class="form-control mb-1" type="text" name="query" placeholder="Search...">
+                    <input class="form-control ms-1" type="text" name="query" placeholder="Search...">
                 </form>
             </div>
         </div>

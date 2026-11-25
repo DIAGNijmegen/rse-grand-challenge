@@ -1,0 +1,19 @@
+{# Recursive sidebar entry for a documentation page. #}
+{# Expects page, depth (0 for top level pages), and from the parent context #}
+{# currentdocpage and active_page_ids (ids of the current page and its ancestors). #}
+{% with children=page.children.all %}
+    <li class="doc-nav-item doc-nav-level-{{ depth }}">
+        <a class="nav-link{% if depth == 0 and page.pk in active_page_ids or depth > 0 and page == currentdocpage %} active{% endif %}"
+           id="{{ page.slug }}"
+           href="{% url 'documentation:detail' slug=page.slug %}">
+            {{ page.title }}{% if depth < 3 and children %}<i class="fas fa-caret-down ms-2"></i>{% endif %}
+        </a>
+        {% if depth < 3 and children %}
+            <ul class="list-group doc-nav-list collapse{% if page.pk in active_page_ids %} show{% endif %}">
+                {% for child in children %}
+                    {% include "documentation/partials/sidebar_item.html" with page=child depth=depth|add:1 %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </li>
+{% endwith %}
