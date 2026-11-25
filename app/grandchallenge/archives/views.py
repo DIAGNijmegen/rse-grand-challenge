@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.views import redirect_to_login
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.forms.utils import ErrorList
@@ -183,12 +184,15 @@ class ArchiveDetail(
         try:
             return super().check_permissions(request)
         except PermissionDenied:
-            return HttpResponseRedirect(
-                reverse(
-                    "archives:permission-request-create",
-                    kwargs={"slug": self.object.slug},
+            if request.user.is_authenticated:
+                return HttpResponseRedirect(
+                    reverse(
+                        "archives:permission-request-create",
+                        kwargs={"slug": self.object.slug},
+                    )
                 )
-            )
+            else:
+                return redirect_to_login(next=request.get_full_path())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
