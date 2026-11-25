@@ -275,8 +275,9 @@ def allocate_storage_costs_for_challenge(*, challenge, include_expired=False):
     the challenge whose storage cost should increase. This function does not
     update the invoices.
 
-    The storage that is not yet accounted for is the sum of registry and S3
-    storage minus what all its authorized invoices (expired included) already carry.
+    The storage that is not yet accounted for is the S3 storage
+    (size_in_storage, the registry is not charged) minus what all its
+    authorized invoices (expired included) already carry.
     It is assigned to the non-expired authorized invoices, or to all authorized
     invoices if include_expired is set, in utilization priority order.
     Each invoice takes what its remaining budget allows, and any GB left over

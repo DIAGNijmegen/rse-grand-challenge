@@ -65,9 +65,7 @@ def _invoice_with_100_gb_capacity(*, challenge):
 
 @pytest.mark.django_db
 def test_fills_authorized_invoices_in_priority_order():
-    challenge = ChallengeFactory(
-        size_in_storage=200 * GIGABYTE, size_in_registry=50 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=250 * GIGABYTE)
     later_invoice = _invoice(challenge=challenge, expires_in_days=200)
     earlier_invoice = _invoice(challenge=challenge, expires_in_days=100)
     cancelled_invoice = _invoice(
@@ -100,9 +98,7 @@ def test_fills_authorized_invoices_in_priority_order():
 def test_allocation_makes_no_queries_for_a_prefetched_challenge(
     django_assert_num_queries,
 ):
-    challenge = ChallengeFactory(
-        size_in_storage=5 * GIGABYTE, size_in_registry=5 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=10 * GIGABYTE)
     _invoice(challenge=challenge)
     _invoice(challenge=challenge, expires_in_days=100)
     prefetched_challenge = _prefetched(challenge=challenge)
@@ -113,9 +109,7 @@ def test_allocation_makes_no_queries_for_a_prefetched_challenge(
 
 @pytest.mark.django_db
 def test_unassigned_storage_gb_counts_authorized_invoices_expired_included():
-    challenge = ChallengeFactory(
-        size_in_storage=30 * GIGABYTE, size_in_registry=20 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=50 * GIGABYTE)
     _invoice(challenge=challenge, storage_cost_euro_millicents=10_000)
     _invoice(
         challenge=challenge,
@@ -135,33 +129,25 @@ def test_unassigned_storage_gb_counts_authorized_invoices_expired_included():
 
 @pytest.mark.django_db
 def test_unassigned_storage_gb_is_negative_when_data_has_shrunk():
-    challenge = ChallengeFactory(
-        size_in_storage=3 * GIGABYTE, size_in_registry=2 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=5 * GIGABYTE)
     _invoice(challenge=challenge, storage_cost_euro_millicents=10_000)
 
     assert _prefetched(challenge=challenge).unassigned_storage_gb == -5
 
 
 @pytest.mark.django_db
-def test_storage_and_registry_size_are_both_included():
+def test_unassigned_storage_gb_ignores_registry_storage():
     challenge = ChallengeFactory(
         size_in_storage=10 * GIGABYTE, size_in_registry=5 * GIGABYTE
     )
-    invoice = _invoice(challenge=challenge)
+    _invoice(challenge=challenge, storage_cost_euro_millicents=4_000)
 
-    new_costs = allocate_storage_costs_for_challenge(
-        challenge=_prefetched(challenge=challenge)
-    )
-
-    assert new_costs == {invoice: 15_000}
+    assert _prefetched(challenge=challenge).unassigned_storage_gb == 6
 
 
 @pytest.mark.django_db
 def test_challenge_without_authorized_invoice_changes_nothing():
-    challenge = ChallengeFactory(
-        size_in_storage=6 * GIGABYTE, size_in_registry=4 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=10 * GIGABYTE)
     _invoice(
         challenge=challenge,
         payment_status=Invoice.PaymentStatusChoices.CANCELLED,
@@ -176,9 +162,7 @@ def test_challenge_without_authorized_invoice_changes_nothing():
 
 @pytest.mark.django_db
 def test_expired_invoice_counts_as_accounted_but_is_not_filled_by_default():
-    challenge = ChallengeFactory(
-        size_in_storage=20 * GIGABYTE, size_in_registry=10 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=30 * GIGABYTE)
     _invoice(
         challenge=challenge,
         expires_in_days=-10,
@@ -196,9 +180,7 @@ def test_expired_invoice_counts_as_accounted_but_is_not_filled_by_default():
 
 @pytest.mark.django_db
 def test_include_expired_fills_expired_invoices_first():
-    challenge = ChallengeFactory(
-        size_in_storage=100 * GIGABYTE, size_in_registry=50 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=150 * GIGABYTE)
     expired_invoice = _invoice(challenge=challenge, expires_in_days=-10)
     active_invoice = _invoice(challenge=challenge)
 
@@ -211,9 +193,7 @@ def test_include_expired_fills_expired_invoices_first():
 
 @pytest.mark.django_db
 def test_only_expired_invoices_receive_nothing_by_default():
-    challenge = ChallengeFactory(
-        size_in_storage=5 * GIGABYTE, size_in_registry=5 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=10 * GIGABYTE)
     _invoice(challenge=challenge, expires_in_days=-10)
 
     new_costs = allocate_storage_costs_for_challenge(
@@ -225,9 +205,7 @@ def test_only_expired_invoices_receive_nothing_by_default():
 
 @pytest.mark.django_db
 def test_allocating_again_after_saving_changes_nothing():
-    challenge = ChallengeFactory(
-        size_in_storage=100 * GIGABYTE, size_in_registry=50 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=150 * GIGABYTE)
     _invoice(challenge=challenge, expires_in_days=100)
     _invoice(challenge=challenge, expires_in_days=200)
 
@@ -246,9 +224,7 @@ def test_allocating_again_after_saving_changes_nothing():
 
 @pytest.mark.django_db
 def test_fills_invoices_in_order():
-    challenge = ChallengeFactory(
-        size_in_storage=30 * GIGABYTE, size_in_registry=20 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=50 * GIGABYTE)
     first_invoice = _invoice_with_10_gb_capacity(challenge=challenge)
     second_invoice = _invoice_with_100_gb_capacity(challenge=challenge)
 
@@ -264,9 +240,7 @@ def test_fills_invoices_in_order():
 
 @pytest.mark.django_db
 def test_overflow_lands_on_last_invoice():
-    challenge = ChallengeFactory(
-        size_in_storage=100 * GIGABYTE, size_in_registry=60 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=160 * GIGABYTE)
     first_invoice = _invoice_with_10_gb_capacity(challenge=challenge)
     second_invoice = _invoice_with_100_gb_capacity(challenge=challenge)
 
@@ -282,9 +256,7 @@ def test_overflow_lands_on_last_invoice():
 
 @pytest.mark.django_db
 def test_challenge_without_invoices_changes_nothing():
-    challenge = ChallengeFactory(
-        size_in_storage=5 * GIGABYTE, size_in_registry=5 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=10 * GIGABYTE)
 
     new_costs = allocate_storage_costs_for_challenge(
         challenge=_prefetched(challenge=challenge)
@@ -295,21 +267,18 @@ def test_challenge_without_invoices_changes_nothing():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "size_in_storage_gb, size_in_registry_gb",
+    "size_in_storage_gb",
     (
         # The first invoice already carries 10 GB, so this is exactly what is
         # accounted for, a bit less, and nothing
-        (6, 4),
-        (6, 3),
-        (0, 0),
+        10,
+        9,
+        0,
     ),
 )
-def test_size_at_or_below_accounted_gb_changes_nothing(
-    size_in_storage_gb, size_in_registry_gb
-):
+def test_size_at_or_below_accounted_gb_changes_nothing(size_in_storage_gb):
     challenge = ChallengeFactory(
         size_in_storage=size_in_storage_gb * GIGABYTE,
-        size_in_registry=size_in_registry_gb * GIGABYTE,
     )
     _invoice_with_10_gb_capacity(challenge=challenge)
     _invoice_with_100_gb_capacity(challenge=challenge)
@@ -323,9 +292,7 @@ def test_size_at_or_below_accounted_gb_changes_nothing(
 
 @pytest.mark.django_db
 def test_only_changed_invoices_are_returned():
-    challenge = ChallengeFactory(
-        size_in_storage=4 * GIGABYTE, size_in_registry=6 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=10 * GIGABYTE)
     _invoice(challenge=challenge, compute_cost_euro_millicents=100_000)
     other_invoice = _invoice(challenge=challenge)
 
@@ -338,9 +305,7 @@ def test_only_changed_invoices_are_returned():
 
 @pytest.mark.django_db
 def test_existing_storage_cost_reduces_capacity():
-    challenge = ChallengeFactory(
-        size_in_storage=70 * GIGABYTE, size_in_registry=60 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=130 * GIGABYTE)
     first_invoice = _invoice(
         challenge=challenge, storage_cost_euro_millicents=80_000
     )
@@ -357,9 +322,7 @@ def test_existing_storage_cost_reduces_capacity():
 
 @pytest.mark.django_db
 def test_uncapped_compute_cost_reduces_capacity():
-    challenge = ChallengeFactory(
-        size_in_storage=20 * GIGABYTE, size_in_registry=30 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=50 * GIGABYTE)
     first_invoice = _invoice(
         challenge=challenge, compute_cost_euro_millicents=60_000
     )
@@ -376,9 +339,7 @@ def test_uncapped_compute_cost_reduces_capacity():
 
 @pytest.mark.django_db
 def test_compute_cost_above_approved_total_leaves_no_capacity():
-    challenge = ChallengeFactory(
-        size_in_storage=5 * GIGABYTE, size_in_registry=5 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=10 * GIGABYTE)
     _invoice(challenge=challenge, compute_cost_euro_millicents=250_000)
     second_invoice = _invoice(challenge=challenge)
 
@@ -392,9 +353,7 @@ def test_compute_cost_above_approved_total_leaves_no_capacity():
 
 @pytest.mark.django_db
 def test_storage_costs_euros_count_towards_approved_total():
-    challenge = ChallengeFactory(
-        size_in_storage=90 * GIGABYTE, size_in_registry=60 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=150 * GIGABYTE)
     first_invoice = _invoice(
         challenge=challenge, compute_costs_euros=0, storage_costs_euros=1
     )
@@ -409,9 +368,7 @@ def test_storage_costs_euros_count_towards_approved_total():
 
 @pytest.mark.django_db
 def test_mixed_prices_overflow_priced_at_last_invoices_own_price():
-    challenge = ChallengeFactory(
-        size_in_storage=30 * GIGABYTE, size_in_registry=20 * GIGABYTE
-    )
+    challenge = ChallengeFactory(size_in_storage=50 * GIGABYTE)
     first_invoice = _invoice(
         challenge=challenge, storage_price_euro_millicents_per_gb=4_000
     )
@@ -484,8 +441,7 @@ def test_storage_costs_never_decrease(make_invoices, unassigned_gb):
         max(_accounted_gb(invoices=invoices) + unassigned_gb, 0) * GIGABYTE
     )
     Challenge.objects.filter(pk=challenge.pk).update(
-        size_in_storage=size_in_bytes // 2,
-        size_in_registry=size_in_bytes - size_in_bytes // 2,
+        size_in_storage=size_in_bytes,
     )
 
     new_costs = allocate_storage_costs_for_challenge(
@@ -519,8 +475,7 @@ def test_no_unassigned_gb_remain_after_allocation(
         max(_accounted_gb(invoices=invoices) + unassigned_gb, 0) * GIGABYTE
     )
     Challenge.objects.filter(pk=challenge.pk).update(
-        size_in_storage=size_in_bytes // 2,
-        size_in_registry=size_in_bytes - size_in_bytes // 2,
+        size_in_storage=size_in_bytes,
     )
 
     new_costs = allocate_storage_costs_for_challenge(
@@ -555,8 +510,7 @@ def test_invoice_receives_gb_only_after_earlier_invoices_are_full(
         max(_accounted_gb(invoices=invoices) + unassigned_gb, 0) * GIGABYTE
     )
     Challenge.objects.filter(pk=challenge.pk).update(
-        size_in_storage=size_in_bytes // 2,
-        size_in_registry=size_in_bytes - size_in_bytes // 2,
+        size_in_storage=size_in_bytes,
     )
 
     new_costs = allocate_storage_costs_for_challenge(

@@ -243,7 +243,7 @@ class Command(BaseCommand):
             Challenge.objects.with_invoices_with_utilization_priority()
             .order_by("short_name")
             .prefetch_related("phase_set")
-            .only("pk", "short_name", "size_in_storage", "size_in_registry")
+            .only("pk", "short_name", "size_in_storage")
         )
         total = len(challenges)
 

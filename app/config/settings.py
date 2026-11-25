@@ -944,10 +944,10 @@ CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT = int(
     os.environ.get("CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT", 250)
 )
 # Charge per GB per year of storage. Multiplied by CHALLENGE_NUM_SUPPORT_YEARS
-# and frozen on each invoice when it is created
+# and frozen on each invoice when it is created.
 CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR = int(
     os.environ.get(
-        "CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR", 13_857
+        "CHALLENGE_STORAGE_PRICE_EURO_MILLICENTS_PER_GB_PER_YEAR", 15_328
     )
 )
 
