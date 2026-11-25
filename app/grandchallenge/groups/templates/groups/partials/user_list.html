@@ -14,7 +14,7 @@
                             <form method="post"
                                   action="{% url 'direct_messages:conversation-create' username=user.username %}">
                                 {% csrf_token %}
-                                <button class="btn btn btn-primary" type="submit">
+                                <button class="btn btn-primary me-2" type="submit">
                                     <i class="far fa-comment"></i>&nbsp;Message User
                                 </button>
                             </form>
