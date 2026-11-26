@@ -50,17 +50,17 @@ def user_profile_link(user: AbstractUser | None) -> str:
 
 
 @register.filter
-def user_profile_link_username(username: str) -> str:
-    return user_profile_links_from_usernames([username])[username]
-
-
-@register.simple_tag
-def user_profile_links_from_usernames(usernames):
+def user_profile_link_from_user_pk(pk: str) -> str:
     User = get_user_model()  # noqa: N806
-    users = User.objects.filter(username__in=usernames).select_related(
-        "user_profile", "verification"
-    )
-    return {user.username: user_profile_link(user) for user in users}
+
+    try:
+        user = User.objects.select_related("user_profile", "verification").get(
+            pk=pk
+        )
+    except ObjectDoesNotExist:
+        return ""
+    else:
+        return user_profile_link(user)
 
 
 @register.filter

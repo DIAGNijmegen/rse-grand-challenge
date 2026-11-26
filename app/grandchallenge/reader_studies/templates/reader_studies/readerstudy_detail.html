@@ -115,11 +115,11 @@
 
             {{ object.help_text_markdown|md2html }}
 
-            {% if user_score.score__sum is not None and progress.hangings == 100.0 %}
+            {% if user_score.score__sum is not None and user_progress.hangings == 100.0 %}
                 <div class="alert alert-info" role="alert">
                     You have completed this reader study. You have
                     scored {{ user_score.score__sum|floatformat }} points
-                    out of a possible {{ max_score_cases|floatformat }} points,
+                    out of a possible {{ ser_score.score__count|floatformat }} points,
                     giving you an average score
                     of {{ user_score.score__avg|floatformat:4 }}.
                 </div>

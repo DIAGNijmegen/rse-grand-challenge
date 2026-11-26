@@ -341,13 +341,18 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
             user_progress = self.object.get_progress_for_user(
                 self.request.user
             )
+
+            if int(user_progress["hangings"]) == 100:
+                user_score = self.object.get_total_score_for_user(
+                    user=self.request.user
+                )
+            else:
+                user_score = None
+
             context.update(
                 {
-                    "progress": user_progress,
-                    "user_score": self.object.score_for_user(
-                        self.request.user
-                    ),
-                    "max_score_cases": self.object.max_score_cases,
+                    "user_progress": user_progress,
+                    "user_score": user_score,
                 }
             )
 
@@ -436,8 +441,18 @@ class ReaderStudyStatistics(
     raise_exception = True
     template_name = "reader_studies/readerstudy_statistics.html"
     queryset = ReaderStudy.objects.with_has_budget()
-    # TODO: this view also contains the ground truth answer values.
-    # If the permission is changed to 'read', we need to filter these values out.
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        question_texts = {
+            str(question.pk): question.question_text
+            for question in self.object.ground_truth_applicable_questions
+        }
+
+        context.update({"question_texts": question_texts})
+
+        return context
 
 
 class ReaderStudyUsage(

@@ -346,7 +346,7 @@ def test_statistics(reader_study_with_gt, django_capture_on_commit_callbacks):
         for question in rs.questions.all():
             for ds in rs.display_sets.all():
                 answer = (
-                    question.question_text == "q1"
+                    question.pk == q1.pk
                     and ds.values.first().image.name == "im1"
                 )
                 AnswerFactory(
