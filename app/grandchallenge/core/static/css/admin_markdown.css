@@ -34,14 +34,47 @@
     display: none;
 }
 
-.gc-md-toolbar {
+.gc-md-admin markdown-toolbar {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
     margin: 8px 0;
 }
 
-.gc-md-toolbar > * {
+/* Font Awesome is not available in the admin, so show text labels instead. */
+.gc-md-admin markdown-toolbar i {
+    display: none;
+}
+
+.gc-md-admin markdown-toolbar md-header::before {
+    content: "H";
+    font-weight: bold;
+}
+.gc-md-admin markdown-toolbar md-bold::before {
+    content: "B";
+    font-weight: bold;
+}
+.gc-md-admin markdown-toolbar md-italic::before {
+    content: "I";
+    font-style: italic;
+}
+.gc-md-admin markdown-toolbar md-unordered-list::before {
+    content: "\2022 List";
+}
+.gc-md-admin markdown-toolbar md-ordered-list::before {
+    content: "1. List";
+}
+.gc-md-admin markdown-toolbar md-quote::before {
+    content: "\201C Quote";
+}
+.gc-md-admin markdown-toolbar md-code::before {
+    content: "</>";
+}
+.gc-md-admin markdown-toolbar md-link::before {
+    content: "Link";
+}
+
+.gc-md-admin markdown-toolbar > * {
     padding: 3px 8px;
     border: 1px solid var(--border-color, #ccc);
     border-radius: 4px;
@@ -56,15 +89,17 @@
     background: var(--selected-row, #e1e1e1);
 }
 
-.gc-md-textarea textarea {
+.gc-md-admin textarea {
     box-sizing: border-box;
     width: 100%;
     font-family: var(--font-family-monospace, monospace);
 }
 
-.gc-md-notes {
-    margin: 4px 0 0 !important;
-    padding-left: 0 !important;
+.gc-md-admin .text-muted {
+    margin: 4px 0 0;
+    padding: 0;
+    font-size: 11px;
+    color: var(--body-quiet-color, #666);
 }
 
 .markdownx-preview {
