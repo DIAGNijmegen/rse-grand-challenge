@@ -1,9 +1,7 @@
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.contrib.sites.models import Site
-from django.forms import ModelForm
 
-from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.tasks import send_bulk_email
@@ -51,11 +49,6 @@ def send_to_me(modeladmin, request, queryset):
         )
 
 
-class EmailAdminForm(ModelForm):
-    class Meta:
-        widgets = {"body": MarkdownEditorAdminWidget}
-
-
 @admin.register(Email)
 class EmailAdmin(ModelAdmin):
     list_display = ("subject", "status", "sent_at")
@@ -64,7 +57,6 @@ class EmailAdmin(ModelAdmin):
         "sent_at",
     )
     actions = (*SendActionChoices, initialize_succeeded_emails, send_to_me)
-    form = EmailAdminForm
 
     @admin.action(description="Send to mailing list", permissions=["change"])
     def send_to_mailing_list(self, request, queryset):

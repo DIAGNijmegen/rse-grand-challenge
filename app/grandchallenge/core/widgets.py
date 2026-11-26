@@ -1,6 +1,6 @@
 from django import forms
 from django.template.loader import render_to_string
-from markdownx.widgets import AdminMarkdownxWidget, MarkdownxWidget
+from markdownx.widgets import MarkdownxWidget
 
 
 class JSONEditorWidget(forms.Textarea):
@@ -73,26 +73,6 @@ class MarkdownEditorInlineWidget(MarkdownxWidget):
                 "js/markdownx.js",
                 "vendored/@github/markdown-toolbar-element/dist/index.umd.js",
             )
-        )
-
-
-class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
-    template_name = "markdownx/admin_widget.html"
-
-    @property
-    def media(self):
-        return forms.Media(
-            css={
-                "all": [
-                    *AdminMarkdownxWidget.Media.css["all"],
-                    "css/admin_markdown.css",
-                ]
-            },
-            js=[
-                "js/markdownx.js",
-                "vendored/@github/markdown-toolbar-element/dist/index.umd.js",
-                "js/admin_markdown_tabs.js",
-            ],
         )
 
 
