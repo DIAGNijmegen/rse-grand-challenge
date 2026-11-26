@@ -206,15 +206,18 @@ def test_leaderboard(  # noqa: C901
                     question=question, creator=r1, answer=True, display_set=ds
                 )
 
-    leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 8
-    assert leaderboard["max_score_cases"] == 6.0
-    scores = leaderboard["grouped_scores"]
-    assert len(scores) == 1
-    user_score = scores[0]
-    assert user_score["creator__username"] == r1.username
-    assert user_score["score__sum"] == 6.0
-    assert user_score["score__avg"] == 1.0
+    assert list(rs.total_score_per_user) == sorted(
+        [
+            {
+                "creator_id": r1.pk,
+                "score__sum": 6.0,
+                "score__avg": 1.0,
+                "score__count": 6,
+            },
+        ],
+        key=lambda x: x["creator_id"],
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         for i, question in enumerate(rs.questions.all()):
@@ -226,18 +229,26 @@ def test_leaderboard(  # noqa: C901
                     display_set=ds,
                 )
 
-    del rs.scores_by_user
-    del rs.leaderboard
-    leaderboard = rs.leaderboard
+    del rs.total_score_per_user
+
     assert Answer.objects.filter(is_ground_truth=False).count() == 16
-    assert leaderboard["max_score_cases"] == 6.0
-    scores = leaderboard["grouped_scores"]
-    assert len(scores) == 2
-    for user_score in scores:
-        if user_score["creator__username"] != r2.username:
-            continue
-        assert user_score["score__sum"] == 3.0
-        assert user_score["score__avg"] == 0.5
+    assert list(rs.total_score_per_user) == sorted(
+        [
+            {
+                "creator_id": r1.pk,
+                "score__sum": 6.0,
+                "score__avg": 1.0,
+                "score__count": 6,
+            },
+            {
+                "creator_id": r2.pk,
+                "score__sum": 3.0,
+                "score__avg": 0.5,
+                "score__count": 6,
+            },
+        ],
+        key=lambda x: x["creator_id"],
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
@@ -246,26 +257,40 @@ def test_leaderboard(  # noqa: C901
                     question=question, creator=e, answer=True, display_set=ds
                 )
 
-    del rs.scores_by_user
-    del rs.leaderboard
-    leaderboard = rs.leaderboard
+    del rs.total_score_per_user
+
     assert Answer.objects.filter(is_ground_truth=False).count() == 24
-    assert leaderboard["max_score_cases"] == 6.0
-    scores = leaderboard["grouped_scores"]
-    assert len(scores) == 3
-    for user_score in scores:
-        if user_score["creator__username"] != e.username:
-            continue
-        assert user_score["score__sum"] == 6.0
-        assert user_score["score__avg"] == 1.0
+    assert list(rs.total_score_per_user) == sorted(
+        [
+            {
+                "creator_id": r1.pk,
+                "score__sum": 6.0,
+                "score__avg": 1.0,
+                "score__count": 6,
+            },
+            {
+                "creator_id": r2.pk,
+                "score__sum": 3.0,
+                "score__avg": 0.5,
+                "score__count": 6,
+            },
+            {
+                "creator_id": e.pk,
+                "score__sum": 6.0,
+                "score__avg": 1.0,
+                "score__count": 6,
+            },
+        ],
+        key=lambda x: x["creator_id"],
+    )
 
 
 @pytest.mark.django_db
 def test_statistics(reader_study_with_gt, django_capture_on_commit_callbacks):
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
-
-    rs_questions = rs.questions.values_list("question_text", flat=True)
+    ds1, ds2 = rs.display_sets.all()
+    q1, q2, q3, q4 = rs.questions.all()
 
     with django_capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
@@ -274,26 +299,48 @@ def test_statistics(reader_study_with_gt, django_capture_on_commit_callbacks):
                     question=question, creator=r1, answer=True, display_set=ds
                 )
 
-    statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 8
-    assert statistics["max_score_questions"] == 2.0
-    scores = statistics["scores_by_question"]
-    assert len(scores) == rs.ground_truth_applicable_questions.count()
-    questions = set(rs_questions)
-    for score in scores:
-        questions -= {score["question__question_text"]}
-        assert score["score__sum"] == 2.0
-        assert score["score__avg"] == 1.0
-    assert questions == {"q4"}  # mask question, excluded
-
-    scores = statistics["scores_by_case"]
-    assert len(scores) == rs.display_sets.count()
-    ds = set(rs.display_sets.values_list("pk", flat=True))
-    for score in scores:
-        ds -= {score.id}
-        assert score.sum == 3.0
-        assert score.avg == 1.0
-    assert ds == set()
+    assert list(rs.total_score_per_display_set) == sorted(
+        [
+            {
+                "display_set_id": ds1.pk,
+                "score__sum": 3.0,
+                "score__avg": 1.0,
+                "score__count": 3,
+            },
+            {
+                "display_set_id": ds2.pk,
+                "score__sum": 3.0,
+                "score__avg": 1.0,
+                "score__count": 3,
+            },
+        ],
+        key=lambda x: x["display_set_id"],
+    )
+    assert list(rs.total_score_per_question) == sorted(
+        [
+            {
+                "question_id": q1.pk,
+                "score__sum": 2.0,
+                "score__avg": 1.0,
+                "score__count": 2,
+            },
+            {
+                "question_id": q2.pk,
+                "score__sum": 2.0,
+                "score__avg": 1.0,
+                "score__count": 2,
+            },
+            {
+                "question_id": q3.pk,
+                "score__sum": 2.0,
+                "score__avg": 1.0,
+                "score__count": 2,
+            },
+            # Note: no q4 as it is non-scorable
+        ],
+        key=lambda x: x["question_id"],
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         for question in rs.questions.all():
@@ -309,40 +356,55 @@ def test_statistics(reader_study_with_gt, django_capture_on_commit_callbacks):
                     display_set=ds,
                 )
 
-    del rs.statistics
-    statistics = rs.statistics
+    del rs.total_score_per_display_set
+    del rs.total_score_per_question
+
     assert Answer.objects.filter(is_ground_truth=False).count() == 16
-    assert statistics["max_score_cases"] == 6.0
-    scores = statistics["scores_by_question"]
-    assert len(scores) == rs.ground_truth_applicable_questions.count()
-    questions = set(rs_questions)
-    for score in scores:
-        questions -= {score["question__question_text"]}
-        if score["question__question_text"] == "q1":
-            assert score["score__sum"] == 3.0
-            assert score["score__avg"] == 0.75
-        else:
-            assert score["score__sum"] == 2.0
-            assert score["score__avg"] == 0.5
-    assert questions == {"q4"}  # mask question, excluded
-
-    rs_ground_truth_applicable_questions = (
-        rs.ground_truth_applicable_questions.values_list(
-            "question_text", flat=True
-        )
+    assert list(rs.total_score_per_display_set) == sorted(
+        [
+            {
+                "display_set_id": ds1.pk,
+                "score__sum": 4.0,
+                "score__avg": 0.6666666666666666,
+                "score__count": 6,
+            },
+            {
+                "display_set_id": ds2.pk,
+                "score__sum": 3.0,
+                "score__avg": 0.5,
+                "score__count": 6,
+            },
+        ],
+        key=lambda x: x["display_set_id"],
     )
-
-    assert sorted(statistics["questions"]) == sorted(
-        rs_ground_truth_applicable_questions
+    assert list(rs.total_score_per_question) == sorted(
+        [
+            {
+                "question_id": q1.pk,
+                "score__sum": 3.0,
+                "score__avg": 0.75,
+                "score__count": 4,
+            },
+            {
+                "question_id": q2.pk,
+                "score__sum": 2.0,
+                "score__avg": 0.5,
+                "score__count": 4,
+            },
+            {
+                "question_id": q3.pk,
+                "score__sum": 2.0,
+                "score__avg": 0.5,
+                "score__count": 4,
+            },
+            # Note: no q4 as it is non-scorable
+        ],
+        key=lambda x: x["question_id"],
     )
-    for ds in rs.display_sets.all():
-        assert sorted(statistics["ground_truths"][ds.pk].keys()) == sorted(
-            rs_ground_truth_applicable_questions
-        )
 
 
 @pytest.mark.django_db
-def test_score_for_user(
+def test_get_total_score_for_user(
     reader_study_with_gt, django_capture_on_commit_callbacks
 ):
     rs = reader_study_with_gt
@@ -358,10 +420,11 @@ def test_score_for_user(
                     display_set=ds,
                 )
 
-    score = rs.score_for_user(r1)
+    score = rs.get_total_score_for_user(user=r1)
     assert Answer.objects.filter(is_ground_truth=False).count() == 8
     assert score["score__sum"] == 3.0
     assert score["score__avg"] == 0.5
+    assert score["score__count"] == 6
 
 
 @pytest.mark.django_db
@@ -1197,19 +1260,19 @@ def test_ground_truth_complete():
 
     # Sanity, add a technically allowed duplicate GT answer
     AnswerFactory(display_set=ds1, question=q1, is_ground_truth=True)
-    del rs.max_score_cases
+    del rs.total_number_of_ground_truth_answers
     del rs.ground_truth_is_complete
     assert (
         not rs.ground_truth_is_complete
     ), "One GT answer should (still) be missing"
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=False)
-    del rs.max_score_cases
+    del rs.total_number_of_ground_truth_answers
     del rs.ground_truth_is_complete
     assert not rs.ground_truth_is_complete, "Non GT answer does not count"
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=True)
-    del rs.max_score_cases
+    del rs.total_number_of_ground_truth_answers
     del rs.ground_truth_is_complete
     assert rs.ground_truth_is_complete, "All GT answers are given"
 

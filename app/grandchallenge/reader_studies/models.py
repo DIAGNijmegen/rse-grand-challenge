@@ -65,6 +65,7 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
+from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import (
     HangingProtocolMixin,
     ViewportNames,
@@ -775,10 +776,18 @@ class ReaderStudy(
     def ground_truth_applicable_questions(self):
         return self.answerable_questions.exclude(
             answer_type__in=AnswerType.get_annotation_types()
-        ).all()
+        )
 
     @cached_property
-    def max_score_cases(self):
+    def ground_truth_is_complete(self):
+        return (
+            self.total_number_of_ground_truth_answers
+            == len(self.ground_truth_applicable_questions)
+            * self.display_sets.count()
+        )
+
+    @cached_property
+    def total_number_of_ground_truth_answers(self):
         return (
             Answer.objects.filter(
                 question__in=self.ground_truth_applicable_questions,
@@ -790,137 +799,36 @@ class ReaderStudy(
         )
 
     @cached_property
-    def ground_truth_is_complete(self):
-        return (
-            self.max_score_cases
-            == len(self.ground_truth_applicable_questions)
-            * self.display_sets.count()
-        )
-
-    def score_for_user(self, user):
-        """Returns the average and total score for answers given by ``user``."""
+    def scorable_answers(self):
         return Answer.objects.filter(
-            creator=user,
             question__in=self.ground_truth_applicable_questions,
             is_ground_truth=False,
-        ).aggregate(Sum("score"), Avg("score"))
-
-    @cached_property
-    def scores_by_user(self):
-        """The average and total scores for this ``ReaderStudy`` grouped by user."""
-        return (
-            Answer.objects.filter(
-                question__in=self.ground_truth_applicable_questions,
-                is_ground_truth=False,
-            )
-            .order_by("creator_id")
-            .values("creator__username")
-            .annotate(Sum("score"), Avg("score"))
-            .order_by("-score__sum")
         )
 
     @cached_property
-    def leaderboard(self):
-        """The leaderboard for this ``ReaderStudy``."""
-        return {
-            "max_score_cases": self.max_score_cases,
-            "grouped_scores": self.scores_by_user,
-        }
+    def total_score_per_user(self):
+        return self.scorable_answers.values("creator_id").annotate(
+            Sum("score"), Avg("score"), Count("score")
+        )
+
+    def get_total_score_for_user(self, *, user):
+        return get(
+            self.scorable_answers.filter(creator=user)
+            .values("creator_id")
+            .annotate(Sum("score"), Avg("score"), Count("score"))
+        )
 
     @cached_property
-    def statistics(self):
-        """Statistics per question and case based on the total / average score."""
-        scores_by_question = (
-            Answer.objects.filter(
-                question__in=self.ground_truth_applicable_questions,
-                is_ground_truth=False,
-            )
-            .order_by("question_id")
-            .values("question__question_text")
-            .annotate(Sum("score"), Avg("score"))
-            .order_by("-score__avg")
+    def total_score_per_display_set(self):
+        return self.scorable_answers.values("display_set_id").annotate(
+            Sum("score"), Avg("score"), Count("score")
         )
 
-        scores_by_case = (
-            DisplaySet.objects.filter(reader_study=self)
-            .select_related("reader_study__workstation__config")
-            .annotate(
-                sum=Sum(
-                    "answers__score",
-                    filter=Q(
-                        answers__is_ground_truth=False,
-                        answers__question__in=self.ground_truth_applicable_questions,
-                    ),
-                ),
-                avg=Avg(
-                    "answers__score",
-                    filter=Q(
-                        answers__is_ground_truth=False,
-                        answers__question__in=self.ground_truth_applicable_questions,
-                    ),
-                ),
-            )
-            .order_by("avg")
-            .all()
+    @cached_property
+    def total_score_per_question(self):
+        return self.scorable_answers.values("question_id").annotate(
+            Sum("score"), Avg("score"), Count("score")
         )
-
-        options = {}
-        for option in CategoricalOption.objects.filter(
-            question__reader_study=self
-        ).values("id", "title", "question"):
-            qt = option["question"]
-            options[qt] = options.get(qt, {})
-            options[qt].update({option["id"]: option["title"]})
-
-        ground_truths = {}
-        questions = []
-        for gt in (
-            Answer.objects.filter(
-                question__reader_study=self, is_ground_truth=True
-            )
-            .values(
-                "display_set_id",
-                "answer",
-                "question",
-                "question__question_text",
-                "question__answer_type",
-            )
-            .order_by("question__order", "question__created")
-        ):
-            questions.append(gt["question__question_text"])
-
-            field = gt["display_set_id"]
-            ground_truths[field] = ground_truths.get(field, {})
-
-            if (
-                gt["question__answer_type"]
-                == Question.AnswerType.MULTIPLE_CHOICE
-            ):
-                human_readable_answers = [
-                    options[gt["question"]].get(a, a) for a in gt["answer"]
-                ]
-                human_readable_answers.sort()
-                human_readable_answer = ", ".join(human_readable_answers)
-            else:
-                human_readable_answer = options.get(gt["question"], {}).get(
-                    gt["answer"], gt["answer"]
-                )
-
-            ground_truths[field][
-                gt["question__question_text"]
-            ] = human_readable_answer
-
-        questions = list(dict.fromkeys(questions))
-
-        return {
-            "max_score_questions": float(len(self.display_sets.all()))
-            * self.scores_by_user.count(),
-            "scores_by_question": scores_by_question,
-            "max_score_cases": self.max_score_cases,
-            "scores_by_case": scores_by_case,
-            "ground_truths": ground_truths,
-            "questions": questions,
-        }
 
     @property
     def next_display_set_order(self):
