@@ -71,11 +71,6 @@ dl.inline dt:after {
     width: 100% !important;
 }
 
-.console {
-    background-color: var(--gray-dark);
-    color: var(--light);
-}
-
 .text-prewrap {
     white-space: pre-wrap;
 }
