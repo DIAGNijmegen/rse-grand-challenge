@@ -1,5 +1,19 @@
+new bootstrap.Tooltip(document.body, { selector: ".copy-btn" });
+
 const activeTimers = {};
 const originalTitles = {};
+
+function showTooltip(btn, id, message) {
+    const tooltip = bootstrap.Tooltip.getOrCreateInstance(btn);
+
+    tooltip.setContent({ ".tooltip-inner": message });
+    tooltip.show();
+
+    activeTimers[id] = setTimeout(() => {
+        tooltip.hide();
+        tooltip.setContent({ ".tooltip-inner": originalTitles[id] });
+    }, 2000);
+}
 
 document.addEventListener("click", e => {
     const btn = e.target.closest(".copy-btn");
@@ -8,30 +22,13 @@ document.addEventListener("click", e => {
     const id = btn.dataset.copy;
 
     if (!originalTitles[id]) {
-        originalTitles[id] = btn.title;
+        originalTitles[id] =
+            btn.getAttribute("data-bs-original-title") || btn.title;
     }
     clearTimeout(activeTimers[id]);
 
     navigator.clipboard
         .writeText(id)
-        .then(() => {
-            $(btn)
-                .tooltip({ trigger: "manual" })
-                .attr("data-original-title", "Copied to clipboard!")
-                .tooltip("show");
-
-            activeTimers[id] = setTimeout(() => {
-                $(btn).attr("title", originalTitles[id]).tooltip("hide");
-            }, 2000);
-        })
-        .catch(() => {
-            $(btn)
-                .tooltip({ trigger: "manual" })
-                .attr("data-original-title", "Copy failed!")
-                .tooltip("show");
-
-            activeTimers[id] = setTimeout(() => {
-                $(btn).attr("title", originalTitles[id]).tooltip("hide");
-            }, 2000);
-        });
+        .then(() => showTooltip(btn, id, "Copied to clipboard!"))
+        .catch(() => showTooltip(btn, id, "Copy failed!"));
 });
