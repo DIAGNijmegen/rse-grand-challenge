@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import pytest
 from actstream.actions import follow, is_following
 from actstream.models import Follow
@@ -594,3 +596,24 @@ def test_follows_deleted_when_base_obj_deleted(client):
 
     base_object.delete()
     assert not Follow.objects.filter(object_id=base_object.pk)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "factory",
+    (AlgorithmFactory, ReaderStudyFactory, ArchiveFactory),
+)
+def test_detail_view_redirects_anonymous_user_to_login(
+    client, factory, settings
+):
+    base_object = factory(
+        access_request_handling=AccessRequestHandlingOptions.MANUAL_REVIEW
+    )
+    detail_path = urlparse(base_object.get_absolute_url()).path
+
+    response = get_view_for_user(
+        client=client, user=None, url=base_object.get_absolute_url()
+    )
+
+    assert response.status_code == 302
+    assert response.url == f"{settings.LOGIN_URL}?next={detail_path}"

@@ -7,6 +7,7 @@ from zipfile import ZipFile
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
+from django.contrib.auth.views import redirect_to_login
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -266,12 +267,15 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         try:
             return super().check_permissions(request)
         except PermissionDenied:
-            return HttpResponseRedirect(
-                reverse(
-                    "algorithms:permission-request-create",
-                    kwargs={"slug": self.object.slug},
+            if request.user.is_authenticated:
+                return HttpResponseRedirect(
+                    reverse(
+                        "algorithms:permission-request-create",
+                        kwargs={"slug": self.object.slug},
+                    )
                 )
-            )
+            else:
+                return redirect_to_login(next=request.get_full_path())
 
     @cached_property
     def best_evaluation_per_phase(self):
