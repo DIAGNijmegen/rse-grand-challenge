@@ -13,7 +13,7 @@ const sessionDetailUrl = JSON.parse(
     document.getElementById("sessionDetailUrl").textContent,
 );
 
-const modal = $("#sessionModal");
+const modalElement = document.getElementById("sessionModal");
 
 function getSessionStatus(statusUrl, statusButton, workstationUrl) {
     // Checks on the status of the Session (queued, running, started, etc)
@@ -102,7 +102,7 @@ function setButtonError(statusButton, msg) {
         .classList.remove("d-none");
 }
 
-modal.on("shown.bs.modal", e => {
+modalElement.addEventListener("shown.bs.modal", () => {
     getSessionStatus(
         sessionDetailUrl,
         document.getElementById("sessionState"),
@@ -110,4 +110,4 @@ modal.on("shown.bs.modal", e => {
     );
 });
 
-modal.modal("show");
+bootstrap.Modal.getOrCreateInstance(modalElement).show();
