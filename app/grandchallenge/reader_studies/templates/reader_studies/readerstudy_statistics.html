@@ -63,8 +63,8 @@
             <tbody>
                 {% for score_per_question in object.total_score_per_question %}
                     <tr>
-                        {% get_dict_values question_texts score_per_question.question_id as question_text %}
-                        <td>{{ question_text }}</td>
+                        {% get_dict_values questions_by_pk score_per_question.question_id as question %}
+                        <td>{{ question.question_text }}</td>
                         <td data-order="{{ score_per_question.score__sum }}">{{ score_per_question.score__sum }} / {{ score_per_question.score__count }}</td>
                         <td data-order="{{ score_per_question.score__avg }}">{{ score_per_question.score__avg|floatformat:4 }}</td>
                     </tr>

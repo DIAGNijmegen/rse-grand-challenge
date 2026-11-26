@@ -44,8 +44,8 @@
                 <tr {% if request.user.pk == user_score.creator_id %} class="bg-primary text-white"{% endif %}>
                     <td data-order="{{ forloop.counter }}">{{ forloop.counter|ordinal }}</td>
                     {% if "change_readerstudy" in readerstudy_perms %}
-                        {% get_dict_values users_with_answers user_score.creator_id as user %}
-                        <td>{{ user|user_profile_link }}</td>
+                        {% get_dict_values users_by_pk user_score.creator_id as creator %}
+                        <td>{{ creator|user_profile_link }}</td>
                     {% else %}
                         <td>{% if user_score.creator_id == request.user.pk %} You {% else %} Reader {% endif %}</td>
                     {% endif %}

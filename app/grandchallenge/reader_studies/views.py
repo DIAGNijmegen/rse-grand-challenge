@@ -439,7 +439,7 @@ class ReaderStudyLeaderBoard(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        users_with_answers = {
+        users_by_pk = {
             user.pk: user
             for user in get_user_model()
             .objects.filter(
@@ -450,7 +450,7 @@ class ReaderStudyLeaderBoard(
             .select_related("user_profile", "verification")
         }
 
-        context.update({"users_with_answers": users_with_answers})
+        context.update({"users_by_pk": users_by_pk})
 
         return context
 
@@ -467,12 +467,12 @@ class ReaderStudyStatistics(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        question_texts = {
-            question.pk: question.question_text
+        questions_by_pk = {
+            question.pk: question
             for question in self.object.ground_truth_applicable_questions
         }
 
-        context.update({"question_texts": question_texts})
+        context.update({"questions_by_pk": questions_by_pk})
 
         return context
 
