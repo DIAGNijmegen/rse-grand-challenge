@@ -420,7 +420,7 @@ def test_get_total_score_for_user(
                     display_set=ds,
                 )
 
-    score = rs.get_total_score_for_user(user=r1)
+    score = rs.total_score_per_user.get(creator=r1)
     assert Answer.objects.filter(is_ground_truth=False).count() == 8
     assert score["score__sum"] == 3.0
     assert score["score__avg"] == 0.5

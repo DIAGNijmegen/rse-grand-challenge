@@ -12,7 +12,11 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.auth.views import redirect_to_login
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    PermissionDenied,
+    ValidationError,
+)
 from django.db.models import (
     Count,
     Exists,
@@ -342,11 +346,11 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 self.request.user
             )
 
-            if int(user_progress["hangings"]) == 100:
-                user_score = self.object.get_total_score_for_user(
-                    user=self.request.user
+            try:
+                user_score = self.object.total_score_per_user.get(
+                    creator=self.request.user
                 )
-            else:
+            except ObjectDoesNotExist:
                 user_score = None
 
             context.update(

@@ -65,7 +65,6 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import (
     HangingProtocolMixin,
     ViewportNames,
@@ -809,13 +808,6 @@ class ReaderStudy(
     def total_score_per_user(self):
         return self.scorable_answers.values("creator_id").annotate(
             Sum("score"), Avg("score"), Count("score")
-        )
-
-    def get_total_score_for_user(self, *, user):
-        return get(
-            self.scorable_answers.filter(creator=user)
-            .values("creator_id")
-            .annotate(Sum("score"), Avg("score"), Count("score"))
         )
 
     @cached_property
