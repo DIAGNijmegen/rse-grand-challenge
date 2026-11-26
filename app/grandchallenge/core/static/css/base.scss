@@ -9,10 +9,10 @@ $navbar-light-color: $primary;
 $navbar-light-brand-color: $primary;
 $navbar-light-brand-hover-color: $primary;
 
-$pagination-bg: $blue;
-$pagination-active-bg: darken($blue, 15%);
-$pagination-hover-bg: darken($blue, 15%);
-$pagination-disabled-bg: lighten($blue, 15%);
+$pagination-bg: $primary;
+$pagination-active-bg: darken($primary, 15%);
+$pagination-hover-bg: darken($primary, 15%);
+$pagination-disabled-bg: lighten($primary, 15%);
 
 $breadcrumb-active-color: $light;
 $breadcrumb-divider-color: $secondary;
@@ -160,6 +160,11 @@ a.mark:hover {
 
 .bg-gray-100 {
     background-color: $gray-100;
+}
+
+.console {
+    background-color: $gray-800;
+    color: $light;
 }
 
 .nav-link {
