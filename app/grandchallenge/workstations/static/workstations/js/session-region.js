@@ -44,10 +44,10 @@ function ping_regions(regions, endpoint) {
     });
 }
 
-$(document).ready(() => {
-    const session_modal = $("#sessionModal");
+document.addEventListener("DOMContentLoaded", () => {
+    const session_modal_element = document.getElementById("sessionModal");
 
-    session_modal.on("shown.bs.modal", () => {
+    session_modal_element.addEventListener("shown.bs.modal", () => {
         const ping_endpoint = JSON.parse(
             document.getElementById("ping-endpoint-data").textContent,
         );
@@ -68,5 +68,5 @@ $(document).ready(() => {
         region_selection.form.submit();
     });
 
-    session_modal.modal({ show: true });
+    bootstrap.Modal.getOrCreateInstance(session_modal_element).show();
 });
