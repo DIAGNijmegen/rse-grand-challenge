@@ -432,6 +432,24 @@ class ReaderStudyLeaderBoard(
     permission_required = "reader_studies.view_leaderboard"
     raise_exception = True
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        users_with_answers = {
+            user.pk: user
+            for user in get_user_model()
+            .objects.filter(
+                answer__question__reader_study=self.object,
+                answer__is_ground_truth=False,
+            )
+            .distinct()
+            .select_related("user_profile", "verification")
+        }
+
+        context.update({"users_with_answers": users_with_answers})
+
+        return context
+
 
 class ReaderStudyStatistics(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
@@ -446,7 +464,7 @@ class ReaderStudyStatistics(
         context = super().get_context_data(*args, **kwargs)
 
         question_texts = {
-            str(question.pk): question.question_text
+            question.pk: question.question_text
             for question in self.object.ground_truth_applicable_questions
         }
 

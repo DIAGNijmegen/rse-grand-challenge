@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% load url %}
 {% load humanize %}
-{% load user_profile_link_from_user_pk from profiles %}
+{% load user_profile_link from profiles %}
 {% load static %}
 {% load guardian_tags %}
+{% load dict_lookup %}
 
 {% block title %}
     Leaderboard - {{ object }} - {{ block.super }}
@@ -43,7 +44,8 @@
                 <tr {% if request.user.pk == user_score.creator_id %} class="bg-primary text-white"{% endif %}>
                     <td data-order="{{ forloop.counter }}">{{ forloop.counter|ordinal }}</td>
                     {% if "change_readerstudy" in readerstudy_perms %}
-                        <td>{{ user_score.creator_id|user_profile_link_from_user_pk }}</td>
+                        {% get_dict_values users_with_answers user_score.creator_id as user %}
+                        <td>{{ user|user_profile_link }}</td>
                     {% else %}
                         <td>{% if user_score.creator_id == request.user.pk %} You {% else %} Reader {% endif %}</td>
                     {% endif %}
