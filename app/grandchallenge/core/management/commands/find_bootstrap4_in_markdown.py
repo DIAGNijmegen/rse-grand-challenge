@@ -6,7 +6,7 @@ from django.core.management import BaseCommand
 # Bootstrap 4 only classes/attributes that no longer exist in Bootstrap 5
 BOOTSTRAP_4_PATTERN = re.compile(
     r"(?<![\w-])(m[lr]|p[lr])-(sm-|md-|lg-|xl-)?(auto|n?[0-5])\b"
-    r"|\b(border-(left|right)|rounded-(left|right)"
+    r"|(?<![\w-])(border-(left|right)|rounded-(left|right)"
     r"|float(-(sm|md|lg|xl))?-(left|right)"
     r"|text(-(sm|md|lg|xl))?-(left|right)"
     r"|dropdown-menu-(left|right)|form-(group|inline|row)"
