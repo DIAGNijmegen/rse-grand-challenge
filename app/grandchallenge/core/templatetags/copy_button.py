@@ -13,7 +13,7 @@ def copy_button_only(value, title="Copy to clipboard"):
         'type="button" '
         'class="btn btn-link text-dark p-0 mt-0 mb-1 mx-1 copy-btn shadow-none" '
         'data-copy="{value}" '
-        'data-bs-placement="left" '
+        'data-bs-placement="bottom" '
         'title="{title}">'
         '<i class="far fa-copy"></i>'
         "</button>",
