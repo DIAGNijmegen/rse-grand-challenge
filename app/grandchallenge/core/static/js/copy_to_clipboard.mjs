@@ -1,32 +1,37 @@
-const activeTimers = {};
-const originalTitles = {};
+const TOOLTIP_DURATION_MS = 2000;
 
-function showTooltip(btn, id, message) {
+const activeTimers = new WeakMap();
+const originalTitles = new WeakMap();
+
+function showTooltip(btn, message) {
     const tooltip = bootstrap.Tooltip.getOrCreateInstance(btn);
 
+    clearTimeout(activeTimers.get(btn));
     tooltip.setContent({ ".tooltip-inner": message });
     tooltip.show();
 
-    activeTimers[id] = setTimeout(() => {
-        tooltip.hide();
-        tooltip.setContent({ ".tooltip-inner": originalTitles[id] });
-    }, 2000);
+    activeTimers.set(
+        btn,
+        setTimeout(() => {
+            tooltip.hide();
+            tooltip.setContent({ ".tooltip-inner": originalTitles.get(btn) });
+        }, TOOLTIP_DURATION_MS),
+    );
 }
 
-document.addEventListener("click", e => {
+document.addEventListener("click", async e => {
     const btn = e.target.closest(".copy-btn");
     if (!btn) return;
 
-    const id = btn.dataset.copy;
-
-    if (!originalTitles[id]) {
-        originalTitles[id] =
-            btn.getAttribute("data-bs-original-title") || btn.title;
+    if (!originalTitles.has(btn)) {
+        originalTitles.set(
+            btn,
+            btn.getAttribute("data-bs-original-title") || btn.title,
+        );
     }
-    clearTimeout(activeTimers[id]);
 
-    navigator.clipboard
-        .writeText(id)
-        .then(() => showTooltip(btn, id, "Copied to clipboard!"))
-        .catch(() => showTooltip(btn, id, "Copy failed!"));
+    navigator.clipboard.writeText(btn.dataset.copy).then(
+        () => showTooltip(btn, "Copied to clipboard!"),
+        () => showTooltip(btn, "Copy failed!"),
+    );
 });

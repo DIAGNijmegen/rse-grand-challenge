@@ -3,9 +3,6 @@
 // For example:
 //   <div data-bs-toggle="tooltip" title="Tooltip content"></div>
 
-const tooltipTriggerList = document.querySelectorAll(
-    '[data-bs-toggle="tooltip"]',
-);
-const tooltipList = [...tooltipTriggerList].map(
-    tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl),
-);
+document
+    .querySelectorAll('[data-bs-toggle="tooltip"]')
+    .forEach(el => bootstrap.Tooltip.getOrCreateInstance(el));

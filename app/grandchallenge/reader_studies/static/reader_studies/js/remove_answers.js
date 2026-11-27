@@ -1,7 +1,6 @@
-let user;
-
 document.addEventListener("DOMContentLoaded", () => {
     const modal = document.getElementById("warningModal");
+    const proceedButton = document.getElementById("proceed");
 
     modal.addEventListener("show.bs.modal", event => {
         const button = event.relatedTarget;
@@ -9,17 +8,18 @@ document.addEventListener("DOMContentLoaded", () => {
             button.dataset.warning;
         modal.querySelector(".modal-action").textContent =
             button.dataset.action;
-        document.getElementById("warningModalLabel").textContent =
+        modal.querySelector("#warningModalLabel").textContent =
             button.dataset.title;
-        user = button.dataset.user;
+        proceedButton.dataset.user = button.dataset.user;
     });
 
-    document.getElementById("proceed").addEventListener("click", event => {
-        const target = event.currentTarget;
-        htmx.ajax("POST", `${target.dataset.baseurl}remove-answers/${user}/`, {
-            values: { csrfmiddlewaretoken: target.dataset.csrf },
+    proceedButton.addEventListener("click", () => {
+        const { baseurl, csrf, user } = proceedButton.dataset;
+
+        htmx.ajax("POST", `${baseurl}remove-answers/${user}/`, {
+            values: { csrfmiddlewaretoken: csrf },
             headers: {
-                "X-CSRFToken": target.dataset.csrf,
+                "X-CSRFToken": csrf,
                 "Content-Type": "application/json",
             },
         });
