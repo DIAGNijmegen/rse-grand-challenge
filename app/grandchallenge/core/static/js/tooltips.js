@@ -3,6 +3,9 @@
 // For example:
 //   <div data-bs-toggle="tooltip" title="Tooltip content"></div>
 
-$(document).ready(() => {
-    $('[data-bs-toggle="tooltip"]').tooltip();
-});
+const tooltipTriggerList = document.querySelectorAll(
+    '[data-bs-toggle="tooltip"]',
+);
+const tooltipList = [...tooltipTriggerList].map(
+    tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl),
+);
