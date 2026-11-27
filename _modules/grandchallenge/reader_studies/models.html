@@ -846,10 +846,18 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">ground_truth_applicable_questions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_questions</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
             <span class="n">answer_type__in</span><span class="o">=</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">get_annotation_types</span><span class="p">()</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">max_score_cases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ground_truth_is_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">total_number_of_ground_truth_answers</span>
+            <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_applicable_questions</span><span class="p">)</span>
+            <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_number_of_ground_truth_answers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_applicable_questions</span><span class="p">,</span>
@@ -861,140 +869,29 @@
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">ground_truth_is_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">max_score_cases</span>
-            <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_applicable_questions</span><span class="p">)</span>
-            <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-        <span class="p">)</span>
-
-<div class="viewcode-block" id="ReaderStudy.score_for_user">
-<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.score_for_user">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">score_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Returns the average and total score for answers given by ``user``."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scorable_answers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
             <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_applicable_questions</span><span class="p">,</span>
             <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">"score"</span><span class="p">))</span></div>
-
-
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">scores_by_user</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""The average and total scores for this ``ReaderStudy`` grouped by user."""</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_applicable_questions</span><span class="p">,</span>
-                <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"creator_id"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">"creator__username"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">"score"</span><span class="p">))</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"-score__sum"</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">leaderboard</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""The leaderboard for this ``ReaderStudy``."""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"max_score_cases"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_score_cases</span><span class="p">,</span>
-            <span class="s2">"grouped_scores"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scores_by_user</span><span class="p">,</span>
-        <span class="p">}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_score_per_user</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorable_answers</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">"creator_id"</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">Sum</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Count</span><span class="p">(</span><span class="s2">"score"</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Statistics per question and case based on the total / average score."""</span>
-        <span class="n">scores_by_question</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_applicable_questions</span><span class="p">,</span>
-                <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"question_id"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">"question__question_text"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">"score"</span><span class="p">))</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"-score__avg"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_score_per_display_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorable_answers</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">"display_set_id"</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">Sum</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Count</span><span class="p">(</span><span class="s2">"score"</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="n">scores_by_case</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">DisplaySet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">"reader_study__workstation__config"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-                <span class="nb">sum</span><span class="o">=</span><span class="n">Sum</span><span class="p">(</span>
-                    <span class="s2">"answers__score"</span><span class="p">,</span>
-                    <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span>
-                        <span class="n">answers__is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                        <span class="n">answers__question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_applicable_questions</span><span class="p">,</span>
-                    <span class="p">),</span>
-                <span class="p">),</span>
-                <span class="n">avg</span><span class="o">=</span><span class="n">Avg</span><span class="p">(</span>
-                    <span class="s2">"answers__score"</span><span class="p">,</span>
-                    <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span>
-                        <span class="n">answers__is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                        <span class="n">answers__question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth_applicable_questions</span><span class="p">,</span>
-                    <span class="p">),</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"avg"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_score_per_question</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scorable_answers</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">"question_id"</span><span class="p">)</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">Sum</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Avg</span><span class="p">(</span><span class="s2">"score"</span><span class="p">),</span> <span class="n">Count</span><span class="p">(</span><span class="s2">"score"</span><span class="p">)</span>
         <span class="p">)</span>
-
-        <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">CategoricalOption</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">question__reader_study</span><span class="o">=</span><span class="bp">self</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">"id"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">,</span> <span class="s2">"question"</span><span class="p">):</span>
-            <span class="n">qt</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="s2">"question"</span><span class="p">]</span>
-            <span class="n">options</span><span class="p">[</span><span class="n">qt</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">qt</span><span class="p">,</span> <span class="p">{})</span>
-            <span class="n">options</span><span class="p">[</span><span class="n">qt</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">option</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">option</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]})</span>
-
-        <span class="n">ground_truths</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">questions</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">gt</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">question__reader_study</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">values</span><span class="p">(</span>
-                <span class="s2">"display_set_id"</span><span class="p">,</span>
-                <span class="s2">"answer"</span><span class="p">,</span>
-                <span class="s2">"question"</span><span class="p">,</span>
-                <span class="s2">"question__question_text"</span><span class="p">,</span>
-                <span class="s2">"question__answer_type"</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"question__order"</span><span class="p">,</span> <span class="s2">"question__created"</span><span class="p">)</span>
-        <span class="p">):</span>
-            <span class="n">questions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="s2">"question__question_text"</span><span class="p">])</span>
-
-            <span class="n">field</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[</span><span class="s2">"display_set_id"</span><span class="p">]</span>
-            <span class="n">ground_truths</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">ground_truths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="p">{})</span>
-
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">gt</span><span class="p">[</span><span class="s2">"question__answer_type"</span><span class="p">]</span>
-                <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span>
-            <span class="p">):</span>
-                <span class="n">human_readable_answers</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="n">options</span><span class="p">[</span><span class="n">gt</span><span class="p">[</span><span class="s2">"question"</span><span class="p">]]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">gt</span><span class="p">[</span><span class="s2">"answer"</span><span class="p">]</span>
-                <span class="p">]</span>
-                <span class="n">human_readable_answers</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
-                <span class="n">human_readable_answer</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">human_readable_answers</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">human_readable_answer</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="s2">"question"</span><span class="p">],</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                    <span class="n">gt</span><span class="p">[</span><span class="s2">"answer"</span><span class="p">],</span> <span class="n">gt</span><span class="p">[</span><span class="s2">"answer"</span><span class="p">]</span>
-                <span class="p">)</span>
-
-            <span class="n">ground_truths</span><span class="p">[</span><span class="n">field</span><span class="p">][</span>
-                <span class="n">gt</span><span class="p">[</span><span class="s2">"question__question_text"</span><span class="p">]</span>
-            <span class="p">]</span> <span class="o">=</span> <span class="n">human_readable_answer</span>
-
-        <span class="n">questions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">questions</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"max_score_questions"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">()))</span>
-            <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scores_by_user</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
-            <span class="s2">"scores_by_question"</span><span class="p">:</span> <span class="n">scores_by_question</span><span class="p">,</span>
-            <span class="s2">"max_score_cases"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_score_cases</span><span class="p">,</span>
-            <span class="s2">"scores_by_case"</span><span class="p">:</span> <span class="n">scores_by_case</span><span class="p">,</span>
-            <span class="s2">"ground_truths"</span><span class="p">:</span> <span class="n">ground_truths</span><span class="p">,</span>
-            <span class="s2">"questions"</span><span class="p">:</span> <span class="n">questions</span><span class="p">,</span>
-        <span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">next_display_set_order</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
