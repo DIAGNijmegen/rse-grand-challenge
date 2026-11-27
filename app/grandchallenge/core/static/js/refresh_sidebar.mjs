@@ -1,50 +1,35 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const tabSelectors = [...document.querySelectorAll("#v-pills-tab a")];
+const DEFAULT_HASH = "#information";
 
-    const allowedHashes = new Set(
-        tabSelectors
-            .map(tab => tab.getAttribute("href"))
-            .filter(href => href !== null && href.startsWith("#")),
-    );
+const tabLinks = [...document.querySelectorAll("#v-pills-tab a")];
+const allowedHashes = new Set(tabLinks.map(tab => tab.getAttribute("href")));
 
-    function isValidHash(hash) {
-        return allowedHashes.has(hash);
-    }
+function showTabFromLocation() {
+    const hash = allowedHashes.has(window.location.hash)
+        ? window.location.hash
+        : DEFAULT_HASH;
+    const tab = tabLinks.find(t => t.getAttribute("href") === hash);
 
-    function showTab(tab) {
-        if (!tab) return;
-        for (const sibling of tab.parentElement.children) {
-            if (sibling !== tab) sibling.classList.remove("active");
-        }
+    if (tab) {
         bootstrap.Tab.getOrCreateInstance(tab).show();
     }
+}
 
-    function activateLocation() {
-        const hash = window.location.hash;
-        if (isValidHash(hash)) {
-            showTab(
-                tabSelectors.find(tab => tab.getAttribute("href") === hash),
-            );
+// Bootstrap handles the click itself, we only keep the URL in sync
+for (const tab of tabLinks) {
+    tab.addEventListener("shown.bs.tab", () => {
+        const hash = tab.getAttribute("href");
+
+        if (window.location.hash === hash) return;
+
+        if (allowedHashes.has(window.location.hash)) {
+            history.pushState(null, "", hash);
         } else {
-            // Fallback to a default tab if the hash is not valid
-            showTab(
-                document.querySelector('#v-pills-tab a[href="#information"]'),
-            );
+            // Default tab shown on load, don't add a history entry for it
+            history.replaceState(null, "", hash);
         }
-    }
+    });
+}
 
-    for (const tab of tabSelectors) {
-        tab.addEventListener("click", () => {
-            const hash = tab.getAttribute("href");
-            if (isValidHash(hash)) {
-                history.pushState(null, null, hash);
-                activateLocation();
-            }
-        });
-    }
+window.addEventListener("popstate", showTabFromLocation);
 
-    window.addEventListener("popstate", activateLocation);
-    window.addEventListener("pageshow", activateLocation);
-
-    activateLocation();
-});
+showTabFromLocation();
