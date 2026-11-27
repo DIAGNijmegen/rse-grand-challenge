@@ -40,7 +40,7 @@
                 </tr>
             </thead>
             <tbody>
-            {% for user_score in object.total_score_per_user %}
+            {% for user_score in sorted_total_score_per_user %}
                 <tr {% if request.user.pk == user_score.creator_id %} class="table-primary text-white"{% endif %}>
                     <td data-order="{{ forloop.counter }}">{{ forloop.counter|ordinal }}</td>
                     {% if "change_readerstudy" in readerstudy_perms %}
