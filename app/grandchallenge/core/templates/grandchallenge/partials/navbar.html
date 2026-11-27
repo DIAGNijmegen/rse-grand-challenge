@@ -1,4 +1,6 @@
 {% load url %}
+{% load random_encode %}
+{% load bleach %}
 
 <nav class="navbar navbar-light navbar-top navbar-expand-md shadow bg-white">
     <div class="container">
@@ -44,7 +46,45 @@
                 </li>
             </ul>
             <ul class="navbar-nav">
-                {% include "grandchallenge/partials/userlinks.html" with hide_userlinks=hide_userlinks %}
+                <li class="nav-item dropdown my-auto">
+                    <a href="#" class="nav-link dropdown-toggle"
+                       data-bs-toggle="dropdown" role="button"
+                       aria-haspopup="true"
+                       aria-expanded="false">
+                        Help
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        {% if challenge %}
+                            <h6 class="dropdown-header">{% firstof challenge.title challenge.short_name %} Support</h6>
+                            {% if challenge.display_forum_link %}
+                                <a class="dropdown-item"
+                                   href="{% url 'discussion-forums:topic-list' challenge_short_name=challenge.short_name %}"
+                                >
+                                    <i class="fas fa-comments fa-fw"></i>
+                                    &nbsp;{% firstof challenge.title challenge.short_name %} Forum
+                                </a>
+                            {% endif %}
+                            {% if challenge.contact_email %}
+                                <a class="dropdown-item"
+                                    target="_blank"
+                                    href="mailto:{{ challenge.contact_email|random_encode|clean }}">
+                                    <i class="fas fa-envelope fa-fw"></i>
+                                    &nbsp;Email {% firstof challenge.title challenge.short_name %} Organizers
+                                </a>
+                            {% endif %}
+                            <div class="dropdown-divider"></div>
+                        {% endif %}
+                        <h6 class="dropdown-header">{{ request.site.name }} Support</h6>
+                        <a class="dropdown-item"
+                           href="{% url 'documentation:home' %}">
+                            <i class="fas fa-book fa-fw"></i>
+                            &nbsp;{{ request.site.name }} Documentation
+                        </a>
+                    </div>
+                </li>
+                {% if not hide_userlinks %}
+                    {% include "grandchallenge/partials/userlinks.html" %}
+                {% endif %}
             </ul>
         </div>
     </div>
