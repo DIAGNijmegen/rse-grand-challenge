@@ -12,7 +12,11 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.auth.views import redirect_to_login
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    PermissionDenied,
+    ValidationError,
+)
 from django.db.models import (
     Count,
     Exists,
@@ -341,13 +345,18 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
             user_progress = self.object.get_progress_for_user(
                 self.request.user
             )
+
+            try:
+                user_score = self.object.total_score_per_user.get(
+                    creator=self.request.user
+                )
+            except ObjectDoesNotExist:
+                user_score = None
+
             context.update(
                 {
-                    "progress": user_progress,
-                    "user_score": self.object.score_for_user(
-                        self.request.user
-                    ),
-                    "max_score_cases": self.object.max_score_cases,
+                    "user_progress": user_progress,
+                    "user_score": user_score,
                 }
             )
 
@@ -427,6 +436,24 @@ class ReaderStudyLeaderBoard(
     permission_required = "reader_studies.view_leaderboard"
     raise_exception = True
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        users_by_pk = {
+            user.pk: user
+            for user in get_user_model()
+            .objects.filter(
+                answer__question__reader_study=self.object,
+                answer__is_ground_truth=False,
+            )
+            .distinct()
+            .select_related("user_profile", "verification")
+        }
+
+        context.update({"users_by_pk": users_by_pk})
+
+        return context
+
 
 class ReaderStudyStatistics(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
@@ -436,8 +463,18 @@ class ReaderStudyStatistics(
     raise_exception = True
     template_name = "reader_studies/readerstudy_statistics.html"
     queryset = ReaderStudy.objects.with_has_budget()
-    # TODO: this view also contains the ground truth answer values.
-    # If the permission is changed to 'read', we need to filter these values out.
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        questions_by_pk = {
+            question.pk: question
+            for question in self.object.ground_truth_applicable_questions
+        }
+
+        context.update({"questions_by_pk": questions_by_pk})
+
+        return context
 
 
 class ReaderStudyUsage(

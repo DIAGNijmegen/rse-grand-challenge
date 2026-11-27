@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load static %}
-{% load user_profile_link_username from profiles %}
+{% load user_profile_link from profiles %}
 {% load naturaldelta %}
 
 {% block title %}
@@ -65,7 +65,7 @@
             <tbody>
                 {% for user in user_usage %}
                     <tr>
-                        <td>{{ user.username|user_profile_link_username }}</td>
+                        <td>{{ user|user_profile_link }}</td>
                         <td>{{ user.total_credits }}</td>
                         <td data-order="{{ user.session_duration.total_seconds }}">{{ user.session_duration|naturaldelta }}</td>
                         <td data-order="{{ user.endpoint_duration.total_seconds }}">{% if user.endpoint_duration %}{{ user.endpoint_duration|naturaldelta }}{% else %}-{% endif %}</td>

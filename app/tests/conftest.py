@@ -216,27 +216,31 @@ def submission_file(tmpdir_factory):
 
 @pytest.fixture
 def reader_study_with_gt():
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(is_educational=True)
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     QuestionFactory(
         reader_study=rs,
         answer_type=Question.AnswerType.BOOL,
-        question_text="q1",
+        required=False,
+        question_text="non-unique-text",
     )
     QuestionFactory(
         reader_study=rs,
         answer_type=Question.AnswerType.BOOL,
-        question_text="q2",
+        required=False,
+        question_text="non-unique-text",
     )
     QuestionFactory(
         reader_study=rs,
         answer_type=Question.AnswerType.BOOL,
-        question_text="q3",
+        required=False,
+        question_text="unique-text",
     )
     QuestionFactory(
         reader_study=rs,
         answer_type=Question.AnswerType.MASK,
-        question_text="q4",
+        required=False,
+        question_text="not-ground-truthable",
     )
 
     r1, r2, editor = UserFactory(), UserFactory(), UserFactory()

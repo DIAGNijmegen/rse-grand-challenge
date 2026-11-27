@@ -1,9 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
-{% load workstations %}
-{% load reader_study_tags %}
 {% load static %}
-{% load meta_attr %}
+{% load dict_lookup %}
 
 {% block title %}
     Statistics - {{ object }} - {{ block.super }}
@@ -23,7 +21,7 @@
     <h1>{{ object.title }} Statistics</h1>
 
     <div class="table-responsive mt-3">
-        <h2>Statistics per case</h2>
+        <h2>Statistics per Display Set</h2>
         <table
             data-data-table
             data-page-length="100"
@@ -32,42 +30,23 @@
         >
             <thead class="table-light">
                 <tr>
-                    <th>DisplaySet ID</th>
+                    <th>Display Set ID</th>
                     <th>Total score / max score</th>
                     <th>Average score</th>
-                    {% for question in object.statistics.questions %}
-                        <th>{{ question }} (GT)</th>
-                    {% endfor %}
-                    <th>View case</th>
                 </tr>
             </thead>
             <tbody>
-                {% for entry in object.statistics.scores_by_case %}
+                {% for score_per_display_set in object.total_score_per_display_set %}
                     <tr>
-                        <td>{{ entry.id }}</td>
-                        <td data-order="{{ entry.sum }}">{{ entry.sum }} / {{ object.statistics.max_score_cases }}</td>
-                        <td data-order="{{ entry.avg }}">{{ entry.avg|floatformat:4 }}</td>
-                        {% for question in object.statistics.questions %}
-                            {% get_ground_truth object entry.id question as ground_truth %}
-                            <td>{{ ground_truth }}</td>
-                        {% endfor %}
-                        <td data-order="{{ object.has_budget }}">
-                            <button class="btn btn-primary badge bg-primary"
-                                    {% if object.has_budget %}
-                                        {% workstation_session_control_data workstation=object.workstation context_object=object display_set=entry reader_study=object %} title="Open in viewer"
-                                    {% else %}
-                                        disabled title="Reader study is out of budget and cannot be launched"
-                                    {% endif %}
-                            >
-                                <i class="fa fa-eye"></i>
-                            </button>
-                        </td>
+                        <td><a href="{% url 'reader-studies:display-set-detail' slug=object.slug pk=score_per_display_set.display_set_id %}">{{ score_per_display_set.display_set_id }}</a></td>
+                        <td data-order="{{ score_per_display_set.score__sum }}">{{ score_per_display_set.score__sum }} / {{ score_per_display_set.score__count }}</td>
+                        <td data-order="{{ score_per_display_set.score__avg }}">{{ score_per_display_set.score__avg|floatformat:4 }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <h2>Statistics per question</h2>
+        <h2>Statistics per Question</h2>
         <table
             data-data-table
             data-page-length="100"
@@ -82,20 +61,15 @@
                 </tr>
             </thead>
             <tbody>
-                {% for entry in object.statistics.scores_by_question %}
+                {% for score_per_question in object.total_score_per_question %}
                     <tr>
-                        <td>{{ entry.question__question_text }}</td>
-                        <td data-order="{{ entry.score__sum }}">{{ entry.score__sum }} / {{ object.statistics.max_score_questions }}</td>
-                        <td data-order="{{ entry.score__avg }}">{{ entry.score__avg|floatformat:4 }}</td>
+                        {% get_dict_values questions_by_pk score_per_question.question_id as question %}
+                        <td>{{ question.question_text }}</td>
+                        <td data-order="{{ score_per_question.score__sum }}">{{ score_per_question.score__sum }} / {{ score_per_question.score__count }}</td>
+                        <td data-order="{{ score_per_question.score__avg }}">{{ score_per_question.score__avg|floatformat:4 }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    {% include 'workstations/partials/session-control.html' %}
 {% endblock %}

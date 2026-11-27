@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% load url %}
 {% load humanize %}
-{% load user_profile_link_username from profiles %}
+{% load user_profile_link from profiles %}
 {% load static %}
 {% load guardian_tags %}
+{% load dict_lookup %}
 
 {% block title %}
     Leaderboard - {{ object }} - {{ block.super }}
@@ -39,16 +40,17 @@
                 </tr>
             </thead>
             <tbody>
-            {% for entry in object.leaderboard.grouped_scores %}
-                <tr {% if request.user.username == entry.creator__username %} class="bg-primary text-white"{% endif %}>
+            {% for user_score in object.total_score_per_user %}
+                <tr {% if request.user.pk == user_score.creator_id %} class="table-primary text-white"{% endif %}>
                     <td data-order="{{ forloop.counter }}">{{ forloop.counter|ordinal }}</td>
                     {% if "change_readerstudy" in readerstudy_perms %}
-                        <td data-order="{{ entry.creator__username }}">{{ entry.creator__username|user_profile_link_username }}</td>
+                        {% get_dict_values users_by_pk user_score.creator_id as creator %}
+                        <td>{{ creator|user_profile_link }}</td>
                     {% else %}
-                        <td>{% if entry.creator__username == request.user.username %} You {% else %} Reader {% endif %}</td>
+                        <td>{% if user_score.creator_id == request.user.pk %} You {% else %} Reader {% endif %}</td>
                     {% endif %}
-                    <td data-order="{{ entry.score__sum }}">{{ entry.score__sum }} / {{ object.leaderboard.max_score_cases }}</td>
-                    <td data-order="{{ entry.score__avg }}">{{ entry.score__avg|floatformat:4 }}</td>
+                    <td data-order="{{ user_score.score__sum }}">{{ user_score.score__sum }} / {{ user_score.score__count }}</td>
+                    <td data-order="{{ user_score.score__avg }}">{{ user_score.score__avg|floatformat:4 }}</td>
                 </tr>
             {% endfor %}
             </tbody>

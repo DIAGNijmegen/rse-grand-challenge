@@ -1,6 +1,5 @@
 from allauth.mfa.utils import is_mfa_enabled
 from django import template
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.html import format_html
@@ -47,20 +46,6 @@ def user_profile_link(user: AbstractUser | None) -> str:
         username,
         verified,
     )
-
-
-@register.filter
-def user_profile_link_username(username: str) -> str:
-    return user_profile_links_from_usernames([username])[username]
-
-
-@register.simple_tag
-def user_profile_links_from_usernames(usernames):
-    User = get_user_model()  # noqa: N806
-    users = User.objects.filter(username__in=usernames).select_related(
-        "user_profile", "verification"
-    )
-    return {user.username: user_profile_link(user) for user in users}
 
 
 @register.filter
