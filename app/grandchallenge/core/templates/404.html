@@ -2,7 +2,9 @@
 
 {% block title %}Not Found{% endblock %}
 
-{% block navbar %}{% endblock %}
+{% block navbar %}
+    {% include "grandchallenge/partials/navbar.html" with hide_userlinks=True %}
+{% endblock %}
 
 {% block content %}
     <h2>Not Found</h2>
