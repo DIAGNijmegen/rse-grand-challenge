@@ -307,7 +307,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         object_perms = get_perms(self.request.user, self.object)
 
-        if f"change_{ReaderStudy._meta.model_name}" in object_perms:
+        if "change_readerstudy" in object_perms:
             reader_remove_form = ReadersForm()
             reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
 
@@ -341,24 +341,20 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 }
             )
 
-        if f"read_{ReaderStudy._meta.model_name}" in object_perms:
-            user_progress = self.object.get_progress_for_user(
+        if "read_readerstudy" in object_perms:
+            context["user_progress"] = self.object.get_progress_for_user(
                 self.request.user
             )
 
-            try:
-                user_score = self.object.total_score_per_user.get(
-                    creator=self.request.user
-                )
-            except ObjectDoesNotExist:
-                user_score = None
-
-            context.update(
-                {
-                    "user_progress": user_progress,
-                    "user_score": user_score,
-                }
-            )
+            if self.object.is_educational:
+                try:
+                    context["user_score"] = (
+                        self.object.total_score_per_user.get(
+                            creator=self.request.user
+                        )
+                    )
+                except ObjectDoesNotExist:
+                    pass
 
         return context
 
@@ -439,6 +435,10 @@ class ReaderStudyLeaderBoard(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
+        sorted_total_score_per_user = (
+            self.object.total_score_per_user.order_by("-score__sum")
+        )
+
         users_by_pk = {
             user.pk: user
             for user in get_user_model()
@@ -450,7 +450,12 @@ class ReaderStudyLeaderBoard(
             .select_related("user_profile", "verification")
         }
 
-        context.update({"users_by_pk": users_by_pk})
+        context.update(
+            {
+                "sorted_total_score_per_user": sorted_total_score_per_user,
+                "users_by_pk": users_by_pk,
+            }
+        )
 
         return context
 
