@@ -1,8 +1,13 @@
-$("#InfoModal").on("show.bs.modal", function (event) {
-    const button = $(event.relatedTarget);
-    const modal = $(this);
-    modal.find(".modal-title").text(button.data("title"));
-    modal.find(".modal-description").text(button.data("description"));
-    modal.find(".modal-url").attr("href", button.data("absolute-url"));
-    modal.find(".modal-url").text(button.data("absolute-url"));
-});
+document
+    .getElementById("InfoModal")
+    .addEventListener("show.bs.modal", event => {
+        const button = event.relatedTarget;
+        const modal = event.target;
+        modal.querySelector(".modal-title").textContent = button.dataset.title;
+        modal.querySelector(".modal-description").textContent =
+            button.dataset.description;
+
+        const url = modal.querySelector(".modal-url");
+        url.setAttribute("href", button.dataset.absoluteUrl);
+        url.textContent = button.dataset.absoluteUrl;
+    });
