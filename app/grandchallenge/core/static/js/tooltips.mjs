@@ -3,6 +3,6 @@
 // For example:
 //   <div data-bs-toggle="tooltip" title="Tooltip content"></div>
 
-$(document).ready(() => {
-    $('[data-bs-toggle="tooltip"]').tooltip();
-});
+document
+    .querySelectorAll('[data-bs-toggle="tooltip"]')
+    .forEach(el => bootstrap.Tooltip.getOrCreateInstance(el));

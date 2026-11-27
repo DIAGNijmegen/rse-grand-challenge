@@ -118,7 +118,7 @@
 
 {% block script %}
     {{ block.super }}
-    <script src="{% static 'reader_studies/js/remove_answers.js' %}"></script>
+    <script type="module" src="{% static 'reader_studies/js/remove_answers.mjs' %}"></script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
     {% include 'workstations/partials/session-control.html' %}
 {% endblock %}
