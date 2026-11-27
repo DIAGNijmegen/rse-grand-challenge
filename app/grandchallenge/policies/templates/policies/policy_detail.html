@@ -15,5 +15,12 @@
 {% block content %}
     <h1>{{ object.title }}</h1>
 
+    {% if 'policies.add_policy' in perms %}
+        <a class="btn btn-md btn-dark me-2 mb-3" href="{% url 'policies:create' %}">Create policy</a>
+    {% endif %}
+    {% if 'policies.change_policy' in perms %}
+        <a class="btn btn-md btn-dark mb-3" href="{% url 'policies:update' slug=object.slug %}">Update policy</a>
+    {% endif %}
+
     {{ object.body|md2html }}
 {% endblock %}
