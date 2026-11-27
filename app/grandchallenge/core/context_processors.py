@@ -67,10 +67,6 @@ def footer_links(*_, **__):
     return {"policy_pages": Policy.objects.all()}
 
 
-def about_page(*_, **__):
-    return {"about_page_url": settings.FLATPAGE_ABOUT_URL}
-
-
 def viewport_names(*_, **__):
     return {"viewport_names": ViewportNames.values}
 

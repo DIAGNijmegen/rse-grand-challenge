@@ -135,9 +135,6 @@ DOCUMENTATION_HELP_INTERFACES_SLUG = os.environ.get(
     "DOCUMENTATION_HELP_INTERFACES_SLUG", "interfaces"
 )
 
-# About Flatpage
-FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
-
 COMPONENTS_TAX_RATE = 0.21
 if COMPONENTS_TAX_RATE > 1:
     raise ImproperlyConfigured("Tax rate should be less than 1")
@@ -445,7 +442,6 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.django_settings",
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
-                "grandchallenge.core.context_processors.about_page",
                 "grandchallenge.core.context_processors.viewport_names",
                 "grandchallenge.core.context_processors.workstation_domains",
             ],
