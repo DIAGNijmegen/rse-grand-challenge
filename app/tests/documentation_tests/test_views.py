@@ -194,10 +194,10 @@ def nested_docpages():
 @pytest.mark.parametrize(
     "level, num_queries",
     (
-        (0, 40),
-        (1, 41),  # +1 parent is not null
-        (2, 42),  # +1 parent breadcrumb
-        (3, 43),  # +1 parent breadcrumb
+        (0, 38),
+        (1, 39),  # +1 parent is not null
+        (2, 40),  # +1 parent breadcrumb
+        (3, 41),  # +1 parent breadcrumb
     ),
 )
 def test_docpage_detail_num_queries(
