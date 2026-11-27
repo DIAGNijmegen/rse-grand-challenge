@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy from crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+    {{ object|yesno:"Update,Create Policy" }} {% if object %} - {{ object.title }} {% endif %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        {% if object %}
+            <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active" aria-current="page">{{ object|yesno:"Update,Create Policy" }}</li>
+    </ol>
+{% endblock %}
+
+{% block container %}container-fluid{% endblock %}
+
+{% block content %}
+    <h2>{{ object|yesno:"Update,Create" }} Policy</h2>
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}
