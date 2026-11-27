@@ -51,6 +51,7 @@ class ChallengeAdmin(ModelAdmin):
         "size_in_registry",
         "unassigned_storage_gb_display",
         "available_compute_euros",
+        "available_total_euros",
     )
     list_filter = (
         "is_suspended",
@@ -71,6 +72,9 @@ class ChallengeAdmin(ModelAdmin):
 
     def available_compute_euros(self, obj):
         return millicents_to_euro(obj.available_compute_cost_euro_millicents)
+
+    def available_total_euros(self, obj):
+        return millicents_to_euro(obj.available_total_cost_euro_millicents)
 
     @staticmethod
     def algorithm_phase_configuration_link(obj):
