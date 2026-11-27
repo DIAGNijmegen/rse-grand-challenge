@@ -1,5 +1,3 @@
-new bootstrap.Tooltip(document.body, { selector: ".copy-btn" });
-
 const activeTimers = {};
 const originalTitles = {};
 
